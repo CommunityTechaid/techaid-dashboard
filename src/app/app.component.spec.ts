@@ -1,4 +1,4 @@
-import { TestBed, async } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { AppHeader } from './components/app-header/app.header.component';
 import { NgProgressModule } from '@ngx-progressbar/core';
@@ -14,7 +14,7 @@ import { AppModule } from './app.module';
 class NgProgressStub { }
 
 describe('AppComponent', () => {
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [
       ],
@@ -32,13 +32,13 @@ describe('AppComponent', () => {
     }).compileComponents();
   }));
 
-  it('should create the app', async(() => {
+  it('should create the app', waitForAsync(() => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.debugElement.componentInstance;
     expect(app).toBeTruthy();
   }));
 
-  it('renders markup to snapshot', async(() => {
+  it('renders markup to snapshot', waitForAsync(() => {
     const fixture = TestBed.createComponent(AppComponent);
     expect(fixture).toMatchSnapshot();
   }));

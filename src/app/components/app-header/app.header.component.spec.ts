@@ -1,4 +1,4 @@
-import { TestBed, async, ComponentFixture } from '@angular/core/testing';
+import { TestBed, ComponentFixture, waitForAsync } from '@angular/core/testing';
 import { AppHeader } from './app.header.component';
 import { AppSharedModule } from '@app/shared';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -19,7 +19,7 @@ describe('AppHeader', () => {
   let fixture: ComponentFixture<AppHeader>;
   let component: AppHeader;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [
         AppHeader
@@ -38,7 +38,7 @@ describe('AppHeader', () => {
     fixture.detectChanges();
   }));
 
-  it('renders user logged in state', async(() => {
+  it('renders user logged in state', waitForAsync(() => {
     const store: Store = TestBed.get(Store);
     const user: User = new User({
       username: 'mock',
@@ -63,7 +63,7 @@ describe('AppHeader', () => {
   }));
 
 
-  it('renders markup to snapshot', async(() => {
+  it('renders markup to snapshot', waitForAsync(() => {
     expect(fixture).toMatchSnapshot();
   }));
 });
