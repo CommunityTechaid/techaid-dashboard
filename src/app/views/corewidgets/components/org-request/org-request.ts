@@ -6,7 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
-import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
+import { UntypedFormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
@@ -49,7 +49,7 @@ query findContent {
 
 export class OrgRequestComponent {
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   submiting = false;
   content: any = {};

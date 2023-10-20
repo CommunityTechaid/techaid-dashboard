@@ -3,7 +3,7 @@ import { NgModule, ModuleWithProviders } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Routes, RouterModule } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { FormlyModule, ConfigOption } from '@ngx-formly/core';
 import { FormlyBootstrapModule, FormlyFieldInput } from '@ngx-formly/bootstrap';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -20,7 +20,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { RichTextComponent } from './components/richtext.component';
 import { RepeatTypeComponent } from './components/repeat.component';
 
-export function percentageValidator(c: FormControl, field) {
+export function percentageValidator(c: UntypedFormControl, field) {
     if (c.value && c.value.toString().trim()) {
         return /^-?[0-9]+\.?[0-9]+%?$/.test(c.value.toString());
     }
@@ -28,7 +28,7 @@ export function percentageValidator(c: FormControl, field) {
     return true;
 }
 
-export function numberValidator(c: FormControl, field) {
+export function numberValidator(c: UntypedFormControl, field) {
     if (c.value && c.value.toString().trim()) {
         return /^-?[0-9]+(\.[0-9]+)?$/.test(c.value.toString());
     }
