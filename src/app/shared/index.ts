@@ -6,7 +6,6 @@ import { ConfigService } from './services/config.service';
 import { YesNoPipe } from './pipes/yesno.pipe';
 import { AppInitialComponent } from './components/app-initial/app-initial.component';
 import { AuthenticationService } from './services/authentication.service';
-import { CsvService } from './services/csv.service';
 
 @NgModule({
     imports: [
@@ -29,8 +28,7 @@ export class AppSharedModule {
             providers: [
                 AuthenticationService,
                 AuthGuard,
-                ConfigService,
-                CsvService,
+                ConfigService
             ]
         };
     }
