@@ -9,14 +9,7 @@
     "build-production": "node ./build/build-pre.js && ng build --configuration=production --aot --base-href / --output-path dist/ --deploy-url /",
     "build-uat": "node ./build/build-pre.js && ng build --configuration=uat --aot --base-href / --output-path dist/ --deploy-url /",
     "debug": "ng build --base-href /",
-    "ng:test": "ng test",
-    "ng:lint": "ng lint",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:ci": "jest --runInBand",
-    "test:update": "jest --updateSnapshot",
-    "server": "node server.js",
-    "e2e": "ng e2e"
+    "server": "node server.js"
   },
   "private": true,
   "main": "main.js",
@@ -89,38 +82,13 @@
     "@types/datatables.net": "^1.10.19",
     "@types/googlemaps": "^3.39.11",
     "@types/jasminewd2": "^2.0.8",
-    "@types/jest": "^26.0.7",
     "@types/jquery": "^3.5.0",
     "@types/node": "^14.0.26",
     "codelyzer": "^6.0.0",
-    "jasmine-core": "~3.5.0",
-    "jasmine-spec-reporter": "~5.0.0",
-    "jest": "^26.1.0",
-    "jest-preset-angular": "^8.2.1",
     "json-loader": "^0.5.7",
-    "karma": "~5.0.0",
-    "karma-chrome-launcher": "~3.1.0",
-    "karma-coverage-istanbul-reporter": "~3.0.2",
-    "karma-jasmine": "~3.3.0",
-    "karma-jasmine-html-reporter": "^1.5.0",
-    "protractor": "~7.0.0",
     "ts-node": "~8.10.2",
-    "tslint": "~6.1.0",
     "typescript": "~3.9.7",
     "wait-on": "5.1.0",
     "webdriver-manager": "12.1.7"
-  },
-  "jest": {
-    "preset": "jest-preset-angular",
-    "setupTestFrameworkScriptFile": "<rootDir>/src/setupJest.ts",
-    "moduleNameMapper": {
-      "^@app/shared$": "<rootDir>/src/app/shared/",
-      "^@app/shared/(.*)$": "<rootDir>/src/app/shared/$1",
-      "^@app/external/(.*)$": "<rootDir>/src/app/external/$1",
-      "^@app/external$": "<rootDir>/src/app/external",
-      "^@app/state/(.*)$": "<rootDir>/src/app/state/$1",
-      "^@env/(.*)$": "<rootDir>/src/environments/$1",
-      "^@views/(.*)$": "<rootDir>/src/app/views/$1"
-    }
   }
 }
