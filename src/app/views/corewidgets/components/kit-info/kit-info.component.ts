@@ -265,7 +265,7 @@ query findAutocompleteOrgs($term: String) {
       contact: {
         _contains: $term
       }
-    }    
+    }
     ]
   }){
     content  {
@@ -833,7 +833,7 @@ export class KitInfoComponent {
 
   private normalizeData(data: any) {
     this.album = (data.attributes.images || []).map(function(src) {
-      src.url = `https://api.techaid.ju.ma/kits/${data.id}/images/${src.id}`;
+      src.url = `https://api.communitytechaid.org.uk/kits/${data.id}/images/${src.id}`;
       return {src: src.url, thumb: src.url, caption: data.model};
     });
     if (data.volunteers) {
