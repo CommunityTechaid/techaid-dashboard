@@ -23,6 +23,7 @@
     "@angular/platform-browser": "11.2.14",
     "@angular/platform-browser-dynamic": "11.2.14",
     "@angular/router": "11.2.14",
+    "@apollo/client": "^3.0.2",
     "@auth0/angular-jwt": "^5.0.1",
     "@auth0/auth0-spa-js": "^1.11.0",
     "@fortawesome/fontawesome-free": "^5.14.0",
