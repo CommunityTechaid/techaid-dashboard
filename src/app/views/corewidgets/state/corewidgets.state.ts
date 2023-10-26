@@ -1,6 +1,7 @@
+import {Apollo} from 'apollo-angular';
 import { State, StateContext, Action, Selector, NgxsOnInit } from '@ngxs/store';
 import { NgZone, Injectable } from '@angular/core';
-import { Apollo } from 'apollo-angular';
+
 import { SearchQuery } from './actions';
 
 

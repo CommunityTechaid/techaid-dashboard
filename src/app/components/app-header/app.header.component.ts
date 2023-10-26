@@ -1,3 +1,4 @@
+import {Apollo} from 'apollo-angular';
 import { Select, Store } from '@ngxs/store';
 import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
@@ -5,7 +6,7 @@ import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
-import { Apollo } from 'apollo-angular';
+
 import { SearchQuery } from '@views/corewidgets/state/actions';
 import * as $ from 'jquery';
 

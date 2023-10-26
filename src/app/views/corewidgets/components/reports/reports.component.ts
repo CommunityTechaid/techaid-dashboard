@@ -1,6 +1,7 @@
+import {gql, Apollo} from 'apollo-angular';
 import { Component } from '@angular/core';
-import gql from 'graphql-tag';
-import { Apollo } from 'apollo-angular';
+
+
 import { DomSanitizer } from '@angular/platform-browser';
 
 const QUERY_ENTITY = gql`
