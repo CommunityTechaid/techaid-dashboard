@@ -66,7 +66,7 @@
                                                 <div *ngIf="dt.model.length"><small>{{ dt.location }}</small></div>
                                                 <div *ngIf="dt.organisation?.name">
                                                     <span class="badge badge-secondary">
-                                                        <i class="fas fa-sitemap mr-1"></i> 
+                                                        <i class="fas fa-sitemap mr-1"></i>
                                                         <a href="#" class="btn-secondary" [routerLink]="['/dashboard/organisations', dt.organisation.id]">{{dt.organisation?.name}}</a>
                                                     </span>
                                                 </div>
@@ -84,7 +84,7 @@
                                     <td>
                                         <a *ngIf="dt.volunteerName?.length" href="#" [routerLink]="['/dashboard/volunteers', dt.volunteer.id]">{{ dt.volunteerName }}</a>
                                         <span *ngFor="let v of dt.volunteers" class="mr-1 mb-1">
-                                            <span [class]="'badge badge-' + classes[v.type]"><span class="badge badge-primary mr-1">{{v.type}}</span> 
+                                            <span [class]="'badge badge-' + classes[v.type]"><span class="badge badge-primary mr-1">{{v.type}}</span>
                                             <a [class]="'btn-'+ classes[v.type]" [routerLink]="['/dashboard/volunteers', v.volunteer.id]">{{v.volunteer.name}}</a>
                                             </span>
                                         </span>
@@ -103,12 +103,6 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <button
-                            class="btn btn-sm font-weight-bold btn-link"
-                            (click)="exportToCsv()">
-                            <i class="fa fa-external-link"></i>
-                            Export CSV
-                        </button>
                     </div>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 # TLDR
 [![CircleCi](https://circleci.com/gh/techaid-tech/techaid-dashboard.svg?style=svg)](https://circleci.com/gh/techaid-tech/techaid-dashboard)
 
-This repo is the source for the UI provided at https://lambeth-techaid.ju.ma/
+This repo is the source for the UI provided at https://app.communitytechaid.org.uk/
 
 ```bash
 # Ensure you have installed nodejs and NPM locally
@@ -49,14 +49,6 @@ Run `ng generate component component-name` to generate a new component. You can 
 ## Build
 
 Run `npm run build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
 
 ## Further help
 

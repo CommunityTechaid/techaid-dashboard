@@ -69,7 +69,7 @@
                                                             {{dt.types[g] || 0}}  / {{dt.attributes.request[g] || 0}}
                                                         </span>
                                                     </span>
-                                                </div> 
+                                                </div>
                                                 <div>
                                                     <span class="mr-1 mb-1" *ngFor="let g of dt.attributes?.alternateAccepts">
                                                         <span class="badge badge-secondary">
@@ -111,12 +111,6 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <button
-                            class="btn btn-sm font-weight-bold btn-link"
-                            (click)="exportToCsv()">
-                            <i class="fa fa-external-link"></i>
-                            Export CSV
-                        </button>
                     </div>
                 </div>
             </div>
