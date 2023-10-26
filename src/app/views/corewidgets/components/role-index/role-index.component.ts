@@ -1,11 +1,10 @@
-import {gql, Apollo} from 'apollo-angular';
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
-
-
+import gql from 'graphql-tag';
+import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
 import { FormControl, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';

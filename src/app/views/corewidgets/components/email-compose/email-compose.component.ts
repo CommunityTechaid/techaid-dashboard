@@ -1,12 +1,11 @@
-import {Apollo, gql} from 'apollo-angular';
 import { Component, Input, ViewChild } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
-
+import { Apollo } from 'apollo-angular';
 import { Location } from '@angular/common';
-
+import gql from 'graphql-tag';
 import { Subscription, Observable } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { EmailThreadsComponent } from '../email-threads/email-threads.component';

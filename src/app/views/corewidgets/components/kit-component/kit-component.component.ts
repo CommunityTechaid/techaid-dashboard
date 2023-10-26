@@ -1,4 +1,3 @@
-import {gql, Apollo} from 'apollo-angular';
 import { Component, ViewChild, Input } from '@angular/core';
 import {
   concat,
@@ -11,8 +10,8 @@ import {
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
-
-
+import gql from 'graphql-tag';
+import { Apollo } from 'apollo-angular';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig  } from '@ngx-formly/core';
 import {

@@ -1,9 +1,8 @@
-import {Apollo, gql} from 'apollo-angular';
 import { Component } from '@angular/core';
-
+import { Apollo } from 'apollo-angular';
 import { ToastrService } from 'ngx-toastr';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
+import gql from 'graphql-tag';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Router } from '@angular/router';

@@ -12,7 +12,7 @@
     "target": "es2015",
     "typeRoots": [
       "node_modules/@types"
-    ],
+    ], 
     "paths": {
       "@app/shared": [
         "app/shared/"
@@ -40,8 +40,7 @@
       "es2017",
       "dom",
       "esnext.asynciterable"
-    ],
-    "allowSyntheticDefaultImports": true
+    ]
   },
   "include": [
     "main.ts",
