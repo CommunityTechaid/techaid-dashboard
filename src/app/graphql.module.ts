@@ -1,14 +1,19 @@
+import {APOLLO_OPTIONS} from 'apollo-angular';
+import {HttpLink} from 'apollo-angular/http';
+import {ApolloLink, Observable, InMemoryCache} from '@apollo/client/core';
+import {onError} from '@apollo/client/link/error';
+import {setContext} from '@apollo/client/link/context';
 import { NgModule } from '@angular/core';
-import { ApolloModule, APOLLO_OPTIONS } from 'apollo-angular';
-import { HttpLinkModule, HttpLink } from 'apollo-angular-link-http';
-import { ApolloLink, Observable } from 'apollo-link';
-import { InMemoryCache } from 'apollo-cache-inmemory';
+
+
+
+
 import { ConfigService } from '@app/shared/services/config.service';
-import { onError } from 'apollo-link-error';
+
 import { AuthenticationService } from './shared/services/authentication.service';
 import { mergeMap, catchError, map, flatMap, switchMap, tap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { setContext } from 'apollo-link-context';
+
 
 
 export function createApollo(httpLink: HttpLink, config: ConfigService, authService: AuthenticationService) {
@@ -39,7 +44,7 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
 }
 
 @NgModule({
-  exports: [ApolloModule, HttpLinkModule],
+  exports: [],
   providers: [
     {
       provide: APOLLO_OPTIONS,

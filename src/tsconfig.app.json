@@ -9,7 +9,8 @@
   },
   "files": [
     "main.ts",
-    "polyfills.ts"
+    "polyfills.ts",
+    "app/shared/utils/app-ngx-progress-http.ts"
   ],
   "include": [
     "src/**/*.d.ts"

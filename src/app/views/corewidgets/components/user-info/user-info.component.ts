@@ -1,9 +1,10 @@
+import {gql, Apollo} from 'apollo-angular';
 import { Component, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
-import gql from 'graphql-tag';
-import { Apollo } from 'apollo-angular';
+
+
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
