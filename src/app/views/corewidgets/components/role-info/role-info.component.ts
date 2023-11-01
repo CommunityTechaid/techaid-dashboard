@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 
 
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
@@ -42,7 +42,7 @@ export class RoleInfoComponent {
 
   }
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   roleName: string;
   roleId: string;

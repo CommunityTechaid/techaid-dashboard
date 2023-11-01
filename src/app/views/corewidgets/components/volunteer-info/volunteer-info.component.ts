@@ -5,7 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 
 
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select } from '@ngxs/store';
@@ -96,7 +96,7 @@ export class VolunteerInfoComponent {
     private apollo: Apollo
   ) {}
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
     formState: {
       disabled: true

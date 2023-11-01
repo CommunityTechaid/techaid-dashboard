@@ -13,7 +13,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 
 
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFieldConfig  } from '@ngx-formly/core';
 import {
   debounceTime,
@@ -172,7 +172,7 @@ export class KitComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   ages = {
     0: 'I don\'t know',
@@ -232,7 +232,7 @@ export class KitComponent {
   filter: any = {};
   filterCount = 0;
   filterModel: any = {};
-  filterForm: FormGroup = new FormGroup({});
+  filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',

@@ -7,7 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 
 
 import { query } from '@angular/animations';
-import { FormControl, FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormControl, UntypedFormGroup, FormBuilder, Validators } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
@@ -220,7 +220,7 @@ export class KitIndexComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   ages = {
      0: 'I don\'t know',
@@ -280,7 +280,7 @@ export class KitIndexComponent {
   filter: any = {};
   filterCount = 0;
   filterModel: any = {archived: [false]};
-  filterForm: FormGroup = new FormGroup({});
+  filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',

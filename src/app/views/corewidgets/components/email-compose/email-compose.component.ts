@@ -1,6 +1,6 @@
 import {Apollo, gql} from 'apollo-angular';
 import { Component, Input, ViewChild } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -194,7 +194,7 @@ export class EmailComposeComponent {
     @ViewChild('quote') quoted: any;
     public user: User;
     @Select(UserState.user) user$: Observable<User>;
-    form: FormGroup = new FormGroup({});
+    form: UntypedFormGroup = new UntypedFormGroup({});
     options: FormlyFormOptions = {};
     model: any = {};
     messageThread: any = {};

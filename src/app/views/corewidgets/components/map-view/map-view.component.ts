@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
@@ -55,7 +55,7 @@ export class MapViewComponent {
   }
 
   markers: Array<any> = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
   fields: Array<FormlyFieldConfig> = [
