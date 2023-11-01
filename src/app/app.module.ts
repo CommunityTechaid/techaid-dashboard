@@ -13,7 +13,7 @@ import { AppAuthModule } from './shared/modules/auth';
 import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app.routing.module';
 import { NgProgressModule } from '@ngx-progressbar/core';
-import { AppNgProgressHttpModule } from '@app/shared/utils/app-ngx-progress-http.ts';
+import { AppNgProgressHttpModule } from '@app/shared/utils/app-ngx-progress-http';
 import { ToastrModule } from 'ngx-toastr';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ConfigService } from '@app/shared/services/config.service';

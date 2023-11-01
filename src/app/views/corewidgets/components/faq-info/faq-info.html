@@ -11,20 +11,20 @@
             </ol>
         </nav>
 
-        <ngb-tabset>
-            <ngb-tab title="FAQ">
+        <ul ngbnav>
+            <li [ngbNavItem] title="FAQ">
                 <ng-template ngbTabContent>
-                    <div class="card shadow mb-4 mt-1"> 
+                    <div class="card shadow mb-4 mt-1">
                         <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">{{entityName}}</h6> 
+                            <h6 class="m-0 font-weight-bold text-primary">{{entityName}}</h6>
                         </div>
-                        <div class="card-body"> 
+                        <div class="card-body">
                             <div [innerHtml]="model.content"></div>
                         </div>
                     </div>
                 </ng-template>
-            </ngb-tab>
-            <ngb-tab title="Edit">
+            </li>
+            <li [ngbNavItem] title="Edit">
                 <ng-template ngbTabContent>
                     <div class="card shadow mb-4 mt-1">
                         <div class="card-header py-3">
@@ -65,8 +65,8 @@
                         </div>
                     </div>
                 </ng-template>
-            </ngb-tab>
-        </ngb-tabset>
+            </li>
+        </ul>
     </div>
 </div>
 

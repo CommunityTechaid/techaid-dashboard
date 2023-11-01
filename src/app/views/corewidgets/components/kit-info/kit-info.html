@@ -11,8 +11,8 @@
             </ol>
         </nav>
 
-        <ngb-tabset [destroyOnHide]="false">
-            <ngb-tab title="Details">
+        <ul ngbNav [destroyOnHide]="false">
+            <li [ngbNavItem] title="Details">
                 <ng-template ngbTabContent>
                     <div class="card shadow mb-4 mt-1">
                         <div class="card-header py-3">
@@ -65,8 +65,8 @@
                         </div>
                     </div>
                 </ng-template>
-            </ngb-tab>
-            <ngb-tab title="Donor Emails" *ngIf="model?.donor?.email">
+            </li>
+            <li [ngbNavItem] title="Donor Emails" *ngIf="model?.donor?.email">
                 <ng-template ngbTabContent>
                     <div class="d-flex justify-content-end">
                         <a routerLink="/dashboard/email" [queryParams]="{to: model.donor.email}" class="btn btn-sm btn-dark mt-2 mb-2">
@@ -76,8 +76,8 @@
                     </div>
                     <email-threads [email]="model.donor.email"></email-threads>
                 </ng-template>
-            </ngb-tab>
-        </ngb-tabset>
+            </li>
+        </ul>
     </div>
 </div>
 

@@ -1,6 +1,6 @@
 import {gql, Apollo} from 'apollo-angular';
 import { Component } from '@angular/core';
-
+import { NgbNavModule} from '@ng-bootstrap/ng-bootstrap'
 
 import { DomSanitizer } from '@angular/platform-browser';
 

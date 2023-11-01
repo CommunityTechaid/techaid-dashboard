@@ -2,7 +2,7 @@ import {gql, Apollo} from 'apollo-angular';
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 
 

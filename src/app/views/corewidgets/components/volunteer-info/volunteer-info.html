@@ -13,8 +13,8 @@
             </ol>
         </nav>
 
-        <ngb-tabset [destroyOnHide]="false">
-            <ngb-tab title="Details">
+        <ul ngbNav [destroyOnHide]="false">
+            <li [ngbNavItem] title="Details">
                 <ng-template ngbTabContent>
                     <div class="card shadow mb-4 mt-1">
                         <div class="card-header py-3">
@@ -55,20 +55,20 @@
                         </div>
                     </div>
                 </ng-template>
-            </ngb-tab>
-            <ngb-tab title="Emails" *ngIf="model?.email?.length && user?.authorities['read:emails']">
+            </li>
+            <li [ngbNavItem] title="Emails" *ngIf="model?.email?.length && user?.authorities['read:emails']">
                 <ng-template ngbTabContent>
                     <email-threads [email]="model.email"></email-threads>
                 </ng-template>
-             </ngb-tab>  
-             <ngb-tab title="Devices">
+            </li>
+            <li [ngbNavItem] title="Devices">
                 <ng-template ngbTabContent>
                     <div class="mt-2">
                         <kit-component *ngIf="model?.id" [where]="{volunteer: {id: {_eq: model.id}}}" [tableId]="'volunteer-info-' + model.id"></kit-component>
                     </div>
                 </ng-template>
-            </ngb-tab>
-        </ngb-tabset>
+            </li>
+        </ul>
     </div>
 </div>
 

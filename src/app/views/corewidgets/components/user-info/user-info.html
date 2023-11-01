@@ -12,22 +12,22 @@
             </ol>
         </nav>
 
-        <ngb-tabset>
-            <ngb-tab title="Roles">
+        <ul ngbNav>
+            <li [ngbNavItem] title="Roles">
                     <ng-template ngbTabContent>
                         <div class="mt-1">
                             <user-roles [userId]="userId"></user-roles>
                         </div>
                     </ng-template>
-            </ngb-tab>
-            <ngb-tab title="Permissions">
+            </li>
+            <li [ngbNavItem] title="Permissions">
                 <ng-template ngbTabContent>
                     <div class="mt-1">
                         <user-permissions [userId]="userId"></user-permissions>
                     </div>
                 </ng-template>
-            </ngb-tab>
-        </ngb-tabset>
+            </li>
+        </ul>
     </div>
 </div>
 

@@ -11,8 +11,8 @@
             </ol>
         </nav>
 
-        <ngb-tabset [destroyOnHide]="false">          
-            <ngb-tab title="Details">
+        <ul ngbNav [destroyOnHide]="false">
+            <li [ngbNavItem] title="Details">
                 <ng-template ngbTabContent>
                     <div class="card shadow mb-4 mt-1">
                         <div class="card-header py-3">
@@ -53,16 +53,16 @@
                         </div>
                     </div>
                 </ng-template>
-            </ngb-tab>
-            <ngb-tab title="Devices">
+            </li>
+            <li [ngbNavItem] title="Devices">
               <ng-template ngbTabContent>
                 <div class="mt-2">
                   <kit-component *ngIf="model?.id" [where]="{organisation: {id: {_eq: model.id}}}" [tableId]="'org-index-' + model.id">
                   </kit-component>
                 </div>
               </ng-template>
-            </ngb-tab>
-        </ngb-tabset>
+            </li>
+        </ul>
     </div>
 </div>
 

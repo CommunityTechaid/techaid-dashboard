@@ -1,7 +1,7 @@
 import {gql, Apollo} from 'apollo-angular';
 import { Component, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 
 

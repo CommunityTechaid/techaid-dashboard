@@ -1,4 +1,4 @@
-import {APOLLO_OPTIONS} from 'apollo-angular';
+import {ApolloModule, APOLLO_OPTIONS} from 'apollo-angular';
 import {HttpLink} from 'apollo-angular/http';
 import {ApolloLink, Observable, InMemoryCache} from '@apollo/client/core';
 import {onError} from '@apollo/client/link/error';
@@ -44,6 +44,7 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
 }
 
 @NgModule({
+  imports: [ApolloModule],
   exports: [],
   providers: [
     {

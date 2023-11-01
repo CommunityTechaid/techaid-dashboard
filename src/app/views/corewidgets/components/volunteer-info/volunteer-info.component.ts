@@ -1,7 +1,7 @@
 import {gql, Apollo} from 'apollo-angular';
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 
 
@@ -83,7 +83,7 @@ const DELETE_ENTITY = gql`
 @Component({
   selector: 'volunteer-info',
   styleUrls: ['volunteer-info.scss'],
-
+  //imports: [NgbNavModule],
   templateUrl: './volunteer-info.html',
 })
 export class VolunteerInfoComponent {
