@@ -1,9 +1,9 @@
-FROM node:12.20.0-alpine3.10  as builder
+FROM node:14-alpine  as builder
 
 ARG CONFIGURATION=production
 
 COPY ./ /app
-WORKDIR /app 
+WORKDIR /app
 RUN npm install
 RUN npm run build-${CONFIGURATION}
 
