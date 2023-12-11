@@ -28,7 +28,9 @@ mutation deleteNote($id: ID!) {
     template: `
   <div class="notes-list">
   <div *ngFor="let note of to.notes" class="note-item">
-    <span>{{ note.content }}</span>
+  <span>{{ note.volunteer }}</span> <br>
+  <span>{{ note.updated_at | date : "dd/MM/yy HH:mm" }}</span> <br>
+  <span>{{ note.content }}</span>
     <div class="actions">
       <button (click)="updateNote({content: 'Updated note', id: note.id})">Edit</button>
       <button (click)="deleteNote(note.id)">Delete</button>
