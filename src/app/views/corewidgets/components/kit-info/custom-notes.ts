@@ -26,7 +26,7 @@ mutation deleteNote($id: ID!) {
 @Component({
     selector: 'formly-field-notes',
     template: `
-  <div class="comment-box">
+  <div class="notes-list">
   <div *ngFor="let note of to.notes" class="note-item">
     <span>{{ note.content }}</span>
     <div class="actions">

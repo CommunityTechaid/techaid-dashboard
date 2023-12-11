@@ -179,17 +179,7 @@ mutation deleteKit($id: ID!) {
 }
 `;
 
-const CREATE_NOTE = gql`
-mutation createNote($data: CreateNoteInput!) {
-  createNote(data: $data){
-      content
-      volunteer
-      createdAt
-      updatedAt
-      id
-  }
-}
-`;
+
 
 const AUTOCOMPLETE_USERS = gql`
 query findAutocompleteVolunteers($term: String, $subGroup: String) {
@@ -421,6 +411,13 @@ export class KitInfoComponent {
     },
   };
 
+  newNoteField: FormlyFieldConfig = {
+    type: 'new-note',
+    templateOptions: {
+      placeholder: "Enter text. Your email and date will be automatically added to the comment"
+    }
+  }
+
   notesField: FormlyFieldConfig = {
     type: 'notes',
     templateOptions: {
@@ -447,7 +444,7 @@ export class KitInfoComponent {
           fieldGroupClassName: 'd-flex flex-column justify-content-between',
           className: 'col-md-4',
           fieldGroup: [
-            {
+            /* {
               type: 'textarea',
               className: '',
               defaultValue: '',
@@ -457,7 +454,8 @@ export class KitInfoComponent {
                 required: false,
                 placeholder: 'Enter text. Your email and date will be automatically added to the comment'
               }
-            },
+            }, */
+            this.newNoteField,
             this.notesField,
             {
               key: 'archived',
@@ -891,6 +889,8 @@ export class KitInfoComponent {
         {label: this.organisationName(data.organisation), value: data.organisation.id}
       ];
     }
+
+    this.newNoteField.templateOptions['kitId'] = this.entityId
 
     if (data.notes) {
       var notes = []

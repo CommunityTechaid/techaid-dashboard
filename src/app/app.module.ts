@@ -22,6 +22,7 @@ import { AppStateModule } from '@app/state/state.module';
 import { FormsModule } from '@angular/forms';
 import { GraphQLModule } from './graphql.module';
 import { FormlyCustomNote } from './views/corewidgets/components/kit-info/custom-notes';
+import { FormlyCustomCreateNote } from './views/corewidgets/components/kit-info/custom-create-note';
 
 @NgModule({
   declarations: [
@@ -29,7 +30,8 @@ import { FormlyCustomNote } from './views/corewidgets/components/kit-info/custom
     AppHeader,
     AppSidebar,
     App404,
-    FormlyCustomNote
+    FormlyCustomNote,
+    FormlyCustomCreateNote
   ],
   imports: [
     FormsModule,
@@ -54,6 +56,7 @@ import { FormlyCustomNote } from './views/corewidgets/components/kit-info/custom
     FormlyModule.forRoot({
       types: [
         { name: 'notes', component: FormlyCustomNote },
+        { name: 'new-note', component: FormlyCustomCreateNote}
       ]
     })
 
