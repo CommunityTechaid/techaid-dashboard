@@ -111,6 +111,13 @@ query findKit($id: Long) {
       pickup
       otherType
     }
+    notes {
+      id
+      content
+      volunteer
+      createdAt
+      updatedAt
+  }
   }
 }
 `;
@@ -169,6 +176,18 @@ mutation updateKit($data: UpdateKitInput!) {
 const DELETE_ENTITY = gql`
 mutation deleteKit($id: ID!) {
   deleteKit(id: $id)
+}
+`;
+
+const CREATE_NOTE = gql`
+mutation createNote($data: CreateNoteInput!) {
+  createNote(data: $data){
+      content
+      volunteer
+      createdAt
+      updatedAt
+      id
+  }
 }
 `;
 
@@ -402,6 +421,13 @@ export class KitInfoComponent {
     },
   };
 
+  notesField: FormlyFieldConfig = {
+    type: 'notes',
+    templateOptions: {
+      notes: [],
+    },
+  }
+
   fields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row border-bottom-warning bordered p-2 mb-3',
@@ -422,16 +448,17 @@ export class KitInfoComponent {
           className: 'col-md-4',
           fieldGroup: [
             {
-              key: 'attributes.notes',
               type: 'textarea',
               className: '',
               defaultValue: '',
               templateOptions: {
-                label: 'Notes about the device',
-                rows: 8,
-                required: false
+                label: 'Add new note about device',
+                rows: 4,
+                required: false,
+                placeholder: 'Enter text. Your email and date will be automatically added to the comment'
               }
             },
+            this.notesField,
             {
               key: 'archived',
               type: 'radio',
@@ -864,6 +891,16 @@ export class KitInfoComponent {
         {label: this.organisationName(data.organisation), value: data.organisation.id}
       ];
     }
+
+    if (data.notes) {
+      var notes = []
+      data.notes.forEach(n => {
+        notes.push({ content: n.content, id: n.id, volunteer: n.volunteer, updated_at: n.updatedAt });
+
+      });
+      this.notesField.templateOptions['notes'] = notes;
+    }
+
     return data;
   }
 
@@ -901,34 +938,34 @@ export class KitInfoComponent {
       this.toastr.warning(`
           <small>${err.message}</small>
         `, 'GraphQL Error', {
-          enableHtml: true,
-          timeOut: 15000,
-          disableTimeOut: true
-        });
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+      });
     });
   }
 
 
   ngOnInit() {
     const userRef = this.apollo
-    .watchQuery({
-      query: AUTOCOMPLETE_USERS,
-      variables: {
-      }
-    });
+      .watchQuery({
+        query: AUTOCOMPLETE_USERS,
+        variables: {
+        }
+      });
     const donorRef = this.apollo
-    .watchQuery({
-      query: AUTOCOMPLETE_DONORS,
-      variables: {
-      }
-    });
+      .watchQuery({
+        query: AUTOCOMPLETE_DONORS,
+        variables: {
+        }
+      });
 
     const orgRef = this.apollo
-    .watchQuery({
-      query: AUTOCOMPLETE_ORGANISATION,
-      variables: {
-      }
-    });
+      .watchQuery({
+        query: AUTOCOMPLETE_ORGANISATION,
+        variables: {
+        }
+      });
 
     this.organisers$ = concat(
       of([]),
@@ -1111,14 +1148,14 @@ export class KitInfoComponent {
       this.toastr.info(`
       <small>Successfully updated device ${this.entityName}</small>
       `, 'Updated Device', {
-          enableHtml: true
-        });
+        enableHtml: true
+      });
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
       `, 'Update Error', {
-          enableHtml: true
-        });
+        enableHtml: true
+      });
     });
   }
 
@@ -1131,16 +1168,16 @@ export class KitInfoComponent {
         this.toastr.info(`
         <small>Successfully deleted device ${this.entityName}</small>
         `, 'Device Deleted', {
-            enableHtml: true
-          });
+          enableHtml: true
+        });
         this.router.navigate(['/dashboard/devices']);
       }
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
       `, 'Error Deleting Device', {
-          enableHtml: true
-        });
+        enableHtml: true
+      });
     });
   }
 }
