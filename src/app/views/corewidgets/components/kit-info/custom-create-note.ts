@@ -19,27 +19,25 @@ mutation createNote($data: CreateNoteInput!) {
 @Component({
     selector: 'formly-field-create-note',
     template: `
-  <div class="note-new">
+  <div class="note-new" style="margin-bottom:20px">
     <label>Add a new note for this device</label>
-    <textarea #newNoteContent rows="4" [placeholder]=to.placeholder>
-    </textarea>
-    <br>
-    <button (click)="createNote({content: newNoteContent.value, kitId: to.kitId})">Create Note</button>
+    <textarea class="form-control" #newNoteContent rows="4" [name]=key [formControl]="formControl" [placeholder]=to.placeholder></textarea>
   </div>
  `,
 })
 export class FormlyCustomCreateNote extends FieldType  {
 
 
-    constructor(
+    /* constructor(
         private toastr: ToastrService,
         private apollo: Apollo
     ) {
         super();
-    }
+    } */
 
-    //todo edit to remove reloading and instead do a subscribe and refresh thingy to eliminate unecessary reloading
-    createNote(data: any) {
+  
+    //Creation of note is handled by the save button of the UpdateKit mutation
+    /* createNote(data: any) {
 
         this.apollo.mutate({
             mutation: CREATE_NOTE,
@@ -61,7 +59,7 @@ export class FormlyCustomCreateNote extends FieldType  {
             });
         });
     }
-
+ */
 
    
 }

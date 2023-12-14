@@ -169,6 +169,13 @@ mutation updateKit($data: UpdateKitInput!) {
       pickup
       otherType
     }
+    notes {
+      id
+      content
+      volunteer
+      createdAt
+      updatedAt
+    }
   }
 }
 `;
@@ -412,6 +419,7 @@ export class KitInfoComponent {
   };
 
   newNoteField: FormlyFieldConfig = {
+    key: 'note.content',
     type: 'new-note',
     templateOptions: {
       placeholder: "Enter text. Your email and date will be automatically added to the comment"
@@ -892,6 +900,12 @@ export class KitInfoComponent {
 
     this.newNoteField.templateOptions['kitId'] = this.entityId
 
+    this.displayNotes(data)
+
+    return data;
+  }
+
+  private displayNotes(data) {
     if (data.notes) {
       var notes = []
       data.notes.forEach(n => {
@@ -900,8 +914,6 @@ export class KitInfoComponent {
       });
       this.notesField.templateOptions['notes'] = notes;
     }
-
-    return data;
   }
 
   open(index: number): void {
@@ -1137,6 +1149,11 @@ export class KitInfoComponent {
         id: f.id
       };
     });
+    // we set the value of content to a blank string if it is null so as to not create issues in the back
+    // it will be checked to see if it is blank in the backend anyway so that blank notes are not created
+    if (data.note.content == null){
+      data.note.content = ""
+    }
     this.apollo.mutate({
       mutation: UPDATE_ENTITY,
       variables: {
