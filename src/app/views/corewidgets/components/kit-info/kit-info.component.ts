@@ -422,7 +422,7 @@ export class KitInfoComponent {
     key: 'note.content',
     type: 'new-note',
     templateOptions: {
-      placeholder: "Enter text. Your email and date will be automatically added to the comment"
+      placeholder: "Enter text. Your name and date will be automatically added to the note. Click the save button to save all your changes"
     }
   }
 

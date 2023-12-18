@@ -34,10 +34,10 @@ mutation deleteNote($id: ID!) {
                 <div class="d-flex justify-content-between">
                     <div class="d-flex flex-row align-items-center">
                         <p class="small text-muted mb-0 ms-2"><em>{{ note.volunteer }}</em></p>
+                        <p class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date : "dd/MM/yy HH:mm" }})</em></p>
                     </div>
-                    <div class="d-flex flex-row align-items-center">
-                        <p class="small text-muted mb-0">{{ note.updated_at | date : "dd/MM/yy HH:mm" }}</p>
-                        <i class="mx-2 fa" (click)="deleteNote(note.id)" style="margin-top: -0.16rem; color:red">X</i>
+                    <div class="d-flex flex-row">
+                        <button (click)="deleteNote(note.id)" class="btn border-danger btn-sm rounded-0" type="button" title="Delete"><i style="color:red" class="fa fa-trash"></i></button>
                     </div>
                 </div>
             </div>
