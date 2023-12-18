@@ -95,6 +95,16 @@ mutation createKits($data: CreateKitInput!) {
 }
 `;
 
+const CREATE_QUICK_ENTITY = gql`
+mutation minCreateKits($data: MinCreateKitInput!) {
+  minCreateKit(data: $data){
+    id
+    type
+    model
+  }
+}
+`;
+
 const AUTOCOMPLETE_USERS = gql`
 query findAutocompleteVolunteers($term: String, $ids: [Long!]) {
   volunteersConnection(page: {
@@ -407,6 +417,7 @@ export class KitIndexComponent {
     },
   };
 
+  quickForm: FormGroup = new FormGroup({});
   quickFields: Array<FormlyFieldConfig> = [
     {
       key: 'serialNo',
@@ -1070,6 +1081,28 @@ export class KitIndexComponent {
     });
   }
 
+  quickCreateEntity(data:any){
+    
+    this.apollo.mutate({
+      mutation: CREATE_QUICK_ENTITY,
+      variables: { data }
+    }).subscribe(data => {
+      this.total = null;
+      this.table.ajax.reload(null, false);
+       this.toastr.info(`
+        <small>Successfully created device</small>
+        `, '', {
+            enableHtml: true
+          });
+    }, err => {
+      this.toastr.error(`
+      <small>${err.message}</small>
+      `, 'Create Device Error', {
+          enableHtml: true,
+          timeOut: 15000
+        });
+    });
+  }
 
   select(row?: any) {
     if (row) {

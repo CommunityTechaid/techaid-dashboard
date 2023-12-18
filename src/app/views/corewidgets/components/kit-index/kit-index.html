@@ -20,13 +20,13 @@
                             </span>
                             <span class="text">Filter <span *ngIf="filterCount > 0" class="badge badge-danger">{{filterCount}}</span></span>
                         </a>
-                        <a href="#" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm mb-1">
+                        <a href="#" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm mr-1 mb-1">
                             <span class="icon text-white-50">
                                 <i class="fas fa-laptop"></i>
                             </span>
                             <span class="text">Create Device</span>
                         </a>
-                        <a href="#" (click)="model={}; modal(minCreateApi); false;" class="btn btn-primary btn-icon-split btn-sm mb-1">
+                        <a href="#" (click)="model={}; modal(minCreateApi); false;" class="btn btn-primary btn-icon-split btn-sm mr-1 mb-1">
                             <span class="icon text-white-50">
                                 <i class="fas fa-laptop"></i>
                             </span>
@@ -122,15 +122,15 @@
         <h4 class="modal-title">Quick New Device</h4>
     </div>
     <div class="modal-body">
-        <form [formGroup]="form">
-            <formly-form [options]="options" [form]="form" [model]="model" [fields]="quickFields">
+        <form [formGroup]="quickForm">
+            <formly-form [options]="options" [form]="quickForm" [model]="model" [fields]="quickFields">
             </formly-form>
         </form>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
         <button [disabled]="form.invalid" type="button" class="btn btn-primary btn-sm"
-            (click)="createEntity(form.value); c('Close click')">
+            (click)="quickCreateEntity(quickForm.value); c('Close click')">
             CREATE
         </button>
     </div>
