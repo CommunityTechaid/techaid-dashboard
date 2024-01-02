@@ -37,7 +37,7 @@ mutation deleteNote($id: ID!) {
                         <p class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date : "dd/MM/yy HH:mm" }})</em></p>
                     </div>
                     <div class="d-flex flex-row">
-                        <button (click)="deleteNote(note.id)" class="btn border-danger btn-sm rounded-0" type="button" title="Delete"><i style="color:red" class="fa fa-trash"></i></button>
+                        <button (click)="deleteNote(note.id)" class="btn rounded-0" type="button" title="Delete"><i style="color: #c51616" class="fas fa-window-close fa-lg"></i></button>
                     </div>
                 </div>
             </div>
