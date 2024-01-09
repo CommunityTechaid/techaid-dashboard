@@ -6,7 +6,7 @@ RUN npm install && \
     npm install -g @angular/cli@13.0
 # You will need to have the api running locally on localhost 
 #CMD ["tail", "-f", "/dev/null"]
-ENTRYPOINT ["ng", "serve", "--host", "0.0.0.0", "--proxy-config", "src/proxy.conf.json"]
+ENTRYPOINT ["ng", "serve", "--host", "0.0.0.0", "--proxy-config", "src/proxy.conf.json", "--poll", "2000", "--disable-host-check"]
 
 # FROM nginx:1.19.6-alpine
 # COPY --from=builder /app/dist /usr/share/nginx/html
