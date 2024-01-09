@@ -10,10 +10,10 @@ import { ConfigParams } from '@app/state/config-params';
 export const environment: ConfigParams = {
   production: false,
   environment: 'development',
-  graphql_endpoint: '/api/graphql',
+  graphql_endpoint: 'techaid-server-web-1:8080/graphql',
   version: APP_VERSION,
-  auth_endpoint: 'http://localhost:8080/auth/user',
-  auth_audience: 'https://localhost:8080',
+  auth_endpoint: 'https://api.communitytechaid.org.uk/auth/user',
+  auth_audience: 'https://api.communitytechaid.org.uk',
   auth_enabled: true,
   remote_config: false
 };
