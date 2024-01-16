@@ -96,8 +96,8 @@ mutation createKits($data: CreateKitInput!) {
 `;
 
 const CREATE_QUICK_ENTITY = gql`
-mutation minCreateKits($data: MinCreateKitInput!) {
-  minCreateKit(data: $data){
+mutation quickCreateKit($data: QuickCreateKitInput!) {
+  quickCreateKit(data: $data){
     id
     type
     model
