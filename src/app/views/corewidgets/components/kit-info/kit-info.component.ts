@@ -76,6 +76,12 @@ query findKit($id: Long) {
     updatedAt
     age
     archived
+    serialNo
+    storageCapacity
+    typeOfStorage
+    ramCapacity
+    cpu
+    tpmVersion
     volunteers {
       type
       volunteer {
@@ -134,6 +140,12 @@ mutation updateKit($data: UpdateKitInput!) {
     updatedAt
     age
     archived
+    serialNo
+    storageCapacity
+    typeOfStorage
+    ramCapacity
+    cpu
+    tpmVersion
     volunteers {
       type
       volunteer {
