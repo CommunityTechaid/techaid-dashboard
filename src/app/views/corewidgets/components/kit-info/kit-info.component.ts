@@ -76,11 +76,14 @@ query findKit($id: Long) {
     updatedAt
     age
     archived
+    make
+    deviceVersion
     serialNo
     storageCapacity
     typeOfStorage
     ramCapacity
-    cpu
+    cpuType
+    cpuCores
     tpmVersion
     volunteers {
       type
@@ -140,11 +143,14 @@ mutation updateKit($data: UpdateKitInput!) {
     updatedAt
     age
     archived
+    make
+    deviceVersion
     serialNo
     storageCapacity
     typeOfStorage
     ramCapacity
-    cpu
+    cpuType
+    cpuCores
     tpmVersion
     volunteers {
       type
@@ -339,7 +345,7 @@ export class KitInfoComponent {
   organisersField: FormlyFieldConfig = {
     key: 'organiserIds',
     type: 'choice',
-    className: 'col-2 ml-auto justify-content-end text-right',
+    className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Organisation request',
       loading: this.organisersLoading,
@@ -453,34 +459,45 @@ export class KitInfoComponent {
         {
           key: 'type',
           type: 'kit-info-input',
-          className: 'col-1',
+          className: 'px-2',
           defaultValue: '',
           templateOptions: {
-            readonly: true
+           label: "Type"
           }
         },
         {
           key: 'ramCapacity',
           type: 'kit-info-input',
-          className: 'col-1',
+          className: 'px-2',
           defaultValue: '',
           templateOptions: {
-            readonly: true
+            label: "RAM",
+            descriptor: "GB"
+          }
+        },
+        {
+          key: 'typeOfStorage',
+          type: 'kit-info-input',
+          className: 'px-2',
+          defaultValue: '',
+          templateOptions: {
+            label: "Storage Type"
           }
         },
         {
           key: 'storageCapacity',
           type: 'kit-info-input',
-          className: 'col-1',
+          className: 'px-2',
           defaultValue: '',
           templateOptions: {
-            readonly: true
+            label: "Storage",
+            descriptor: "GB"
           }
         },
         {
           key: 'donor.id',
           type: 'kit-info-input',
-          className: 'col-1 ml-auto justify-content-end text-right',
+          className: 'px-2 ml-auto justify-content-end text-right',
           defaultValue: '',
           templateOptions: {
             disabled: true,
@@ -491,12 +508,12 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'row border-bottom border-top-info d-flex p-2 mb-3',
+      fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
       fieldGroup: [
         {
           key: 'serialNo',
           type: 'kit-info-input',
-          className: 'col-1',
+          className: 'px-2',
           defaultValue: '',
           templateOptions: {
             label: "Serial Number",

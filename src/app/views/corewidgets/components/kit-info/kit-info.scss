@@ -36,8 +36,11 @@ form {
 }
 
 .kit-info-input{
-    border: solid 1px grey;
+    border: solid 1px #4e73df;
     color: #4e73df;
+    padding: 3px 5px;
+    border-radius: 5px;
+    height: 30px;
 }
 
 .kit-info-input input{
