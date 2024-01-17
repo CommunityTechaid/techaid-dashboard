@@ -339,16 +339,17 @@ export class KitInfoComponent {
   organisersField: FormlyFieldConfig = {
     key: 'organiserIds',
     type: 'choice',
-    className: 'col-md-12',
+    className: 'col-2 ml-auto justify-content-end text-right',
     templateOptions: {
-      label: 'Organising Volunteer',
+      label: 'Organisation request',
       loading: this.organisersLoading,
       typeahead: this.organisersInput$,
       placeholder: 'Assign device to Organiser Volunteers',
       multiple: true,
       searchable: true,
       items: [],
-      required: false
+      required: false,
+      disabled: true
     },
   };
 
@@ -446,6 +447,65 @@ export class KitInfoComponent {
   }
 
   fields: Array<FormlyFieldConfig> = [
+    {
+      fieldGroupClassName: 'row border-top-info d-flex p-2 mb-2',
+      fieldGroup: [
+        {
+          key: 'type',
+          type: 'kit-info-input',
+          className: 'col-1',
+          defaultValue: '',
+          templateOptions: {
+            readonly: true
+          }
+        },
+        {
+          key: 'ramCapacity',
+          type: 'kit-info-input',
+          className: 'col-1',
+          defaultValue: '',
+          templateOptions: {
+            readonly: true
+          }
+        },
+        {
+          key: 'storageCapacity',
+          type: 'kit-info-input',
+          className: 'col-1',
+          defaultValue: '',
+          templateOptions: {
+            readonly: true
+          }
+        },
+        {
+          key: 'donor.id',
+          type: 'kit-info-input',
+          className: 'col-1 ml-auto justify-content-end text-right',
+          defaultValue: '',
+          templateOptions: {
+            disabled: true,
+            readonly: true,
+            label: "Donor ID"
+          }
+        }
+      ]
+    },
+    {
+      fieldGroupClassName: 'row border-bottom border-top-info d-flex p-2 mb-3',
+      fieldGroup: [
+        {
+          key: 'serialNo',
+          type: 'kit-info-input',
+          className: 'col-1',
+          defaultValue: '',
+          templateOptions: {
+            label: "Serial Number",
+            readonly: true
+          }
+        },
+        this.organisersField
+      ]
+    },
     {
       fieldGroupClassName: 'row border-bottom-warning bordered p-2 mb-3',
       fieldGroup: [
