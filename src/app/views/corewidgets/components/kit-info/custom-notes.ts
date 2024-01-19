@@ -28,13 +28,13 @@ mutation deleteNote($id: ID!) {
     template: `
 <div class="notes-list" style="max-height:350px; overflow-y:scroll">
     <div *ngFor="let note of to.notes" class="note-item">
-        <div class="card mb-4">
-            <div class="card-body">
-                <p>{{ note.content }}</p>
+        <div class="card">
+            <div class="card-body" style="padding:10px">
+                <span>{{ note.content }}</span>
                 <div class="d-flex justify-content-between">
                     <div class="d-flex flex-row align-items-center">
-                        <p class="small text-muted mb-0 ms-2"><em>{{ note.volunteer }}</em></p>
-                        <p class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date : "dd/MM/yy HH:mm" }})</em></p>
+                        <span class="small text-muted mb-0 ms-2"><em>{{ note.volunteer }}</em></span>
+                        <span class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date : "dd/MM/yy HH:mm" }})</em></span>
                     </div>
                     <div class="d-flex flex-row">
                         <button (click)="deleteNote(note.id)" class="btn rounded-0" type="button" title="Delete"><i style="color: #c51616" class="fas fa-window-close fa-lg"></i></button>
