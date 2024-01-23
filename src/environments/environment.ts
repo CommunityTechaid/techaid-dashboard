@@ -12,8 +12,8 @@ export const environment: ConfigParams = {
   environment: 'development',
   graphql_endpoint: '/api/graphql',
   version: APP_VERSION,
-  auth_endpoint: 'http://localhost:8080/auth/user',
-  auth_audience: 'https://localhost:8080',
+  auth_endpoint: 'https://api.communitytechaid.org.uk/auth/user',
+  auth_audience: 'https://api.communitytechaid.org.uk',
   auth_enabled: true,
   remote_config: false
 };

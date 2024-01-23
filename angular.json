@@ -139,7 +139,8 @@
               "browserTarget": "angular-template:build:uat"
             },
             "dev": {
-              "browserTarget": "angular-template:build:dev"
+              "browserTarget": "angular-template:build:dev",
+              "proxyConfig": "src/proxy.conf.json"
             }
           }
         },

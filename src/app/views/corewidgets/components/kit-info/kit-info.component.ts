@@ -111,6 +111,13 @@ query findKit($id: Long) {
       pickup
       otherType
     }
+    notes {
+      id
+      content
+      volunteer
+      createdAt
+      updatedAt
+  }
   }
 }
 `;
@@ -162,6 +169,13 @@ mutation updateKit($data: UpdateKitInput!) {
       pickup
       otherType
     }
+    notes {
+      id
+      content
+      volunteer
+      createdAt
+      updatedAt
+    }
   }
 }
 `;
@@ -171,6 +185,8 @@ mutation deleteKit($id: ID!) {
   deleteKit(id: $id)
 }
 `;
+
+
 
 const AUTOCOMPLETE_USERS = gql`
 query findAutocompleteVolunteers($term: String, $subGroup: String) {
@@ -402,6 +418,21 @@ export class KitInfoComponent {
     },
   };
 
+  newNoteField: FormlyFieldConfig = {
+    key: 'note.content',
+    type: 'new-note',
+    templateOptions: {
+      placeholder: "Enter text. Your name and date will be automatically added to the note. Click the save button to save all your changes"
+    }
+  }
+
+  notesField: FormlyFieldConfig = {
+    type: 'notes',
+    templateOptions: {
+      notes: [],
+    },
+  }
+
   fields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row border-bottom-warning bordered p-2 mb-3',
@@ -421,17 +452,19 @@ export class KitInfoComponent {
           fieldGroupClassName: 'd-flex flex-column justify-content-between',
           className: 'col-md-4',
           fieldGroup: [
-            {
-              key: 'attributes.notes',
+            /* {
               type: 'textarea',
               className: '',
               defaultValue: '',
               templateOptions: {
-                label: 'Notes about the device',
-                rows: 8,
-                required: false
+                label: 'Add new note about device',
+                rows: 4,
+                required: false,
+                placeholder: 'Enter text. Your email and date will be automatically added to the comment'
               }
-            },
+            }, */
+            this.newNoteField,
+            this.notesField,
             {
               key: 'archived',
               type: 'radio',
@@ -864,7 +897,23 @@ export class KitInfoComponent {
         {label: this.organisationName(data.organisation), value: data.organisation.id}
       ];
     }
+
+    this.newNoteField.templateOptions['kitId'] = this.entityId
+
+    this.displayNotes(data)
+
     return data;
+  }
+
+  private displayNotes(data) {
+    if (data.notes) {
+      var notes = []
+      data.notes.forEach(n => {
+        notes.push({ content: n.content, id: n.id, volunteer: n.volunteer, updated_at: n.updatedAt });
+
+      });
+      this.notesField.templateOptions['notes'] = notes;
+    }
   }
 
   open(index: number): void {
@@ -901,34 +950,34 @@ export class KitInfoComponent {
       this.toastr.warning(`
           <small>${err.message}</small>
         `, 'GraphQL Error', {
-          enableHtml: true,
-          timeOut: 15000,
-          disableTimeOut: true
-        });
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+      });
     });
   }
 
 
   ngOnInit() {
     const userRef = this.apollo
-    .watchQuery({
-      query: AUTOCOMPLETE_USERS,
-      variables: {
-      }
-    });
+      .watchQuery({
+        query: AUTOCOMPLETE_USERS,
+        variables: {
+        }
+      });
     const donorRef = this.apollo
-    .watchQuery({
-      query: AUTOCOMPLETE_DONORS,
-      variables: {
-      }
-    });
+      .watchQuery({
+        query: AUTOCOMPLETE_DONORS,
+        variables: {
+        }
+      });
 
     const orgRef = this.apollo
-    .watchQuery({
-      query: AUTOCOMPLETE_ORGANISATION,
-      variables: {
-      }
-    });
+      .watchQuery({
+        query: AUTOCOMPLETE_ORGANISATION,
+        variables: {
+        }
+      });
 
     this.organisers$ = concat(
       of([]),
@@ -1100,6 +1149,11 @@ export class KitInfoComponent {
         id: f.id
       };
     });
+    // we set the value of content to a blank string if it is null so as to not create issues in the back
+    // it will be checked to see if it is blank in the backend anyway so that blank notes are not created
+    if (data.note.content == null){
+      data.note.content = ""
+    }
     this.apollo.mutate({
       mutation: UPDATE_ENTITY,
       variables: {
@@ -1111,14 +1165,14 @@ export class KitInfoComponent {
       this.toastr.info(`
       <small>Successfully updated device ${this.entityName}</small>
       `, 'Updated Device', {
-          enableHtml: true
-        });
+        enableHtml: true
+      });
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
       `, 'Update Error', {
-          enableHtml: true
-        });
+        enableHtml: true
+      });
     });
   }
 
@@ -1131,16 +1185,16 @@ export class KitInfoComponent {
         this.toastr.info(`
         <small>Successfully deleted device ${this.entityName}</small>
         `, 'Device Deleted', {
-            enableHtml: true
-          });
+          enableHtml: true
+        });
         this.router.navigate(['/dashboard/devices']);
       }
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
       `, 'Error Deleting Device', {
-          enableHtml: true
-        });
+        enableHtml: true
+      });
     });
   }
 }

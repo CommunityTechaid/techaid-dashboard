@@ -40,6 +40,8 @@ View update site to ensure the steps match the ones outlined below https://updat
 ```
 ## Development server
 
+_See below for setting up the dev environment_
+
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
 ## Code scaffolding
@@ -55,3 +57,19 @@ Run `npm run build` to build the project. The build artifacts will be stored in 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
 
 Force deploy 
+
+
+## Setting up the Dev environment
+
+The setup branch contains the docker files and modifications necessary for setting up a local dev environment. This may be moved to a submodule later. 
+
+Steps to follow: 
+
+- Ensure that the `techaid-server-web-1` container is running (this is the backend. Follow the instructions on the repo to set it up). This container uses the same network as the backend container. 
+- Run `docker compose up -d`
+
+You should now be good to go. 
+
+### Issues and Notes:
+- For `ng serve` to work correctly without CORS issues, we use `proxy.conf.json` where we define the proxy for the backend api. Currently this is set to the name of the backend container. Change this if your backend url changes. 
+- The way these containers are setup, the backend API is contacted using the name of the container running the backend API. This is because the containers are connected to the same virtual docker network in the docker compose file. If running on Linux, the frontend container can be started in the "host network mode" to access `localhost:8080` directly (assuming the backend container is available on 8080 on the host machine. Host network mode is not supported on Windows/Mac). On Windows/Mac, this can be achieved using `host.docker.internal:8080` domain. This might be useful when configuring nginx or to change the configuration in `proxy.conf.json` to steer clear of depending on container name.  
