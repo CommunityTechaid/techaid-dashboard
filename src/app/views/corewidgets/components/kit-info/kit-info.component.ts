@@ -403,7 +403,7 @@ export class KitInfoComponent {
   donorField: FormlyFieldConfig = {
     key: 'donorId',
     type: 'choice',
-    className: 'col-md-12',
+    className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Donor',
       description: 'The donor this device is currently assigned to.',
@@ -494,17 +494,7 @@ export class KitInfoComponent {
             descriptor: "GB"
           }
         },
-        {
-          key: 'donor.id',
-          type: 'kit-info-input',
-          className: 'px-2 ml-auto justify-content-end text-right',
-          defaultValue: '',
-          templateOptions: {
-            disabled: true,
-            readonly: true,
-            label: "Donor ID"
-          }
-        }
+        this.donorField
       ]
     },
     {
