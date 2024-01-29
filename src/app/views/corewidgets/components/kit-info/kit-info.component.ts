@@ -355,7 +355,6 @@ export class KitInfoComponent {
       searchable: true,
       items: [],
       required: false,
-      disabled: true
     },
   };
 
@@ -506,8 +505,7 @@ export class KitInfoComponent {
           className: 'px-2',
           defaultValue: '',
           templateOptions: {
-            label: "Serial Number",
-            readonly: true
+            label: "Serial Number"
           }
         },
         this.organisersField
