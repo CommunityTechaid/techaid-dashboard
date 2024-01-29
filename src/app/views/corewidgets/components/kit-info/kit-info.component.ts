@@ -461,7 +461,18 @@ export class KitInfoComponent {
           className: 'px-2',
           defaultValue: '',
           templateOptions: {
-           label: "Type"
+           label: "Device",
+           type: "select",
+            options: [
+              {label: 'Laptop', value: 'LAPTOP' },
+              {label: 'Chromebook', value: 'CHROMEBOOK' },
+              {label: 'Tablet', value: 'TABLET' },
+              {label: 'Smart Phone', value: 'SMARTPHONE' },
+              {label: 'All In One (PC)', value: 'ALLINONE' },
+              {label: 'Desktop', value: 'DESKTOP' },
+              {label: 'Connectivity Device', value: 'COMMSDEVICE' },
+              {label: 'Other', value: 'OTHER' }
+            ]
           }
         },
         {
@@ -471,7 +482,8 @@ export class KitInfoComponent {
           defaultValue: '',
           templateOptions: {
             label: "RAM",
-            descriptor: "GB"
+            descriptor: "GB",
+            type:"number"
           }
         },
         {
@@ -480,7 +492,14 @@ export class KitInfoComponent {
           className: 'px-2',
           defaultValue: '',
           templateOptions: {
-            label: "Storage Type"
+            label: "Storage Type",
+            type: "select",
+            options: [
+              {label: 'HDD', value: 'HDD' },
+              {label: 'SSD', value: 'SSD' },
+              {label: 'Hybrid', value: 'HYBRID' },
+              {label: 'Unknown', value: 'UNKNOWN' }
+            ]
           }
         },
         {
@@ -490,6 +509,7 @@ export class KitInfoComponent {
           defaultValue: '',
           templateOptions: {
             label: "Storage",
+            type: "number",
             descriptor: "GB"
           }
         },
