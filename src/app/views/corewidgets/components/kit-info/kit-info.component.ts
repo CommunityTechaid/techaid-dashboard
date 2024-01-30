@@ -458,7 +458,7 @@ export class KitInfoComponent {
         {
           key: 'type',
           type: 'kit-info-input',
-          className: 'px-2',
+          className: 'px-1',
           defaultValue: '',
           templateOptions: {
            label: "Device",
@@ -478,7 +478,7 @@ export class KitInfoComponent {
         {
           key: 'ramCapacity',
           type: 'kit-info-input',
-          className: 'px-2',
+          className: 'px-1',
           defaultValue: '',
           templateOptions: {
             label: "RAM",
@@ -489,7 +489,7 @@ export class KitInfoComponent {
         {
           key: 'typeOfStorage',
           type: 'kit-info-input',
-          className: 'px-2',
+          className: 'px-1',
           defaultValue: '',
           templateOptions: {
             label: "Storage Type",
@@ -505,10 +505,10 @@ export class KitInfoComponent {
         {
           key: 'storageCapacity',
           type: 'kit-info-input',
-          className: 'px-2',
+          className: 'px-1',
           defaultValue: '',
           templateOptions: {
-            label: "Storage",
+            label: "Capacity",
             type: "number",
             descriptor: "GB"
           }
@@ -522,7 +522,7 @@ export class KitInfoComponent {
         {
           key: 'serialNo',
           type: 'kit-info-input',
-          className: 'px-2',
+          className: 'px-1',
           defaultValue: '',
           templateOptions: {
             label: "Serial Number"

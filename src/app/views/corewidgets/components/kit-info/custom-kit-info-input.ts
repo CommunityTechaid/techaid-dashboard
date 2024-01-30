@@ -7,7 +7,7 @@ import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
   template: `
   <label *ngIf="to.label">{{to.label}}</label>
     <div class="kit-info-input d-flex w-100 align-items-end justify-content-between">
-    <div class="d-flex">
+    <div style="font-size:smaller" class="d-flex">
 
       <select *ngIf="to.type=='select'" [hidden]="!editable" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="infoValue">
         <option *ngFor="let val of to.options" 
