@@ -266,22 +266,12 @@ query findAutocompleteOrgs($term: String) {
   organisationsConnection(page: {
     size: 50
   }, where: {
-    name: {
+    id: {
       _contains: $term
     }
     OR: [
     {
-      phoneNumber: {
-        _contains: $term
-      }
-    },
-    {
-      email: {
-        _contains: $term
-      }
-    },
-    {
-      contact: {
+      name: {
         _contains: $term
       }
     }
@@ -407,7 +397,7 @@ export class KitInfoComponent {
   orgField: FormlyFieldConfig = {
     key: 'organisationId',
     type: 'choice',
-    className: 'col-md-12',
+    className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Organisation',
       description: 'The organisation this device is currently assigned to.',
@@ -517,7 +507,7 @@ export class KitInfoComponent {
             label: "Serial Number"
           }
         },
-        this.organisersField
+        this.orgField
       ]
     },
     {
@@ -600,8 +590,6 @@ export class KitInfoComponent {
         }
       ]
     },
-    this.orgField,
-    this.donorField,
     {
       key: 'attributes.pickup',
       type: 'radio',
@@ -1214,7 +1202,7 @@ export class KitInfoComponent {
   }
 
   organisationName(data) {
-    return `${data.name || ''}||${data.id || ''}||${data.email || ''}||${data.phoneNumber || ''}`
+    return `${data.name || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
       .join(' / ')
