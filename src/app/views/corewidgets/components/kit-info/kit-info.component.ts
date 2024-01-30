@@ -451,6 +451,10 @@ export class KitInfoComponent {
     },
   }
 
+  /*
+    kit-info-input type is slightly complicated/unintuitive
+    Check the custom-kit-info-input.ts file for the documentation on how to use and the underlying template.  
+   */
   fields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row border-top-info d-flex p-2 mb-2',

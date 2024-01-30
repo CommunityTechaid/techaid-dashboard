@@ -1,6 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
 
+/*
+This component is a custom made formly type. This is probably not the cleanest way to do things but I could not figure out quite a bit of things needed to make it work 
+without resorting to such means. Here is a bit of explanation of how things work.
+
+The template consists of an select fields, an input field (both hidden by default), a span with the value of the field (using ngModel. This might be deprecated) and a button.
+Based on a template option "type", either the input field or select field is used. 
+When the edit button is clicked, it toggles a variable called editable that hides the span and displays the input or the select (depending on what the type variable).
+If this element loses focus, another event toggles the editable back, thereby hiding it and displaying the span with the current value. 
+
+Template Options:
+
+- type: can be 'select' if you want to have a select field instead of input field. Other possible values include all valid <input> 'type' attribute.
+        If not defined, it defaults to 'input'
+- options: Make sure you provide a list of options if you set the type as select. Example:
+          [
+              {label: 'title1', value: 'val1' },
+              {label: 'title2', value: 'val2' }
+          ]
+- label: The label (duh!)
+- descriptor: A span to display something after the value. Usefull for units like "GB"
+
+Ideally, the input field should be dynamically rendered using custom selector but this gives errors that are beyond my comprehension. That said, this works well.  
+
+ */
 @Component({
   selector: 'formly-field-kit-info-input',
   styleUrls: ['kit-info.scss'],
