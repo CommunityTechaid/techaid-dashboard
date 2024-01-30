@@ -250,27 +250,12 @@ query findAutocompleteDonors($term: String) {
   donorsConnection(page: {
     size: 50
   }, where: {
-    name: {
+    id: {
       _contains: $term
     }
-    OR: [
-    {
-      phoneNumber: {
-        _contains: $term
-      }
-    },
-    {
-      email: {
-        _contains: $term
-      }
-    }
-    ]
   }){
     content  {
      id
-     name
-     email
-     phoneNumber
     }
   }
 }
@@ -988,7 +973,7 @@ export class KitInfoComponent {
     if (data.donor && data.donor.id) {
       data.donorId = data.donor.id;
       this.donorField.templateOptions['items'] = [
-        {label: this.volunteerName(data.donor), value: data.donor.id}
+        {label: data.donorId, value: data.donor.id}
       ];
     }
 
@@ -1166,7 +1151,7 @@ export class KitInfoComponent {
           switchMap(res => {
             const data = res['data']['donorsConnection']['content'].map(v => {
               return {
-                label: `${this.volunteerName(v)}`, value: v.id
+                label: v.id, value: v.id
               };
             });
             return of(data);
