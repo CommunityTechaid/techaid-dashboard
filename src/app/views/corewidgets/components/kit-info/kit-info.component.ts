@@ -263,22 +263,12 @@ query findAutocompleteOrgs($term: String) {
   organisationsConnection(page: {
     size: 50
   }, where: {
-    name: {
+    id: {
       _contains: $term
     }
     OR: [
     {
-      phoneNumber: {
-        _contains: $term
-      }
-    },
-    {
-      email: {
-        _contains: $term
-      }
-    },
-    {
-      contact: {
+      name: {
         _contains: $term
       }
     }
@@ -1128,7 +1118,7 @@ export class KitInfoComponent {
   }
 
   organisationName(data) {
-    return `${data.name || ''}||${data.id || ''}||${data.email || ''}||${data.phoneNumber || ''}`
+    return `${data.name || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
       .join(' / ')
