@@ -76,6 +76,15 @@ query findKit($id: Long) {
     updatedAt
     age
     archived
+    make
+    deviceVersion
+    serialNo
+    storageCapacity
+    typeOfStorage
+    ramCapacity
+    cpuType
+    cpuCores
+    tpmVersion
     volunteers {
       type
       volunteer {
@@ -134,6 +143,15 @@ mutation updateKit($data: UpdateKitInput!) {
     updatedAt
     age
     archived
+    make
+    deviceVersion
+    serialNo
+    storageCapacity
+    typeOfStorage
+    ramCapacity
+    cpuType
+    cpuCores
+    tpmVersion
     volunteers {
       type
       volunteer {
@@ -232,27 +250,12 @@ query findAutocompleteDonors($term: String) {
   donorsConnection(page: {
     size: 50
   }, where: {
-    name: {
+    id: {
       _contains: $term
     }
-    OR: [
-    {
-      phoneNumber: {
-        _contains: $term
-      }
-    },
-    {
-      email: {
-        _contains: $term
-      }
-    }
-    ]
   }){
     content  {
      id
-     name
-     email
-     phoneNumber
     }
   }
 }
@@ -317,16 +320,16 @@ export class KitInfoComponent {
   organisersField: FormlyFieldConfig = {
     key: 'organiserIds',
     type: 'choice',
-    className: 'col-md-12',
+    className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
-      label: 'Organising Volunteer',
+      label: 'Organisation request',
       loading: this.organisersLoading,
       typeahead: this.organisersInput$,
       placeholder: 'Assign device to Organiser Volunteers',
       multiple: true,
       searchable: true,
       items: [],
-      required: false
+      required: false,
     },
   };
 
@@ -374,7 +377,7 @@ export class KitInfoComponent {
   donorField: FormlyFieldConfig = {
     key: 'donorId',
     type: 'choice',
-    className: 'col-md-12',
+    className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Donor',
       description: 'The donor this device is currently assigned to.',
@@ -394,7 +397,7 @@ export class KitInfoComponent {
   orgField: FormlyFieldConfig = {
     key: 'organisationId',
     type: 'choice',
-    className: 'col-md-12',
+    className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Organisation',
       description: 'The organisation this device is currently assigned to.',
@@ -423,7 +426,90 @@ export class KitInfoComponent {
     },
   }
 
+  /*
+    kit-info-input type is slightly complicated/unintuitive
+    Check the custom-kit-info-input.ts file for the documentation on how to use and the underlying template.  
+   */
   fields: Array<FormlyFieldConfig> = [
+    {
+      fieldGroupClassName: 'row border-top-info d-flex p-2 mb-2',
+      fieldGroup: [
+        {
+          key: 'type',
+          type: 'kit-info-input',
+          className: 'px-1',
+          defaultValue: '',
+          templateOptions: {
+           label: "Device",
+           type: "select",
+            options: [
+              {label: 'Laptop', value: 'LAPTOP' },
+              {label: 'Chromebook', value: 'CHROMEBOOK' },
+              {label: 'Tablet', value: 'TABLET' },
+              {label: 'Smart Phone', value: 'SMARTPHONE' },
+              {label: 'All In One (PC)', value: 'ALLINONE' },
+              {label: 'Desktop', value: 'DESKTOP' },
+              {label: 'Connectivity Device', value: 'COMMSDEVICE' },
+              {label: 'Other', value: 'OTHER' }
+            ]
+          }
+        },
+        {
+          key: 'ramCapacity',
+          type: 'kit-info-input',
+          className: 'px-1',
+          defaultValue: '',
+          templateOptions: {
+            label: "RAM",
+            descriptor: "GB",
+            type:"number"
+          }
+        },
+        {
+          key: 'typeOfStorage',
+          type: 'kit-info-input',
+          className: 'px-1',
+          defaultValue: '',
+          templateOptions: {
+            label: "Storage Type",
+            type: "select",
+            options: [
+              {label: 'HDD', value: 'HDD' },
+              {label: 'SSD', value: 'SSD' },
+              {label: 'Hybrid', value: 'HYBRID' },
+              {label: 'Unknown', value: 'UNKNOWN' }
+            ]
+          }
+        },
+        {
+          key: 'storageCapacity',
+          type: 'kit-info-input',
+          className: 'px-1',
+          defaultValue: '',
+          templateOptions: {
+            label: "Capacity",
+            type: "number",
+            descriptor: "GB"
+          }
+        },
+        this.donorField
+      ]
+    },
+    {
+      fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
+      fieldGroup: [
+        {
+          key: 'serialNo',
+          type: 'kit-info-input',
+          className: 'px-1',
+          defaultValue: '',
+          templateOptions: {
+            label: "Serial Number"
+          }
+        },
+        this.orgField
+      ]
+    },
     {
       fieldGroupClassName: 'row border-bottom-warning bordered p-2 mb-3',
       fieldGroup: [
@@ -504,8 +590,6 @@ export class KitInfoComponent {
         }
       ]
     },
-    this.orgField,
-    this.donorField,
     {
       key: 'attributes.pickup',
       type: 'radio',
@@ -877,7 +961,7 @@ export class KitInfoComponent {
     if (data.donor && data.donor.id) {
       data.donorId = data.donor.id;
       this.donorField.templateOptions['items'] = [
-        {label: this.volunteerName(data.donor), value: data.donor.id}
+        {label: data.donorId, value: data.donor.id}
       ];
     }
 
@@ -1055,7 +1139,7 @@ export class KitInfoComponent {
           switchMap(res => {
             const data = res['data']['donorsConnection']['content'].map(v => {
               return {
-                label: `${this.volunteerName(v)}`, value: v.id
+                label: v.id, value: v.id
               };
             });
             return of(data);

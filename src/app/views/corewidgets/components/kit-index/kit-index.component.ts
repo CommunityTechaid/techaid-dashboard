@@ -95,6 +95,16 @@ mutation createKits($data: CreateKitInput!) {
 }
 `;
 
+const CREATE_QUICK_ENTITY = gql`
+mutation quickCreateKit($data: QuickCreateKitInput!) {
+  quickCreateKit(data: $data){
+    id
+    type
+    model
+  }
+}
+`;
+
 const AUTOCOMPLETE_USERS = gql`
 query findAutocompleteVolunteers($term: String, $ids: [Long!]) {
   volunteersConnection(page: {
@@ -192,6 +202,37 @@ query findAutocompleteVolunteers($volunteerIds: [Long!], $orgIds: [Long!]) {
      name
      email
      phoneNumber
+  }
+}
+`;
+
+const AUTOCOMPLETE_DONORS = gql`
+query findAutocompleteDonors($term: String) {
+  donorsConnection(page: {
+    size: 50
+  }, where: {
+    name: {
+      _contains: $term
+    }
+    OR: [
+    {
+      phoneNumber: {
+        _contains: $term
+      }
+    },
+    {
+      email: {
+        _contains: $term
+      }
+    }
+    ]
+  }){
+    content  {
+     id
+     name
+     email
+     phoneNumber
+    }
   }
 }
 `;
@@ -353,6 +394,45 @@ export class KitIndexComponent {
       ]
     }
   ];
+
+  
+
+  donors$: Observable<any>;
+  donorInput$ = new Subject<string>();
+  donorLoading = false;
+  donorField: FormlyFieldConfig = {
+    key: 'donorId',
+    type: 'choice',
+    className: 'col-md-12',
+    templateOptions: {
+      label: 'Donor',
+      description: 'The donor this device is currently assigned to.',
+      loading: this.donorLoading,
+      typeahead: this.donorInput$,
+      placeholder: 'Assign device to a Donor',
+      multiple: false,
+      searchable: true,
+      items: [],
+      required: false
+    },
+  };
+
+  quickForm: FormGroup = new FormGroup({});
+  quickFields: Array<FormlyFieldConfig> = [
+    {
+      key: 'serialNo',
+      type: 'input',
+      className: 'col-md-12',
+      defaultValue: '',
+      templateOptions: {
+        label: 'Enter Serial No',
+        rows: 2,
+        placeholder: '',
+        required: true
+      }
+    }, this.donorField
+  ]
+  
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
@@ -730,6 +810,14 @@ export class KitIndexComponent {
         }
       });
 
+      const donorRef = this.apollo
+      .watchQuery({
+        query: AUTOCOMPLETE_DONORS,
+        variables: {
+        }
+      });
+
+
     this.sub = this.search$.subscribe(query => {
       if (this.table) {
         this.table.search(query);
@@ -786,6 +874,29 @@ export class KitIndexComponent {
       )
     );
 
+    this.donors$ = concat(
+      of([]),
+      this.donorInput$.pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        tap(() => this.donorLoading = true),
+        switchMap(term => from(donorRef.refetch({
+          term: term
+        })).pipe(
+          catchError(() => of([])),
+          tap(() => this.donorLoading = false),
+          switchMap(res => {
+            const data = res['data']['donorsConnection']['content'].map(v => {
+              return {
+                label: `${this.volunteerName(v)}`, value: v.id
+              };
+            });
+            return of(data);
+          })
+        ))
+      )
+    );
+
     this.sub.add(this.orgs$.subscribe(data => {
       this.orgField.templateOptions['items'] = data;
     }));
@@ -793,6 +904,11 @@ export class KitIndexComponent {
     this.sub.add(this.users$.subscribe(data => {
       this.userField.templateOptions['items'] = data;
     }));
+
+    this.sub.add(this.donors$.subscribe(data => {
+      this.donorField.templateOptions['items'] = data;
+    }));
+
 
     this.dtOptions = {
       pagingType: 'simple_numbers',
@@ -965,6 +1081,28 @@ export class KitIndexComponent {
     });
   }
 
+  quickCreateEntity(data:any){
+    
+    this.apollo.mutate({
+      mutation: CREATE_QUICK_ENTITY,
+      variables: { data }
+    }).subscribe(data => {
+      this.total = null;
+      this.table.ajax.reload(null, false);
+       this.toastr.info(`
+        <small>Successfully created device</small>
+        `, '', {
+            enableHtml: true
+          });
+    }, err => {
+      this.toastr.error(`
+      <small>${err.message}</small>
+      `, 'Create Device Error', {
+          enableHtml: true,
+          timeOut: 15000
+        });
+    });
+  }
 
   select(row?: any) {
     if (row) {

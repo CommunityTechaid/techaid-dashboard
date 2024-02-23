@@ -34,3 +34,18 @@ form {
         font-size: 0.9em;
     }
 }
+
+.kit-info-input{
+    border: solid 1.5px #4e73df;
+    color: #4e73df;
+    padding: 3px 5px;
+    border-radius: 3px;
+    min-height: 36px;
+}
+
+.kit-info-input input{
+    border: none;
+    box-sizing: border-box;
+    width: 100%;
+
+}
