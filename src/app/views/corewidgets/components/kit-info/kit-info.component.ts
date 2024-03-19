@@ -415,7 +415,7 @@ export class KitInfoComponent {
     key: 'note.content',
     type: 'new-note',
     templateOptions: {
-      placeholder: "Enter text. Your name and date will be automatically added to the note. Click the save button to save all your changes"
+      placeholder: "Enter text and your initials. The current date and time will be automatically added to the note. Click the save button to save all your changes"
     }
   }
 
@@ -428,7 +428,7 @@ export class KitInfoComponent {
 
   /*
     kit-info-input type is slightly complicated/unintuitive
-    Check the custom-kit-info-input.ts file for the documentation on how to use and the underlying template.  
+    Check the custom-kit-info-input.ts file for the documentation on how to use and the underlying template.
    */
   fields: Array<FormlyFieldConfig> = [
     {
@@ -536,7 +536,7 @@ export class KitInfoComponent {
                 label: 'Add new note about device',
                 rows: 4,
                 required: false,
-                placeholder: 'Enter text. Your email and date will be automatically added to the comment'
+                placeholder: 'Enter text and your initials. The current date and time will be automatically added to the comment'
               }
             }, */
             this.newNoteField,
