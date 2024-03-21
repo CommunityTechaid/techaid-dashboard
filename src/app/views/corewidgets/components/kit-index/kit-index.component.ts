@@ -26,7 +26,13 @@ query findAllKits($page: PaginationInput,$term: String, $where: KitWhereInput!) 
       AND: [ $where ]
       OR: [
         {
-          location: {
+          serialNo: {
+            _contains: $term
+          }
+          AND: [ $where ]
+        }
+        {
+          id: {
             _contains: $term
           }
           AND: [ $where ]
@@ -395,7 +401,7 @@ export class KitIndexComponent {
     }
   ];
 
-  
+
 
   donors$: Observable<any>;
   donorInput$ = new Subject<string>();
@@ -432,7 +438,7 @@ export class KitIndexComponent {
       }
     }, this.donorField
   ]
-  
+
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
@@ -1082,7 +1088,7 @@ export class KitIndexComponent {
   }
 
   quickCreateEntity(data:any){
-    
+
     this.apollo.mutate({
       mutation: CREATE_QUICK_ENTITY,
       variables: { data }
