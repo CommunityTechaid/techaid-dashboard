@@ -240,7 +240,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
               className: 'col-md-6',
               defaultValue: [{}],
               templateOptions: {
-                description: 'If your client needs a SIM card, please tell us in the notes below.',
+                description: '',
                 addText: 'Request another item',
                 removeText: 'Remove this item',
                 required: true,
@@ -253,7 +253,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
                 className: '',
                 templateOptions: {
                   label: 'Select the item your client needs.',
-                  description: 'We currently have no tablets. When we do, we will re-open requests for them.',
+                  description: 'If your client needs a SIM card in addition to a device, please select the main device above. Then tell us in the notes below that you also need a SIM card.',
                   options: [
                     // TODO: find some way to derive these from requestedItems so it's
                     // all defined in one place
