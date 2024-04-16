@@ -226,7 +226,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
               }
             }
           ]
-        },    
+        },
         {
           className: 'col-md-12',
           template: '<h6 class="m-0 font-weight-bold text-primary">Your client\'s needs</h6>'
@@ -240,12 +240,12 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
               className: 'col-md-6',
               defaultValue: [{}],
               templateOptions: {
-                description: 'If your client needs another item, use this button ➜',
+                description: 'If your client needs a SIM card, please tell us in the notes below',
                 addText: 'Request another item',
                 removeText: 'Remove this item',
                 required: true,
                 min: 1,
-                maxItems: 3
+                maxItems: 1
               },
               fieldArray: {
                 key: 'item',
@@ -253,13 +253,13 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
                 className: '',
                 templateOptions: {
                   label: 'Select the item your client needs.',
-                  description: 'We currently have no phones or tablets. When we do, we will re-open requests for them.',
+                  description: 'We currently have no tablets. When we do, we will re-open requests for them.',
                   options: [
                     // TODO: find some way to derive these from requestedItems so it's
                     // all defined in one place
                     {value: 'laptops', label: 'Laptop'},
-                    // {value: 'phones', label: 'Phone'},
-                    {value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
+                    {value: 'phones', label: 'Phone'},
+                    {value: 'commsDevices', label: 'SIM card with data, UK calls and texts (6 months)' },
                     // {value: 'tablets', label: 'Tablet' },
                     {value: 'desktops', label: 'Desktop computer' },
                   ],
@@ -270,7 +270,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
                 // },
                 // expressionProperties: {
                 //   'validation.show': 'model.showErrorState',
-                // }              
+                // }
                 //   }
                 // ]
               }
@@ -283,20 +283,6 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
           className: '',
           templateOptions: {
             label: 'Does your client have access to the internet at home?',
-            options: [
-              {value: 'yes', label: 'Yes'},
-              {value: 'no' , label: 'No'},
-              {value: 'dk', label: 'Don\'t know'}
-            ],
-            required: true
-          }
-        },        
-        {
-          key: 'hasMobilityNeeds',
-          type: 'radio',
-          className: '',
-          templateOptions: {
-            label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
             options: [
               {value: 'yes', label: 'Yes'},
               {value: 'no' , label: 'No'},
@@ -325,9 +311,9 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
           className: 'col-md-12',
           defaultValue: '',
           templateOptions: {
-            label: 'In order to support you as best as possible, please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. Please do not include any identifiable details such as names or addresses but any background you can provide would be extremely helpful.',
+            label: 'Please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. If your client needs a SIM card, please tell us here.',
             rows: 3,
-            required: false
+            required: true
           }
         },
         {
@@ -338,7 +324,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
           templateOptions: {
             label: 'For your records, enter your client\'s initials or a client reference',
             // TODO: should this be required
-            required: false
+            required: true
           }
         }
       ]
@@ -352,8 +338,8 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
 
   }
   private normalizeData(data: any) {
-    data.attributes.request = {'laptops': 0, 
-                               'phones': 0, 
+    data.attributes.request = {'laptops': 0,
+                               'phones': 0,
                                'commsDevices': 0,
                                'tablets': 0,
                                'desktops': 0};
@@ -406,7 +392,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
   }
 
 
-  createEntity(data: any) {        
+  createEntity(data: any) {
     data = this.normalizeData(data);
 //    console.log(data);
 
