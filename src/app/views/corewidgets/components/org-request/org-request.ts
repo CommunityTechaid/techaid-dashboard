@@ -240,7 +240,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
               className: 'col-md-6',
               defaultValue: [{}],
               templateOptions: {
-                description: 'If your client needs a SIM card, please tell us in the notes below',
+                description: 'If your client needs a SIM card, please tell us in the notes below.',
                 addText: 'Request another item',
                 removeText: 'Remove this item',
                 required: true,
