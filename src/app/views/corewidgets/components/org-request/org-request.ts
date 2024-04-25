@@ -1,11 +1,12 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
+import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -39,6 +40,24 @@ query findContent {
 //   return true;
 // }
 
+const AUTOCOMPLETE_REFERRING_ORGANISATION = gql`
+query findAutocompleteReferringOrgs($term: String) {
+  referringOrganisationsConnection(page: {
+    size: 50
+  }, where: {
+      name: {
+        _contains: $term
+      }
+  }){
+    content  {
+     id
+     name
+     address
+    }
+  }
+}
+`;
+
 
 @Component({
   selector: 'org-request',
@@ -48,7 +67,7 @@ query findContent {
 })
 
 export class OrgRequestComponent {
-  sub: Subscription;
+sub: Subscription;
   form: FormGroup = new FormGroup({});
   options: FormlyFormOptions = {};
   submiting = false;
@@ -63,6 +82,53 @@ export class OrgRequestComponent {
   reloadCurrentPage() {
     window.location.reload();
   }
+
+
+  referringOrgs: Observable<any>;
+  referringOrgInput = new Subject<string>();
+  referringOrgLoading = false;
+  referringOrgField: FormlyFieldConfig = {
+    key: 'organisationId',
+    type: 'choice',
+    className: 'px-2 ml-auto justify-content-end text-right',
+    templateOptions: {
+      label: 'Organisation Name',
+      description: 'Type the name of your organisation',
+      loading: this.referringOrgLoading,
+      typeahead: this.referringOrgInput,
+      placeholder: 'Name of your organisation',
+      multiple: false,
+      searchable: true,
+      items: [],
+      required: false
+    },
+  };
+
+
+  referringOrganisationDetailFormGroup: FormlyFieldConfig = {
+    fieldGroupClassName: 'row',
+    fieldGroup: [
+      {
+        key: 'referringOrgWebsite',
+        type: 'input',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Organisation website',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      },
+      
+    ]
+  };
+
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -130,23 +196,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
           className: 'col-md-12',
           template: '<h6 class="m-0 font-weight-bold text-primary">About your organisation</h6>'
         },
-        {
-          key: 'name',
-          type: 'input',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Organisation Name',
-            placeholder: '',
-            required: true
-          },
-          validation: {
-            show: false
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-          }
-        },
+        this.referringOrgField,
         {
           fieldGroupClassName: 'row',
           fieldGroup: [
@@ -389,6 +439,15 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
     return data;
   }
 
+  organisationName(data) {
+    console.log(data.name)
+    return `${data.name || ''}||${data.id || ''}`
+      .split('||')
+      .filter(f => f.trim().length)
+      .join(' / ')
+      .trim();
+  }
+
   ngOnInit() {
     this.apollo.query({
       query: QUERY_CONTENT
@@ -397,6 +456,46 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         this.content = res.data['post'];
       }
     });
+
+    
+
+    const orgRef = this.apollo
+      .watchQuery({
+        query: AUTOCOMPLETE_REFERRING_ORGANISATION,
+        variables: {
+        }
+      });
+
+      this.referringOrgs = concat(
+        of([]),
+        this.referringOrgInput.pipe(
+          debounceTime(200),
+          distinctUntilChanged(),
+          tap(() => this.referringOrgLoading = true),
+          switchMap(term => from(orgRef.refetch({
+            term: term
+          })).pipe(
+            catchError(() => of([])),
+            tap(() => this.referringOrgLoading = false),
+            switchMap(res => {
+              console.log(res)
+              const data = res['data']['referringOrganisationsConnection']['content'].map(v => {
+                return {
+                  label: `${this.organisationName(v)}`, value: v.id
+                };
+              });
+              return of(data);
+            })
+          ))
+        )
+      );
+
+      //todo figure out how to initiate sub
+
+      this.sub = this.referringOrgs.subscribe(data => {
+        this.referringOrgField.templateOptions['items'] = data;
+      });
+  
   }
 
   ngOnDestroy() {
