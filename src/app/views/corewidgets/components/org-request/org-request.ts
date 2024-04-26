@@ -58,6 +58,7 @@ query findAutocompleteReferringOrgs($term: String) {
 }
 `;
 
+const NEW_ORG = "NEW_ORG";
 
 @Component({
   selector: 'org-request',
@@ -65,6 +66,8 @@ query findAutocompleteReferringOrgs($term: String) {
 
   templateUrl: './org-request.html'
 })
+
+
 
 export class OrgRequestComponent {
 sub: Subscription;
@@ -83,14 +86,26 @@ sub: Subscription;
     window.location.reload();
   }
 
+  
+  isOrganisationExists = true;
+  isContactExists = true;
+  newOrganisationName = ""
 
-  referringOrgs: Observable<any>;
+  referringOrgs$: Observable<any>;
   referringOrgInput = new Subject<string>();
   referringOrgLoading = false;
   referringOrgField: FormlyFieldConfig = {
     key: 'organisationId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
+    className: 'px-2 ml-auto justify-content-end',
+    hooks: {
+      onInit: (field) => {
+          this.sub.add(field.formControl.valueChanges.subscribe(v => {
+              if (!this.isOrganisationExists){
+                (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
+              }
+          }));
+      }},
     templateOptions: {
       label: 'Organisation Name',
       description: 'Type the name of your organisation',
@@ -107,9 +122,10 @@ sub: Subscription;
 
   referringOrganisationDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
+    hideExpression:'model.attributes.isIndividual == null || model.attributes.isIndividual == true',
     fieldGroup: [
       {
-        key: 'referringOrgWebsite',
+        key: 'name',
         type: 'input',
         className: 'col-md-12',
         defaultValue: '',
@@ -125,7 +141,134 @@ sub: Subscription;
           'validation.show': 'model.showErrorState',
         }
       },
-      
+      {
+        key: 'website',
+        type: 'input',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Organisation website',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      },
+      {
+        key: 'address',
+        type: 'input',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Organisation address',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      },
+      {
+        key: 'phoneNumber',
+        type: 'input',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Organisation phone number',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      }
+
+    ]
+  };
+
+  referringOrganisationContactDetailFormGroup: FormlyFieldConfig = {
+    fieldGroupClassName: 'row',
+    hideExpression: this.isOrganisationExists,
+    fieldGroup: [
+      {
+        key: 'firstName',
+        type: 'input',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Your first name',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      },
+      {
+        key: 'surname',
+        type: 'input',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Your surname',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      },
+      {
+        key: 'email',
+        type: 'input',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Your email address',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      },
+      {
+        key: 'phoneNumber',
+        type: 'input',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Your phone number',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      }
+
     ]
   };
 
@@ -197,86 +340,8 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
           template: '<h6 class="m-0 font-weight-bold text-primary">About your organisation</h6>'
         },
         this.referringOrgField,
-        {
-          fieldGroupClassName: 'row',
-          fieldGroup: [
-            {
-              key: 'contact',
-              type: 'input',
-              className: 'col-md-12',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Primary Contact Name',
-                placeholder: '',
-                required: true
-              },
-              validation: {
-                show: false
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState',
-              }
-            },
-            {
-              key: 'email',
-              type: 'input',
-              className: 'col-md-6',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Primary Contact Email',
-                type: 'email',
-                pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-                placeholder: '',
-                required: true
-              },
-              validation: {
-                show: false
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState',
-                'templateOptions.required': '!model.phoneNumber.length'
-              }
-            },
-            {
-              key: 'phoneNumber',
-              type: 'input',
-              className: 'col-md-6',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Primary Contact Phone Number',
-                pattern: /\+?[0-9]+/,
-                required: true
-              },
-              validation: {
-                show: false
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState',
-                'templateOptions.required': '!model.email.length'
-              }
-            },
-            {
-              key: 'address',
-              type: 'place',
-              className: 'col-md-12',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Address',
-                description: 'The address of the organisation',
-                placeholder: '',
-                postCode: false,
-                required: true
-              },
-              validation: {
-                show: false
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState',
-                'templateOptions.required': '!model.address.length'
-              }
-            }
-          ]
-        },    
+        this.referringOrganisationDetailFormGroup,
+        this.referringOrganisationContactDetailFormGroup,  
         {
           className: 'col-md-12',
           template: '<h6 class="m-0 font-weight-bold text-primary">Your client\'s needs</h6>'
@@ -392,7 +457,9 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
           }
         }
       ]
-    }
+    },
+    this.referringOrganisationDetailFormGroup,
+    this.referringOrganisationContactDetailFormGroup
   ];
 
   constructor(
@@ -466,37 +533,57 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         }
       });
 
-      this.referringOrgs = concat(
+      this.referringOrgs$ = concat(
         of([]),
         this.referringOrgInput.pipe(
           debounceTime(200),
           distinctUntilChanged(),
-          tap(() => this.referringOrgLoading = true),
-          switchMap(term => from(orgRef.refetch({
+          tap(() => {
+            this.referringOrgLoading = true;}
+          ),
+          switchMap(term => {
+            if (term){
+              return from(orgRef.refetch({
             term: term
           })).pipe(
             catchError(() => of([])),
             tap(() => this.referringOrgLoading = false),
             switchMap(res => {
-              console.log(res)
-              const data = res['data']['referringOrganisationsConnection']['content'].map(v => {
+              var data = res['data']['referringOrganisationsConnection']['content'].map(v => {
                 return {
-                  label: `${this.organisationName(v)}`, value: v.id
+                  label: v.name, value: v.id
                 };
               });
+              
+              if (data.length == 0){
+                this.hideNewOrganisationField(false);
+                data = [{
+                  label: 'Use "' + term + '"', value: term, display: term
+                }];
+              } else{
+                this.hideNewOrganisationField(true);
+              }
               return of(data);
             })
-          ))
+          )} return []})
         )
       );
 
       //todo figure out how to initiate sub
 
-      this.sub = this.referringOrgs.subscribe(data => {
+      this.sub = this.referringOrgs$.subscribe(data => {
         this.referringOrgField.templateOptions['items'] = data;
       });
   
   }
+
+  hideNewOrganisationField(hide:boolean){
+    this.isOrganisationExists = hide;
+    this.isContactExists = hide;
+    this.referringOrganisationDetailFormGroup.hideExpression= this.isOrganisationExists;
+    this.referringOrganisationContactDetailFormGroup.hideExpression = this.isContactExists;
+  }
+
 
   ngOnDestroy() {
     if (this.sub) {
