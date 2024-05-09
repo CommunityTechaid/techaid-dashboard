@@ -198,59 +198,8 @@ sub: Subscription;
 
   referringOrganisationContactDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
-    hideExpression: this.isOrganisationExists,
+    hideExpression: this.isOrganisationExists && this.isContactExists,
     fieldGroup: [
-      {
-        key: 'firstName',
-        type: 'input',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: '',
-          placeholder: 'Your first name',
-          required: true
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': 'model.showErrorState',
-        }
-      },
-      {
-        key: 'surname',
-        type: 'input',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: '',
-          placeholder: 'Your surname',
-          required: true
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': 'model.showErrorState',
-        }
-      },
-      {
-        key: 'email',
-        type: 'input',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: '',
-          placeholder: 'Your email address',
-          required: true
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': 'model.showErrorState',
-        }
-      },
       {
         key: 'phoneNumber',
         type: 'input',
@@ -341,6 +290,65 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         },
         this.referringOrgField,
         this.referringOrganisationDetailFormGroup,
+        {
+          key: 'firstName',
+          type: 'input',
+          className: 'col-md-12',
+          defaultValue: '',
+          templateOptions: {
+            label: '',
+            placeholder: 'Your first name',
+            required: true
+          },
+          validation: {
+            show: false
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
+          }
+        },
+        {
+          key: 'surname',
+          type: 'input',
+          className: 'col-md-12',
+          defaultValue: '',
+          templateOptions: {
+            label: '',
+            placeholder: 'Your surname',
+            required: true
+          },
+          validation: {
+            show: false
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
+          }
+        },
+        {
+          key: 'email',
+          type: 'input',
+          className: 'col-md-12',
+          defaultValue: '',
+          templateOptions: {
+            label: '',
+            placeholder: 'Your email address',
+            required: true
+          },
+          validation: {
+            show: false
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
+          }
+        },
+        {
+          type: 'input',
+          templateOptions: {
+            text: 'Click here!',
+            type: "Submit",
+            onClick: () => alert('You clicked me!'),
+          },
+        },
         this.referringOrganisationContactDetailFormGroup,  
         {
           className: 'col-md-12',
