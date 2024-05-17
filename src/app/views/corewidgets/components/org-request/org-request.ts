@@ -58,6 +58,18 @@ query findAutocompleteReferringOrgs($term: String) {
 }
 `;
 
+const FIND_ORGANISATION_CONTACT = gql`
+query findOrganisationContact($name: String, $surname: String, $email: String) {
+  referringOrganisationContact( where: {
+      firstName: { _ilike: $name }
+      surname: { _ilike: $surname }
+      email: { _ilike: $email }
+    }){
+    id
+  }
+}
+`;
+
 const NEW_ORG = "NEW_ORG";
 
 @Component({
@@ -118,6 +130,34 @@ sub: Subscription;
       required: false
     },
   };
+
+  contactSubmit$: Observable<any>;
+  contactSubmitInput = new Subject<string>();
+  contactSubmitLoading = false;
+  contactSubmitField: FormlyFieldConfig = {
+    type: 'choice',
+    className: 'px-2 ml-auto justify-content-end',
+    hooks: {
+      onInit: (field) => {
+          this.sub.add(field.formControl.valueChanges.subscribe(v => {
+              if (!this.isOrganisationExists){
+                (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
+              }
+          }));
+      }},
+    templateOptions: {
+      label: 'Submit',
+      description: 'Type the name of your organisation',
+      loading: this.contactSubmitLoading,
+      typeahead: this.contactSubmitInput,
+      placeholder: 'Name of your organisation',
+      multiple: false,
+      searchable: true,
+      items: [],
+      required: false
+    },
+  };
+
 
 
   referringOrganisationDetailFormGroup: FormlyFieldConfig = {
@@ -221,6 +261,60 @@ sub: Subscription;
     ]
   };
 
+  firstNameField: FormlyFieldConfig = {
+    key: 'firstName',
+    type: 'input',
+    className: 'col-md-12',
+    defaultValue: '',
+    templateOptions: {
+      label: '',
+      placeholder: 'Your first name',
+      required: true
+    },
+    validation: {
+      show: false
+    },
+    expressionProperties: {
+      'validation.show': 'model.showErrorState',
+    }
+  }
+
+  surnameField: FormlyFieldConfig = {
+          key: 'surname',
+          type: 'input',
+          className: 'col-md-12',
+          defaultValue: '',
+          templateOptions: {
+            label: '',
+            placeholder: 'Your surname',
+            required: true
+          },
+          validation: {
+            show: false
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
+          }
+        }
+
+  emailField: FormlyFieldConfig = {
+    key: 'email',
+    type: 'input',
+    className: 'col-md-12',
+    defaultValue: '',
+    templateOptions: {
+      label: '',
+      placeholder: 'Your email address',
+      required: true
+    },
+    validation: {
+      show: false
+    },
+    expressionProperties: {
+      'validation.show': 'model.showErrorState',
+    }
+  }
+
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -290,65 +384,10 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         },
         this.referringOrgField,
         this.referringOrganisationDetailFormGroup,
-        {
-          key: 'firstName',
-          type: 'input',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: '',
-            placeholder: 'Your first name',
-            required: true
-          },
-          validation: {
-            show: false
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-          }
-        },
-        {
-          key: 'surname',
-          type: 'input',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: '',
-            placeholder: 'Your surname',
-            required: true
-          },
-          validation: {
-            show: false
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-          }
-        },
-        {
-          key: 'email',
-          type: 'input',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: '',
-            placeholder: 'Your email address',
-            required: true
-          },
-          validation: {
-            show: false
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-          }
-        },
-        {
-          type: 'input',
-          templateOptions: {
-            text: 'Click here!',
-            type: "Submit",
-            onClick: () => alert('You clicked me!'),
-          },
-        },
+        this.firstNameField,
+        this.surnameField,
+        this.emailField,
+        this.contactSubmitField,
         this.referringOrganisationContactDetailFormGroup,  
         {
           className: 'col-md-12',
@@ -541,6 +580,14 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         }
       });
 
+      const contactRef = this.apollo
+      .watchQuery({
+        query: FIND_ORGANISATION_CONTACT,
+        variables: {
+
+        }
+      })
+
       this.referringOrgs$ = concat(
         of([]),
         this.referringOrgInput.pipe(
@@ -577,11 +624,42 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         )
       );
 
-      //todo figure out how to initiate sub
-
       this.sub = this.referringOrgs$.subscribe(data => {
         this.referringOrgField.templateOptions['items'] = data;
       });
+
+      
+
+      this.contactSubmit$ = concat(
+        of([]),
+        this.contactSubmitInput.pipe(
+          debounceTime(200),
+          distinctUntilChanged(),
+          tap(() => {
+            this.contactSubmitLoading = true;}
+          ),
+          switchMap(term => {
+            if (term){
+              return from(contactRef.refetch({
+            name: this.firstNameField.formControl.value,
+            surname: this.surnameField.formControl.value,
+            email: this.emailField.formControl.value
+          })).pipe(
+            catchError(() => of([])),
+            tap(() => this.referringOrgLoading = false),
+            switchMap(res => {
+              console.log(res)
+              
+              return of(res)
+            
+            })
+          )} return []})
+        )
+      );
+
+      this.sub.add(this.contactSubmit$.subscribe(data =>{
+        console.log("Hello World");
+      }));
   
   }
 
