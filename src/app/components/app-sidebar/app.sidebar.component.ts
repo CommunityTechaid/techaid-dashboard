@@ -9,8 +9,8 @@ import { Observable, Subscription } from 'rxjs';
     templateUrl: 'app.sidebar.component.html',
     styles: [`
         .logo {
-          content: url('https://static.wixstatic.com/media/827819_015b258491dd4785950bcc8657b3ca4c~mv2.png');
-          width: 80px;
+          content: url('https://static.wixstatic.com/media/8f9418_51fbe59940f84613940e7eaa720ae67a~mv2.png');
+          width: 60px;
         }
     `]
 })
