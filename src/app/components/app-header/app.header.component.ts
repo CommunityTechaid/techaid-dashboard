@@ -17,6 +17,11 @@ import * as $ from 'jquery';
         .nav-border {
             border-bottom: 1px solid #f8f9fa;
         }
+
+        .logo {
+            content: url('https://static.wixstatic.com/media/827819_015b258491dd4785950bcc8657b3ca4c~mv2.png');
+            width: 80px;
+        }
     `]
 })
 export class AppHeader {
