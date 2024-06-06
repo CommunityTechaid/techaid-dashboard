@@ -19,6 +19,8 @@ import { GalleryInput } from './components/gallery.component';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { RichTextComponent } from './components/richtext.component';
 import { RepeatTypeComponent } from './components/repeat.component';
+import { FormlyFieldButton } from './components/button.component';
+
 
 export function percentageValidator(c: FormControl, field) {
     if (c.value && c.value.toString().trim()) {
@@ -220,6 +222,17 @@ export const FORMLYCONFIG: ConfigOption = {
                 }
             }
         },
+        {
+            name: 'button',
+            component: FormlyFieldButton,
+            wrappers: ['form-field'],
+            defaultOptions: {
+              templateOptions: {
+                btnType: 'default',
+                type: 'button',
+              },
+            },
+          }
     ],
     wrappers: [
         { name: 'form-field', component: AppFormlyWrapperFormField }
@@ -252,7 +265,8 @@ export const FORMLYCONFIG: ConfigOption = {
         PlaceInput,
         GalleryInput,
         RichTextComponent,
-        RepeatTypeComponent
+        RepeatTypeComponent,
+        FormlyFieldButton
     ],
     exports: [
         AppFormlyWrapperFormField,

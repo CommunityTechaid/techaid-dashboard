@@ -131,34 +131,6 @@ sub: Subscription;
     },
   };
 
-  contactSubmit$: Observable<any>;
-  contactSubmitInput = new Subject<string>();
-  contactSubmitLoading = false;
-  contactSubmitField: FormlyFieldConfig = {
-    type: 'choice',
-    className: 'px-2 ml-auto justify-content-end',
-    hooks: {
-      onInit: (field) => {
-          this.sub.add(field.formControl.valueChanges.subscribe(v => {
-              if (!this.isOrganisationExists){
-                (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
-              }
-          }));
-      }},
-    templateOptions: {
-      label: 'Submit',
-      description: 'Type the name of your organisation',
-      loading: this.contactSubmitLoading,
-      typeahead: this.contactSubmitInput,
-      placeholder: 'Name of your organisation',
-      multiple: false,
-      searchable: true,
-      items: [],
-      required: false
-    },
-  };
-
-
 
   referringOrganisationDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
@@ -315,6 +287,16 @@ sub: Subscription;
     }
   }
 
+  refContactSubmitButton: FormlyFieldConfig  = {
+    hideExpression: !this.isOrganisationExists,
+    type: 'button',
+    className: 'border',
+    templateOptions: {
+      text: 'Submit',
+      onClick: () => this.getRefContact(),
+    },
+  }
+
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -387,7 +369,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         this.firstNameField,
         this.surnameField,
         this.emailField,
-        this.contactSubmitField,
+        this.refContactSubmitButton,
         this.referringOrganisationContactDetailFormGroup,  
         {
           className: 'col-md-12',
@@ -628,45 +610,40 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         this.referringOrgField.templateOptions['items'] = data;
       });
 
+  }
+
+  getRefContact(){
+    
+    this.apollo.query({
+      query: FIND_ORGANISATION_CONTACT,
+      variables:{
+        name: this.firstNameField.formControl.value,
+        surname: this.surnameField.formControl.value,
+        email: this.emailField.formControl.value
+      }
+    }).toPromise().then(res => {
       
+      var data = res["data"]["referringOrganisationContact"];
+      if (data){
+        //create a hidden field for the referringOrganisationContact and use that with data["id"]
+      }else {
+        this.hideNewContactRefDetailsField(false);
+      }
+    });
 
-      this.contactSubmit$ = concat(
-        of([]),
-        this.contactSubmitInput.pipe(
-          debounceTime(200),
-          distinctUntilChanged(),
-          tap(() => {
-            this.contactSubmitLoading = true;}
-          ),
-          switchMap(term => {
-            if (term){
-              return from(contactRef.refetch({
-            name: this.firstNameField.formControl.value,
-            surname: this.surnameField.formControl.value,
-            email: this.emailField.formControl.value
-          })).pipe(
-            catchError(() => of([])),
-            tap(() => this.referringOrgLoading = false),
-            switchMap(res => {
-              console.log(res)
-              
-              return of(res)
-            
-            })
-          )} return []})
-        )
-      );
-
-      this.sub.add(this.contactSubmit$.subscribe(data =>{
-        console.log("Hello World");
-      }));
-  
+   
   }
 
   hideNewOrganisationField(hide:boolean){
     this.isOrganisationExists = hide;
     this.isContactExists = hide;
     this.referringOrganisationDetailFormGroup.hideExpression= this.isOrganisationExists;
+    this.referringOrganisationContactDetailFormGroup.hideExpression = this.isContactExists;
+    this.refContactSubmitButton.hideExpression = !this.isOrganisationExists;
+  }
+
+  hideNewContactRefDetailsField(hide:boolean){
+    this.isContactExists = hide;
     this.referringOrganisationContactDetailFormGroup.hideExpression = this.isContactExists;
   }
 
