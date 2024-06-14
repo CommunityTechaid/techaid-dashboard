@@ -181,9 +181,16 @@ export class OrgComponent {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private apollo: Apollo
-  ) {
+  ) { }
 
+  @Input()
+  set where(where: any) {
+    this._where = where;
+    if (this.table) {
+      this.applyFilter(this.filterModel);
+    }
   }
+
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -661,7 +668,9 @@ export class OrgComponent {
   ];
 
   @Input()
-  tableId = 'org-index';
+  tableId = 'org-component';
+
+  _where = {};
 
   applyFilter(data) {
     const filter = {'OR': [], 'AND': []};
@@ -831,8 +840,9 @@ export class OrgComponent {
             size: params.length,
             page: Math.round(params.start / params.length),
           },
+          where: this.filter,
           term: params['search']['value'],
-          filter: this.filter
+          filter: this._where || this.filter
         };
 
         queryRef.refetch(vars).then(res => {
