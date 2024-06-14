@@ -81,7 +81,7 @@
             <ngb-tab title="Organisations" *ngIf="model?.organisation?.id">
               <ng-template ngbTabContent>
                   <div class="mt-2">
-                      <org-component [where]="{id: {_eq: model.organisation.id}}" [tableId]="'org-index-' + model.organisation.id"></org-index>
+                      <org-component [where]="{id: {_eq: model.organisation.id}}" [tableId]="'org-index-' + model.organisation.id"></org-component>
                   </div>
               </ng-template>
             </ngb-tab>
