@@ -43,6 +43,7 @@ import { DashboardIndexComponent } from './components/dashboard-index/dashboard-
 import { OrgRequestComponent } from './components/org-request/org-request';
 import { KitComponent } from './components/kit-component/kit-component.component';
 import { ReportsComponent} from './components/reports/reports.component';
+import { OrgComponent } from './components/org-component/org-component.component';
 
 const routes: Routes = [
   { path: '', component: DashboardIndexComponent },
@@ -135,7 +136,8 @@ const routes: Routes = [
     DashboardIndexComponent,
     OrgRequestComponent,
     KitComponent,
-    ReportsComponent
+    ReportsComponent,
+    OrgComponent
   ],
   imports: [
     LightboxModule,
