@@ -566,8 +566,8 @@ export class KitInfoComponent {
               hideExpression: 'model.status != \'DECLINED\''
             },
           ]
-        },
-        {
+        }
+        /* ,{
           fieldGroupClassName: 'd-none flex-column justify-content-between',
           className: 'col-md-4',
           fieldGroup: [
@@ -587,7 +587,7 @@ export class KitInfoComponent {
             this.organisersField,
             this.logisticsField,
           ]
-        }
+        } */
       ]
     },
     {

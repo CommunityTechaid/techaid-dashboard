@@ -8,7 +8,11 @@ import { Observable, Subscription } from 'rxjs';
     selector: 'app-sidebar',
     templateUrl: 'app.sidebar.component.html',
     styles: [`
-
+        .logo {
+          content: url('https://static.wixstatic.com/media/8f9418_51fbe59940f84613940e7eaa720ae67a~mv2.png');
+          width: 60px;
+          padding-top: 5px;
+        }
     `]
 })
 
