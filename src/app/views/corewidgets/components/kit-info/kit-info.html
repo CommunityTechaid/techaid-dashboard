@@ -78,6 +78,14 @@
                 </ng-template>
             </ngb-tab>
  -->
+            <ngb-tab title="Organisations" *ngIf="model?.organisation?.id">
+              <ng-template ngbTabContent>
+                  <div class="mt-2">
+                      <org-info [where]="{organisation: {id: {_eq: model.organisation.id}}}" [tableId]="'org-info-' + model.organisation.id"></org-info>
+                  </div>
+              </ng-template>
+            </ngb-tab>
+      </ngb-tabset>
     </div>
 </div>
 
