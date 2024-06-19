@@ -137,7 +137,7 @@ sub: Subscription;
     hideExpression:'model.attributes.isIndividual == null || model.attributes.isIndividual == true',
     fieldGroup: [
       {
-        key: 'name',
+        key: 'referringOrganisation.name',
         type: 'input',
         className: 'col-md-12',
         defaultValue: '',
@@ -154,7 +154,7 @@ sub: Subscription;
         }
       },
       {
-        key: 'website',
+        key: 'referringOrganisation.website',
         type: 'input',
         className: 'col-md-12',
         defaultValue: '',
@@ -171,7 +171,7 @@ sub: Subscription;
         }
       },
       {
-        key: 'address',
+        key: 'referringOrganisation.address',
         type: 'input',
         className: 'col-md-12',
         defaultValue: '',
@@ -188,7 +188,7 @@ sub: Subscription;
         }
       },
       {
-        key: 'phoneNumber',
+        key: 'referringOrganisation.phoneNumber',
         type: 'input',
         className: 'col-md-12',
         defaultValue: '',
@@ -212,6 +212,13 @@ sub: Subscription;
     fieldGroupClassName: 'row',
     hideExpression: this.isOrganisationExists && this.isContactExists,
     fieldGroup: [
+      {
+        hideExpression: !this.isOrganisationExists,
+        className: 'col-md-12',
+        template: `<div class="border-bottom-info card mb-3 p-3">
+        <p>It looks like you haven’t made a request with us before, please check your details and fill in some additional information below.</p>
+  </div>`
+      },
       {
         key: 'phoneNumber',
         type: 'input',
