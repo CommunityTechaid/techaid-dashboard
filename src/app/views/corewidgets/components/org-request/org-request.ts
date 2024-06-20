@@ -22,6 +22,14 @@ mutation createOrganisation($data: CreateOrganisationInput!) {
 }
 `;
 
+const CREATE_REFERRING_ORGANISATION = gql`
+mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
+  createReferringOrganisation(data: $data){
+     id
+  }
+}
+`;
+
 const QUERY_CONTENT = gql`
 query findContent {
   post(where: {slug: {_eq: "/organisation-device-request"}}){
@@ -82,13 +90,13 @@ const NEW_ORG = "NEW_ORG";
 
 
 export class OrgRequestComponent {
-sub: Subscription;
+  sub: Subscription;
   form: FormGroup = new FormGroup({});
   options: FormlyFormOptions = {};
   submiting = false;
   content: any = {};
   model: any = {
-      showErrorState: false,
+    showErrorState: false,
   };
   submited = false;
 
@@ -98,11 +106,11 @@ sub: Subscription;
     window.location.reload();
   }
 
-  
+
   isOrganisationExists = true;
   isContactExists = true;
   newOrganisationName = ""
- 
+
 
   referringOrgs$: Observable<any>;
   referringOrgInput = new Subject<string>();
@@ -113,12 +121,13 @@ sub: Subscription;
     className: 'px-2 ml-auto justify-content-end',
     hooks: {
       onInit: (field) => {
-          this.sub.add(field.formControl.valueChanges.subscribe(v => {
-              if (!this.isOrganisationExists){
-                (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
-              }
-          }));
-      }},
+        this.sub.add(field.formControl.valueChanges.subscribe(v => {
+          if (!this.isOrganisationExists) {
+            (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
+          }
+        }));
+      }
+    },
     templateOptions: {
       label: 'Organisation Name',
       description: 'Type the name of your organisation',
@@ -135,7 +144,7 @@ sub: Subscription;
 
   referringOrganisationDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
-    hideExpression:'model.attributes.isIndividual == null || model.attributes.isIndividual == true',
+    hideExpression: 'model.attributes.isIndividual == null || model.attributes.isIndividual == true',
     fieldGroup: [
       {
         key: 'referringOrganisation.name',
@@ -173,19 +182,19 @@ sub: Subscription;
       },
       {
         key: 'referringOrganisation.address',
-        type: 'input',
+        type: 'place',
         className: 'col-md-12',
         defaultValue: '',
         templateOptions: {
-          label: '',
-          placeholder: 'Organisation address',
+          placeholder: 'Organisation Address',
+          postCode: false,
           required: true
         },
         validation: {
           show: false
         },
         expressionProperties: {
-          'validation.show': 'model.showErrorState',
+          'validation.show': 'model.showErrorState'
         }
       },
       {
@@ -211,13 +220,37 @@ sub: Subscription;
         templateOptions: {
           text: 'Submit',
           onClick: () => {
-            this.isOrganisationExists = true;
-            this.showContactPage()},
+            this.saveNewOrganisation().then(success => {
+              if (success){
+                this.isOrganisationExists = true;
+                this.showContactPage();
+              }
+            });
+          },
         },
       }
-
     ]
   };
+
+  referringOrgIdField: FormlyFieldConfig = {
+    key: 'referringOrganisation',
+    defaultValue: null,
+    templateOptions: {
+      label: '',
+      required: true,
+      hidden: true
+    }
+  }
+
+  referringContactIdField: FormlyFieldConfig = {
+    key: 'referringOrganisationContact',
+    defaultValue: null,
+    templateOptions: {
+      label: '',
+      required: true,
+      hidden: true
+    }
+  }
 
   referringOrganisationContactDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
@@ -279,22 +312,22 @@ sub: Subscription;
   }
 
   surnameField: FormlyFieldConfig = {
-          key: 'surname',
-          type: 'input',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: '',
-            placeholder: 'Your surname',
-            required: true
-          },
-          validation: {
-            show: false
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-          }
-        }
+    key: 'surname',
+    type: 'input',
+    className: 'col-md-12',
+    defaultValue: '',
+    templateOptions: {
+      label: '',
+      placeholder: 'Your surname',
+      required: true
+    },
+    validation: {
+      show: false
+    },
+    expressionProperties: {
+      'validation.show': 'model.showErrorState',
+    }
+  }
 
   emailField: FormlyFieldConfig = {
     key: 'email',
@@ -314,7 +347,7 @@ sub: Subscription;
     }
   }
 
-  refContactSubmitButton: FormlyFieldConfig  = {
+  refContactSubmitButton: FormlyFieldConfig = {
     hideExpression: !this.isOrganisationExists,
     type: 'button',
     className: 'border',
@@ -375,11 +408,11 @@ sub: Subscription;
                 options: [
                   // TODO: find some way to derive these from requestedItems so it's
                   // all defined in one place
-                  {value: 'laptops', label: 'Laptop'},
+                  { value: 'laptops', label: 'Laptop' },
                   // {value: 'phones', label: 'Phone'},
-                  {value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
+                  { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
                   // {value: 'tablets', label: 'Tablet' },
-                  {value: 'desktops', label: 'Desktop computer' },
+                  { value: 'desktops', label: 'Desktop computer' },
                 ],
                 required: true
               },
@@ -402,13 +435,13 @@ sub: Subscription;
         templateOptions: {
           label: 'Does your client have access to the internet at home?',
           options: [
-            {value: 'yes', label: 'Yes'},
-            {value: 'no' , label: 'No'},
-            {value: 'dk', label: 'Don\'t know'}
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 'dk', label: 'Don\'t know' }
           ],
           required: true
         }
-      },        
+      },
       {
         key: 'hasMobilityNeeds',
         type: 'radio',
@@ -416,9 +449,9 @@ sub: Subscription;
         templateOptions: {
           label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
           options: [
-            {value: 'yes', label: 'Yes'},
-            {value: 'no' , label: 'No'},
-            {value: 'dk', label: 'Don\'t know'}
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 'dk', label: 'Don\'t know' }
           ],
           required: true
         }
@@ -430,9 +463,9 @@ sub: Subscription;
         templateOptions: {
           label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
           options: [
-            {value: 'yes', label: 'Yes'},
-            {value: 'no' , label: 'No'},
-            {value: 'dk', label: 'Don\'t know'}
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 'dk', label: 'Don\'t know' }
           ],
           required: true
         }
@@ -461,7 +494,7 @@ sub: Subscription;
       }
     ]
   }
- 
+
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -475,8 +508,8 @@ sub: Subscription;
       templateOptions: {
         label: 'Is your request for one client?',
         options: [
-          {value: true, label: 'Yes'},
-          {value: false, label: 'No'}
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' }
         ],
         required: true
       },
@@ -503,8 +536,8 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       templateOptions: {
         label: 'Does your client live in either Lambeth or Southwark?',
         options: [
-          {value: true, label: 'Yes'},
-          {value: false , label: 'No'}
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' }
         ],
         required: true
       },
@@ -531,10 +564,12 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         },
         this.referringOrgField,
         this.referringOrganisationDetailFormGroup,
-        this.refContactPage,  
+        this.refContactPage,
         this.requestPage
       ]
-    }
+    },
+    this.referringOrgIdField,
+    this.referringContactIdField
   ];
 
   constructor(
@@ -544,11 +579,13 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
 
   }
   private normalizeData(data: any) {
-    data.attributes.request = {'laptops': 0, 
-                               'phones': 0, 
-                               'commsDevices': 0,
-                               'tablets': 0,
-                               'desktops': 0};
+    data.attributes.request = {
+      'laptops': 0,
+      'phones': 0,
+      'commsDevices': 0,
+      'tablets': 0,
+      'desktops': 0
+    };
     data.items.forEach(i => {
       data.attributes.request[i] = data.attributes.request[i] + 1;
     });
@@ -599,7 +636,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       }
     });
 
-    
+
 
     const orgRef = this.apollo
       .watchQuery({
@@ -608,7 +645,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         }
       });
 
-      const contactRef = this.apollo
+    const contactRef = this.apollo
       .watchQuery({
         query: FIND_ORGANISATION_CONTACT,
         variables: {
@@ -616,105 +653,135 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         }
       })
 
-      this.referringOrgs$ = concat(
-        of([]),
-        this.referringOrgInput.pipe(
-          debounceTime(200),
-          distinctUntilChanged(),
-          tap(() => {
-            this.referringOrgLoading = true;}
-          ),
-          switchMap(term => {
-            if (term){
-              return from(orgRef.refetch({
-            term: term
-          })).pipe(
-            catchError(() => of([])),
-            tap(() => this.referringOrgLoading = false),
-            switchMap(res => {
-              var data = res['data']['referringOrganisationsConnection']['content'].map(v => {
-                return {
-                  label: v.name, value: v.id
-                };
-              });
-              
-              if (data.length == 0){
-                this.hideNewOrganisationField(false);
-                data = [{
-                  label: 'Use "' + term + '"', value: term, display: term
-                }];
-              } else{
-                this.hideNewOrganisationField(true);
-                this.showContactPage();
-              }
-              return of(data);
-            })
-          )} return []})
-        )
-      );
+    this.referringOrgs$ = concat(
+      of([]),
+      this.referringOrgInput.pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        tap(() => {
+          this.referringOrgLoading = true;
+        }
+        ),
+        switchMap(term => {
+          if (term) {
+            return from(orgRef.refetch({
+              term: term
+            })).pipe(
+              catchError(() => of([])),
+              tap(() => this.referringOrgLoading = false),
+              switchMap(res => {
+                var data = res['data']['referringOrganisationsConnection']['content'].map(v => {
+                  return {
+                    label: v.name, value: v.id
+                  };
+                });
 
-      this.sub = this.referringOrgs$.subscribe(data => {
-        this.referringOrgField.templateOptions['items'] = data;
-      });
+                if (data.length == 0) {
+                  this.hideNewOrganisationField(false);
+                  data = [{
+                    label: 'Use "' + term + '"', value: term, display: term
+                  }];
+                } else {
+                  this.hideNewOrganisationField(true);
+                  this.showContactPage();
+                }
+                return of(data);
+              })
+            )
+          } return []
+        })
+      )
+    );
+
+    this.sub = this.referringOrgs$.subscribe(data => {
+      this.referringOrgField.templateOptions['items'] = data;
+    });
 
   }
 
-  getRefContact(){
+  async saveNewOrganisation(): Promise<boolean> {
+
+    var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
+    return this.apollo.mutate({
+      mutation: CREATE_REFERRING_ORGANISATION,
+      variables: {data}
+    }).toPromise().then(res => {
+
+      var data = res["data"]["createReferringOrganisation"]["id"];
+      if (data) {
+        this.toastr.info("Your organisation details were saved.")
+        this.referringOrgIdField.formControl.setValue(data);
+        console.log(this.referringOrgIdField);
+        return true;
+      } else {
+        this.toastr.error("Could not create the organisation.");
+        console.log(res);
+        return false;
+      }
+    }).catch(error => {
+      this.toastr.error("An error occurred while creating the organisation.");
+      console.error(error);
+      return false;
+    });
     
+  }
+
+  getRefContact() {
+
     this.apollo.query({
       query: FIND_ORGANISATION_CONTACT,
-      variables:{
+      variables: {
         name: this.firstNameField.formControl.value,
         surname: this.surnameField.formControl.value,
         email: this.emailField.formControl.value
       }
     }).toPromise().then(res => {
-      
+
       var data = res["data"]["referringOrganisationContact"];
-      if (data){
+      if (data) {
         //create a hidden field for the referringOrganisationContact and use that with data["id"]
-      }else {
+      } else {
         this.hideNewContactRefDetailsField(false);
       }
     });
 
-   
+
   }
 
-  showRequestPage(){
+  showRequestPage() {
     this.referringOrgField.hideExpression = true;
     this.refOrganisationPage.hideExpression = true;
     this.refContactPage.hideExpression = true;
     this.requestPage.hideExpression = false;
   }
 
-  showOrganisationPage(){
+  showOrganisationPage() {
     this.referringOrgField.hideExpression = false;
   }
 
-  showContactPage(){
+  showContactPage() {
 
-    
+
     this.referringOrganisationDetailFormGroup.hideExpression = this.isOrganisationExists;
-    
+
     this.refContactPage.hideExpression = false;
 
-    if (!this.isContactExists){
+    if (!this.isContactExists) {
       this.referringOrganisationContactDetailFormGroup.hideExpression = false;
       this.refContactSubmitButton.hideExpression = true;
-    }else{
+    } else {
       this.refContactSubmitButton.hideExpression = false;
     }
   }
 
-  hideNewOrganisationField(hide:boolean){
+  hideNewOrganisationField(hide: boolean) {
     this.isOrganisationExists = hide;
     this.isContactExists = hide;
-    this.referringOrganisationDetailFormGroup.hideExpression= this.isOrganisationExists;
+    this.referringOrganisationDetailFormGroup.hideExpression = this.isOrganisationExists;
     this.refContactPage.hideExpression = !this.isOrganisationExists;
   }
 
-  hideNewContactRefDetailsField(hide:boolean){
+  hideNewContactRefDetailsField(hide: boolean) {
     this.isContactExists = hide;
     this.referringOrganisationContactDetailFormGroup.hideExpression = this.isContactExists;
   }
@@ -727,9 +794,9 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
   }
 
 
-  createEntity(data: any) {        
+  createEntity(data: any) {
     data = this.normalizeData(data);
-//    console.log(data);
+    //    console.log(data);
 
     if (this.form.invalid) {
       this.model.showErrorState = true;
@@ -748,9 +815,9 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       this.toastr.error(`
       <small>${err.message}</small>
       `, 'Create Organisation Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
+        enableHtml: true,
+        timeOut: 15000
+      });
     });
   }
 }
