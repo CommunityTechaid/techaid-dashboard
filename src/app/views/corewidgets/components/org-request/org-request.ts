@@ -102,6 +102,7 @@ sub: Subscription;
   isOrganisationExists = true;
   isContactExists = true;
   newOrganisationName = ""
+ 
 
   referringOrgs$: Observable<any>;
   referringOrgInput = new Subject<string>();
@@ -143,7 +144,7 @@ sub: Subscription;
         defaultValue: '',
         templateOptions: {
           label: '',
-          placeholder: 'Organisation website',
+          placeholder: 'Organisation Name',
           required: true
         },
         validation: {
@@ -203,6 +204,16 @@ sub: Subscription;
         expressionProperties: {
           'validation.show': 'model.showErrorState',
         }
+      },
+      {
+        type: 'button',
+        className: 'border',
+        templateOptions: {
+          text: 'Submit',
+          onClick: () => {
+            this.isOrganisationExists = true;
+            this.showContactPage()},
+        },
       }
 
     ]
@@ -235,6 +246,15 @@ sub: Subscription;
         expressionProperties: {
           'validation.show': 'model.showErrorState',
         }
+      },
+      {
+        hideExpression: !this.isContactExists,
+        type: 'button',
+        className: 'border',
+        templateOptions: {
+          text: 'Submit',
+          onClick: () => this.showRequestPage(),
+        },
       }
 
     ]
@@ -304,6 +324,144 @@ sub: Subscription;
     },
   }
 
+  refContactPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      this.firstNameField,
+      this.surnameField,
+      this.emailField,
+      this.refContactSubmitButton,
+      this.referringOrganisationContactDetailFormGroup
+    ]
+  };
+
+  refOrganisationPage: FormlyFieldConfig = {
+    fieldGroup: [
+      this.referringOrgField,
+      this.referringOrganisationDetailFormGroup
+    ]
+  }
+
+  requestPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'col-md-12',
+        template: '<h6 class="m-0 font-weight-bold text-primary">Your client\'s needs</h6>'
+      },
+      {
+        fieldGroupClassName: 'row',
+        fieldGroup: [
+          {
+            key: 'items',
+            type: 'repeat',
+            className: 'col-md-6',
+            defaultValue: [{}],
+            templateOptions: {
+              description: 'If your client needs another item, use this button ➜',
+              addText: 'Request another item',
+              removeText: 'Remove this item',
+              required: true,
+              min: 1,
+              maxItems: 3
+            },
+            fieldArray: {
+              key: 'item',
+              type: 'radio',
+              className: '',
+              templateOptions: {
+                label: 'Select the item your client needs.',
+                description: 'We currently have no phones or tablets. When we do, we will re-open requests for them.',
+                options: [
+                  // TODO: find some way to derive these from requestedItems so it's
+                  // all defined in one place
+                  {value: 'laptops', label: 'Laptop'},
+                  // {value: 'phones', label: 'Phone'},
+                  {value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
+                  // {value: 'tablets', label: 'Tablet' },
+                  {value: 'desktops', label: 'Desktop computer' },
+                ],
+                required: true
+              },
+              // // validation: {
+              //   show: false
+              // },
+              // expressionProperties: {
+              //   'validation.show': 'model.showErrorState',
+              // }              
+              //   }
+              // ]
+            }
+          }
+        ]
+      },
+      {
+        key: 'hasInternetHome',
+        type: 'radio',
+        className: '',
+        templateOptions: {
+          label: 'Does your client have access to the internet at home?',
+          options: [
+            {value: 'yes', label: 'Yes'},
+            {value: 'no' , label: 'No'},
+            {value: 'dk', label: 'Don\'t know'}
+          ],
+          required: true
+        }
+      },        
+      {
+        key: 'hasMobilityNeeds',
+        type: 'radio',
+        className: '',
+        templateOptions: {
+          label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
+          options: [
+            {value: 'yes', label: 'Yes'},
+            {value: 'no' , label: 'No'},
+            {value: 'dk', label: 'Don\'t know'}
+          ],
+          required: true
+        }
+      },
+      {
+        key: 'hasTrainingNeeds',
+        type: 'radio',
+        className: '',
+        templateOptions: {
+          label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
+          options: [
+            {value: 'yes', label: 'Yes'},
+            {value: 'no' , label: 'No'},
+            {value: 'dk', label: 'Don\'t know'}
+          ],
+          required: true
+        }
+      },
+      {
+        key: 'attributes.details',
+        type: 'textarea',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: 'In order to support you as best as possible, please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. Please do not include any identifiable details such as names or addresses but any background you can provide would be extremely helpful.',
+          rows: 3,
+          required: false
+        }
+      },
+      {
+        key: 'attributes.clientRef',
+        type: 'input',
+        className: 'col-md-3',
+        defaultValue: '',
+        templateOptions: {
+          label: 'For your records, enter your client\'s initials or a client reference',
+          // TODO: should this be required
+          required: false
+        }
+      }
+    ]
+  }
+ 
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -373,129 +531,10 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         },
         this.referringOrgField,
         this.referringOrganisationDetailFormGroup,
-        this.firstNameField,
-        this.surnameField,
-        this.emailField,
-        this.refContactSubmitButton,
-        this.referringOrganisationContactDetailFormGroup,  
-        {
-          className: 'col-md-12',
-          template: '<h6 class="m-0 font-weight-bold text-primary">Your client\'s needs</h6>'
-        },
-        {
-          fieldGroupClassName: 'row',
-          fieldGroup: [
-            {
-              key: 'items',
-              type: 'repeat',
-              className: 'col-md-6',
-              defaultValue: [{}],
-              templateOptions: {
-                description: 'If your client needs another item, use this button ➜',
-                addText: 'Request another item',
-                removeText: 'Remove this item',
-                required: true,
-                min: 1,
-                maxItems: 3
-              },
-              fieldArray: {
-                key: 'item',
-                type: 'radio',
-                className: '',
-                templateOptions: {
-                  label: 'Select the item your client needs.',
-                  description: 'We currently have no phones or tablets. When we do, we will re-open requests for them.',
-                  options: [
-                    // TODO: find some way to derive these from requestedItems so it's
-                    // all defined in one place
-                    {value: 'laptops', label: 'Laptop'},
-                    // {value: 'phones', label: 'Phone'},
-                    {value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
-                    // {value: 'tablets', label: 'Tablet' },
-                    {value: 'desktops', label: 'Desktop computer' },
-                  ],
-                  required: true
-                },
-                // // validation: {
-                //   show: false
-                // },
-                // expressionProperties: {
-                //   'validation.show': 'model.showErrorState',
-                // }              
-                //   }
-                // ]
-              }
-            }
-          ]
-        },
-        {
-          key: 'hasInternetHome',
-          type: 'radio',
-          className: '',
-          templateOptions: {
-            label: 'Does your client have access to the internet at home?',
-            options: [
-              {value: 'yes', label: 'Yes'},
-              {value: 'no' , label: 'No'},
-              {value: 'dk', label: 'Don\'t know'}
-            ],
-            required: true
-          }
-        },        
-        {
-          key: 'hasMobilityNeeds',
-          type: 'radio',
-          className: '',
-          templateOptions: {
-            label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
-            options: [
-              {value: 'yes', label: 'Yes'},
-              {value: 'no' , label: 'No'},
-              {value: 'dk', label: 'Don\'t know'}
-            ],
-            required: true
-          }
-        },
-        {
-          key: 'hasTrainingNeeds',
-          type: 'radio',
-          className: '',
-          templateOptions: {
-            label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
-            options: [
-              {value: 'yes', label: 'Yes'},
-              {value: 'no' , label: 'No'},
-              {value: 'dk', label: 'Don\'t know'}
-            ],
-            required: true
-          }
-        },
-        {
-          key: 'attributes.details',
-          type: 'textarea',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: 'In order to support you as best as possible, please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. Please do not include any identifiable details such as names or addresses but any background you can provide would be extremely helpful.',
-            rows: 3,
-            required: false
-          }
-        },
-        {
-          key: 'attributes.clientRef',
-          type: 'input',
-          className: 'col-md-3',
-          defaultValue: '',
-          templateOptions: {
-            label: 'For your records, enter your client\'s initials or a client reference',
-            // TODO: should this be required
-            required: false
-          }
-        }
+        this.refContactPage,  
+        this.requestPage
       ]
-    },
-    this.referringOrganisationDetailFormGroup,
-    this.referringOrganisationContactDetailFormGroup
+    }
   ];
 
   constructor(
@@ -606,6 +645,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
                 }];
               } else{
                 this.hideNewOrganisationField(true);
+                this.showContactPage();
               }
               return of(data);
             })
@@ -641,12 +681,37 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
    
   }
 
+  showRequestPage(){
+    this.referringOrgField.hideExpression = true;
+    this.refOrganisationPage.hideExpression = true;
+    this.refContactPage.hideExpression = true;
+    this.requestPage.hideExpression = false;
+  }
+
+  showOrganisationPage(){
+    this.referringOrgField.hideExpression = false;
+  }
+
+  showContactPage(){
+
+    
+    this.referringOrganisationDetailFormGroup.hideExpression = this.isOrganisationExists;
+    
+    this.refContactPage.hideExpression = false;
+
+    if (!this.isContactExists){
+      this.referringOrganisationContactDetailFormGroup.hideExpression = false;
+      this.refContactSubmitButton.hideExpression = true;
+    }else{
+      this.refContactSubmitButton.hideExpression = false;
+    }
+  }
+
   hideNewOrganisationField(hide:boolean){
     this.isOrganisationExists = hide;
     this.isContactExists = hide;
     this.referringOrganisationDetailFormGroup.hideExpression= this.isOrganisationExists;
-    this.referringOrganisationContactDetailFormGroup.hideExpression = this.isContactExists;
-    this.refContactSubmitButton.hideExpression = !this.isOrganisationExists;
+    this.refContactPage.hideExpression = !this.isOrganisationExists;
   }
 
   hideNewContactRefDetailsField(hide:boolean){
