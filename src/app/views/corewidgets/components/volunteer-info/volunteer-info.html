@@ -56,12 +56,12 @@
                     </div>
                 </ng-template>
             </ngb-tab>
-            <ngb-tab title="Emails" *ngIf="model?.email?.length && user?.authorities['read:emails']">
+<!--             <ngb-tab title="Emails" *ngIf="model?.email?.length && user?.authorities['read:emails']">
                 <ng-template ngbTabContent>
                     <email-threads [email]="model.email"></email-threads>
                 </ng-template>
-             </ngb-tab>  
-             <ngb-tab title="Devices">
+             </ngb-tab> -->
+            <ngb-tab title="Devices">
                 <ng-template ngbTabContent>
                     <div class="mt-2">
                         <kit-component *ngIf="model?.id" [where]="{volunteer: {id: {_eq: model.id}}}" [tableId]="'volunteer-info-' + model.id"></kit-component>

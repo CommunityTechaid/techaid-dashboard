@@ -30,7 +30,8 @@ export class PlaceInput extends FieldType {
             const addr = <any>(place.address_components.find(a => a.types.indexOf('postal_code') > -1) || {});
             this.formControl.setValue(addr.long_name || place.formatted_address);
           } else {
-            this.formControl.setValue(place.formatted_address);
+            const fullAddress = place.name && place.name.length > 0 ? place.name + ", " + place.formatted_address : place.formatted_address;
+            this.formControl.setValue(fullAddress);
           }
       });
   }
