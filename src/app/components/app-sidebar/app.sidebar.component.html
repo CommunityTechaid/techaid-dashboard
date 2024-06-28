@@ -42,11 +42,25 @@
     <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
         <a class="nav-link" href="#" routerLink="/dashboard/organisations">
             <i class="fas fa-sitemap"></i>
-            <span>Orgs</span>
+            <span>Orgs [Old]</span>
         </a>
     </li>
 
-    <hr class="sidebar-divider my-0">
+    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
+      <a class="nav-link" href="#" routerLink="/dashboard/referring-organisations">
+          <i class="fas fa-address-book"></i>
+          <span>Orgs [New]</span>
+      </a>
+  </li>
+
+  <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
+    <a class="nav-link" href="#" routerLink="/dashboard/device-requests">
+        <i class="fas fa-hands"></i>
+        <span>Requests</span>
+    </a>
+</li>
+
+<hr class="sidebar-divider my-0">
 
     <div class="sidebar-heading mt-1">
         Forms

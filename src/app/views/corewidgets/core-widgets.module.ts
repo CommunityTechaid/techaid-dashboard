@@ -43,6 +43,12 @@ import { DashboardIndexComponent } from './components/dashboard-index/dashboard-
 import { OrgRequestComponent } from './components/org-request/org-request';
 import { KitComponent } from './components/kit-component/kit-component.component';
 import { ReportsComponent} from './components/reports/reports.component';
+import { DeviceRequestIndexComponent } from './components/device-request-index/device-request-index.component';
+import { DeviceRequestInfoComponent } from './components/device-request-info/device-request-info.component';
+import { ReferringOrganisationIndexComponent } from './components/referring-organisation-index/referring-organisation-index.component';
+import { ReferringOrganisationInfoComponent } from './components/referring-organisation-info/referring-organisation-info.component';
+import { ReferringOrganisationContactIndexComponent } from './components/referring-organisation-contact-index/referring-organisation-contact-index.component';
+import { ReferringOrganisationContactInfoComponent } from './components/referring-organisation-contact-info/referring-organisation-contact-info.component';
 
 const routes: Routes = [
   { path: '', component: DashboardIndexComponent },
@@ -94,6 +100,12 @@ const routes: Routes = [
   {
     path: 'dashboard/organisations/:orgId', component: OrgInfoComponent, canActivate: [AuthGuard]
   },
+  { path: 'dashboard/device-requests/', component: DeviceRequestIndexComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard/device-requests/:requestId', component: DeviceRequestInfoComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard/referring-organisations/', component: ReferringOrganisationIndexComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard/referring-organisations/:orgId', component: ReferringOrganisationInfoComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard/referring-organisation-contacts/', component: ReferringOrganisationContactIndexComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard/referring-organisation-contacts/:contactId', component: ReferringOrganisationContactInfoComponent, canActivate: [AuthGuard] },
   { path: 'dashboard', component: DashboardIndexComponent, canActivate: [AuthGuard]},
   { path: 'about-us', component: PostDataComponent},
   { path: 'reports', component: ReportsComponent, canActivate: [AuthGuard] },
@@ -135,7 +147,13 @@ const routes: Routes = [
     DashboardIndexComponent,
     OrgRequestComponent,
     KitComponent,
-    ReportsComponent
+    ReportsComponent,
+    DeviceRequestIndexComponent,
+    DeviceRequestInfoComponent,
+    ReferringOrganisationIndexComponent,
+    ReferringOrganisationInfoComponent,
+    ReferringOrganisationContactIndexComponent,
+    ReferringOrganisationContactInfoComponent
   ],
   imports: [
     LightboxModule,
