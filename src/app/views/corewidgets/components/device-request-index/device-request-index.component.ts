@@ -12,18 +12,12 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 
 const QUERY_ENTITY = gql`
-query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: ReferringOrganisationWhereInput!) {
-  referringOrganisationsConnection(page: $page, where: {
+query findAllDeviceRequests($page: PaginationInput,, $term: String, $filter: DeviceRequestWhereInput!) {
+  deviceRequestConnections(page: $page, where: {
     AND: {
       OR: [
         {
-          name: {
-            _contains: $term
-          }
-          AND: [$filter]
-        },
-        {
-          website: {
+          status: {
             _contains: $term
           }
           AND: [$filter]
@@ -34,18 +28,21 @@ query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: Refe
     totalElements
     content{
      id
-     phoneNumber
-     name
-     domain
-     address
-     website
+     status
+     referringOrganisationContact {
+      id
+      firstName
+      referringOrganisation {
+        id
+        name
+      }
+     }
      createdAt
      updatedAt
     }
   }
 }
 `;
-
 
 @Component({
   selector: 'app-device-request-index',
@@ -157,7 +154,7 @@ export class DeviceRequestIndexComponent {
   ];
 
   @Input()
-  tableId = 'referring-org-index';
+  tableId = 'device-request-index';
 
   applyFilter(data) {
     const filter = {'OR': [], 'AND': []};
@@ -168,7 +165,7 @@ export class DeviceRequestIndexComponent {
       filter['archived'] = {_in: data.archived};
     }
 
-    localStorage.setItem(`referringOrgFilters-${this.tableId}`, JSON.stringify(data));
+    localStorage.setItem(`deviceRequestFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
@@ -249,7 +246,7 @@ export class DeviceRequestIndexComponent {
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res.data) {
-            data = res['data']['referringOrganisationsConnection'];
+            data = res['data']['deviceRequestConnection'];
             if (!this.total) {
               this.total = data['totalElements'];
             }
@@ -283,10 +280,8 @@ export class DeviceRequestIndexComponent {
       },
       columns: [
         { data: null, width: '15px', orderable: false },
-        { data: 'name' },
-        { data: 'email' },
-        { data: 'website' },
-        { data: 'phoneNumber'},
+        { data: 'status' },
+        { data: 'referringOrganisationContact.firstName' },
         { data: 'createdAt'},
         { data: 'updatedAt' },
       ]
@@ -303,7 +298,7 @@ export class DeviceRequestIndexComponent {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
       try {
-        this.filterModel = JSON.parse(localStorage.getItem(`referringOrgFilters-${this.tableId}`)) || {archived: [false]};
+        this.filterModel = JSON.parse(localStorage.getItem(`deviceRequestFilters-${this.tableId}`)) || {archived: [false]};
       } catch (_) {
         this.filterModel = {archived: [false]};
       }
