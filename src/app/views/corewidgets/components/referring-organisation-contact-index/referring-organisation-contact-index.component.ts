@@ -150,7 +150,7 @@ export class ReferringOrganisationContactIndexComponent {
   ];
 
   @Input()
-  tableId = 'referring-org-index';
+  tableId = 'referring-org-contact-index';
 
   applyFilter(data) {
     const filter = {'OR': [], 'AND': []};
