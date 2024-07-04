@@ -107,7 +107,9 @@ export class ReferringOrganisationIndexComponent {
           expressionProperties: {
             'templateOptions.required': '!model.phoneNumber.length'
           }
-        },
+        }
+      ]
+/*         ,
         {
           key: 'address',
           type: 'place',
@@ -124,7 +126,7 @@ export class ReferringOrganisationIndexComponent {
             'templateOptions.required': '!model.address.length'
           }
         }
-      ]
+ */
     },
   ];
 
