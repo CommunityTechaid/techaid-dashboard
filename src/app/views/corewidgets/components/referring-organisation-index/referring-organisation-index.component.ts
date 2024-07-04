@@ -50,7 +50,7 @@ query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: Refe
   selector: 'app-referring-organisation-index',
   templateUrl: './referring-organisation-index.component.html',
   styleUrls: ['./referring-organisation-index.component.scss']
-  })
+})
 export class ReferringOrganisationIndexComponent {
 
   constructor(
