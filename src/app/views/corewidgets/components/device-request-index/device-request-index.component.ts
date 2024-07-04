@@ -12,13 +12,16 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 
 const QUERY_ENTITY = gql`
-query findAllDeviceRequests($page: PaginationInput,, $term: String, $filter: DeviceRequestWhereInput!) {
+query findAllDeviceRequests($page: PaginationInput, $status: DeviceRequestStatus, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnections(page: $page, where: {
     AND: {
+      clientRef: {
+        _contains: $term
+      }
       OR: [
         {
           status: {
-            _contains: $term
+            _eq: $status
           }
           AND: [$filter]
         }
@@ -31,7 +34,7 @@ query findAllDeviceRequests($page: PaginationInput,, $term: String, $filter: Dev
      status
      referringOrganisationContact {
       id
-      firstName
+      fullName
       referringOrganisation {
         id
         name
@@ -162,7 +165,7 @@ export class DeviceRequestIndexComponent {
 
     if (data.archived && data.archived.length) {
       count += data.archived.length;
-      filter['archived'] = {_in: data.archived};
+      filter['referringOrganisationContact'] = { 'archived': { _in: data.archived}};
     }
 
     localStorage.setItem(`deviceRequestFilters-${this.tableId}`, JSON.stringify(data));
@@ -281,7 +284,7 @@ export class DeviceRequestIndexComponent {
       columns: [
         { data: null, width: '15px', orderable: false },
         { data: 'status' },
-        { data: 'referringOrganisationContact.firstName' },
+        { data: 'referringOrganisationContact.fullName' },
         { data: 'createdAt'},
         { data: 'updatedAt' },
       ]

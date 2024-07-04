@@ -18,7 +18,7 @@ query findAllReferringOrgContacts(
     AND: {
       OR: [
         {
-          firstName: {
+          fullName: {
             _contains: $term
           }
           AND: [$filter]
@@ -41,7 +41,7 @@ query findAllReferringOrgContacts(
     totalElements
     content{
      id
-     firstName
+     fullName
      email
      phoneNumber
      requestCount
@@ -276,7 +276,7 @@ export class ReferringOrganisationContactIndexComponent {
       },
       columns: [
         { data: null, width: '15px', orderable: false },
-        { data: 'firstName' },
+        { data: 'fullName' },
         { data: 'email' },
         { data: 'phoneNumber'},
         { data: 'requestCount' },
