@@ -224,7 +224,7 @@ export class ReferringOrganisationIndexComponent {
         '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
       pageLength: 10,
       lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [7, 'desc'],
+      order: [6, 'desc'],
       serverSide: true,
       stateSave: true,
       processing: true,
