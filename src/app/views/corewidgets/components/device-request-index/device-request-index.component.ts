@@ -249,7 +249,7 @@ export class DeviceRequestIndexComponent {
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res.data) {
-            data = res['data']['deviceRequestConnection'];
+            data = res['data']['deviceRequestConnections'];
             if (!this.total) {
               this.total = data['totalElements'];
             }
