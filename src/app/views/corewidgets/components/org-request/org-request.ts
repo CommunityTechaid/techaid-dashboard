@@ -77,7 +77,15 @@ query findOrganisationContact($fullName: String, $email: String) {
 }
 `;
 
-const NEW_ORG = "NEW_ORG";
+const CREATE_REFERRING_ORGANISATION_CONTACT = gql`
+mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
+  createReferringOrganisationContact(data: $data){
+     id
+  }
+}
+`;
+
+
 
 @Component({
   selector: 'org-request',
@@ -123,6 +131,8 @@ export class OrgRequestComponent {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
           if (!this.isOrganisationExists) {
             (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
+          }else{
+            this.referringOrgIdField.formControl.setValue(v)
           }
         }));
       }
@@ -224,8 +234,8 @@ export class OrgRequestComponent {
         templateOptions: {
           text: 'Submit',
           onClick: () => {
-            this.saveNewOrganisation().then(success => {
-              if (success){
+            this.saveNewReferringOrganisation().then(success => {
+              if (success) {
                 this.isOrganisationExists = true;
                 this.showContactPage();
               }
@@ -314,12 +324,20 @@ export class OrgRequestComponent {
         className: 'border',
         templateOptions: {
           text: 'Submit',
-          onClick: () => this.showRequestPage(),
+          onClick: () => {
+            this.saveNewReferringOrganisationContact().then(success => {
+              if (success) {
+                this.isContactExists = true;
+                this.showRequestPage();
+              }
+            });
+          }
         },
       }
 
     ]
   };
+
 
 
   fullNameField: FormlyFieldConfig = {
@@ -371,7 +389,7 @@ export class OrgRequestComponent {
   refContactPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
-      
+
       this.fullNameField,
       this.emailField,
       this.refContactSubmitButton,
@@ -630,7 +648,6 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
   }
 
   organisationName(data) {
-    console.log(data.name)
     return `${data.name || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
@@ -710,24 +727,21 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
 
   }
 
-  async saveNewOrganisation(): Promise<boolean> {
+  async saveNewReferringOrganisation(): Promise<boolean> {
 
     var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION,
-      variables: {data}
+      variables: { data }
     }).toPromise().then(res => {
 
       var data = res["data"]["createReferringOrganisation"]["id"];
       if (data) {
         this.toastr.info("Your organisation details were saved.")
-        console.log(this.referringOrgIdField.formControl)
         this.referringOrgIdField.formControl.setValue(data);
-        console.log(this.referringOrgIdField);
         return true;
       } else {
         this.toastr.error("Could not create the organisation.");
-        console.log(res);
         return false;
       }
     }).catch(error => {
@@ -735,7 +749,36 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       console.error(error);
       return false;
     });
-    
+
+  }
+
+  async saveNewReferringOrganisationContact(): Promise<boolean> {
+
+    var contactDetails:any = this.referringOrganisationContactDetailFormGroup.formControl.value.referringOrganisationContact;
+    contactDetails.referringOrganisation = this.referringOrgIdField.formControl.value
+    var data = contactDetails;
+
+    return this.apollo.mutate({
+      mutation: CREATE_REFERRING_ORGANISATION_CONTACT,
+      variables: { data }
+    }).toPromise().then(res => {
+
+      var data = res["data"]["createReferringOrganisationContact"]["id"];
+      if (data) {
+        this.toastr.info("Your contact details were saved.")
+        this.referringContactIdField.formControl.setValue(data);
+        return true;
+      } else {
+        this.toastr.error("Could not save your contact details.");
+        console.log(res);
+        return false;
+      }
+    }).catch(error => {
+      this.toastr.error("An error occurred while trying to save your contact details.");
+      console.error(error);
+      return false;
+    });
+
   }
 
   getRefContact() {
@@ -750,7 +793,9 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
 
       var data = res["data"]["referringOrganisationContact"];
       if (data) {
-        //create a hidden field for the referringOrganisationContact and use that with data["id"]
+        this.referringContactIdField.formControl.setValue(data["id"]);
+        this.isContactExists = true;
+        this.showRequestPage();
       } else {
         this.hideNewContactRefDetailsField(false);
       }
