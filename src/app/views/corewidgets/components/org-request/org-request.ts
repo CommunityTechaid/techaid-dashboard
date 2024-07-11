@@ -67,10 +67,9 @@ query findAutocompleteReferringOrgs($term: String) {
 `;
 
 const FIND_ORGANISATION_CONTACT = gql`
-query findOrganisationContact($name: String, $surname: String, $email: String) {
+query findOrganisationContact($fullName: String, $email: String) {
   referringOrganisationContact( where: {
-      firstName: { _ilike: $name }
-      surname: { _ilike: $surname }
+      fullName: { _ilike: $fullName }
       email: { _ilike: $email }
     }){
     id
@@ -142,6 +141,11 @@ export class OrgRequestComponent {
   };
 
 
+  /**
+   * NEW REFERRING ORGANISATION
+   * These fields collect details of a new organisation and is displayed only
+   * if the organisation search results return no results
+   */
   referringOrganisationDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
     hideExpression: 'model.attributes.isIndividual == null || model.attributes.isIndividual == true',
@@ -232,8 +236,9 @@ export class OrgRequestComponent {
     ]
   };
 
+  //hidden field for ID of the referringOrganisation
   referringOrgIdField: FormlyFieldConfig = {
-    key: 'referringOrganisation',
+    key: 'referringOrganisationId',
     defaultValue: null,
     templateOptions: {
       label: '',
@@ -242,8 +247,9 @@ export class OrgRequestComponent {
     }
   }
 
+  //hidden field for the ID of the referringContact 
   referringContactIdField: FormlyFieldConfig = {
-    key: 'referringOrganisationContact',
+    key: 'referringOrganisationContactId',
     defaultValue: null,
     templateOptions: {
       label: '',
@@ -252,6 +258,11 @@ export class OrgRequestComponent {
     }
   }
 
+  /**
+   * NEW REFERRING ORGANISATION CONTACT
+   * These fields collect details of a new organisation contact and is displayed only
+   * if the contact with the entered name and email ID cannot be found
+   */
   referringOrganisationContactDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
     hideExpression: this.isOrganisationExists && this.isContactExists,
@@ -264,13 +275,30 @@ export class OrgRequestComponent {
   </div>`
       },
       {
-        key: 'phoneNumber',
+        key: 'referringOrganisationContact.phoneNumber',
         type: 'input',
         className: 'col-md-12',
         defaultValue: '',
         templateOptions: {
           label: '',
           placeholder: 'Your phone number',
+          required: true
+        },
+        validation: {
+          show: false
+        },
+        expressionProperties: {
+          'validation.show': 'model.showErrorState',
+        }
+      },
+      {
+        key: 'referringOrganisationContact.address',
+        type: 'place',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: '',
+          placeholder: 'Your address',
           required: true
         },
         validation: {
@@ -293,32 +321,15 @@ export class OrgRequestComponent {
     ]
   };
 
-  firstNameField: FormlyFieldConfig = {
-    key: 'firstName',
-    type: 'input',
-    className: 'col-md-12',
-    defaultValue: '',
-    templateOptions: {
-      label: '',
-      placeholder: 'Your first name',
-      required: true
-    },
-    validation: {
-      show: false
-    },
-    expressionProperties: {
-      'validation.show': 'model.showErrorState',
-    }
-  }
 
-  surnameField: FormlyFieldConfig = {
-    key: 'surname',
+  fullNameField: FormlyFieldConfig = {
+    key: 'referringOrganisationContact.fullName',
     type: 'input',
     className: 'col-md-12',
     defaultValue: '',
     templateOptions: {
       label: '',
-      placeholder: 'Your surname',
+      placeholder: 'Please enter your full name eg: John Doe',
       required: true
     },
     validation: {
@@ -330,7 +341,7 @@ export class OrgRequestComponent {
   }
 
   emailField: FormlyFieldConfig = {
-    key: 'email',
+    key: 'referringOrganisationContact.email',
     type: 'input',
     className: 'col-md-12',
     defaultValue: '',
@@ -360,8 +371,8 @@ export class OrgRequestComponent {
   refContactPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
-      this.firstNameField,
-      this.surnameField,
+      
+      this.fullNameField,
       this.emailField,
       this.refContactSubmitButton,
       this.referringOrganisationContactDetailFormGroup
@@ -710,6 +721,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       var data = res["data"]["createReferringOrganisation"]["id"];
       if (data) {
         this.toastr.info("Your organisation details were saved.")
+        console.log(this.referringOrgIdField.formControl)
         this.referringOrgIdField.formControl.setValue(data);
         console.log(this.referringOrgIdField);
         return true;
@@ -731,8 +743,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
     this.apollo.query({
       query: FIND_ORGANISATION_CONTACT,
       variables: {
-        name: this.firstNameField.formControl.value,
-        surname: this.surnameField.formControl.value,
+        fullName: this.fullNameField.formControl.value,
         email: this.emailField.formControl.value
       }
     }).toPromise().then(res => {
