@@ -35,8 +35,7 @@ const UPDATE_ENTITY = gql`
       domain
       address
       website
-      createdAt
-      updatedAt
+      archived
     }
   }
 `;
