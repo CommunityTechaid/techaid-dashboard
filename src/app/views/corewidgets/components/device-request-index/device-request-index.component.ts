@@ -32,6 +32,7 @@ query findAllDeviceRequests($page: PaginationInput, $status: DeviceRequestStatus
     content{
      id
      status
+     clientRef
      referringOrganisationContact {
       id
       fullName
@@ -223,7 +224,7 @@ export class DeviceRequestIndexComponent {
         '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
       pageLength: 10,
       lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [4, 'desc'],
+      order: [0, 'desc'],
       serverSide: true,
       stateSave: true,
       processing: true,
@@ -282,8 +283,10 @@ export class DeviceRequestIndexComponent {
         });
       },
       columns: [
-        { data: null, width: '15px', orderable: false },
+        { data: 'id', width: '15px' },
         { data: 'status' },
+        { data: 'clientRef' },
+        { data: 'referringOrganisationContact.referringOrganisation.name' },
         { data: 'referringOrganisationContact.fullName' },
         { data: 'createdAt'},
         { data: 'updatedAt' },

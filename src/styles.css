@@ -43,12 +43,12 @@ h1.small {
 .modal-full .modal-content {
     min-height: 100vh;
 }
-.visuallyhidden { 
-    position: absolute; 
-    overflow: hidden; 
-    clip: rect(0 0 0 0); 
-    height: 1px; width: 1px; 
-    margin: -1px; padding: 0; border: 0; 
+.visuallyhidden {
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    height: 1px; width: 1px;
+    margin: -1px; padding: 0; border: 0;
 }
 
 .is-invalid > .ng-invalid.ng-touched > .form-control,
@@ -57,7 +57,7 @@ h1.small {
     border-radius: 5px;
 }
 
-.is-invalid > .ng-invalid.ng-touched > .form-control:focus, 
+.is-invalid > .ng-invalid.ng-touched > .form-control:focus,
 .is-invalid > .validate.ng-touched:focus{
     border-color:#dc3545;
     box-shadow:0 0 0 .2rem rgba(220,53,69,.25)
@@ -87,7 +87,7 @@ input[type="text"].srch {
 .no-data-available{
     text-align: center;
 }
- 
+
  .dataTables_empty {
     text-align: center;
  }
@@ -96,7 +96,7 @@ input[type="text"].srch {
     opacity: 0.90;
 }
 
-.masked input::-moz-placeholder { 
+.masked input::-moz-placeholder {
     color: transparent;
 }
 
@@ -182,7 +182,7 @@ input[type="text"].srch {
 
 .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
     word-break: break-word;
-    white-space: pre-line !important; 
+    white-space: pre-line !important;
 }
 
 .pac-container {
@@ -244,7 +244,7 @@ input[type="text"].srch {
     font-weight: 500;
     color: var(--gray-dark);
 }
-  
+
 html,
 body {
   overflow-x: hidden; /* Prevent scroll on narrow devices */
@@ -484,6 +484,29 @@ i.input-group-text {
   display: none;
 }
 
+.device-request-status .custom-control {
+  color: black;
+}
+.device-request-status .custom-control:nth-child(1){
+  border-radius: 5px 5px 0px 0px;
+  background-color: #fddca6;
+}
+.device-request-status .custom-control:nth-child(2),
+.device-request-status .custom-control:nth-child(3){
+  background-color: #fddca6;
+}
+.device-request-status .custom-control:nth-child(4),
+.device-request-status .custom-control:nth-child(5){
+  background-color: #bae3d7;
+}
+.device-request-status .custom-control:nth-child(6){
+  background-color: #fdc6c1;
+}
+.device-request-status .custom-control:nth-child(7){
+  background-color: #fdc6c1;
+  border-radius: 0px 0px 5px 5px;
+}
+
 .kit-status .custom-control {
     color: black;
 }
@@ -535,7 +558,7 @@ i.input-group-text {
 .no-data-available {
     text-align: center;
  }
- 
+
  .dataTables_empty {
      display: none;
  }
@@ -543,7 +566,7 @@ i.input-group-text {
  .cursor-hand {
      cursor: pointer;
  }
- 
+
  .modal-title{
      font-size: 0.9em;
  }

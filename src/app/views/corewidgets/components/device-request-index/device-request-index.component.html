@@ -33,8 +33,10 @@
                           [dtOptions]="dtOptions" style="width:100%;">
                           <thead>
                               <tr>
-                                  <th></th>
+                                  <th>ID</th>
                                   <th>Status</th>
+                                  <th>Client Ref</th>
+                                  <th>Organisation</th>
                                   <th>Referee</th>
                                   <th>Created</th>
                                   <th>Updated</th>
@@ -59,6 +61,8 @@
                                           </div>
                                       </div>
                                   </td>
+                                  <td>{{dt.clientRef}}</td>
+                                  <td>{{dt.referringOrganisationContact.referringOrganisation.name}}</td>
                                   <td>{{dt.referringOrganisationContact.fullName}}</td>
                                   <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
                                       {{ dt.createdAt | date:'medium' }}

@@ -224,7 +224,7 @@ export class ReferringOrganisationIndexComponent {
         '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
       pageLength: 10,
       lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [6, 'desc'],
+      order: [5, 'desc'],
       serverSide: true,
       stateSave: true,
       processing: true,
@@ -285,7 +285,6 @@ export class ReferringOrganisationIndexComponent {
       columns: [
         { data: null, width: '15px', orderable: false },
         { data: 'name' },
-        { data: 'email' },
         { data: 'website' },
         { data: 'phoneNumber'},
         { data: 'createdAt'},
