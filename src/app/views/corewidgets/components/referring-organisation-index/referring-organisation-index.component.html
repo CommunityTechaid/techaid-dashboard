@@ -37,6 +37,7 @@
                                   <th>Name</th>
                                   <th>Website</th>
                                   <th>Phone</th>
+                                  <th>Request #</th>
                                   <th>Created</th>
                                   <th>Updated</th>
                               </tr>
@@ -61,6 +62,7 @@
                                   </td>
                                   <td>{{dt.website}}</td>
                                   <td>{{dt.phoneNumber}}</td>
+                                  <td>{{dt.requestCount}}</td>
                                   <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
                                       {{ dt.createdAt | date:'medium' }}
                                   </td>

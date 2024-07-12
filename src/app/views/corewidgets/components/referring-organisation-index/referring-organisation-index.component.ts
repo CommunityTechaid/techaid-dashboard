@@ -39,6 +39,7 @@ query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: Refe
      domain
      address
      website
+     requestCount
      createdAt
      updatedAt
     }
@@ -224,7 +225,7 @@ export class ReferringOrganisationIndexComponent {
         '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
       pageLength: 10,
       lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [5, 'desc'],
+      order: [6, 'desc'],
       serverSide: true,
       stateSave: true,
       processing: true,
@@ -286,8 +287,9 @@ export class ReferringOrganisationIndexComponent {
         { data: null, width: '15px', orderable: false },
         { data: 'name' },
         { data: 'website' },
-        { data: 'phoneNumber'},
-        { data: 'createdAt'},
+        { data: 'phoneNumber' },
+        { data: 'requestCount' },
+        { data: 'createdAt' },
         { data: 'updatedAt' },
       ]
     };
