@@ -175,10 +175,10 @@ export class ReferringOrganisationInfoComponent {
           templateOptions: {
             type: 'array',
             label: 'Archived?',
-            description: 'Archived requests are hidden from view',
+            description: 'Archived organisations are hidden from view',
             options: [
-              {label: 'Request active and visible', value: false },
-              {label: 'Archive and hide this request', value: true },
+              {label: 'Organisation active and visible', value: false },
+              {label: 'Archive and hide this organisation', value: true },
             ],
             required: true,
           }

@@ -135,10 +135,10 @@ export class ReferringOrganisationContactInfoComponent {
           templateOptions: {
             type: 'array',
             label: 'Archived?',
-            description: 'Archived requests are hidden from view',
+            description: 'Archived referees are hidden from view',
             options: [
-              {label: 'Request active and visible', value: false },
-              {label: 'Archive and hide this request', value: true },
+              {label: 'Referee active and visible', value: false },
+              {label: 'Archive and hide this referee', value: true },
             ],
             required: true,
           }
