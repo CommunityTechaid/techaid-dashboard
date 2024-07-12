@@ -83,7 +83,7 @@ export class DeviceRequestInfoComponent {
         {
           key: 'status',
           type: 'radio',
-          className: 'col-md-4 kit-status',
+          className: 'col-md-4 device-request-status',
           defaultValue: 'NEW',
           templateOptions: {
             label: 'Status of the request',
@@ -106,17 +106,7 @@ export class DeviceRequestInfoComponent {
   }
 
   private normalizeData(data: any) {
-    if (data.subGroup) {
-      if (!Array.isArray(data.subGroup)) {
-        data.subGroup = (data.subGroup || '')
-          .toString()
-          .split(',')
-          .filter((value) => value.trim().length > 0);
-      }
-    } else {
-      data.subGroup = [];
-    }
-    data.attributes = data.attributes || {accepts: []};
+    // Not currently doing any normalization
     return data;
   }
 
@@ -181,16 +171,7 @@ export class DeviceRequestInfoComponent {
       return;
     }
     data.id = this.requestId;
-    data.subGroup = data.subGroup || [];
-    if (data.organizing) {
-      if (data.organizing == 'yes') {
-        data.subGroup.push('Organizing');
-      }
-    }
-    data.subGroup = (data.subGroup || [])
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .join(',');
-    delete data.organizing;
+
     this.apollo
       .mutate({
         mutation: UPDATE_ENTITY,

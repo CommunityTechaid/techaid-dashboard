@@ -184,17 +184,7 @@ export class ReferringOrganisationInfoComponent {
   }
 
   private normalizeData(data: any) {
-    if (data.subGroup) {
-      if (!Array.isArray(data.subGroup)) {
-        data.subGroup = (data.subGroup || '')
-          .toString()
-          .split(',')
-          .filter((value) => value.trim().length > 0);
-      }
-    } else {
-      data.subGroup = [];
-    }
-    data.attributes = data.attributes || {accepts: []};
+    // Not currently doing any normalization
     return data;
   }
 
@@ -259,16 +249,7 @@ export class ReferringOrganisationInfoComponent {
       return;
     }
     data.id = this.orgId;
-    data.subGroup = data.subGroup || [];
-    if (data.organizing) {
-      if (data.organizing == 'yes') {
-        data.subGroup.push('Organizing');
-      }
-    }
-    data.subGroup = (data.subGroup || [])
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .join(',');
-    delete data.organizing;
+
     this.apollo
       .mutate({
         mutation: UPDATE_ENTITY,
