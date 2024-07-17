@@ -119,6 +119,7 @@ export class OrgRequestComponent {
   newOrganisationName = ""
 
 
+  //Review and remove
   referringOrgs$: Observable<any>;
   referringOrgInput = new Subject<string>();
   referringOrgLoading = false;
@@ -339,7 +340,9 @@ export class OrgRequestComponent {
   };
 
 
-
+/**
+ * REFERRING ORGAQNISATION CONTACT FULL NAME AND EMAIL 
+ */
   fullNameField: FormlyFieldConfig = {
     key: 'referringOrganisationContact.fullName',
     type: 'input',
@@ -357,7 +360,6 @@ export class OrgRequestComponent {
       'validation.show': 'model.showErrorState',
     }
   }
-
   emailField: FormlyFieldConfig = {
     key: 'referringOrganisationContact.email',
     type: 'input',
@@ -386,6 +388,10 @@ export class OrgRequestComponent {
     },
   }
 
+  /**
+   * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION CONTACT 
+   *
+   */
   refContactPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
@@ -397,6 +403,10 @@ export class OrgRequestComponent {
     ]
   };
 
+  /**
+   * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION 
+   *
+   */
   refOrganisationPage: FormlyFieldConfig = {
     fieldGroup: [
       this.referringOrgField,
@@ -404,8 +414,12 @@ export class OrgRequestComponent {
     ]
   }
 
+   /**
+   * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION 
+   *
+   */
   requestPage: FormlyFieldConfig = {
-    hideExpression: true,
+    hideExpression: false,
     fieldGroup: [
       {
         className: 'col-md-12',
@@ -415,7 +429,7 @@ export class OrgRequestComponent {
         fieldGroupClassName: 'row',
         fieldGroup: [
           {
-            key: 'items',
+            key: 'deviceRequestItems',
             type: 'repeat',
             className: 'col-md-6',
             defaultValue: [{}],
@@ -425,23 +439,24 @@ export class OrgRequestComponent {
               removeText: 'Remove this item',
               required: true,
               min: 1,
-              maxItems: 3
+              maxItems: 1
             },
             fieldArray: {
-              key: 'item',
-              type: 'radio',
-              className: '',
-              templateOptions: {
-                label: 'Select the item your client needs.',
-                description: 'We currently have no phones or tablets. When we do, we will re-open requests for them.',
-                options: [
-                  // TODO: find some way to derive these from requestedItems so it's
-                  // all defined in one place
-                  { value: 'laptops', label: 'Laptop' },
-                  // {value: 'phones', label: 'Phone'},
-                  { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
-                  // {value: 'tablets', label: 'Tablet' },
-                  { value: 'desktops', label: 'Desktop computer' },
+            key: 'item',
+            type: 'radio',
+            className: '',
+            templateOptions: {
+              label: 'Please select the item your client needs.',
+              description: 'If your client needs a SIM card in addition to a device, please select the main device above. Then tell us in the notes below that you also need a SIM card.',
+              options: [
+                // TODO: find some way to derive these from requestedItems so it's
+                // all defined in one place
+                { value: 'laptops', label: 'Laptop' },
+                { value: 'desktops', label: 'Desktop computer' },
+                {value: 'phones', label: 'Smartphone'},
+                //{ value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
+                // {value: 'tablets', label: 'Tablet' },
+                
                 ],
                 required: true
               },
@@ -458,7 +473,29 @@ export class OrgRequestComponent {
         ]
       },
       {
-        key: 'hasInternetHome',
+        key: 'details',
+        type: 'textarea',
+        className: 'col-md-12',
+        defaultValue: '',
+        templateOptions: {
+          label: 'In order to support you as best as possible, please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. Please do not include any identifiable details such as names or addresses but any background you can provide would be extremely helpful.',
+          rows: 3,
+          required: false
+        }
+      },
+      {
+        key: 'clientRef',
+        type: 'input',
+        className: 'col-md-3',
+        defaultValue: '',
+        templateOptions: {
+          label: 'For your records, enter your client\'s initials or a client reference',
+          // TODO: should this be required
+          required: false
+        }
+      },
+      {
+        key: 'deviceRequestNeeds.hasInternet',
         type: 'radio',
         className: '',
         templateOptions: {
@@ -472,7 +509,7 @@ export class OrgRequestComponent {
         }
       },
       {
-        key: 'hasMobilityNeeds',
+        key: 'deviceRequestNeeds.hasMobilityIssues',
         type: 'radio',
         className: '',
         templateOptions: {
@@ -486,7 +523,7 @@ export class OrgRequestComponent {
         }
       },
       {
-        key: 'hasTrainingNeeds',
+        key: 'deviceRequestNeeds.needQuickStart',
         type: 'radio',
         className: '',
         templateOptions: {
@@ -497,28 +534,6 @@ export class OrgRequestComponent {
             { value: 'dk', label: 'Don\'t know' }
           ],
           required: true
-        }
-      },
-      {
-        key: 'attributes.details',
-        type: 'textarea',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: 'In order to support you as best as possible, please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. Please do not include any identifiable details such as names or addresses but any background you can provide would be extremely helpful.',
-          rows: 3,
-          required: false
-        }
-      },
-      {
-        key: 'attributes.clientRef',
-        type: 'input',
-        className: 'col-md-3',
-        defaultValue: '',
-        templateOptions: {
-          label: 'For your records, enter your client\'s initials or a client reference',
-          // TODO: should this be required
-          required: false
         }
       }
     ]
@@ -607,6 +622,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
   ) {
 
   }
+
   private normalizeData(data: any) {
     data.attributes.request = {
       'laptops': 0,
