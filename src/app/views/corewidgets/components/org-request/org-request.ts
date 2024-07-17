@@ -239,7 +239,6 @@ export class OrgRequestComponent {
       },
       {
         type: 'button',
-        className: 'border',
         templateOptions: {
           text: 'Submit',
           onClick: () => {
@@ -330,7 +329,6 @@ export class OrgRequestComponent {
       {
         hideExpression: !this.isContactExists,
         type: 'button',
-        className: 'border',
         templateOptions: {
           text: 'Submit',
           onClick: () => {
@@ -389,7 +387,6 @@ export class OrgRequestComponent {
   refContactSubmitButton: FormlyFieldConfig = {
     hideExpression: !this.isOrganisationExists,
     type: 'button',
-    className: 'border',
     templateOptions: {
       text: 'Submit',
       onClick: () => this.getRefContact(),
@@ -417,6 +414,10 @@ export class OrgRequestComponent {
    */
   refOrganisationPage: FormlyFieldConfig = {
     fieldGroup: [
+      {
+        className: 'col-md-12',
+        template: '<h6 class="m-0 font-weight-bold text-primary">About your organisation</h6>'
+      },
       this.referringOrgField,
       this.referringOrganisationDetailFormGroup
     ]
@@ -427,7 +428,7 @@ export class OrgRequestComponent {
    *
    */
   requestPage: FormlyFieldConfig = {
-    hideExpression: false,
+    hideExpression: true,
     fieldGroup: [
       {
         className: 'col-md-12',
@@ -550,7 +551,7 @@ export class OrgRequestComponent {
         templateOptions: {
           text: 'Submit',
           onClick: () => {
-            this.test().then(success => {
+            this.createNewDeviceRequest().then((success: boolean) => {
               if (success) {
               }
             });
@@ -564,12 +565,7 @@ export class OrgRequestComponent {
   fields: Array<FormlyFieldConfig> = [
     {
       fieldGroup: [
-        {
-          className: 'col-md-12',
-          template: '<h6 class="m-0 font-weight-bold text-primary">About your organisation</h6>'
-        },
-        this.referringOrgField,
-        this.referringOrganisationDetailFormGroup,
+        this.refOrganisationPage,
         this.refContactPage,
         this.requestPage
       ]
@@ -840,7 +836,7 @@ export class OrgRequestComponent {
 
   }
 
-  test(){
+  createNewDeviceRequest(){
     const deviceRequest:any = this.requestPage.formControl.value;
     const data: any = {
       clientRef: deviceRequest.clientRef,
