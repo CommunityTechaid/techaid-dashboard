@@ -972,7 +972,7 @@ export class KitInfoComponent {
     }
 
     if (data.deviceRequest && data.deviceRequest.id) {
-      data.deviceRequest = data.deviceRequest.id;
+      data.deviceRequestId = data.deviceRequest.id;
       this.deviceRequestField.templateOptions['items'] = [
         {label: this.organisationName(data.deviceRequest), value: data.deviceRequest.id}
       ];
