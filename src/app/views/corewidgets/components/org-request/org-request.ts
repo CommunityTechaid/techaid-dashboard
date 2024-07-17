@@ -327,7 +327,6 @@ export class OrgRequestComponent {
         }
       },
       {
-        hideExpression: !this.isContactExists,
         type: 'button',
         templateOptions: {
           text: 'Submit',
@@ -341,7 +340,6 @@ export class OrgRequestComponent {
           }
         },
       }
-
     ]
   };
 
@@ -359,6 +357,15 @@ export class OrgRequestComponent {
       placeholder: 'Please enter your full name eg: John Doe',
       required: true
     },
+    hooks: {
+      onInit: (field) => {
+        this.sub.add(field.formControl.valueChanges.subscribe(v => {
+          this.isContactExists = true;
+          this.refContactSubmitButton.hideExpression = false
+          this.referringOrganisationContactDetailFormGroup.hideExpression = true;
+        }));
+      }
+    },
     validation: {
       show: false
     },
@@ -375,6 +382,15 @@ export class OrgRequestComponent {
       label: '',
       placeholder: 'Your email address',
       required: true
+    },
+    hooks: {
+      onInit: (field) => {
+        this.sub.add(field.formControl.valueChanges.subscribe(v => {
+          this.isContactExists = true;
+          this.refContactSubmitButton.hideExpression = false
+          this.referringOrganisationContactDetailFormGroup.hideExpression = true;
+        }));
+      }
     },
     validation: {
       show: false
@@ -770,6 +786,7 @@ export class OrgRequestComponent {
         this.isContactExists = true;
         this.showRequestPage();
       } else {
+        this.refContactSubmitButton.hideExpression = true
         this.hideNewContactRefDetailsField(false);
       }
     });
