@@ -547,7 +547,6 @@ export class OrgRequestComponent {
       },
       {
         type: 'button',
-        className: 'border',
         templateOptions: {
           text: 'Submit',
           onClick: () => {
