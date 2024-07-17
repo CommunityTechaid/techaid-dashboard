@@ -1208,7 +1208,6 @@ export class KitInfoComponent {
   }
 
   organisationName(data) {
-    console.log(data)
     return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
