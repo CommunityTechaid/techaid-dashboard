@@ -1052,7 +1052,7 @@ export class KitInfoComponent {
         }
       });
 
-    const devRequestRef = this.apollo
+    const deviceRequestRef = this.apollo
       .watchQuery({
         query: AUTOCOMPLETE_DEVICE_REQUESTS,
         variables: {
