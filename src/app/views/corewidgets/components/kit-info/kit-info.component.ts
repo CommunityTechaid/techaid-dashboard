@@ -100,11 +100,14 @@ query findKit($id: Long) {
       email
       phoneNumber
     }
-    organisation {
+    deviceRequest {
       id
-      name
-      email
-      phoneNumber
+      clientRef
+      referringOrganisationContact {
+        referringOrganisation {
+          name
+        }
+      }
     }
     attributes {
       credentials
@@ -167,11 +170,13 @@ mutation updateKit($data: UpdateKitInput!) {
       email
       phoneNumber
     }
-    organisation {
+    deviceRequest {
       id
-      name
-      email
-      phoneNumber
+      referringOrganisationContact {
+        referringOrganisation {
+          name
+        }
+      }
     }
     attributes {
       credentials
@@ -261,9 +266,9 @@ query findAutocompleteDonors($term: String) {
 }
 `;
 
-const AUTOCOMPLETE_ORGANISATION = gql`
-query findAutocompleteOrgs($term: String) {
-  organisationsConnection(page: {
+const AUTOCOMPLETE_DEVICE_REQUESTS = gql`
+query findAutocompleteDeviceRequests($term: String) {
+  deviceRequestConnection(page: {
     size: 50
   }, where: {
     id: {
@@ -274,18 +279,27 @@ query findAutocompleteOrgs($term: String) {
       name: {
         _contains: $term
       }
+    },
+    {
+      clientRef: {
+        _contains: $term
+      }
     }
     ]
   }){
     content  {
      id
-     name
-     email
-     phoneNumber
+     clientRef
+     referringOrganisationContact {
+      referringOrganisation {
+        name
+      }
+     }
     }
   }
 }
 `;
+
 @Component({
   selector: 'kit-info',
   styleUrls: ['kit-info.scss'],
@@ -391,19 +405,19 @@ export class KitInfoComponent {
     },
   };
 
-  orgs$: Observable<any>;
-  orgInput$ = new Subject<string>();
-  orgLoading = false;
-  orgField: FormlyFieldConfig = {
-    key: 'organisationId',
+  devRequests$: Observable<any>;
+  devRequestInput$ = new Subject<string>();
+  devRequestLoading = false;
+  devRequestField: FormlyFieldConfig = {
+    key: 'deviceRequestId',
     type: 'choice',
     className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
-      label: 'Organisation',
-      description: 'The organisation this device is currently assigned to.',
-      loading: this.orgLoading,
-      typeahead: this.orgInput$,
-      placeholder: 'Assign device to an Organisation',
+      label: 'Device Request',
+      description: 'The device request this device is currently assigned to.',
+      loading: this.devRequestLoading,
+      typeahead: this.devRequestInput$,
+      placeholder: 'Assign device to a Device Request',
       multiple: false,
       searchable: true,
       items: [],
@@ -507,7 +521,7 @@ export class KitInfoComponent {
             label: "Serial Number"
           }
         },
-        this.orgField
+        this.devRequestField
       ]
     },
     {
@@ -965,10 +979,10 @@ export class KitInfoComponent {
       ];
     }
 
-    if (data.organisation && data.organisation.id) {
-      data.organisationId = data.organisation.id;
-      this.orgField.templateOptions['items'] = [
-        {label: this.organisationName(data.organisation), value: data.organisation.id}
+    if (data.deviceRequest && data.deviceRequest.id) {
+      data.deviceRequest = data.deviceRequest.id;
+      this.devRequestField.templateOptions['items'] = [
+        {label: this.organisationName(data.deviceRequest), value: data.deviceRequest.id}
       ];
     }
 
@@ -1046,9 +1060,9 @@ export class KitInfoComponent {
         }
       });
 
-    const orgRef = this.apollo
+    const devRequestRef = this.apollo
       .watchQuery({
-        query: AUTOCOMPLETE_ORGANISATION,
+        query: AUTOCOMPLETE_DEVICE_REQUESTS,
         variables: {
         }
       });
@@ -1148,19 +1162,19 @@ export class KitInfoComponent {
       )
     );
 
-    this.orgs$ = concat(
+    this.devRequests$ = concat(
       of([]),
-      this.orgInput$.pipe(
+      this.devRequestInput$.pipe(
         debounceTime(200),
         distinctUntilChanged(),
-        tap(() => this.orgLoading = true),
-        switchMap(term => from(orgRef.refetch({
+        tap(() => this.devRequestLoading = true),
+        switchMap(term => from(devRequestRef.refetch({
           term: term
         })).pipe(
           catchError(() => of([])),
-          tap(() => this.orgLoading = false),
+          tap(() => this.devRequestLoading = false),
           switchMap(res => {
-            const data = res['data']['organisationsConnection']['content'].map(v => {
+            const data = res['data']['deviceRequestConnection']['content'].map(v => {
               return {
                 label: `${this.organisationName(v)}`, value: v.id
               };
@@ -1192,8 +1206,8 @@ export class KitInfoComponent {
       this.donorField.templateOptions['items'] = data;
     }));
 
-    this.sub.add(this.orgs$.subscribe(data => {
-      this.orgField.templateOptions['items'] = data;
+    this.sub.add(this.devRequests$.subscribe(data => {
+      this.devRequestField.templateOptions['items'] = data;
     }));
   }
 
@@ -1202,7 +1216,7 @@ export class KitInfoComponent {
   }
 
   organisationName(data) {
-    return `${data.name || ''}||${data.id || ''}`
+    return `${data.deviceRequest.referringOrganisationContact.referringOrganisation.name || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
       .join(' / ')

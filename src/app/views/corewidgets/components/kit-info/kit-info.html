@@ -78,10 +78,10 @@
                 </ng-template>
             </ngb-tab>
  -->
-            <ngb-tab title="Organisations" *ngIf="model?.organisation?.id">
+            <ngb-tab title="Device Requests" *ngIf="model?.deviceRequest?.id">
               <ng-template ngbTabContent>
                   <div class="mt-2">
-                      <org-component [where]="{id: {_eq: model.organisation.id}}" [tableId]="'org-index-' + model.organisation.id"></org-component>
+                      <dev-request-component [where]="{id: {_eq: model.deviceRequest.id}}" [tableId]="'dev-request-index-' + model.deviceRequest.id"></dev-request-component>
                   </div>
               </ng-template>
             </ngb-tab>

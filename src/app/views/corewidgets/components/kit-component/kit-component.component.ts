@@ -60,9 +60,13 @@ const QUERY_ENTITY = gql`
           email
           phoneNumber
         }
-        organisation {
+        deviceRequest {
           id
-          name
+          referringOrganisationContact {
+            referringOrganisation {
+              name
+            }
+          }
         }
         volunteers {
           type
@@ -78,25 +82,30 @@ const QUERY_ENTITY = gql`
   }
 `;
 
-const AUTOCOMPLETE_ORGS = gql`
-  query findAutocompleteOrgs($term: String, $ids: [Long!]) {
-    organisationsConnection(
+const AUTOCOMPLETE_DEVICE_REQUESTS = gql`
+  query findAutocompleteDeviceRequests($term: String, $ids: [Long!]) {
+    deviceRequestConnection(
       page: { size: 50 }
       where: {
-        name: { _contains: $term }
+        referringOrganisationContact.referringOrganisation.name: { _contains: $term }
         OR: [
           { id: { _in: $ids } }
-          { phoneNumber: { _contains: $term } }
-          { contact: { _contains: $term } }
-          { email: { _contains: $term } }
+          { referringOrganisationContact.phoneNumber: { _contains: $term } }
+          { referringOrganisationContact.fullName: { _contains: $term } }
+          { referringOrganisationContact.email: { _contains: $term } }
         ]
       }
     ) {
       content {
         id
-        name
-        email
-        phoneNumber
+        referringOrganisationContact {
+          fullName
+          email
+          phoneNumber
+          referringOrganisation {
+            name
+          }
+        }
       }
     }
   }
@@ -126,7 +135,7 @@ const AUTOCOMPLETE_USERS = gql`
 `;
 
 const FIND_USERS = gql`
-  query findAutocompleteVolunteers($volunteerIds: [Long!], $orgIds: [Long!]) {
+  query findAutocompleteVolunteers($volunteerIds: [Long!], $deviceRequestIds: [Long!]) {
     volunteers(where: { id: { _in: $volunteerIds } }) {
       id
       name
@@ -134,11 +143,16 @@ const FIND_USERS = gql`
       phoneNumber
     }
 
-    organisations(where: { id: { _in: $orgIds } }) {
+    deviceRequests(where: { id: { _in: $deviceRequestIds } }) {
       id
-      name
-      email
-      phoneNumber
+      referringOrganisationContact {
+        fullName
+        email
+        phoneNumber
+        referringOrganisation {
+          name
+        }
+      }
     }
   }
 `;
@@ -209,18 +223,18 @@ export class KitComponent {
     },
   };
 
-  orgs$: Observable<any>;
-  orgInput$ = new Subject<string>();
-  orgLoading = false;
-  orgField: FormlyFieldConfig = {
-    key: 'orgIds',
+  deviceRequests$: Observable<any>;
+  deviceRequestInput$ = new Subject<string>();
+  deviceRequestLoading = false;
+  deviceRequestField: FormlyFieldConfig = {
+    key: 'deviceRequestIds',
     type: 'choice',
     className: 'col-md-12',
     templateOptions: {
-      label: 'Assigned Organisation',
-      description: 'Filter by assigned organisation.',
-      loading: this.orgLoading,
-      typeahead: this.orgInput$,
+      label: 'Assigned Device Request',
+      description: 'Filter by assigned device request.',
+      loading: this.deviceRequestLoading,
+      typeahead: this.deviceRequestInput$,
       multiple: true,
       searchable: true,
       items: [],
@@ -321,7 +335,7 @@ export class KitComponent {
           },
         },
         this.userField,
-        this.orgField,
+        this.deviceRequestField,
       ],
     },
   ];
@@ -368,9 +382,9 @@ export class KitComponent {
       filter['volunteer'] = { id: { _in: data.userIds } };
     }
 
-    if (data.orgIds && data.orgIds.length) {
-      count += data.orgIds.length;
-      filter['organisation'] = { id: { _in: data.orgIds } };
+    if (data.deviceRequestIds && data.deviceRequestIds.length) {
+      count += data.deviceRequestIds.length;
+      filter['deviceRequest'] = { id: { _in: data.deviceRequestIds } };
     }
 
     localStorage.setItem(`kitFilters-${this.tableId}`, JSON.stringify(data));
@@ -416,8 +430,8 @@ export class KitComponent {
       variables: {},
     });
 
-    const orgRef = this.apollo.watchQuery({
-      query: AUTOCOMPLETE_ORGS,
+    const deviceRequestRef = this.apollo.watchQuery({
+      query: AUTOCOMPLETE_DEVICE_REQUESTS,
       variables: {},
     });
 
@@ -465,23 +479,23 @@ export class KitComponent {
       })
     );
 
-    this.orgs$ = concat(
+    this.deviceRequests$ = concat(
       of([]),
-      this.orgInput$.pipe(
+      this.deviceRequestInput$.pipe(
         debounceTime(200),
         distinctUntilChanged(),
-        tap(() => (this.orgLoading = true)),
+        tap(() => (this.deviceRequestLoading = true)),
         switchMap((term) =>
           from(
-            orgRef.refetch({
+            deviceRequestRef.refetch({
               term: term,
-              ids: this.filterModel.orgIds || [],
+              ids: this.filterModel.deviceRequestIds || [],
             })
           ).pipe(
             catchError(() => of([])),
-            tap(() => (this.orgLoading = false)),
+            tap(() => (this.deviceRequestLoading = false)),
             switchMap((res) => {
-              const data = res['data']['organisationsConnection'][
+              const data = res['data']['deviceRequestConnection'][
                 'content'
               ].map((v) => {
                 return {
@@ -497,8 +511,8 @@ export class KitComponent {
     );
 
     this.sub.add(
-      this.orgs$.subscribe((data) => {
-        this.orgField.templateOptions['items'] = data;
+      this.deviceRequests$.subscribe((data) => {
+        this.deviceRequestField.templateOptions['items'] = data;
       })
     );
 
@@ -614,7 +628,7 @@ export class KitComponent {
   }
 
   organisationName(data) {
-    return `${data.name || ''}||${data.id || ''}||${data.email || ''}||${data.phoneNumber || ''}`
+    return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.id || ''}||${data.referringOrganisationContact.email || ''}||${data.referringOrganisationContact.phoneNumber || ''}`
       .split('||')
       .filter((f) => f.trim().length)
       .join(' / ')
@@ -635,14 +649,14 @@ export class KitComponent {
           JSON.parse(localStorage.getItem(`kitFilters-${this.tableId}`)) || {};
         if (
           this.filterModel &&
-          (this.filterModel.userIds || this.filterModel.orgIds)
+          (this.filterModel.userIds || this.filterModel.deviceRequestIds)
         ) {
           this.apollo
             .query({
               query: FIND_USERS,
               variables: {
                 volunteerIds: this.filterModel.userIds || [],
-                orgIds: this.filterModel.orgIds || [],
+                deviceRequestIds: this.filterModel.deviceRequestIds || [],
               },
             })
             .toPromise()
@@ -655,9 +669,9 @@ export class KitComponent {
                     return { label: this.volunteerName(v), value: v.id };
                   });
                 }
-                if (res.data['organisations']) {
-                  this.orgField.templateOptions['items'] = res.data[
-                    'organisations'
+                if (res.data['deviceRequests']) {
+                  this.deviceRequestField.templateOptions['items'] = res.data[
+                    'deviceRequests'
                   ].map((v) => {
                     return { label: this.organisationName(v), value: v.id };
                   });

@@ -37,8 +37,6 @@ import { EmailThreadsComponent } from './components/email-threads/email-threads.
 import { EmailComposeComponent } from './components/email-compose/email-compose.component';
 import { EmailTemplatesIndexComponent } from './components/etemplates-index/etemplates-index.component';
 import { EmailTemplatesInfoComponent } from './components/etemplates-info/etemplates-info.component';
-import { OrgIndexComponent } from './components/org-index/org-index.component';
-import { OrgInfoComponent } from './components/org-info/org-info.component';
 import { DashboardIndexComponent } from './components/dashboard-index/dashboard-index.component';
 import { OrgRequestComponent } from './components/org-request/org-request';
 import { KitComponent } from './components/kit-component/kit-component.component';
@@ -94,12 +92,6 @@ const routes: Routes = [
   {
     path: 'dashboard/email/templates/:templateId', component: EmailTemplatesInfoComponent,  canActivate: [AuthGuard]
   },
-  {
-    path: 'dashboard/organisations', component: OrgIndexComponent, canActivate: [AuthGuard]
-  },
-  {
-    path: 'dashboard/organisations/:orgId', component: OrgInfoComponent, canActivate: [AuthGuard]
-  },
   { path: 'dashboard/device-requests', component: DeviceRequestIndexComponent, canActivate: [AuthGuard] },
   { path: 'dashboard/device-requests/:requestId', component: DeviceRequestInfoComponent, canActivate: [AuthGuard] },
   { path: 'dashboard/referring-organisations', component: ReferringOrganisationIndexComponent, canActivate: [AuthGuard] },
@@ -142,8 +134,6 @@ const routes: Routes = [
     EmailComposeComponent,
     EmailTemplatesIndexComponent,
     EmailTemplatesInfoComponent,
-    OrgIndexComponent,
-    OrgInfoComponent,
     DashboardIndexComponent,
     OrgRequestComponent,
     KitComponent,

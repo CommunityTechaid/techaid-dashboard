@@ -72,10 +72,10 @@
                                                     <a *ngIf="!dt.model.length" href="#" [routerLink]="['/dashboard/devices', dt.id]">{{ dt.location }}</a>
                                                 </div>
                                                 <div *ngIf="dt.model.length"><small>{{ dt.location }}</small></div>
-                                                <div *ngIf="dt.organisation?.name">
+                                                <div *ngIf="dt.deviceRequest?.id">
                                                     <span class="badge badge-secondary">
                                                         <i class="fas fa-sitemap mr-1"></i>
-                                                        <a href="#" class="btn-secondary" [routerLink]="['/dashboard/organisations', dt.organisation.id]">{{dt.organisation?.name}}</a>
+                                                        <a href="#" class="btn-secondary" [routerLink]="['/dashboard/device-requests', dt.deviceRequest.id]">{{dt.deviceRequest?.referringOrganisationContact.referringOrganisation.name}}</a>
                                                     </span>
                                                 </div>
                                             </div>

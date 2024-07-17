@@ -55,14 +55,6 @@ const QUERY_VARIABLES = gql`
         phoneNumber
         address: postCode
     }
-
-    organisation(where: {email: {_eq: $to}}){
-        id
-        name
-        email
-        contact
-        phoneNumber
-    }
 }
 `;
 

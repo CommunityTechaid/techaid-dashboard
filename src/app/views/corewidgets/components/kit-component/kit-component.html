@@ -55,10 +55,10 @@
                                                     <a *ngIf="!dt.model.length" href="#" [routerLink]="['/dashboard/devices', dt.id]">{{ dt.location }}</a>
                                                 </div>
                                                 <div *ngIf="dt.model.length"><small>{{ dt.location }}</small></div>
-                                                <div *ngIf="dt.organisation?.name">
+                                                <div *ngIf="dt.deviceRequest?.id">
                                                     <span class="badge badge-secondary">
-                                                        <i class="fas fa-sitemap mr-1"></i> 
-                                                        <a href="#" class="btn-secondary" [routerLink]="['/dashboard/organisations', dt.organisation.id]">{{dt.organisation?.name}}</a>
+                                                        <i class="fas fa-sitemap mr-1"></i>
+                                                        <a href="#" class="btn-secondary" [routerLink]="['/dashboard/device-requests', dt.deviceRequest.id]">{{dt.deviceRequest?.referringOrganisationContact.referringOrganisation.name}}</a>
                                                     </span>
                                                 </div>
                                             </div>
@@ -71,7 +71,7 @@
                                     <td>
                                         <a *ngIf="dt.volunteerName?.length" href="#" [routerLink]="['/dashboard/volunteers', dt.volunteer.id]">{{ dt.volunteerName }}</a>
                                         <span *ngFor="let v of dt.volunteers" class="mr-1 mb-1">
-                                            <span [class]="'badge badge-' + classes[v.type]"><span class="badge badge-primary mr-1">{{v.type}}</span> 
+                                            <span [class]="'badge badge-' + classes[v.type]"><span class="badge badge-primary mr-1">{{v.type}}</span>
                                             <a [class]="'btn-'+ classes[v.type]" [routerLink]="['/dashboard/volunteers', v.volunteer.id]">{{v.volunteer.name}}</a>
                                             </span>
                                         </span>

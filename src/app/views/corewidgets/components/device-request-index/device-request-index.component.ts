@@ -13,7 +13,7 @@ import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from '
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $status: DeviceRequestStatus, $term: String, $filter: DeviceRequestWhereInput!) {
-  deviceRequestConnections(page: $page, where: {
+  deviceRequestConnection(page: $page, where: {
     AND: {
       clientRef: {
         _contains: $term
@@ -250,7 +250,7 @@ export class DeviceRequestIndexComponent {
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res.data) {
-            data = res['data']['deviceRequestConnections'];
+            data = res['data']['deviceRequestConnection'];
             if (!this.total) {
               this.total = data['totalElements'];
             }
