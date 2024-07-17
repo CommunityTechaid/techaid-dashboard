@@ -159,7 +159,7 @@ export class OrgRequestComponent {
    */
   referringOrganisationDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
-    hideExpression: 'model.attributes.isIndividual == null || model.attributes.isIndividual == true',
+    hideExpression: true,
     fieldGroup: [
       {
         key: 'referringOrganisation.name',
@@ -542,65 +542,6 @@ export class OrgRequestComponent {
 
   fields: Array<FormlyFieldConfig> = [
     {
-      className: 'col-md-12',
-      template: '<h6 class="m-0 font-weight-bold text-primary">Check your eligibility</h6>'
-    },
-    {
-      key: 'attributes.isIndividual',
-      type: 'radio',
-      className: 'col-md-12',
-      templateOptions: {
-        label: 'Is your request for one client?',
-        options: [
-          { value: true, label: 'Yes' },
-          { value: false, label: 'No' }
-        ],
-        required: true
-      },
-      validators: {
-        mustBeTrue: {
-          expression: (c: AbstractControl) => c.value,
-          message: (error: any, field: FormlyFieldConfig) => 'This request must be for one client only.'
-        }
-      }
-    },
-    {
-      hideExpression: 'model.attributes.isIndividual == null || model.attributes.isIndividual == true',
-      className: 'col-md-12',
-      template: `<div class="border-bottom-info card mb-3 p-3">
-<p>This form is for requests for individuals. If your request is for an
-organisation rather than an individual, please contact <a href="mailto:
-distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
-</div>`
-    },
-    {
-      key: 'attributes.isResident',
-      type: 'radio',
-      className: '',
-      templateOptions: {
-        label: 'Does your client live in either Lambeth or Southwark?',
-        options: [
-          { value: true, label: 'Yes' },
-          { value: false, label: 'No' }
-        ],
-        required: true
-      },
-      validators: {
-        mustBeTrue: {
-          expression: (c: AbstractControl) => c.value,
-          message: (error: any, field: FormlyFieldConfig) => 'This request must be for a Lambeth or Southwark resident.'
-        }
-      }
-    },
-    {
-      hideExpression: 'model.attributes.isResident == null || model.attributes.isResident == true',
-      className: 'col-md-12',
-      template: `<div class="border-bottom-info card mb-3 p-3">
-<p>Unfortunately, we can only support people in Lambeth and Southwark currently.</p>
-</div>`
-    },
-    {
-      hideExpression: '!model.attributes.isIndividual || !model.attributes.isResident',
       fieldGroup: [
         {
           className: 'col-md-12',
