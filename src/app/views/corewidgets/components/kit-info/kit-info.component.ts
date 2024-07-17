@@ -397,18 +397,18 @@ export class KitInfoComponent {
     },
   };
 
-  devRequests$: Observable<any>;
-  devRequestInput$ = new Subject<string>();
-  devRequestLoading = false;
-  devRequestField: FormlyFieldConfig = {
+  deviceRequests$: Observable<any>;
+  deviceRequestInput$ = new Subject<string>();
+  deviceRequestLoading = false;
+  deviceRequestField: FormlyFieldConfig = {
     key: 'deviceRequestId',
     type: 'choice',
     className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Device Request',
       description: 'The device request this device is currently assigned to.',
-      loading: this.devRequestLoading,
-      typeahead: this.devRequestInput$,
+      loading: this.deviceRequestLoading,
+      typeahead: this.deviceRequestInput$,
       placeholder: 'Assign device to a Device Request',
       multiple: false,
       searchable: true,
@@ -513,7 +513,7 @@ export class KitInfoComponent {
             label: "Serial Number"
           }
         },
-        this.devRequestField
+        this.deviceRequestField
       ]
     },
     {
@@ -973,7 +973,7 @@ export class KitInfoComponent {
 
     if (data.deviceRequest && data.deviceRequest.id) {
       data.deviceRequest = data.deviceRequest.id;
-      this.devRequestField.templateOptions['items'] = [
+      this.deviceRequestField.templateOptions['items'] = [
         {label: this.organisationName(data.deviceRequest), value: data.deviceRequest.id}
       ];
     }
@@ -1154,17 +1154,17 @@ export class KitInfoComponent {
       )
     );
 
-    this.devRequests$ = concat(
+    this.deviceRequests$ = concat(
       of([]),
-      this.devRequestInput$.pipe(
+      this.deviceRequestInput$.pipe(
         debounceTime(200),
         distinctUntilChanged(),
-        tap(() => this.devRequestLoading = true),
-        switchMap(term => from(devRequestRef.refetch({
+        tap(() => this.deviceRequestLoading = true),
+        switchMap(term => from(deviceRequestRef.refetch({
           term: term
         })).pipe(
           catchError(() => of([])),
-          tap(() => this.devRequestLoading = false),
+          tap(() => this.deviceRequestLoading = false),
           switchMap(res => {
             const data = res['data']['deviceRequestConnection']['content'].map(v => {
               return {
@@ -1198,8 +1198,8 @@ export class KitInfoComponent {
       this.donorField.templateOptions['items'] = data;
     }));
 
-    this.sub.add(this.devRequests$.subscribe(data => {
-      this.devRequestField.templateOptions['items'] = data;
+    this.sub.add(this.deviceRequests$.subscribe(data => {
+      this.deviceRequestField.templateOptions['items'] = data;
     }));
   }
 
@@ -1208,7 +1208,7 @@ export class KitInfoComponent {
   }
 
   organisationName(data) {
-    return `${data.deviceRequest.referringOrganisationContact.referringOrganisation.name || ''}||${data.id || ''}`
+    return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
       .join(' / ')
