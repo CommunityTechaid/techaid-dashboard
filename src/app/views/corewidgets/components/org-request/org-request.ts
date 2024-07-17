@@ -85,6 +85,14 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
 }
 `;
 
+const CREATE_DEVICE_REQUEST = gql`
+mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
+  createDeviceRequest(data: $data){
+     id
+  }
+}
+`;
+
 
 
 @Component({
@@ -415,7 +423,7 @@ export class OrgRequestComponent {
   }
 
    /**
-   * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION 
+   * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
    *
    */
   requestPage: FormlyFieldConfig = {
@@ -501,9 +509,9 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client have access to the internet at home?',
           options: [
-            { value: 'yes', label: 'Yes' },
-            { value: 'no', label: 'No' },
-            { value: 'dk', label: 'Don\'t know' }
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+            { value: null, label: 'Don\'t know' }
           ],
           required: true
         }
@@ -515,9 +523,9 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
           options: [
-            { value: 'yes', label: 'Yes' },
-            { value: 'no', label: 'No' },
-            { value: 'dk', label: 'Don\'t know' }
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+            { value: null, label: 'Don\'t know' }
           ],
           required: true
         }
@@ -529,12 +537,25 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
           options: [
-            { value: 'yes', label: 'Yes' },
-            { value: 'no', label: 'No' },
-            { value: 'dk', label: 'Don\'t know' }
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+            { value: null, label: 'Don\'t know' }
           ],
           required: true
         }
+      },
+      {
+        type: 'button',
+        className: 'border',
+        templateOptions: {
+          text: 'Submit',
+          onClick: () => {
+            this.test().then(success => {
+              if (success) {
+              }
+            });
+          }
+        },
       }
     ]
   }
@@ -806,6 +827,49 @@ export class OrgRequestComponent {
     }
   }
 
+  setDeviceRequestItems(deviceRequestItems: any) {
+
+    const payload: any = {};
+
+    for (var device of deviceRequestItems) {
+      payload[device] = 1;
+    }
+
+    return payload;
+
+
+  }
+
+  test(){
+    const deviceRequest:any = this.requestPage.formControl.value;
+    const data: any = {
+      clientRef: deviceRequest.clientRef,
+      deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
+      details: deviceRequest.details,
+      referringOrganisationContact: deviceRequest.referringOrganisationContactId,
+      deviceRequestItems: this.setDeviceRequestItems(deviceRequest.deviceRequestItems)
+  };
+
+    return this.apollo.mutate({
+      mutation: CREATE_DEVICE_REQUEST,
+      variables: { data }
+    }).toPromise().then(res => {
+
+      var data = res["data"]["createDeviceRequest"]["id"];
+      if (data) {
+        this.toastr.info("Your request was made succesfully.")
+        return true;
+      } else {
+        this.toastr.error("Could not create your request.");
+        console.log(res);
+        return false;
+      }
+    }).catch(error => {
+      this.toastr.error("An error occurred while trying to create the request");
+      console.error(error);
+      return false;
+    });
+  }
 
   createEntity(data: any) {
     data = this.normalizeData(data);
