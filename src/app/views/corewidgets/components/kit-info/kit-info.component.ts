@@ -275,16 +275,8 @@ query findAutocompleteDeviceRequests($term: String) {
       _contains: $term
     }
     OR: [
-    {
-      name: {
-        _contains: $term
-      }
-    },
-    {
-      clientRef: {
-        _contains: $term
-      }
-    }
+    { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } },
+    { clientRef: { _contains: $term } }
     ]
   }){
     content  {

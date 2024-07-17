@@ -155,30 +155,13 @@ query findAutocompleteDeviceRequests($term: String, $ids: [Long!]) {
   deviceRequestConnection(page: {
     size: 50
   }, where: {
-    name: {
-      _contains: $term
-    }
+    referringOrganisationConact: {referringOrganisation: { name: { _contains: $term } } }
     OR: [
-    {
-      id: {
-        _in: $ids
-      }
-    },
-    {
-      phoneNumber: {
-        _contains: $term
-      }
-    },
-    {
-      contact: {
-        _contains: $term
-      }
-    },
-    {
-      email: {
-        _contains: $term
-      }
-    }]
+    { id: { _in: $ids } },
+    { referringOrganisationConact: { phoneNumber: { _contains: $term } } },
+    { referringOrganisationConact: { fullName: { _contains: $term } } },
+    { referringOrganisationConact: { email: { _contains: $term } } }
+    ]
   }){
     content  {
      id

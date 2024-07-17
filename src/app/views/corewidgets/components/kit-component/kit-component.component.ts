@@ -87,12 +87,12 @@ const AUTOCOMPLETE_DEVICE_REQUESTS = gql`
     deviceRequestConnection(
       page: { size: 50 }
       where: {
-        referringOrganisationContact.referringOrganisation.name: { _contains: $term }
+        referringOrganisationContact: {referringOrganisation: {name: { _contains: $term }}}
         OR: [
           { id: { _in: $ids } }
-          { referringOrganisationContact.phoneNumber: { _contains: $term } }
-          { referringOrganisationContact.fullName: { _contains: $term } }
-          { referringOrganisationContact.email: { _contains: $term } }
+          { referringOrganisationContact: {phoneNumber: { _contains: $term } }}
+          { referringOrganisationContact: {fullName: { _contains: $term } }}
+          { referringOrganisationContact: {email: { _contains: $term } }}
         ]
       }
     ) {
