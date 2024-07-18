@@ -64,13 +64,12 @@ query findAutocompleteReferringOrgs($term: String) {
 `;
 
 const FIND_ORGANISATION_CONTACT = gql`
-query findOrganisationContact($fullName: String, $email: String) {
-  referringOrganisationContact( where: {
+query findOrganisationContact($fullName: String, $email: String, $refOrgId: Long) {
+  referringOrganisationContactsPublic( where: {
       fullName: { _ilike: $fullName }
       email: { _ilike: $email }
-    }){
-    id
-  }
+      referringOrganisation: { id: { _eq: $refOrgId } }
+    })
 }
 `;
 
@@ -659,14 +658,6 @@ export class OrgRequestComponent {
         }
       });
 
-    const contactRef = this.apollo
-      .watchQuery({
-        query: FIND_ORGANISATION_CONTACT,
-        variables: {
-
-        }
-      })
-
     this.referringOrgs$ = concat(
       of([]),
       this.referringOrgInput.pipe(
@@ -774,13 +765,15 @@ export class OrgRequestComponent {
       query: FIND_ORGANISATION_CONTACT,
       variables: {
         fullName: this.fullNameField.formControl.value,
-        email: this.emailField.formControl.value
+        email: this.emailField.formControl.value,
+        refOrgId: this.referringOrgIdField.formControl.value 
       }
     }).toPromise().then(res => {
 
-      var data = res["data"]["referringOrganisationContact"];
-      if (data) {
-        this.referringContactIdField.formControl.setValue(data["id"]);
+      var data = res["data"]["referringOrganisationContactsPublic"];
+      if (data && data.length >= 1) {
+        console.log(data[0])
+        this.referringContactIdField.formControl.setValue(data[0]);
         this.isContactExists = true;
         this.showRequestPage();
       } else {
