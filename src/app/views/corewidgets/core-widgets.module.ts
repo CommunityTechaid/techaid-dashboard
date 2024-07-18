@@ -47,6 +47,8 @@ import { ReferringOrganisationIndexComponent } from './components/referring-orga
 import { ReferringOrganisationInfoComponent } from './components/referring-organisation-info/referring-organisation-info.component';
 import { ReferringOrganisationContactIndexComponent } from './components/referring-organisation-contact-index/referring-organisation-contact-index.component';
 import { ReferringOrganisationContactInfoComponent } from './components/referring-organisation-contact-info/referring-organisation-contact-info.component';
+import { ReferringOrganisationContactComponent }  from './components/referring-organisation-contact-component/referring-organisation-contact-component.component';
+import { DeviceRequestComponent } from './components/device-request-component/device-request-component.component';
 
 const routes: Routes = [
   { path: '', component: DashboardIndexComponent },
@@ -143,7 +145,9 @@ const routes: Routes = [
     ReferringOrganisationIndexComponent,
     ReferringOrganisationInfoComponent,
     ReferringOrganisationContactIndexComponent,
-    ReferringOrganisationContactInfoComponent
+    ReferringOrganisationContactInfoComponent,
+    ReferringOrganisationContactComponent,
+    DeviceRequestComponent
   ],
   imports: [
     LightboxModule,

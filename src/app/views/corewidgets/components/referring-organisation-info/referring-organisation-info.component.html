@@ -64,7 +64,7 @@
           <ngb-tab title="Referees">
               <ng-template ngbTabContent>
                   <div class="mt-2">
-                      <referring-organisation-contact-component *ngIf="model?.id" [where]="{referringOrganisation: {id: {_eq: model.id}}}" [tableId]="'referring-organisation-referees-' + model.id"></referring-organisation-contact-component>
+                      <referee-component *ngIf="model?.id" [where]="{referringOrganisation: {id: {_eq: model.id}}}" [tableId]="'referring-organisation-referees-' + model.id"></referee-component>
                   </div>
               </ng-template>
           </ngb-tab>
