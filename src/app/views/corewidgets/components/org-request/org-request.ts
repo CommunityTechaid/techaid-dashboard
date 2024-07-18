@@ -50,18 +50,15 @@ query findContent {
 
 const AUTOCOMPLETE_REFERRING_ORGANISATION = gql`
 query findAutocompleteReferringOrgs($term: String) {
-  referringOrganisationsConnection(page: {
-    size: 50
-  }, where: {
+  referringOrganisationsPublic(where: {
       name: {
         _contains: $term
       }
   }){
-    content  {
+
      id
      name
-     address
-    }
+
   }
 }
 `;
@@ -148,10 +145,10 @@ export class OrgRequestComponent {
     },
     templateOptions: {
       label: 'Organisation Name',
-      description: 'Type the name of your organisation',
+      description: 'Type atleast three letters of the name of your organisation',
       loading: this.referringOrgLoading,
       typeahead: this.referringOrgInput,
-      placeholder: 'Name of your organisation',
+      placeholder: 'Start typing the name of your organisation',
       multiple: false,
       searchable: true,
       items: [],
@@ -680,14 +677,15 @@ export class OrgRequestComponent {
         }
         ),
         switchMap(term => {
-          if (term) {
+          if (term && term.length >= 3) {
             return from(orgRef.refetch({
               term: term
             })).pipe(
               catchError(() => of([])),
               tap(() => this.referringOrgLoading = false),
               switchMap(res => {
-                var data = res['data']['referringOrganisationsConnection']['content'].map(v => {
+                console.log(res['data'])
+                var data = res['data']['referringOrganisationsPublic'].map(v => {
                   return {
                     label: v.name, value: v.id
                   };
