@@ -99,7 +99,7 @@ const routes: Routes = [
   { path: 'dashboard/referring-organisations', component: ReferringOrganisationIndexComponent, canActivate: [AuthGuard] },
   { path: 'dashboard/referring-organisations/:orgId', component: ReferringOrganisationInfoComponent, canActivate: [AuthGuard] },
   { path: 'dashboard/referring-organisation-contacts', component: ReferringOrganisationContactIndexComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard/referring-organisation-contacts/:contactId', component: ReferringOrganisationContactInfoComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard/referring-organisation-contacts/:refereeId', component: ReferringOrganisationContactInfoComponent, canActivate: [AuthGuard] },
   { path: 'dashboard', component: DashboardIndexComponent, canActivate: [AuthGuard]},
   { path: 'about-us', component: PostDataComponent},
   { path: 'reports', component: ReportsComponent, canActivate: [AuthGuard] },

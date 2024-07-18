@@ -62,8 +62,9 @@
                                       </div>
                                   </td>
                                   <td>{{dt.clientRef}}</td>
-                                  <td>{{dt.referringOrganisationContact.referringOrganisation.name}}</td>
-                                  <td>{{dt.referringOrganisationContact.fullName}}</td>
+                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
+                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
+
                                   <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
                                       {{ dt.createdAt | date:'medium' }}
                                   </td>

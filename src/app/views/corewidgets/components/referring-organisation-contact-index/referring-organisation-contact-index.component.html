@@ -64,7 +64,7 @@
                                   <td>{{dt.email}}</td>
                                   <td>{{dt.phoneNumber}}</td>
                                   <td>{{dt.requestCount}}</td>
-                                  <td>{{dt.referringOrganisation.name}}</td>
+                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisation.id]">{{dt.referringOrganisation.name}}</a></td>
                                   <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
                                       {{ dt.createdAt | date:'medium' }}
                                   </td>

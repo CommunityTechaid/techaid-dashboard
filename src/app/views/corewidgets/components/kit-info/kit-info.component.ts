@@ -104,7 +104,9 @@ query findKit($id: Long) {
       id
       clientRef
       referringOrganisationContact {
+        id
         referringOrganisation {
+          id
           name
         }
       }
@@ -173,7 +175,9 @@ mutation updateKit($data: UpdateKitInput!) {
     deviceRequest {
       id
       referringOrganisationContact {
+        id
         referringOrganisation {
+          id
           name
         }
       }
@@ -283,7 +287,9 @@ query findAutocompleteDeviceRequests($term: String) {
      id
      clientRef
      referringOrganisationContact {
+      id
       referringOrganisation {
+        id
         name
       }
      }
@@ -295,7 +301,6 @@ query findAutocompleteDeviceRequests($term: String) {
 @Component({
   selector: 'kit-info',
   styleUrls: ['kit-info.scss'],
-
   templateUrl: './kit-info.html'
 })
 export class KitInfoComponent {

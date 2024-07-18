@@ -63,7 +63,9 @@ const QUERY_ENTITY = gql`
         deviceRequest {
           id
           referringOrganisationContact {
+            id
             referringOrganisation {
+              id
               name
             }
           }
@@ -99,10 +101,12 @@ const AUTOCOMPLETE_DEVICE_REQUESTS = gql`
       content {
         id
         referringOrganisationContact {
+          id
           fullName
           email
           phoneNumber
           referringOrganisation {
+            id
             name
           }
         }
@@ -146,10 +150,12 @@ const FIND_USERS = gql`
     deviceRequests(where: { id: { _in: $deviceRequestIds } }) {
       id
       referringOrganisationContact {
+        id
         fullName
         email
         phoneNumber
         referringOrganisation {
+          id
           name
         }
       }

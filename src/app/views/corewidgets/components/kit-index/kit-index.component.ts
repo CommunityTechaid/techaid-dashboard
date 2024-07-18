@@ -73,7 +73,9 @@ query findAllKits($page: PaginationInput,$term: String, $where: KitWhereInput!) 
      deviceRequest {
        id
        referringOrganisationContact {
+        id
         referringOrganisation {
+          id
           name
         }
        }
@@ -166,10 +168,12 @@ query findAutocompleteDeviceRequests($term: String, $ids: [Long!]) {
     content  {
      id
      referringOrganisationContact {
+      id
       email
       fullName
       phoneNumber
       referringOrganisation {
+        id
         name
       }
      }
@@ -198,10 +202,12 @@ query findAutocompleteVolunteers($volunteerIds: [Long!], $deviceRequestIds: [Lon
   }){
      id
      referringOrganisationContact {
+      id
       fullName
       email
       phoneNumber
       referringOrganisation {
+        id
         name
       }
      }

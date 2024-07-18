@@ -90,7 +90,8 @@
                                     <!-- <span *ngIf="!dt.volunteer?.id">--</span> -->
                                   </td>
                                   <td><span class="badge badge-info">{{dt.kitCount}}</span></td>
-                                  <td>{{dt.referringOrganisationContact.fullName}}</td>
+
+                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
                                   <td>
                                       <a routerLink="/dashboard/email" [queryParams]="{to: dt.email}">{{dt.referringOrganisationContact.email}}</a>
                                   </td>

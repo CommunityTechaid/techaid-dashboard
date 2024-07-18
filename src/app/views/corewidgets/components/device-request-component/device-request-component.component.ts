@@ -14,40 +14,42 @@ import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from '
 const QUERY_ENTITY = gql`
 query findAllOrgs($page: PaginationInput,, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
-    AND: {
-      OR: [
-        {
-          referringOrganisationContact: { phoneNumber: { _contains: $term } }
-          AND: [$filter]
-        },
-        {
-          referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }
-          AND: [$filter]
-        },
-        {
-          referringOrganisationContact: { fullName: { _contains: $term } }
-          AND: [$filter]
-        },
-        {
-          referringOrganisationContact: { email: { _contains: $term } }
-          AND: [$filter]
-        },
-        {
-          clientRef: { _contains: $term }
-          AND: [$filter]
-        }
-      ]
-    }
+    AND: [$filter]
+    OR: [
+      {
+        referringOrganisationContact: { phoneNumber: { _contains: $term } }
+        AND: [$filter]
+      },
+      {
+        referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }
+        AND: [$filter]
+      },
+      {
+        referringOrganisationContact: { fullName: { _contains: $term } }
+        AND: [$filter]
+      },
+      {
+        referringOrganisationContact: { email: { _contains: $term } }
+        AND: [$filter]
+      },
+      {
+        clientRef: { _contains: $term }
+        AND: [$filter]
+      }
+    ]
+
   }){
     totalElements
     content{
       id
       referringOrganisationContact {
+        id
         phoneNumber
         fullName
         email
         address
         referringOrganisation {
+          id
           name
         }
       }
