@@ -58,6 +58,50 @@
                                               <div>
                                                   <a href="#" [routerLink]="['./', dt.id]">{{ dt.status }}</a>
                                               </div>
+                                              <div>
+                                                <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.other != 0">
+                                                    <span class="badge badge-primary">
+                                                        <span class="badge badge-secondary">Other</span>
+                                                        {{dt.types['OTHER'] || 0}}  / {{dt.deviceRequestItems.other || 0}}
+                                                    </span>
+                                                </span>
+                                                <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.laptops != 0">
+                                                    <span class="badge badge-primary">
+                                                        <span class="badge badge-secondary">Laptops</span>
+                                                        {{dt.types['LAPTOPS'] || 0}}  / {{dt.deviceRequestItems.laptops || 0}}
+                                                    </span>
+                                                </span>
+                                                <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.tablets != 0">
+                                                  <span class="badge badge-primary">
+                                                      <span class="badge badge-secondary">Tablets</span>
+                                                      {{dt.types['TABLETS'] || 0}}  / {{dt.deviceRequestItems.tablets || 0}}
+                                                  </span>
+                                                </span>
+                                                <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.allInOnes != 0">
+                                                  <span class="badge badge-primary">
+                                                      <span class="badge badge-secondary">All-in-ones</span>
+                                                      {{dt.types['ALLINONES'] || 0}}  / {{dt.deviceRequestItems.allInOnes || 0}}
+                                                  </span>
+                                                </span>
+                                                <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.desktops != 0">
+                                                  <span class="badge badge-primary">
+                                                      <span class="badge badge-secondary">Desktops</span>
+                                                      {{dt.types['DESKTOPS'] || 0}}  / {{dt.deviceRequestItems.desktops || 0}}
+                                                  </span>
+                                                </span>
+                                                <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.phones != 0">
+                                                  <span class="badge badge-primary">
+                                                      <span class="badge badge-secondary">Phones</span>
+                                                      {{dt.types['PHONES'] || 0}}  / {{dt.deviceRequestItems.phones || 0}}
+                                                  </span>
+                                                </span>
+                                                <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.commsDevices != 0">
+                                                  <span class="badge badge-primary">
+                                                      <span class="badge badge-secondary">Comms Devices</span>
+                                                      {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
+                                                  </span>
+                                              </span>
+                                            </div>
                                           </div>
                                       </div>
                                   </td>

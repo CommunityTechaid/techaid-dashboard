@@ -28,23 +28,64 @@ const QUERY_ENTITY = gql`
       status
       createdAt
       updatedAt
+      deviceRequestItems {
+        phones
+        tablets
+        laptops
+        allInOnes
+        desktops
+        commsDevices
+        other
+      }
+      isSales
+      clientRef
+      details
+      deviceRequestNeeds {
+        hasInternet
+        hasMobilityIssues
+        needQuickStart
+      }
+      deviceRequestNotes {
+        id
+        content
+        volunteer
+        createdAt
+        updatedAt
+      }
     }
   }
 `;
 
 const UPDATE_ENTITY = gql`
-  mutation updateReferringOrganisation($data: UpdateDeviceRequestInput!) {
+  mutation updateDeviceRequest($data: UpdateDeviceRequestInput!) {
     updateDeviceRequest(data: $data) {
       id
       status
       createdAt
       updatedAt
+      deviceRequestItems {
+        phones
+        tablets
+        laptops
+        allInOnes
+        desktops
+        commsDevices
+        other
+      }
+      isSales
+      clientRef
+      details
+      deviceRequestNeeds {
+        hasInternet
+        hasMobilityIssues
+        needQuickStart
+      }
     }
   }
 `;
 
 const DELETE_ENTITY = gql`
-  mutation deleteReferringOrganisationContact($id: ID!) {
+  mutation deleteDeviceRequest($id: ID!) {
     deleteDeviceRequest(id: $id)
   }
 `;
@@ -76,25 +117,326 @@ export class DeviceRequestInfoComponent {
   @Select(UserState.user) user$: Observable<User>;
 
   fields: Array<FormlyFieldConfig> = [
-
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          key: 'status',
-          type: 'radio',
-          className: 'col-md-4 device-request-status',
-          defaultValue: 'NEW',
-          templateOptions: {
-            label: 'Status of the request',
-            options: DEVICE_REQUEST_STATUS_LABELS,
-            required: true
-          }
-        },
-      ],
-    },
-  ];
+          // column 1
+          fieldGroupClassName: 'd-flex flex-column justify-content-between',
+          className: 'col-md-4',
+          fieldGroup: [
+            {
+              key: 'status',
+              type: 'radio',
+              className: 'device-request-status',
+              defaultValue: 'NEW',
+              templateOptions: {
+                label: 'Status of the request',
+                options: DEVICE_REQUEST_STATUS_LABELS,
+                required: true
+              }
+            },
 
+//             {
+//               key: 'name',
+//               type: 'input',
+//               className: '',
+//               defaultValue: '',
+//               templateOptions: {
+//                 label: 'Organisation name',
+// //                description: 'The name of the organisation',
+//                 placeholder: '',
+//                 required: true
+//               },
+//               validation: {
+//                 show: false
+//               },
+//               expressionProperties: {
+//                 'validation.show': 'model.showErrorState',
+//               }
+//             },
+            // {
+            //   key: 'contact',
+            //   type: 'input',
+            //   className: '',
+            //   defaultValue: '',
+            //   templateOptions: {
+            //     label: 'Primary contact name',
+            //     placeholder: '',
+            //     required: true
+            //   },
+            //   validation: {
+            //     show: false
+            //   },
+            //   expressionProperties: {
+            //     'validation.show': 'model.showErrorState',
+            //   }
+            // },
+            // {
+            //   key: 'email',
+            //   type: 'input',
+            //   className: '',
+            //   defaultValue: '',
+            //   templateOptions: {
+            //     label: 'Primary contact email',
+            //     type: 'email',
+            //     pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+            //     placeholder: '',
+            //     required: true
+            //   },
+            //   expressionProperties: {
+            //     'templateOptions.required': '!model.phoneNumber.length'
+            //   }
+            // },
+            // {
+            //   key: 'phoneNumber',
+            //   type: 'input',
+            //   className: '',
+            //   defaultValue: '',
+            //   templateOptions: {
+            //     label: 'Primary contact phone number',
+            //     required: true
+            //   },
+            //   expressionProperties: {
+            //     'templateOptions.required': '!model.email.length'
+            //   }
+            // },
+            // {
+            //   key: 'address',
+            //   type: 'place',
+            //   className: '',
+            //   defaultValue: '',
+            //   templateOptions: {
+            //     label: 'Address',
+            //     description: 'The address of the organisation',
+            //     placeholder: '',
+            //     postCode: false,
+            //     required: true
+            //   },
+            //   expressionProperties: {
+            //     'templateOptions.required': '!model.address.length'
+            //   }
+            // },
+            {
+              key: 'clientRef',
+              type: 'input',
+              className: '',
+              defaultValue: '',
+              templateOptions: {
+                label: 'Organisation\'s client reference',
+                // TODO: should this be required
+                description: 'An organisation\'s internal reference for their client',
+                required: false
+              }
+            }
+          ]
+        },
+        {
+          fieldGroupClassName: 'd-flex flex-column justify-content-between',
+          className: 'col-md-4',
+          // column 2
+          fieldGroup: [
+            {
+              key: 'details',
+              type: 'textarea',
+              className: '',
+              defaultValue: '',
+              templateOptions: {
+                label: 'Referring organisation\'s details about the client',
+                description: '',
+                rows: 4,
+                required: false
+              }
+            },
+            {
+              fieldGroup: [
+                //       {
+                //         className: '',
+                //         template: `
+                //   <p>How many of the following items can you currently take</p>
+                // `
+                //       },
+                {
+                  key: 'deviceRequestItems.laptops',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  templateOptions: {
+                    min: 0,
+                    label: 'Laptops',
+                    addonLeft: {
+                      class: 'fas fa-laptop'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                  {
+                    key: 'deviceRequestItems.phones',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      label: 'Phones',
+                      addonLeft: {
+                        class: 'fas fa-mobile-alt'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  },
+                  {
+                    key: 'deviceRequestItems.tablets',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      label: 'Tablets',
+                      addonLeft: {
+                        class: 'fas fa-tablet-alt'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  },
+                  {
+                    key: 'deviceRequestItems.allInOnes',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      label: 'All In Ones',
+                      addonLeft: {
+                        class: 'fas fa-desktop'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  },
+                  {
+                    key: 'deviceRequestItems.desktops',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      label: 'Desktops',
+                      addonLeft: {
+                        class: 'fas fa-desktop'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  },
+                {
+                    key: 'deviceRequestItems.other',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      max: 5,
+                      label: 'Other',
+                      description: '',
+                      addonLeft: {
+                        class: 'fas fa-laptop-house'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  },
+                  {
+                    key: 'deviceRequestItems.commsDevices',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      max: 5,
+                      label: 'Connectivity Devices',
+                      description: '',
+                      addonLeft: {
+                        class: 'fas fa-laptop-house'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  }
+              ]
+            }
+          ]
+        },
+        {
+          fieldGroupClassName: 'd-flex flex-column justify-content-between',
+          className: 'col-md-4',
+          //column 3
+          fieldGroup: [
+            // {
+            //   key: 'deviceRequestNotes',
+            //   type: 'textarea',
+            //   className: '',
+            //   defaultValue: '',
+            //   templateOptions: {
+            //     label: 'Request fulfilment notes',
+            //     rows: 4,
+            //     required: false
+            //   }
+            // },
+            {
+              key: 'deviceRequestNeeds.hasInternet',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Has no home internet',
+                placeholder: '',
+                required: false
+              }
+            },
+            {
+              key: 'deviceRequestNeeds.hasMobilityIssues',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Mobility issues',
+                placeholder: '',
+                required: false
+              }
+            },
+            {
+              key: 'deviceRequestNeeds.needQuickStart',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Training needs',
+                placeholder: '',
+                required: false
+              }
+            },
+            {
+              key: 'isSales',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Is this a commercial sale?',
+                placeholder: '',
+                required: false
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ];
 
   private queryRef = this.apollo.watchQuery({
     query: QUERY_ENTITY,

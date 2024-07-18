@@ -10,6 +10,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
+import { DEVICE_REQUEST_STATUS_LABELS } from '../device-request-info/device-request-info.component';
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $status: DeviceRequestStatus, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -33,6 +34,18 @@ query findAllDeviceRequests($page: PaginationInput, $status: DeviceRequestStatus
      id
      status
      clientRef
+     deviceRequestItems {
+      phones
+      tablets
+      laptops
+      allInOnes
+      desktops
+      commsDevices
+      other
+     }
+     kits {
+      type
+     }
      referringOrganisationContact {
       id
       fullName
@@ -139,20 +152,16 @@ export class DeviceRequestIndexComponent {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          key: 'archived',
-          type: 'multicheckbox',
-          className: 'col-sm-4',
-          defaultValue: [false],
+          key: 'status',
+          type: 'choice',
+          className: 'col-md-12',
           templateOptions: {
-            type: 'array',
-            label: 'Filter by Archived?',
-            options: [
-              {label: 'Active Requests', value: false },
-              {label: 'Archived Requests', value: true },
-            ],
-            required: false,
+            label: 'Status of the request',
+            items: DEVICE_REQUEST_STATUS_LABELS,
+            multiple: true,
+            required: false
           }
-        }
+        },
       ]
     }
   ];
@@ -167,6 +176,11 @@ export class DeviceRequestIndexComponent {
     if (data.archived && data.archived.length) {
       count += data.archived.length;
       filter['referringOrganisationContact'] = { 'archived': { _in: data.archived}};
+    }
+
+    if (data.status && data.status.length) {
+      count = count + data.status.length;
+      filter['status'] = {'_in': data.status };
     }
 
     localStorage.setItem(`deviceRequestFilters-${this.tableId}`, JSON.stringify(data));
@@ -254,6 +268,16 @@ export class DeviceRequestIndexComponent {
             if (!this.total) {
               this.total = data['totalElements'];
             }
+            data.content.forEach(d => {
+              d.types = {};
+              if (d.kits && d.kits.length) {
+                d.kits.forEach(k => {
+                  const t = `${k.type}S`;
+                  d.types[t] = d.types[t] || 0;
+                  d.types[t]++;
+                });
+              }
+            });
             this.entities = data.content;
           }
 
