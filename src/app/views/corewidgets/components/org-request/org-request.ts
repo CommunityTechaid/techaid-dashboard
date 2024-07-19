@@ -224,7 +224,7 @@ export class OrgRequestComponent {
         templateOptions: {
           label: '',
           placeholder: 'Organisation phone number',
-          required: true
+          required: false
         },
         validation: {
           show: false
@@ -735,7 +735,19 @@ export class OrgRequestComponent {
 
   async saveNewReferringOrganisation(): Promise<boolean> {
 
-    console.log(this.referringOrganisationDetailFormGroup.formControl)
+    console.log(this.referringOrganisationDetailFormGroup)
+    console.log()
+
+    var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
+    var wesbite = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
+
+    if (!address && !wesbite){
+      this.toastr.error("Please fill in an address OR a website");
+      return false
+
+    }
+
+
     var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION,
@@ -752,7 +764,7 @@ export class OrgRequestComponent {
         return false;
       }
     }).catch(error => {
-      this.toastr.error("An error occurred while creating the organisation.");
+      this.toastr.error(error.message.split(':')[1]);
       console.error(error);
       return false;
     });
@@ -780,7 +792,7 @@ export class OrgRequestComponent {
         return false;
       }
     }).catch(error => {
-      this.toastr.error("An error occurred while trying to save your contact details.");
+      this.toastr.error(error.message.split(':')[1]);
       console.error(error);
       return false;
     });
