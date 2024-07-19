@@ -144,7 +144,7 @@ export class OrgRequestComponent {
     },
     templateOptions: {
       label: 'Organisation Name',
-      description: 'Type atleast three letters of the name of your organisation',
+      description: 'Type at least three letters of the name of your organisation',
       loading: this.referringOrgLoading,
       typeahead: this.referringOrgInput,
       placeholder: 'Start typing the name of your organisation',
@@ -521,7 +521,7 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'For your records, enter your client\'s initials or a client reference',
           // TODO: should this be required
-          required: false
+          required: true
         }
       },
       {
@@ -895,6 +895,13 @@ export class OrgRequestComponent {
 
   createNewDeviceRequest() {
     const deviceRequest: any = this.requestPage.formControl.value;
+
+    if (!deviceRequest.clientRef){
+      this.toastr.error("Please fill in a client reference");
+      return
+    }
+    
+
     const data: any = {
       clientRef: deviceRequest.clientRef,
       deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
