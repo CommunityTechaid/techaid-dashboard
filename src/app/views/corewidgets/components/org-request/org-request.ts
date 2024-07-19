@@ -868,8 +868,7 @@ export class OrgRequestComponent {
         return false;
       }
     }).catch(error => {
-      this.toastr.error("An error occurred while trying to create the request");
-      console.error(error);
+      this.toastr.error(error.message.split(':')[1]);
       return false;
     });
   }
