@@ -564,10 +564,29 @@ export class OrgRequestComponent {
           onClick: () => {
             this.createNewDeviceRequest().then((success: boolean) => {
               if (success) {
+                this.showThankYouPage()
               }
             });
           }
         },
+      }
+    ]
+  }
+
+  thankYouPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className:'row',
+        template:'<h3 class="font-weight-bold text-primary">Thank You</h3>'
+      },
+      {
+        className:'row',
+        template:'<p class="">You will receive an email confirmation of your request shortly with the next steps. </p><p>If you haven’t received any email, or need to amend any details, please get in touch:</p>'
+      },
+      {
+        className:'row',
+        template:'<p class="text-primary">020 3488 7742<br>distributions@communitytechaid.org.uk</p><p>Requests typically take 4-6 weeks to fufill</p>'
       }
     ]
   }
@@ -578,7 +597,8 @@ export class OrgRequestComponent {
       fieldGroup: [
         this.refOrganisationPage,
         this.refContactPage,
-        this.requestPage
+        this.requestPage,
+        this.thankYouPage
       ]
     },
     this.referringOrgIdField,
@@ -782,7 +802,13 @@ export class OrgRequestComponent {
       }
     });
 
+  }
 
+  showThankYouPage(){
+    this.refOrganisationPage.hideExpression = true;
+    this.refContactPage.hideExpression = true;
+    this.requestPage.hideExpression = true;
+    this.thankYouPage.hideExpression = false;
   }
 
   showRequestPage() {
