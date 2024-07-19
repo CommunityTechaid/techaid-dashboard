@@ -136,7 +136,7 @@ export class OrgRequestComponent {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
           if (!this.isOrganisationExists) {
             (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
-          }else{
+          } else {
             this.referringOrgIdField.formControl.setValue(v)
           }
         }));
@@ -240,8 +240,10 @@ export class OrgRequestComponent {
           onClick: () => {
             this.saveNewReferringOrganisation().then(success => {
               if (success) {
-                this.isOrganisationExists = true;
+                this.isOrganisationExists = false;
                 this.showContactPage();
+                this.referringOrganisationDetailFormGroup.hideExpression = true
+
               }
             });
           },
@@ -340,9 +342,9 @@ export class OrgRequestComponent {
   };
 
 
-/**
- * REFERRING ORGAQNISATION CONTACT FULL NAME AND EMAIL 
- */
+  /**
+   * REFERRING ORGAQNISATION CONTACT FULL NAME AND EMAIL 
+   */
   fullNameField: FormlyFieldConfig = {
     key: 'referringOrganisationContact.fullName',
     type: 'input',
@@ -356,9 +358,11 @@ export class OrgRequestComponent {
     hooks: {
       onInit: (field) => {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
-          this.isContactExists = true;
-          this.refContactSubmitButton.hideExpression = false
-          this.referringOrganisationContactDetailFormGroup.hideExpression = true;
+          if (this.isOrganisationExists) {
+            this.isContactExists = true;
+            this.refContactSubmitButton.hideExpression = false
+            this.referringOrganisationContactDetailFormGroup.hideExpression = true;
+          }
         }));
       }
     },
@@ -382,9 +386,11 @@ export class OrgRequestComponent {
     hooks: {
       onInit: (field) => {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
-          this.isContactExists = true;
-          this.refContactSubmitButton.hideExpression = false
-          this.referringOrganisationContactDetailFormGroup.hideExpression = true;
+          if (this.isOrganisationExists) {
+            this.isContactExists = true;
+            this.refContactSubmitButton.hideExpression = false
+            this.referringOrganisationContactDetailFormGroup.hideExpression = true;
+          }
         }));
       }
     },
@@ -412,7 +418,10 @@ export class OrgRequestComponent {
   refContactPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
-
+      {
+        className: 'col-md-12',
+        template: '<h6 class="m-0 font-weight-bold text-primary">About you</h6>'
+      },
       this.fullNameField,
       this.emailField,
       this.refContactSubmitButton,
@@ -435,10 +444,10 @@ export class OrgRequestComponent {
     ]
   }
 
-   /**
-   * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
-   *
-   */
+  /**
+  * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
+  *
+  */
   requestPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
@@ -463,21 +472,21 @@ export class OrgRequestComponent {
               maxItems: 1
             },
             fieldArray: {
-            key: 'item',
-            type: 'radio',
-            className: '',
-            templateOptions: {
-              label: 'Please select the item your client needs.',
-              description: 'If your client needs a SIM card in addition to a device, please select the main device above. Then tell us in the notes below that you also need a SIM card.',
-              options: [
-                // TODO: find some way to derive these from requestedItems so it's
-                // all defined in one place
-                { value: 'laptops', label: 'Laptop' },
-                { value: 'desktops', label: 'Desktop computer' },
-                {value: 'phones', label: 'Smartphone'},
-                //{ value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
-                // {value: 'tablets', label: 'Tablet' },
-                
+              key: 'item',
+              type: 'radio',
+              className: '',
+              templateOptions: {
+                label: 'Please select the item your client needs.',
+                description: 'If your client needs a SIM card in addition to a device, please select the main device above. Then tell us in the notes below that you also need a SIM card.',
+                options: [
+                  // TODO: find some way to derive these from requestedItems so it's
+                  // all defined in one place
+                  { value: 'laptops', label: 'Laptop' },
+                  { value: 'desktops', label: 'Desktop computer' },
+                  { value: 'phones', label: 'Smartphone' },
+                  //{ value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
+                  // {value: 'tablets', label: 'Tablet' },
+
                 ],
                 required: true
               },
@@ -577,16 +586,16 @@ export class OrgRequestComponent {
     hideExpression: true,
     fieldGroup: [
       {
-        className:'row',
-        template:'<h3 class="font-weight-bold text-primary">Thank You</h3>'
+        className: 'row',
+        template: '<h3 class="font-weight-bold text-primary">Thank You</h3>'
       },
       {
-        className:'row',
-        template:'<p class="">You will receive an email confirmation of your request shortly with the next steps. </p><p>If you haven’t received any email, or need to amend any details, please get in touch:</p>'
+        className: 'row',
+        template: '<p class="">You will receive an email confirmation of your request shortly with the next steps. </p><p>If you haven’t received any email, or need to amend any details, please get in touch:</p>'
       },
       {
-        className:'row',
-        template:'<p class="text-primary">020 3488 7742<br>distributions@communitytechaid.org.uk</p><p>Requests typically take 4-6 weeks to fufill</p>'
+        className: 'row',
+        template: '<p class="text-primary">020 3488 7742<br>distributions@communitytechaid.org.uk</p><p>Requests typically take 4-6 weeks to fufill</p>'
       }
     ]
   }
@@ -695,7 +704,6 @@ export class OrgRequestComponent {
               catchError(() => of([])),
               tap(() => this.referringOrgLoading = false),
               switchMap(res => {
-                console.log(res['data'])
                 var data = res['data']['referringOrganisationsPublic'].map(v => {
                   return {
                     label: v.name, value: v.id
@@ -727,6 +735,7 @@ export class OrgRequestComponent {
 
   async saveNewReferringOrganisation(): Promise<boolean> {
 
+    console.log(this.referringOrganisationDetailFormGroup.formControl)
     var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION,
@@ -752,7 +761,7 @@ export class OrgRequestComponent {
 
   async saveNewReferringOrganisationContact(): Promise<boolean> {
 
-    var contactDetails:any = this.referringOrganisationContactDetailFormGroup.formControl.value.referringOrganisationContact;
+    var contactDetails: any = this.referringOrganisationContactDetailFormGroup.formControl.value.referringOrganisationContact;
     contactDetails.referringOrganisation = this.referringOrgIdField.formControl.value
     var data = contactDetails;
 
@@ -768,7 +777,6 @@ export class OrgRequestComponent {
         return true;
       } else {
         this.toastr.error("Could not save your contact details.");
-        console.log(res);
         return false;
       }
     }).catch(error => {
@@ -781,18 +789,22 @@ export class OrgRequestComponent {
 
   getRefContact() {
 
+    if (this.fullNameField.formControl.errors || this.emailField.formControl.errors) {
+      this.fullNameField.validation.show = true;
+      this.emailField.validation.show = true;
+      return;
+    }
     this.apollo.query({
       query: FIND_ORGANISATION_CONTACT,
       variables: {
         fullName: this.fullNameField.formControl.value,
         email: this.emailField.formControl.value,
-        refOrgId: this.referringOrgIdField.formControl.value 
+        refOrgId: this.referringOrgIdField.formControl.value
       }
     }).toPromise().then(res => {
 
       var data = res["data"]["referringOrganisationContactsPublic"];
       if (data && data.length >= 1) {
-        console.log(data[0])
         this.referringContactIdField.formControl.setValue(data[0]);
         this.isContactExists = true;
         this.showRequestPage();
@@ -804,7 +816,7 @@ export class OrgRequestComponent {
 
   }
 
-  showThankYouPage(){
+  showThankYouPage() {
     this.refOrganisationPage.hideExpression = true;
     this.refContactPage.hideExpression = true;
     this.requestPage.hideExpression = true;
@@ -869,15 +881,15 @@ export class OrgRequestComponent {
 
   }
 
-  createNewDeviceRequest(){
-    const deviceRequest:any = this.requestPage.formControl.value;
+  createNewDeviceRequest() {
+    const deviceRequest: any = this.requestPage.formControl.value;
     const data: any = {
       clientRef: deviceRequest.clientRef,
       deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
       details: deviceRequest.details,
       referringOrganisationContact: deviceRequest.referringOrganisationContactId,
       deviceRequestItems: this.setDeviceRequestItems(deviceRequest.deviceRequestItems)
-  };
+    };
 
     return this.apollo.mutate({
       mutation: CREATE_DEVICE_REQUEST,
@@ -890,7 +902,6 @@ export class OrgRequestComponent {
         return true;
       } else {
         this.toastr.error("Could not create your request.");
-        console.log(res);
         return false;
       }
     }).catch(error => {
