@@ -10,21 +10,22 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
-import { DEVICE_REQUEST_STATUS_LABELS } from '../device-request-info/device-request-info.component';
+import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 
 const QUERY_ENTITY = gql`
-query findAllDeviceRequests($page: PaginationInput, $status: DeviceRequestStatus, $term: String, $filter: DeviceRequestWhereInput!) {
+query findAllDeviceRequests($page: PaginationInput, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
     AND: {
       clientRef: {
         _contains: $term
       }
+      AND: [ $filter ]
       OR: [
         {
-          status: {
-            _eq: $status
+          id: {
+            _contains: $term
           }
-          AND: [$filter]
+          AND: [ $filter ]
         }
       ]
     }
@@ -88,6 +89,8 @@ export class DeviceRequestIndexComponent {
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
+  statusTypes: any = DEVICE_REQUEST_STATUS;
+
   fields: Array<FormlyFieldConfig> = [
     {
       key: 'name',
@@ -145,7 +148,7 @@ export class DeviceRequestIndexComponent {
 
   filter: any = {};
   filterCount = 0;
-  filterModel: any = {archived: [false]};
+  filterModel: any = {is_sales: [false]};
   filterForm: FormGroup = new FormGroup({});
   filterFields: Array<FormlyFieldConfig> = [
     {
@@ -162,6 +165,21 @@ export class DeviceRequestIndexComponent {
             required: false
           }
         },
+        {
+          key: 'is_sales',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          defaultValue: [false],
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Commercial Sales?',
+            options: [
+              {label: 'Non-commercial', value: false },
+              {label: 'Commercial', value: true },
+            ],
+            required: false,
+          }
+        },
       ]
     }
   ];
@@ -173,14 +191,19 @@ export class DeviceRequestIndexComponent {
     const filter = {'OR': [], 'AND': []};
     let count = 0;
 
-    if (data.archived && data.archived.length) {
+/*     if (data.archived && data.archived.length) {
       count += data.archived.length;
       filter['referringOrganisationContact'] = { 'archived': { _in: data.archived}};
-    }
+    } */
 
     if (data.status && data.status.length) {
       count = count + data.status.length;
       filter['status'] = {'_in': data.status };
+    }
+
+    if (data.is_sales && data.is_sales.length) {
+      count += data.is_sales.length;
+      filter['isSales'] = {_in: data.is_sales};
     }
 
     localStorage.setItem(`deviceRequestFilters-${this.tableId}`, JSON.stringify(data));
@@ -328,9 +351,9 @@ export class DeviceRequestIndexComponent {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
       try {
-        this.filterModel = JSON.parse(localStorage.getItem(`deviceRequestFilters-${this.tableId}`)) || {archived: [false]};
+        this.filterModel = JSON.parse(localStorage.getItem(`deviceRequestFilters-${this.tableId}`)) || {is_sales: [false]};
       } catch (_) {
-        this.filterModel = {archived: [false]};
+        this.filterModel = {is_sales: [false]};
       }
 
       try {

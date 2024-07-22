@@ -56,7 +56,7 @@
                                       <div class="d-flex">
                                           <div class="d-flex flex-column">
                                               <div>
-                                                  <a href="#" [routerLink]="['./', dt.id]">{{ dt.status }}</a>
+                                                  <a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a>
                                               </div>
                                               <div>
                                                 <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.other != 0">

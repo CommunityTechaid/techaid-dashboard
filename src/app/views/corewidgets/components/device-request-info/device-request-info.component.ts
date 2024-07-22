@@ -11,6 +11,16 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 
+export const DEVICE_REQUEST_STATUS = {
+    'NEW':'New request',
+    'PROCESSING_EQUALITIES_DATA_COMPLETE':'Equalities data complete',
+    'PROCESSING_COLLECTION_DELIVERY_ARRANGED':'Collection/Delivery arranged',
+    'PROCESSING_ON_HOLD':'On hold',
+    'REQUEST_COMPLETED':'Completed',
+    'REQUEST_DECLINED':'Declined',
+    'REQUEST_CANCELLED':'Cancelled',
+}
+
 export const DEVICE_REQUEST_STATUS_LABELS = [
   {label: 'New request', value: 'NEW'},
   {label: 'Equalities data complete', value: 'PROCESSING_EQUALITIES_DATA_COMPLETE'},
@@ -36,6 +46,14 @@ const QUERY_ENTITY = gql`
         desktops
         commsDevices
         other
+      }
+      referringOrganisationContact {
+        id
+        fullName
+        referringOrganisation {
+          id
+          name
+        }
       }
       isSales
       clientRef

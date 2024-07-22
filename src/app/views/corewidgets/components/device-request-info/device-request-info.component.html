@@ -19,7 +19,7 @@
                   <div class="card shadow mb-4 mt-1">
                       <div class="card-header py-3">
                           <div class="d-flex justify-content-between">
-                              <h6 class="m-0 font-weight-bold text-primary">{{requestId}}</h6>
+                              <h6 class="m-0 font-weight-bold text-primary">{{requestId}} - <a href="#" [routerLink]="['/dashboard/referring-organisations', model.referringOrganisationContact.referringOrganisation.id]">{{model.referringOrganisationContact.referringOrganisation.name}}</a> / <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', model.referringOrganisationContact.id]">{{model.referringOrganisationContact.fullName}}</a></h6>
                           </div>
                       </div>
                       <div class="card-body">
