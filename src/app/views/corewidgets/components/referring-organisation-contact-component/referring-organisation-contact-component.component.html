@@ -40,7 +40,7 @@
                           <tbody *ngIf="entities?.length != 0;">
                               <tr *ngFor="let dt of entities" [class.selected]="selections[dt.id]" (click)="select(dt)">
                                   <td>
-                                      <a href="#" [routerLink]="['./', dt.id]">
+                                      <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.id]">
                                           <span class="badge badge-primary">
                                               {{dt.id}}
                                           </span>
@@ -50,7 +50,7 @@
                                       <div class="d-flex">
                                           <div class="d-flex flex-column">
                                               <div>
-                                                  <a href="#" [routerLink]="['./', dt.id]">{{ dt.fullName }}</a>
+                                                  <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.id]">{{ dt.fullName }}</a>
                                               </div>
                                           </div>
                                       </div>
