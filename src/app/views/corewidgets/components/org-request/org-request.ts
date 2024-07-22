@@ -199,7 +199,7 @@ export class OrgRequestComponent {
           'validation.show': 'model.showErrorState',
         }
       },
-      {
+/*       {
         key: 'referringOrganisation.address',
         type: 'place',
         className: 'col-md-12',
@@ -215,7 +215,7 @@ export class OrgRequestComponent {
         expressionProperties: {
           'validation.show': 'model.showErrorState'
         }
-      },
+      }, */
       {
         key: 'referringOrganisation.phoneNumber',
         type: 'input',
@@ -263,7 +263,7 @@ export class OrgRequestComponent {
     }
   }
 
-  //hidden field for the ID of the referringContact 
+  //hidden field for the ID of the referringContact
   referringContactIdField: FormlyFieldConfig = {
     key: 'referringOrganisationContactId',
     defaultValue: null,
@@ -343,7 +343,7 @@ export class OrgRequestComponent {
 
 
   /**
-   * REFERRING ORGAQNISATION CONTACT FULL NAME AND EMAIL 
+   * REFERRING ORGAQNISATION CONTACT FULL NAME AND EMAIL
    */
   fullNameField: FormlyFieldConfig = {
     key: 'referringOrganisationContact.fullName',
@@ -412,7 +412,7 @@ export class OrgRequestComponent {
   }
 
   /**
-   * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION CONTACT 
+   * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION CONTACT
    *
    */
   refContactPage: FormlyFieldConfig = {
@@ -430,7 +430,7 @@ export class OrgRequestComponent {
   };
 
   /**
-   * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION 
+   * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION
    *
    */
   refOrganisationPage: FormlyFieldConfig = {
@@ -495,7 +495,7 @@ export class OrgRequestComponent {
               // },
               // expressionProperties: {
               //   'validation.show': 'model.showErrorState',
-              // }              
+              // }
               //   }
               // ]
             }
@@ -738,11 +738,11 @@ export class OrgRequestComponent {
     console.log(this.referringOrganisationDetailFormGroup)
     console.log()
 
-    var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
+    //var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
     var wesbite = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
 
-    if (!address && !wesbite){
-      this.toastr.error("Please fill in an address OR a website");
+    if (!wesbite){
+      this.toastr.error("Please fill in a website");
       return false
 
     }
@@ -900,7 +900,7 @@ export class OrgRequestComponent {
       this.toastr.error("Please fill in a client reference");
       return
     }
-    
+
 
     const data: any = {
       clientRef: deviceRequest.clientRef,

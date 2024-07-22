@@ -17,9 +17,8 @@ const QUERY_ENTITY = gql`
       id
       phoneNumber
       name
-      domain
-      address
       website
+      archived
       createdAt
       updatedAt
     }
@@ -32,8 +31,6 @@ const UPDATE_ENTITY = gql`
       id
       phoneNumber
       name
-      domain
-      address
       website
       archived
     }
@@ -135,43 +132,9 @@ export class ReferringOrganisationInfoComponent {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          key: 'domain',
-          type: 'input',
-          className: 'col-md-6',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Domain',
-            required: false
-          },
-          validation: {
-            show: false,
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
-          },
-        },
-        {
-          key: 'address',
-          type: 'input',
-          className: 'col-md-6',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Address',
-            required: false
-          },
-          validation: {
-            show: false,
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
-          },
-        },
-        {
           key: 'archived',
           type: 'radio',
-          className: '',
+          className: 'col-md-6',
           templateOptions: {
             type: 'array',
             label: 'Archived?',
@@ -183,8 +146,9 @@ export class ReferringOrganisationInfoComponent {
             required: true,
           }
         }
-      ],
-    },
+      ]
+    }
+
   ];
 
 

@@ -36,8 +36,6 @@ query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: Refe
      id
      phoneNumber
      name
-     domain
-     address
      website
      requestCount
      createdAt
