@@ -773,7 +773,22 @@ export class OrgRequestComponent {
 
   async saveNewReferringOrganisationContact(): Promise<boolean> {
 
-    var contactDetails: any = this.referringOrganisationContactDetailFormGroup.formControl.value.referringOrganisationContact;
+    var contactFormControl = this.referringOrganisationContactDetailFormGroup.formControl;
+
+    var isValid: boolean = true
+    for (var field of this.referringOrganisationContactDetailFormGroup.fieldGroup) {
+      if (field.formControl.errors){
+        isValid = false;
+        field.validation.show = true
+      }
+    }
+    
+    if (!isValid) {
+      return
+
+    }
+    
+    var contactDetails: any = contactFormControl.value.referringOrganisationContact;
     contactDetails.referringOrganisation = this.referringOrgIdField.formControl.value
     var data = contactDetails;
 
