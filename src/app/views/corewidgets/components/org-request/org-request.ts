@@ -297,6 +297,7 @@ export class OrgRequestComponent {
         defaultValue: '',
         templateOptions: {
           label: '',
+          pattern: /\+?[0-9]+/,
           placeholder: 'Your phone number',
           required: true
         },
@@ -380,7 +381,9 @@ export class OrgRequestComponent {
     defaultValue: '',
     templateOptions: {
       label: '',
+      type: 'email',
       placeholder: 'Your email address',
+      pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
       required: true
     },
     hooks: {
