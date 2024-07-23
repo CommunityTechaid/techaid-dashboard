@@ -16,15 +16,19 @@ const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
     AND: {
-      clientRef: {
-        _contains: $term
-      }
+      clientRef: { _contains: $term }
       AND: [ $filter ]
       OR: [
         {
-          id: {
-            _contains: $term
-          }
+          id: { _contains: $term }
+          AND: [ $filter ]
+        }
+        {
+          referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }
+          AND: [ $filter ]
+        }
+        {
+          referringOrganisationContact: { fullName: { _contains: $term } }
           AND: [ $filter ]
         }
       ]
@@ -188,7 +192,7 @@ export class DeviceRequestIndexComponent {
   tableId = 'device-request-index';
 
   applyFilter(data) {
-    const filter = {'OR': [], 'AND': []};
+    const filter = {};
     let count = 0;
 
 /*     if (data.archived && data.archived.length) {
