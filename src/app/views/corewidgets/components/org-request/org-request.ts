@@ -844,6 +844,7 @@ export class OrgRequestComponent {
   }
 
   showThankYouPage() {
+    this.content = {}
     this.refOrganisationPage.hideExpression = true;
     this.refContactPage.hideExpression = true;
     this.requestPage.hideExpression = true;
