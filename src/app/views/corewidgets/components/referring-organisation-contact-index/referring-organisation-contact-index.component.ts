@@ -166,7 +166,6 @@ export class ReferringOrganisationContactIndexComponent {
     this.filterCount = count;
     this.filterModel = data;
     this.table.ajax.reload(null, false);
-    console.log(this.filter)
   }
 
   modal(content) {
