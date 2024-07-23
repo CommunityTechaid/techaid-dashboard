@@ -20,6 +20,10 @@ const QUERY_ENTITY = gql`
       phoneNumber
       createdAt
       updatedAt
+      archived
+      referringOrganisation {
+        id
+      }
     }
   }
 `;
@@ -66,6 +70,7 @@ export class ReferringOrganisationContactInfoComponent {
   model: any = {};
   fullName: string;
   refereeId: number;
+  referringOrganisationId: number;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
 
@@ -131,7 +136,7 @@ export class ReferringOrganisationContactInfoComponent {
         {
           key: 'archived',
           type: 'radio',
-          className: '',
+          className: 'col-md-6',
           templateOptions: {
             type: 'array',
             label: 'Archived?',
@@ -177,6 +182,7 @@ export class ReferringOrganisationContactInfoComponent {
             const data = res.data['referringOrganisationContact'];
             this.model = this.normalizeData(data);
             this.fullName = this.model['fullName'];
+            this.referringOrganisationId = this.model['referringOrganisation']['id'];
           } else {
             this.model = {};
             this.fullName = 'Not Found!';
@@ -223,6 +229,7 @@ export class ReferringOrganisationContactInfoComponent {
       return;
     }
     data.id = this.refereeId;
+    data.referringOrganisation = this.referringOrganisationId
 
     this.apollo
       .mutate({
