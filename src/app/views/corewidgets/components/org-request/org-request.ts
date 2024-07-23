@@ -738,13 +738,10 @@ export class OrgRequestComponent {
 
   async saveNewReferringOrganisation(): Promise<boolean> {
 
-    console.log(this.referringOrganisationDetailFormGroup)
-    console.log()
-
     //var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
-    var wesbite = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
+    var website = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
 
-    if (!wesbite){
+    if (!website){
       this.toastr.error("Please fill in a website");
       return false
 
@@ -794,7 +791,7 @@ export class OrgRequestComponent {
     var contactDetails: any = contactFormControl.value.referringOrganisationContact;
     contactDetails.referringOrganisation = this.referringOrgIdField.formControl.value
     var data = contactDetails;
-
+    Object.keys(data).forEach(k => data[k] = typeof data[k] == 'string' ? data[k].trim() : data[k]); 
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION_CONTACT,
       variables: { data }
@@ -827,8 +824,8 @@ export class OrgRequestComponent {
     this.apollo.query({
       query: FIND_ORGANISATION_CONTACT,
       variables: {
-        fullName: this.fullNameField.formControl.value,
-        email: this.emailField.formControl.value,
+        fullName: this.fullNameField.formControl.value.trim(),
+        email: this.emailField.formControl.value.trim(),
         refOrgId: this.referringOrgIdField.formControl.value
       }
     }).toPromise().then(res => {
