@@ -98,6 +98,13 @@ const UPDATE_ENTITY = gql`
         hasMobilityIssues
         needQuickStart
       }
+      deviceRequestNotes {
+        id
+        content
+        volunteer
+        createdAt
+        updatedAt
+      }
     }
   }
 `;
@@ -133,6 +140,21 @@ export class DeviceRequestInfoComponent {
   requestId: number;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
+
+  newNoteField: FormlyFieldConfig = {
+    key: 'deviceRequestNote.content',
+    type: 'device-request-new-note',
+    templateOptions: {
+      placeholder: "Enter text and your initials. The current date and time will be automatically added to the note. Click the save button to save all your changes"
+    }
+  }
+
+  notesField: FormlyFieldConfig = {
+    type: 'device-request-notes',
+    templateOptions: {
+      notes: [],
+    },
+  }
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -449,7 +471,9 @@ export class DeviceRequestInfoComponent {
                 placeholder: '',
                 required: false
               }
-            }
+            },
+            this.newNoteField,
+            this.notesField
           ]
         }
       ]
@@ -466,8 +490,24 @@ export class DeviceRequestInfoComponent {
   }
 
   private normalizeData(data: any) {
-    // Not currently doing any normalization
+
+    this.newNoteField.templateOptions['requestId'] = this.requestId
+
+    this.displayNotes(data)
+
     return data;
+  }
+
+  private displayNotes(data) {
+    if (data.deviceRequestNotes) {
+
+      var notes = []
+      data.deviceRequestNotes.forEach(n => {
+        notes.push({ content: n.content, id: n.id, volunteer: n.volunteer, updated_at: n.updatedAt });
+
+      });
+      this.notesField.templateOptions['notes'] = notes;
+    }
   }
 
   private fetchData() {
@@ -526,6 +566,7 @@ export class DeviceRequestInfoComponent {
   }
 
   updateEntity(data: any) {
+
     if (!this.form.valid) {
       this.model['showErrorState'] = true;
       return;

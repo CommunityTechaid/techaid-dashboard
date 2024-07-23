@@ -24,6 +24,9 @@ import { GraphQLModule } from './graphql.module';
 import { FormlyCustomNote } from './views/corewidgets/components/kit-info/custom-notes';
 import { FormlyCustomCreateNote } from './views/corewidgets/components/kit-info/custom-create-note';
 import { FormlyCustomKitInfoType } from './views/corewidgets/components/kit-info/custom-kit-info-input'
+import { FormlyCustomDeviceRequestNote } from './views/corewidgets/components/device-request-info/custom-notes';
+import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/components/device-request-info/custom-create-notes';
+
 
 @NgModule({
   declarations: [
@@ -33,6 +36,8 @@ import { FormlyCustomKitInfoType } from './views/corewidgets/components/kit-info
     App404,
     FormlyCustomNote,
     FormlyCustomCreateNote,
+    FormlyCustomDeviceRequestNote,
+    FormlyCustomCreateDeviceRequestNote,
     FormlyCustomKitInfoType
   ],
   imports: [
@@ -59,6 +64,8 @@ import { FormlyCustomKitInfoType } from './views/corewidgets/components/kit-info
       types: [
         { name: 'notes', component: FormlyCustomNote },
         { name: 'new-note', component: FormlyCustomCreateNote},
+        { name: 'device-request-notes', component: FormlyCustomDeviceRequestNote },
+        { name: 'device-request-new-note', component: FormlyCustomCreateDeviceRequestNote},
         { name: 'kit-info-input', component: FormlyCustomKitInfoType}
       ]
     })

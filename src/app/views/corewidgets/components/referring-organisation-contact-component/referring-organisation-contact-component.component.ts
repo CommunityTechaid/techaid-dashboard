@@ -15,28 +15,28 @@ const QUERY_ENTITY = gql`
 query findAllReferringOrgContacts(
   $page: PaginationInput,, $term: String, $filter: ReferringOrganisationContactWhereInput!) {
   referringOrganisationContactsConnection(page: $page, where: {
-    AND: {
-      OR: [
-        {
-          fullName: {
-            _contains: $term
-          }
-          AND: [$filter]
-        },
-        {
-          phoneNumber: {
-            _contains: $term
-          }
-          AND: [$filter]
-        },
-        {
-          email: {
-            _contains: $term
-          }
-          AND: [$filter]
+    AND: [$filter]
+    OR: [
+      {
+        fullName: {
+          _contains: $term
         }
-      ]
-    }
+        AND: [$filter]
+      },
+      {
+        phoneNumber: {
+          _contains: $term
+        }
+        AND: [$filter]
+      },
+      {
+        email: {
+          _contains: $term
+        }
+        AND: [$filter]
+      }
+    ]
+
   }){
     totalElements
     content{
@@ -184,7 +184,6 @@ export class ReferringOrganisationContactComponent {
     this.filterCount = count;
     this.filterModel = data;
     this.table.ajax.reload(null, false);
-    console.log(this.filter)
   }
 
   modal(content) {
@@ -254,9 +253,9 @@ export class ReferringOrganisationContactComponent {
             size: params.length,
             page: Math.round(params.start / params.length),
           },
+          where: this.filter,
           term: params['search']['value'],
           filter: this._where || this.filter
-
         };
 
         queryRef.refetch(vars).then(res => {
