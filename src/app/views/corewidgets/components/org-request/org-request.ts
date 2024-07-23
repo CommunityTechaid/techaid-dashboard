@@ -297,6 +297,7 @@ export class OrgRequestComponent {
         defaultValue: '',
         templateOptions: {
           label: '',
+          pattern: /\+?[0-9]+/,
           placeholder: 'Your phone number',
           required: true
         },
@@ -380,7 +381,9 @@ export class OrgRequestComponent {
     defaultValue: '',
     templateOptions: {
       label: '',
+      type: 'email',
       placeholder: 'Your email address',
+      pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
       required: true
     },
     hooks: {
@@ -510,7 +513,7 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'In order to support you as best as possible, please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. Please do not include any identifiable details such as names or addresses but any background you can provide would be extremely helpful.',
           rows: 3,
-          required: false
+          required: true
         }
       },
       {
@@ -535,7 +538,7 @@ export class OrgRequestComponent {
             { value: false, label: 'No' },
             { value: null, label: 'Don\'t know' }
           ],
-          required: true
+          required: false
         }
       },
       {
@@ -549,7 +552,7 @@ export class OrgRequestComponent {
             { value: false, label: 'No' },
             { value: null, label: 'Don\'t know' }
           ],
-          required: true
+          required: false
         }
       },
       {
@@ -563,7 +566,7 @@ export class OrgRequestComponent {
             { value: false, label: 'No' },
             { value: null, label: 'Don\'t know' }
           ],
-          required: true
+          required: false
         }
       },
       {
@@ -735,13 +738,10 @@ export class OrgRequestComponent {
 
   async saveNewReferringOrganisation(): Promise<boolean> {
 
-    console.log(this.referringOrganisationDetailFormGroup)
-    console.log()
-
     //var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
-    var wesbite = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
+    var website = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
 
-    if (!wesbite){
+    if (!website){
       this.toastr.error("Please fill in a website");
       return false
 
@@ -773,10 +773,25 @@ export class OrgRequestComponent {
 
   async saveNewReferringOrganisationContact(): Promise<boolean> {
 
-    var contactDetails: any = this.referringOrganisationContactDetailFormGroup.formControl.value.referringOrganisationContact;
+    var contactFormControl = this.referringOrganisationContactDetailFormGroup.formControl;
+
+    var isValid: boolean = true
+    for (var field of this.referringOrganisationContactDetailFormGroup.fieldGroup) {
+      if (field.formControl.errors){
+        isValid = false;
+        field.validation.show = true
+      }
+    }
+    
+    if (!isValid) {
+      return
+
+    }
+    
+    var contactDetails: any = contactFormControl.value.referringOrganisationContact;
     contactDetails.referringOrganisation = this.referringOrgIdField.formControl.value
     var data = contactDetails;
-
+    Object.keys(data).forEach(k => data[k] = typeof data[k] == 'string' ? data[k].trim() : data[k]); 
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION_CONTACT,
       variables: { data }
@@ -809,8 +824,8 @@ export class OrgRequestComponent {
     this.apollo.query({
       query: FIND_ORGANISATION_CONTACT,
       variables: {
-        fullName: this.fullNameField.formControl.value,
-        email: this.emailField.formControl.value,
+        fullName: this.fullNameField.formControl.value.trim(),
+        email: this.emailField.formControl.value.trim(),
         refOrgId: this.referringOrgIdField.formControl.value
       }
     }).toPromise().then(res => {
@@ -829,6 +844,7 @@ export class OrgRequestComponent {
   }
 
   showThankYouPage() {
+    this.content = {}
     this.refOrganisationPage.hideExpression = true;
     this.refContactPage.hideExpression = true;
     this.requestPage.hideExpression = true;
@@ -882,9 +898,12 @@ export class OrgRequestComponent {
 
   setDeviceRequestItems(deviceRequestItems: any) {
 
-    const payload: any = {};
+    var payload: any = {};
+    if (Object.keys(deviceRequestItems[0]).length == 0){
+      return null
+    }
 
-    for (var device of deviceRequestItems) {
+    for (var device of deviceRequestItems) {      
       payload[device] = 1;
     }
 
@@ -896,19 +915,40 @@ export class OrgRequestComponent {
   createNewDeviceRequest() {
     const deviceRequest: any = this.requestPage.formControl.value;
 
+    var isValid = true
+    for (var field of this.requestPage.fieldGroup) {
+      console.log(field.formControl)
+      if (field.formControl.errors){
+        isValid = false;
+        field.validation.show = true
+      }
+    }
+   
     if (!deviceRequest.clientRef){
       this.toastr.error("Please fill in a client reference");
       return
     }
 
 
+    var requestItems =  this.setDeviceRequestItems(deviceRequest.deviceRequestItems)
+    
+    if (requestItems == null){
+      this.toastr.error("Please select the item your client needs");
+      return
+    }
+
+    if (!isValid){
+      return
+    }
+    
     const data: any = {
       clientRef: deviceRequest.clientRef,
       deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
       details: deviceRequest.details,
       referringOrganisationContact: deviceRequest.referringOrganisationContactId,
-      deviceRequestItems: this.setDeviceRequestItems(deviceRequest.deviceRequestItems)
+      deviceRequestItems: requestItems
     };
+
 
     return this.apollo.mutate({
       mutation: CREATE_DEVICE_REQUEST,
