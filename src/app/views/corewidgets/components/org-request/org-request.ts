@@ -513,7 +513,7 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'In order to support you as best as possible, please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. Please do not include any identifiable details such as names or addresses but any background you can provide would be extremely helpful.',
           rows: 3,
-          required: false
+          required: true
         }
       },
       {
@@ -538,7 +538,7 @@ export class OrgRequestComponent {
             { value: false, label: 'No' },
             { value: null, label: 'Don\'t know' }
           ],
-          required: true
+          required: false
         }
       },
       {
@@ -552,7 +552,7 @@ export class OrgRequestComponent {
             { value: false, label: 'No' },
             { value: null, label: 'Don\'t know' }
           ],
-          required: true
+          required: false
         }
       },
       {
@@ -566,7 +566,7 @@ export class OrgRequestComponent {
             { value: false, label: 'No' },
             { value: null, label: 'Don\'t know' }
           ],
-          required: true
+          required: false
         }
       },
       {
@@ -898,9 +898,12 @@ export class OrgRequestComponent {
 
   setDeviceRequestItems(deviceRequestItems: any) {
 
-    const payload: any = {};
+    var payload: any = {};
+    if (Object.keys(deviceRequestItems[0]).length == 0){
+      return null
+    }
 
-    for (var device of deviceRequestItems) {
+    for (var device of deviceRequestItems) {      
       payload[device] = 1;
     }
 
@@ -912,19 +915,40 @@ export class OrgRequestComponent {
   createNewDeviceRequest() {
     const deviceRequest: any = this.requestPage.formControl.value;
 
+    var isValid = true
+    for (var field of this.requestPage.fieldGroup) {
+      console.log(field.formControl)
+      if (field.formControl.errors){
+        isValid = false;
+        field.validation.show = true
+      }
+    }
+   
     if (!deviceRequest.clientRef){
       this.toastr.error("Please fill in a client reference");
       return
     }
 
 
+    var requestItems =  this.setDeviceRequestItems(deviceRequest.deviceRequestItems)
+    
+    if (requestItems == null){
+      this.toastr.error("Please select the item your client needs");
+      return
+    }
+
+    if (!isValid){
+      return
+    }
+    
     const data: any = {
       clientRef: deviceRequest.clientRef,
       deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
       details: deviceRequest.details,
       referringOrganisationContact: deviceRequest.referringOrganisationContactId,
-      deviceRequestItems: this.setDeviceRequestItems(deviceRequest.deviceRequestItems)
+      deviceRequestItems: requestItems
     };
+
 
     return this.apollo.mutate({
       mutation: CREATE_DEVICE_REQUEST,
