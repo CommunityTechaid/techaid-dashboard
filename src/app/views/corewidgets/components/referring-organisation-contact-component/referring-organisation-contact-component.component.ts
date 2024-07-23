@@ -70,6 +70,16 @@ export class ReferringOrganisationContactComponent {
   ) {
 
   }
+
+
+  @Input()
+  set where(where: any) {
+    this._where = where;
+    if (this.table) {
+      this.applyFilter(this.filterModel);
+    }
+  }
+
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -158,6 +168,8 @@ export class ReferringOrganisationContactComponent {
   @Input()
   title = 'Referring Organisation Contacts';
 
+  _where = {};
+
   applyFilter(data) {
     const filter = {'OR': [], 'AND': []};
     let count = 0;
@@ -243,7 +255,8 @@ export class ReferringOrganisationContactComponent {
             page: Math.round(params.start / params.length),
           },
           term: params['search']['value'],
-          filter: this.filter
+          filter: this._where || this.filter
+
         };
 
         queryRef.refetch(vars).then(res => {
