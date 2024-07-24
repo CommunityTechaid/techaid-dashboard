@@ -573,6 +573,9 @@ export class DeviceRequestInfoComponent {
     }
     data.id = this.requestId;
 
+    if (data.deviceRequestNote.content == null){
+      data.deviceRequestNote.content = ""
+    }
     this.apollo
       .mutate({
         mutation: UPDATE_ENTITY,
