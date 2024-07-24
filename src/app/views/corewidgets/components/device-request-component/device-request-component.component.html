@@ -33,13 +33,12 @@
                           [dtOptions]="dtOptions" style="width:100%;">
                           <thead>
                               <tr>
-                                  <th></th>
-                                  <th>Name</th>
-                                  <th>Needs</th>
+                                  <th>ID</th>
+                                  <th>Status</th>
                                   <th>Devices</th>
+                                  <th>Client Ref</th>
+                                  <th>Organisation</th>
                                   <th>Referee</th>
-                                  <th>Email</th>
-                                  <th>Phone</th>
                                   <th>Created</th>
                                   <th>Updated</th>
                               </tr>
@@ -54,48 +53,64 @@
                                       </a>
                                   </td>
                                   <td>
-                                      <div class="d-flex">
-                                          <div class="d-flex flex-column">
-                                              <div>
-                                                  <a href="#" [routerLink]="['/dashboard/device-requests', dt.id]">{{ dt.referringOrganisationContact.referringOrganisation.name }}</a>
-                                              </div>
-                                              <!-- <div> -->
-                                              <!--     <a *ngIf="dt.website?.length" target="_blank" [href]="dt.website">{{dt.website}}</a> -->
-                                              <!-- </div> -->
-                                              <div>
-                                                  <span class="mr-1 mb-1" *ngFor="let g of dt.attributes?.accepts">
-                                                      <span class="badge badge-primary">
-                                                          <span class="badge badge-secondary">{{g}}</span>
-                                                          {{dt.types[g] || 0}}  / {{dt.attributes.request[g] || 0}}
-                                                      </span>
-                                                  </span>
-                                              </div>
-
-                                              <div class="text-muted" *ngIf="dt.details">
-                                                  <hr />
-                                                  <small>{{dt.details}}</small>
-                                              </div>
-                                          </div>
+                                    <div class="d-flex">
+                                      <div class="d-flex flex-column">
+                                        <div>
+                                            <a href="#" [routerLink]="['/dashboard/device-requests', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a>
+                                        </div>
+                                        <div>
+                                          <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.other != 0">
+                                            <span class="badge badge-primary">
+                                                <span class="badge badge-secondary">Other</span>
+                                                {{dt.types['OTHER'] || 0}}  / {{dt.deviceRequestItems.other || 0}}
+                                            </span>
+                                          </span>
+                                          <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.laptops != 0">
+                                              <span class="badge badge-primary">
+                                                  <span class="badge badge-secondary">Laptops</span>
+                                                  {{dt.types['LAPTOPS'] || 0}}  / {{dt.deviceRequestItems.laptops || 0}}
+                                              </span>
+                                          </span>
+                                          <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.tablets != 0">
+                                            <span class="badge badge-primary">
+                                                <span class="badge badge-secondary">Tablets</span>
+                                                {{dt.types['TABLETS'] || 0}}  / {{dt.deviceRequestItems.tablets || 0}}
+                                            </span>
+                                          </span>
+                                          <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.allInOnes != 0">
+                                            <span class="badge badge-primary">
+                                                <span class="badge badge-secondary">All-in-ones</span>
+                                                {{dt.types['ALLINONES'] || 0}}  / {{dt.deviceRequestItems.allInOnes || 0}}
+                                            </span>
+                                          </span>
+                                          <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.desktops != 0">
+                                            <span class="badge badge-primary">
+                                                <span class="badge badge-secondary">Desktops</span>
+                                                {{dt.types['DESKTOPS'] || 0}}  / {{dt.deviceRequestItems.desktops || 0}}
+                                            </span>
+                                          </span>
+                                          <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.phones != 0">
+                                            <span class="badge badge-primary">
+                                                <span class="badge badge-secondary">Phones</span>
+                                                {{dt.types['PHONES'] || 0}}  / {{dt.deviceRequestItems.phones || 0}}
+                                            </span>
+                                          </span>
+                                          <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.commsDevices != 0">
+                                            <span class="badge badge-primary">
+                                                <span class="badge badge-secondary">Comms Devices</span>
+                                                {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
+                                            </span>
+                                          </span>
+                                        </div>
                                       </div>
-                                  </td>
-                                  <td>
-                                    <span *ngFor="let n of dt.attributes?.needs">
-                                      <span class="badge badge-secondary">{{n}}</span>
-                                    </span>
-                                    <!-- <span *ngIf="dt.volunteer?.id" class="mr-1 mb-1"> -->
-                                    <!--   <span class="badge badge-info"><span class="badge badge-primary mr-1">Organiser</span>  -->
-                                    <!--     <a class="btn-info" [routerLink]="['/dashboard/volunteers', dt.volunteer.id]">{{dt.volunteer.name}}</a> -->
-                                    <!--   </span> -->
-                                    <!-- </span> -->
-                                    <!-- <span *ngIf="!dt.volunteer?.id">--</span> -->
+                                    </div>
+
                                   </td>
                                   <td><span class="badge badge-info">{{dt.kitCount}}</span></td>
-
+                                  <td>{{dt.clientRef}}</td>
+                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
                                   <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
-                                  <td>
-                                      <a routerLink="/dashboard/email" [queryParams]="{to: dt.email}">{{dt.referringOrganisationContact.email}}</a>
-                                  </td>
-                                  <td>{{dt.referringOrganisationContact.phoneNumber}}</td>
+
                                   <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
                                       {{ dt.createdAt | date:'medium' }}
                                   </td>

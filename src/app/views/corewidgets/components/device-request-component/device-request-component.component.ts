@@ -10,6 +10,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
+import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 
 const QUERY_ENTITY = gql`
 query findAllOrgs($page: PaginationInput,, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -42,6 +43,8 @@ query findAllOrgs($page: PaginationInput,, $term: String, $filter: DeviceRequest
     totalElements
     content{
       id
+      status
+      clientRef
       referringOrganisationContact {
         id
         phoneNumber
@@ -61,13 +64,14 @@ query findAllOrgs($page: PaginationInput,, $term: String, $filter: DeviceRequest
         type
       }
       deviceRequestItems {
-        LAPTOPS: laptops
-        TABLETS: tablets
-        ALLINONES:allInOnes
-        DESKTOPS:desktops
-        PHONES: phones
-        COMMSDEVICES: commsDevices
-     }
+        phones
+        tablets
+        laptops
+        allInOnes
+        desktops
+        commsDevices
+        other
+      }
     }
   }
 }
@@ -114,6 +118,8 @@ export class DeviceRequestComponent {
   model = {};
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
+
+  statusTypes: any = DEVICE_REQUEST_STATUS;
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -654,7 +660,7 @@ export class DeviceRequestComponent {
         '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
       pageLength: 10,
       lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [7, 'desc'],
+      order: [0, 'desc'],
       serverSide: true,
       stateSave: true,
       processing: true,
@@ -724,13 +730,12 @@ export class DeviceRequestComponent {
         });
       },
       columns: [
-        { data: null, width: '15px', orderable: false },
-        { data: 'name' },
-        {data: 'needs'},
+        { data: 'id', width: '15px' },
+        { data: 'status' },
         { data: 'kitCount'},
-        { data: 'contact' },
-        { data: 'email' },
-        { data: 'phoneNumber'},
+        { data: 'clientRef' },
+        { data: 'referringOrganisationContact.referringOrganisation.name' },
+        { data: 'referringOrganisationContact.fullName' },
         { data: 'createdAt'},
         { data: 'updatedAt' },
       ]
