@@ -173,6 +173,7 @@ export class OrgRequestComponent {
         templateOptions: {
           label: '',
           placeholder: 'Organisation Name',
+          minLength: 3,
           required: true
         },
         validation: {
@@ -758,13 +759,22 @@ export class OrgRequestComponent {
 
     //var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
     var website = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
-
     if (!website){
       this.toastr.error("Please fill in a website");
       return false
 
     }
 
+    var nameField = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.name")
+    var name = nameField.formControl.value
+    if (!name){
+      this.toastr.error("Please fill in the name of your organisation");
+      return false
+    }else if (name.length < 3){
+      nameField.validation.show = true
+      this.toastr.error("Name of organisation should be at least 3 characters.");
+      return false
+    }
 
     var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
     return this.apollo.mutate({
