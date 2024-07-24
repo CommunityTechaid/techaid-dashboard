@@ -173,6 +173,7 @@ export class OrgRequestComponent {
         templateOptions: {
           label: '',
           placeholder: 'Organisation Name',
+          minLength: 3,
           required: true
         },
         validation: {
@@ -189,6 +190,7 @@ export class OrgRequestComponent {
         defaultValue: '',
         templateOptions: {
           label: '',
+          pattern:/^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
           placeholder: 'Organisation website',
           required: true
         },
@@ -223,6 +225,7 @@ export class OrgRequestComponent {
         defaultValue: '',
         templateOptions: {
           label: '',
+          pattern: /\+?[0-9]+/,
           placeholder: 'Organisation phone number',
           required: false
         },
@@ -344,7 +347,7 @@ export class OrgRequestComponent {
 
 
   /**
-   * REFERRING ORGAQNISATION CONTACT FULL NAME AND EMAIL
+   * REFERRING ORGANISATION CONTACT FULL NAME AND EMAIL
    */
   fullNameField: FormlyFieldConfig = {
     key: 'referringOrganisationContact.fullName',
@@ -598,7 +601,21 @@ export class OrgRequestComponent {
       },
       {
         className: 'row',
-        template: '<p class="text-primary">020 3488 7742<br>distributions@communitytechaid.org.uk</p><p>Requests typically take 4-6 weeks to fufill</p>'
+        template: '<p class="text-primary">020 3488 7742<br>distributions@communitytechaid.org.uk</p><p>Requests typically take 4-6 weeks to fulfill</p>'
+      }
+    ]
+  }
+
+  moreThanThreeRequestsPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'row',
+        template: '<h3 class="font-weight-bold text-primary">Oops!</h3>'
+      },
+      {
+        className: 'row',
+        template: '<p class="">It looks like you already have 3 open requests.</br> Please wait for these to be fulfilled before making another.</p>'
       }
     ]
   }
@@ -610,7 +627,8 @@ export class OrgRequestComponent {
         this.refOrganisationPage,
         this.refContactPage,
         this.requestPage,
-        this.thankYouPage
+        this.thankYouPage,
+        this.moreThanThreeRequestsPage
       ]
     },
     this.referringOrgIdField,
@@ -700,6 +718,7 @@ export class OrgRequestComponent {
         }
         ),
         switchMap(term => {
+          this.referringOrganisationContactDetailFormGroup.hideExpression = true
           if (term && term.length >= 3) {
             return from(orgRef.refetch({
               term: term
@@ -740,13 +759,22 @@ export class OrgRequestComponent {
 
     //var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
     var website = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
-
     if (!website){
       this.toastr.error("Please fill in a website");
       return false
 
     }
 
+    var nameField = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.name")
+    var name = nameField.formControl.value
+    if (!name){
+      this.toastr.error("Please fill in the name of your organisation");
+      return false
+    }else if (name.length < 3){
+      nameField.validation.show = true
+      this.toastr.error("Name of organisation should be at least 3 characters.");
+      return false
+    }
 
     var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
     return this.apollo.mutate({
@@ -849,6 +877,14 @@ export class OrgRequestComponent {
     this.refContactPage.hideExpression = true;
     this.requestPage.hideExpression = true;
     this.thankYouPage.hideExpression = false;
+  }
+
+  showMoreThanThreeRequestsPage() {
+    this.content = {}
+    this.refOrganisationPage.hideExpression = true;
+    this.refContactPage.hideExpression = true;
+    this.requestPage.hideExpression = true;
+    this.moreThanThreeRequestsPage.hideExpression = false;
   }
 
   showRequestPage() {
@@ -957,14 +993,19 @@ export class OrgRequestComponent {
 
       var data = res["data"]["createDeviceRequest"]["id"];
       if (data) {
-        this.toastr.info("Your request was made succesfully.")
+        this.toastr.info("Your request was made successfully.")
         return true;
       } else {
         this.toastr.error("Could not create your request.");
         return false;
       }
     }).catch(error => {
-      this.toastr.error(error.message.split(':')[1]);
+      var message = error.message.split(':')[1]
+      if (message.trim().startsWith("Could not create new requests. This user already has")){
+        this.showMoreThanThreeRequestsPage()
+        return false;
+      }
+      this.toastr.error(message);
       return false;
     });
   }
