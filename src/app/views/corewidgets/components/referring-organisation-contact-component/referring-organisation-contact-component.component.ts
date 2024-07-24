@@ -15,28 +15,22 @@ const QUERY_ENTITY = gql`
 query findAllReferringOrgContacts(
   $page: PaginationInput,, $term: String, $filter: ReferringOrganisationContactWhereInput!) {
   referringOrganisationContactsConnection(page: $page, where: {
-    AND: [$filter]
-    OR: [
-      {
-        fullName: {
-          _contains: $term
+    AND: {
+      OR: [
+        {
+          fullName: { _contains: $term }
+          AND: [$filter]
+        },
+        {
+          phoneNumber: { _contains: $term }
+          AND: [$filter]
+        },
+        {
+          email: { _contains: $term }
+          AND: [$filter]
         }
-        AND: [$filter]
-      },
-      {
-        phoneNumber: {
-          _contains: $term
-        }
-        AND: [$filter]
-      },
-      {
-        email: {
-          _contains: $term
-        }
-        AND: [$filter]
-      }
-    ]
-
+      ]
+    }
   }){
     totalElements
     content{
