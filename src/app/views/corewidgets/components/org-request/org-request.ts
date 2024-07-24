@@ -598,7 +598,21 @@ export class OrgRequestComponent {
       },
       {
         className: 'row',
-        template: '<p class="text-primary">020 3488 7742<br>distributions@communitytechaid.org.uk</p><p>Requests typically take 4-6 weeks to fufill</p>'
+        template: '<p class="text-primary">020 3488 7742<br>distributions@communitytechaid.org.uk</p><p>Requests typically take 4-6 weeks to fulfill</p>'
+      }
+    ]
+  }
+
+  moreThanThreeRequestsPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'row',
+        template: '<h3 class="font-weight-bold text-primary">Oops!</h3>'
+      },
+      {
+        className: 'row',
+        template: '<p class="">It looks like you already have 3 open requests.</br> Please wait for these to be fulfilled before making another.</p>'
       }
     ]
   }
@@ -610,7 +624,8 @@ export class OrgRequestComponent {
         this.refOrganisationPage,
         this.refContactPage,
         this.requestPage,
-        this.thankYouPage
+        this.thankYouPage,
+        this.moreThanThreeRequestsPage
       ]
     },
     this.referringOrgIdField,
@@ -852,6 +867,14 @@ export class OrgRequestComponent {
     this.thankYouPage.hideExpression = false;
   }
 
+  showMoreThanThreeRequestsPage() {
+    this.content = {}
+    this.refOrganisationPage.hideExpression = true;
+    this.refContactPage.hideExpression = true;
+    this.requestPage.hideExpression = true;
+    this.moreThanThreeRequestsPage.hideExpression = false;
+  }
+
   showRequestPage() {
     this.referringOrgField.hideExpression = true;
     this.refOrganisationPage.hideExpression = true;
@@ -958,14 +981,19 @@ export class OrgRequestComponent {
 
       var data = res["data"]["createDeviceRequest"]["id"];
       if (data) {
-        this.toastr.info("Your request was made succesfully.")
+        this.toastr.info("Your request was made successfully.")
         return true;
       } else {
         this.toastr.error("Could not create your request.");
         return false;
       }
     }).catch(error => {
-      this.toastr.error(error.message.split(':')[1]);
+      var message = error.message.split(':')[1]
+      if (message.trim().startsWith("Could not create new requests. This user already has")){
+        this.showMoreThanThreeRequestsPage()
+        return false;
+      }
+      this.toastr.error(message);
       return false;
     });
   }
