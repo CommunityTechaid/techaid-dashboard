@@ -700,6 +700,7 @@ export class OrgRequestComponent {
         }
         ),
         switchMap(term => {
+          this.referringOrganisationContactDetailFormGroup.hideExpression = true
           if (term && term.length >= 3) {
             return from(orgRef.refetch({
               term: term
