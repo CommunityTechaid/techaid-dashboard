@@ -347,7 +347,7 @@ export class OrgRequestComponent {
 
 
   /**
-   * REFERRING ORGAQNISATION CONTACT FULL NAME AND EMAIL
+   * REFERRING ORGANISATION CONTACT FULL NAME AND EMAIL
    */
   fullNameField: FormlyFieldConfig = {
     key: 'referringOrganisationContact.fullName',
