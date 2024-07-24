@@ -1,10 +1,8 @@
 <!-- Content Row -->
 <div class="row">
-
   <!-- Content Column -->
   <div class="col-lg-12 mb-4">
       <div *ngIf="!model?.id" class="overlay"></div>
-
       <!-- Project Card Example -->
       <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
@@ -12,14 +10,25 @@
               <li class="breadcrumb-item active" aria-current="page">{{ requestId }}</li>
           </ol>
       </nav>
-
       <ngb-tabset [destroyOnHide]="false">
           <ngb-tab title="Details">
               <ng-template ngbTabContent>
                   <div class="card shadow mb-4 mt-1">
                       <div class="card-header py-3">
                           <div class="d-flex justify-content-between">
-                              <h6 class="m-0 font-weight-bold text-primary">{{requestId}} - <a href="#" [routerLink]="['/dashboard/referring-organisations', model?.referringOrganisationContact?.referringOrganisation?.id]">{{model?.referringOrganisationContact?.referringOrganisation?.name}}</a> / <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', model?.referringOrganisationContact?.id]">{{model?.referringOrganisationContact?.fullName}}</a></h6>
+                            <div>
+                              <h6 class="m-0 font-weight-bold text-primary">
+                                {{requestId}} -
+                                <a href="#" [routerLink]="['/dashboard/referring-organisations', model?.referringOrganisationContact?.referringOrganisation?.id]">{{model?.referringOrganisationContact?.referringOrganisation?.name}}</a> /
+                                <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', model?.referringOrganisationContact?.id]">{{model?.referringOrganisationContact?.fullName}}</a>
+                              </h6>
+                            </div>
+                          <div>
+                              <button [disabled]="form.invalid" (click)="updateEntity(form.value)"
+                                  type="submit" class="btn btn-primary btn-sm">
+                                  <small>Save</small>
+                              </button>
+                              </div>
                           </div>
                       </div>
                       <div class="card-body">
@@ -27,10 +36,10 @@
                               <formly-form [options]="options" (ngSubmit)="updateEntity(form.value)"
                                   [form]="form" [model]="model" [fields]="fields">
                               </formly-form>
-                              <button *ngIf="!options.formState.disabled" style="width: 150px" (click)="updateEntity(form.value)"
+                              <!-- <button *ngIf="!options.formState.disabled" style="width: 150px" (click)="updateEntity(form.value)"
                                   type="submit" class="btn btn-primary btn-sm p-2">
                                   <small>Save</small>
-                              </button>
+                              </button> -->
                           </form>
 
                           <div class="delete-api mt-5 " *ngIf="user?.authorities['delete:organisations']">
