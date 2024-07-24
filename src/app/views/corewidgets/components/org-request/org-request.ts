@@ -189,6 +189,7 @@ export class OrgRequestComponent {
         defaultValue: '',
         templateOptions: {
           label: '',
+          pattern:/^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
           placeholder: 'Organisation website',
           required: true
         },
@@ -223,6 +224,7 @@ export class OrgRequestComponent {
         defaultValue: '',
         templateOptions: {
           label: '',
+          pattern: /\+?[0-9]+/,
           placeholder: 'Organisation phone number',
           required: false
         },
