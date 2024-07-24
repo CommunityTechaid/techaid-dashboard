@@ -1,5 +1,6 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
+import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
+import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -23,6 +24,7 @@ const QUERY_ENTITY = gql`
       archived
       referringOrganisation {
         id
+        name
       }
     }
   }
@@ -36,6 +38,10 @@ const UPDATE_ENTITY = gql`
       email
       phoneNumber
       archived
+      referringOrganisation {
+        id
+        name
+      }
     }
   }
 `;
@@ -44,6 +50,23 @@ const DELETE_ENTITY = gql`
   mutation deleteReferringOrganisationContact($id: ID!) {
     deleteReferringOrganisationContact(id: $id)
   }
+`;
+
+const AUTOCOMPLETE_REFERRING_ORGANISATIONS = gql`
+query findAutocompleteReferringOrganisations($term: String) {
+  referringOrganisationsConnection(page: {
+    size: 50
+  }, where: {
+    name: {
+      _contains: $term
+    }
+  }){
+    content  {
+      id
+      name
+    }
+  }
+}
 `;
 
 @Component({
@@ -74,24 +97,50 @@ export class ReferringOrganisationContactInfoComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
 
+  referringOrganisations$: Observable<any>;
+  referringOrganisationInput$ = new Subject<string>();
+  referringOrganisationLoading = false;
+  referringOrganisationField: FormlyFieldConfig = {
+    key: 'referringOrganisationId',
+    type: 'choice',
+    className: 'px-2 ml-auto justify-content-end text-right',
+    templateOptions: {
+      label: 'Referring Organisation',
+      description: 'The organisation this referee is currently assigned to.',
+      loading: this.referringOrganisationLoading,
+      typeahead: this.referringOrganisationInput$,
+      placeholder: 'Assign referee to a Referring Organisation',
+      multiple: false,
+      searchable: true,
+      items: [],
+      required: false
+    },
+  };
+
   fields: Array<FormlyFieldConfig> = [
     {
-      key: 'fullName',
-      type: 'input',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Full Name',
-        placeholder: '',
-        required: true,
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'fullName',
+          type: 'input',
+          className: 'col-md-6',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Full Name',
+            placeholder: '',
+            required: true,
+          },
+          validation: {
+            show: false,
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
+            'templateOptions.disabled': 'formState.disabled',
+          },
+        },
+        this.referringOrganisationField
+      ]
     },
     {
       fieldGroupClassName: 'row',
@@ -164,6 +213,13 @@ export class ReferringOrganisationContactInfoComponent {
 
   private normalizeData(data: any) {
     // Not currently doing any normalization
+
+    if (data.referringOrganisation && data.referringOrganisation.id) {
+      data.referringOrganisationId = data.referringOrganisation.id;
+      this.referringOrganisationField.templateOptions['items'] = [
+        {label: this.referringOrganisationName(data.referringOrganisation), value: data.referringOrganisation.id}
+      ];
+    }
     return data;
   }
 
@@ -205,16 +261,59 @@ export class ReferringOrganisationContactInfoComponent {
   }
 
   ngOnInit() {
+    const referringOrganisationRef = this.apollo
+      .watchQuery({
+        query: AUTOCOMPLETE_REFERRING_ORGANISATIONS,
+        variables: {
+        }
+      });
+
+    this.referringOrganisations$ = concat(
+      of([]),
+      this.referringOrganisationInput$.pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        tap(() => this.referringOrganisationLoading = true),
+        switchMap(term => from(referringOrganisationRef.refetch({
+          term: term
+        })).pipe(
+          catchError(() => of([])),
+          tap(() => this.referringOrganisationLoading = false),
+          switchMap(res => {
+            const data = res['data']['referringOrganisationsConnection']['content'].map(v => {
+              return {
+                label: `${this.referringOrganisationName(v)}`, value: v.id
+              };
+            });
+            return of(data);
+          })
+        ))
+      )
+    );
+
     this.sub = this.activatedRoute.params.subscribe((params) => {
       this.refereeId = +params['refereeId'];
       this.fetchData();
     });
+
     this.sub.add(
       this.user$.subscribe((user) => {
         this.user = user;
         this.options.formState.disabled = !(user && user.authorities && user.authorities['write:organisations']);
       })
     );
+
+    this.sub.add(this.referringOrganisations$.subscribe(data => {
+      this.referringOrganisationField.templateOptions['items'] = data;
+    }));
+  }
+
+  referringOrganisationName(data) {
+    return `${data.name || ''}||${data.id || ''}`
+      .split('||')
+      .filter(f => f.trim().length)
+      .join(' / ')
+      .trim();
   }
 
   ngOnDestroy() {
@@ -229,7 +328,6 @@ export class ReferringOrganisationContactInfoComponent {
       return;
     }
     data.id = this.refereeId;
-    data.referringOrganisation = this.referringOrganisationId
 
     this.apollo
       .mutate({
