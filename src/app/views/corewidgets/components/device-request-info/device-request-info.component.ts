@@ -91,6 +91,14 @@ const UPDATE_ENTITY = gql`
         other
       }
       isSales
+      referringOrganisationContact {
+        id
+        fullName
+        referringOrganisation {
+          id
+          name
+        }
+      }
       clientRef
       details
       deviceRequestNeeds {
