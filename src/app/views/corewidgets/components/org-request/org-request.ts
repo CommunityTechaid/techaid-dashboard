@@ -473,7 +473,6 @@ export class OrgRequestComponent {
           .finally(() => {
             this.submitting = false;
             this.deviceRequestCreateButton.templateOptions.disabled = this.submitting
-            alert("Wait")
           })
         ;
       }
@@ -973,7 +972,6 @@ export class OrgRequestComponent {
 
     var isValid = true
     for (var field of this.requestPage.fieldGroup) {
-      console.log(field.formControl)
       if (field.formControl.errors){
         isValid = false;
         field.validation.show = true
@@ -982,7 +980,7 @@ export class OrgRequestComponent {
    
     if (!deviceRequest.clientRef){
       this.toastr.error("Please fill in a client reference");
-      return
+      return Promise.resolve(false)
     }
 
 
@@ -990,11 +988,11 @@ export class OrgRequestComponent {
     
     if (requestItems == null){
       this.toastr.error("Please select the item your client needs");
-      return
+      return Promise.resolve(false)
     }
 
     if (!isValid){
-      return
+      return Promise.resolve(false)
     }
     
     const data: any = {
