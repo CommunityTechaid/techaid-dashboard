@@ -104,7 +104,7 @@ export class OrgRequestComponent {
   sub: Subscription;
   form: FormGroup = new FormGroup({});
   options: FormlyFormOptions = {};
-  submiting = false;
+  submitting = false;
   content: any = {};
   model: any = {
     showErrorState: false,
@@ -450,6 +450,35 @@ export class OrgRequestComponent {
     ]
   }
 
+  deviceRequestCreateButton: FormlyFieldConfig = {
+    type: 'button',
+    templateOptions: {
+      text: 'Submit',
+      disabled: this.submitting,
+      onClick: () => {
+        
+        if (this.submitting){
+          return
+        }
+
+        this.submitting = true;
+        
+        this.createNewDeviceRequest()
+          .then((success: boolean) => {
+            if (success) {
+              this.submitting = false;
+              this.showThankYouPage()
+            }
+          })
+          .finally(() => {
+            this.submitting = false;
+            this.deviceRequestCreateButton.templateOptions.disabled = this.submitting
+          })
+        ;
+      }
+    },
+  }
+
   /**
   * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
   *
@@ -572,19 +601,7 @@ export class OrgRequestComponent {
           required: false
         }
       },
-      {
-        type: 'button',
-        templateOptions: {
-          text: 'Submit',
-          onClick: () => {
-            this.createNewDeviceRequest().then((success: boolean) => {
-              if (success) {
-                this.showThankYouPage()
-              }
-            });
-          }
-        },
-      }
+      this.deviceRequestCreateButton
     ]
   }
 
@@ -949,11 +966,12 @@ export class OrgRequestComponent {
   }
 
   createNewDeviceRequest() {
+    
+    this.deviceRequestCreateButton.templateOptions.disabled = true;
     const deviceRequest: any = this.requestPage.formControl.value;
 
     var isValid = true
     for (var field of this.requestPage.fieldGroup) {
-      console.log(field.formControl)
       if (field.formControl.errors){
         isValid = false;
         field.validation.show = true
@@ -962,7 +980,7 @@ export class OrgRequestComponent {
    
     if (!deviceRequest.clientRef){
       this.toastr.error("Please fill in a client reference");
-      return
+      return Promise.resolve(false)
     }
 
 
@@ -970,11 +988,11 @@ export class OrgRequestComponent {
     
     if (requestItems == null){
       this.toastr.error("Please select the item your client needs");
-      return
+      return Promise.resolve(false)
     }
 
     if (!isValid){
-      return
+      return Promise.resolve(false)
     }
     
     const data: any = {
@@ -1018,16 +1036,16 @@ export class OrgRequestComponent {
       this.model.showErrorState = true;
       return false;
     }
-    this.submiting = true;
+    this.submitting = true;
     this.apollo.mutate({
       mutation: CREATE_ENTITY,
       variables: { data }
     }).subscribe(data => {
       this.submited = true;
-      this.submiting = false;
+      this.submitting = false;
       this.model = {};
     }, err => {
-      this.submiting = false;
+      this.submitting = false;
       this.toastr.error(`
       <small>${err.message}</small>
       `, 'Create Organisation Error', {
