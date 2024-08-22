@@ -436,10 +436,63 @@ export class OrgRequestComponent {
   };
 
   /**
+   * Question to filter out non Lambeth requests
+   * 
+   */
+  isLambethErrorMessage: FormlyFieldConfig = {
+    hideExpression: true,
+    className: 'col-md-12',
+    template: `<div class="border-bottom-info card mb-3 p-3">
+<p>Unfortunately, we can only support people in Lambeth and Southwark currently. For any questions, please contact <a href="mailto:
+distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
+</div>`
+  }
+
+  isLambethPage: FormlyFieldConfig = {
+    hideExpression: false,
+    fieldGroup: [
+      {
+        type: 'radio',
+        className: '',
+        hooks: {
+          onInit: (field) => {
+            this.sub.add(field.formControl.valueChanges.subscribe(v => {
+              if (v){
+                this.refOrganisationPage.hideExpression = false;
+                this.isLambethErrorMessage.hideExpression = true;
+              }else{
+                this.refOrganisationPage.hideExpression = true;
+                this.isLambethErrorMessage.hideExpression = false;
+              }
+            }));
+          }
+        },
+        templateOptions: {
+          label: 'Does your client live in either Lambeth or Southwark?',
+          options: [
+            {value: true, label: 'Yes'},
+            {value: false , label: 'No'}
+          ],
+          required: true
+        },
+        validators: {
+          mustBeTrue: {
+            expression: (c: AbstractControl) => c.value,
+            message: (error: any, field: FormlyFieldConfig) => ''
+          }
+        }
+      },
+      this.isLambethErrorMessage
+    ]
+  }
+
+
+  /**
    * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION
    *
    */
   refOrganisationPage: FormlyFieldConfig = {
+    hideExpression: true,
     fieldGroup: [
       {
         className: 'col-md-12',
@@ -641,6 +694,7 @@ export class OrgRequestComponent {
   fields: Array<FormlyFieldConfig> = [
     {
       fieldGroup: [
+        this.isLambethPage,
         this.refOrganisationPage,
         this.refContactPage,
         this.requestPage,
@@ -905,6 +959,7 @@ export class OrgRequestComponent {
   }
 
   showRequestPage() {
+    this.isLambethPage.hideExpression = true
     this.referringOrgField.hideExpression = true;
     this.refOrganisationPage.hideExpression = true;
     this.refContactPage.hideExpression = true;
