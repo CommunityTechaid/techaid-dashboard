@@ -456,13 +456,13 @@ export class OrgRequestComponent {
       text: 'Submit',
       disabled: this.submitting,
       onClick: () => {
-        
+
         if (this.submitting){
           return
         }
 
         this.submitting = true;
-        
+
         this.createNewDeviceRequest()
           .then((success: boolean) => {
             if (success) {
@@ -519,7 +519,7 @@ export class OrgRequestComponent {
                   { value: 'laptops', label: 'Laptop' },
                   { value: 'desktops', label: 'Desktop computer' },
                   { value: 'phones', label: 'Smartphone' },
-                  //{ value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
+                  { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
                   // {value: 'tablets', label: 'Tablet' },
 
                 ],
@@ -827,16 +827,16 @@ export class OrgRequestComponent {
         field.validation.show = true
       }
     }
-    
+
     if (!isValid) {
       return
 
     }
-    
+
     var contactDetails: any = contactFormControl.value.referringOrganisationContact;
     contactDetails.referringOrganisation = this.referringOrgIdField.formControl.value
     var data = contactDetails;
-    Object.keys(data).forEach(k => data[k] = typeof data[k] == 'string' ? data[k].trim() : data[k]); 
+    Object.keys(data).forEach(k => data[k] = typeof data[k] == 'string' ? data[k].trim() : data[k]);
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION_CONTACT,
       variables: { data }
@@ -956,7 +956,7 @@ export class OrgRequestComponent {
       return null
     }
 
-    for (var device of deviceRequestItems) {      
+    for (var device of deviceRequestItems) {
       payload[device] = 1;
     }
 
@@ -966,7 +966,7 @@ export class OrgRequestComponent {
   }
 
   createNewDeviceRequest() {
-    
+
     this.deviceRequestCreateButton.templateOptions.disabled = true;
     const deviceRequest: any = this.requestPage.formControl.value;
 
@@ -977,7 +977,7 @@ export class OrgRequestComponent {
         field.validation.show = true
       }
     }
-   
+
     if (!deviceRequest.clientRef){
       this.toastr.error("Please fill in a client reference");
       return Promise.resolve(false)
@@ -985,7 +985,7 @@ export class OrgRequestComponent {
 
 
     var requestItems =  this.setDeviceRequestItems(deviceRequest.deviceRequestItems)
-    
+
     if (requestItems == null){
       this.toastr.error("Please select the item your client needs");
       return Promise.resolve(false)
@@ -994,7 +994,7 @@ export class OrgRequestComponent {
     if (!isValid){
       return Promise.resolve(false)
     }
-    
+
     const data: any = {
       clientRef: deviceRequest.clientRef,
       deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
