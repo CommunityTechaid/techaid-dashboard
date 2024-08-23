@@ -571,7 +571,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
                   // all defined in one place
                   { value: 'laptops', label: 'Laptop' },
                   { value: 'desktops', label: 'Desktop computer' },
-                  { value: 'phones', label: 'Smartphone' },
+                  //{ value: 'phones', label: 'Smartphone' },
                   { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
                   // {value: 'tablets', label: 'Tablet' },
 
