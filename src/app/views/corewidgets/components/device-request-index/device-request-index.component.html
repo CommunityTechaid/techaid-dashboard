@@ -52,6 +52,15 @@
                                           </span>
                                       </a>
                                   </td>
+                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
+                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
+                                  <td>{{dt.clientRef}}</td>
+                                  <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
+                                      {{ dt.createdAt | date:'medium' }}
+                                  </td>
+                                  <td [title]="dt.updatedAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.updatedAt | date:'full'}}" triggers="click:blur">
+                                      {{ dt.updatedAt | date:'medium' }}
+                                  </td>
                                   <td>
                                       <div class="d-flex">
                                           <div class="d-flex flex-column">
@@ -104,16 +113,6 @@
                                             </div>
                                           </div>
                                       </div>
-                                  </td>
-                                  <td>{{dt.clientRef}}</td>
-                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
-                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
-
-                                  <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
-                                      {{ dt.createdAt | date:'medium' }}
-                                  </td>
-                                  <td [title]="dt.updatedAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.updatedAt | date:'full'}}" triggers="click:blur">
-                                      {{ dt.updatedAt | date:'medium' }}
                                   </td>
                               </tr>
                           </tbody>
