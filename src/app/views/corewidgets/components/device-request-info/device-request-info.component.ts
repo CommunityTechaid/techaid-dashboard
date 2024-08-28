@@ -337,6 +337,24 @@ export class DeviceRequestInfoComponent {
                     }
                   },
                   {
+                    key: 'deviceRequestItems.commsDevices',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      max: 5,
+                      label: 'Connectivity Devices',
+                      description: '',
+                      addonLeft: {
+                        class: 'fas fa-laptop-house'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  },
+                  {
                     key: 'deviceRequestItems.tablets',
                     type: 'input',
                     className: '',
@@ -393,24 +411,6 @@ export class DeviceRequestInfoComponent {
                       min: 0,
                       max: 5,
                       label: 'Other',
-                      description: '',
-                      addonLeft: {
-                        class: 'fas fa-laptop-house'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.commsDevices',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      max: 5,
-                      label: 'Connectivity Devices',
                       description: '',
                       addonLeft: {
                         class: 'fas fa-laptop-house'
