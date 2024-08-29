@@ -139,7 +139,8 @@ export const FORMLYCONFIG: ConfigOption = {
                     editorConfig: {
                         height: 500,
                         allowedContent: true,
-                        contentsCss: 'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css'
+                        contentsCss: 'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css',
+                        versionCheck: false
                     },
                     type: 'divarea', // classic | divarea | inline
                     html: false,
