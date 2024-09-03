@@ -1,5 +1,6 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
+import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
+import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -123,6 +124,28 @@ const DELETE_ENTITY = gql`
   }
 `;
 
+const AUTOCOMPLETE_REFERRING_ORGANISATION_CONTACTS = gql`
+query findAutocompleteReferringOrganisationContacts($term: String, $referringOrganisationId: Long) {
+  referringOrganisationContactsConnection(page: {
+    size: 50
+  }, where: {
+   AND: {
+    fullName: { _contains: $term },
+    referringOrganisation: { id: { _eq: $referringOrganisationId } }
+   }
+  }){
+    content  {
+      id
+      fullName
+      referringOrganisation {
+          id
+          name
+        }
+    }
+  }
+}
+`;
+
 @Component({
   selector: 'app-device-request-info',
   templateUrl: './device-request-info.component.html',
@@ -146,6 +169,8 @@ export class DeviceRequestInfoComponent {
   };
   model: any = {};
   requestId: number;
+  referringOrganisationId: number;
+  referringOrganisationContactId: number;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
 
@@ -163,6 +188,26 @@ export class DeviceRequestInfoComponent {
       notes: [],
     },
   }
+
+  referringOrganisationContacts$: Observable<any>;
+  referringOrganisationContactInput$ = new Subject<string>();
+  referringOrganisationContactLoading = false;
+  referringOrganisationContactField: FormlyFieldConfig = {
+    key: 'referringOrganisationContactId',
+    type: 'choice',
+    className: 'px-2 ml-auto justify-content-end text-right',
+    templateOptions: {
+      label: 'Referee',
+      description: 'The referee this request is currently assigned to.',
+      loading: this.referringOrganisationContactLoading,
+      typeahead: this.referringOrganisationContactInput$,
+      placeholder: 'Assign request to a Referee',
+      multiple: false,
+      searchable: true,
+      items: [],
+      required: false
+    },
+  };
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -184,87 +229,6 @@ export class DeviceRequestInfoComponent {
                 required: true
               }
             },
-
-//             {
-//               key: 'name',
-//               type: 'input',
-//               className: '',
-//               defaultValue: '',
-//               templateOptions: {
-//                 label: 'Organisation name',
-// //                description: 'The name of the organisation',
-//                 placeholder: '',
-//                 required: true
-//               },
-//               validation: {
-//                 show: false
-//               },
-//               expressionProperties: {
-//                 'validation.show': 'model.showErrorState',
-//               }
-//             },
-            // {
-            //   key: 'contact',
-            //   type: 'input',
-            //   className: '',
-            //   defaultValue: '',
-            //   templateOptions: {
-            //     label: 'Primary contact name',
-            //     placeholder: '',
-            //     required: true
-            //   },
-            //   validation: {
-            //     show: false
-            //   },
-            //   expressionProperties: {
-            //     'validation.show': 'model.showErrorState',
-            //   }
-            // },
-            // {
-            //   key: 'email',
-            //   type: 'input',
-            //   className: '',
-            //   defaultValue: '',
-            //   templateOptions: {
-            //     label: 'Primary contact email',
-            //     type: 'email',
-            //     pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-            //     placeholder: '',
-            //     required: true
-            //   },
-            //   expressionProperties: {
-            //     'templateOptions.required': '!model.phoneNumber.length'
-            //   }
-            // },
-            // {
-            //   key: 'phoneNumber',
-            //   type: 'input',
-            //   className: '',
-            //   defaultValue: '',
-            //   templateOptions: {
-            //     label: 'Primary contact phone number',
-            //     required: true
-            //   },
-            //   expressionProperties: {
-            //     'templateOptions.required': '!model.email.length'
-            //   }
-            // },
-            // {
-            //   key: 'address',
-            //   type: 'place',
-            //   className: '',
-            //   defaultValue: '',
-            //   templateOptions: {
-            //     label: 'Address',
-            //     description: 'The address of the organisation',
-            //     placeholder: '',
-            //     postCode: false,
-            //     required: true
-            //   },
-            //   expressionProperties: {
-            //     'templateOptions.required': '!model.address.length'
-            //   }
-            // },
             {
               key: 'clientRef',
               type: 'input',
@@ -440,6 +404,7 @@ export class DeviceRequestInfoComponent {
             //     required: false
             //   }
             // },
+            this.referringOrganisationContactField,
             {
               key: 'deviceRequestNeeds.hasInternet',
               type: 'checkbox',
@@ -503,6 +468,14 @@ export class DeviceRequestInfoComponent {
 
     this.displayNotes(data)
 
+    if (data.referringOrganisationContact && data.referringOrganisationContact.id) {
+      data.referringOrganisationContactId = data.referringOrganisationContact.id;
+      this.referringOrganisationContactField.templateOptions['items'] = [
+        {label: this.referringOrganisationContactName(data.referringOrganisationContact), value: data.referringOrganisationContact.id}
+      ];
+      this.referringOrganisationContactField.templateOptions['label'] = data.referringOrganisationContact.referringOrganisation.name + ' Referee';
+    }
+
     return data;
   }
 
@@ -533,6 +506,8 @@ export class DeviceRequestInfoComponent {
             const data = res.data['deviceRequest'];
             this.model = this.normalizeData(data);
             this.requestId = this.model['id'];
+            this.referringOrganisationId = this.model['referringOrganisationContact']['referringOrganisation']['id'];
+            this.referringOrganisationContactId = this.model['referringOrganisationContact']['id'];
           } else {
             this.model = {};
             this.requestId = -1;
@@ -555,16 +530,59 @@ export class DeviceRequestInfoComponent {
   }
 
   ngOnInit() {
+    const referringOrganisationContactRef = this.apollo
+      .watchQuery({
+        query: AUTOCOMPLETE_REFERRING_ORGANISATION_CONTACTS,
+        variables: {
+        }
+      });
+
+    this.referringOrganisationContacts$ = concat(
+      of([]),
+      this.referringOrganisationContactInput$.pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        tap(() => this.referringOrganisationContactLoading = true),
+        switchMap(term => from(referringOrganisationContactRef.refetch({
+          term: term, referringOrganisationId: this.referringOrganisationId
+        })).pipe(
+          catchError(() => of([])),
+          tap(() => this.referringOrganisationContactLoading = false),
+          switchMap(res => {
+            const data = res['data']['referringOrganisationContactsConnection']['content'].map(v => {
+              return {
+                label: `${this.referringOrganisationContactName(v)}`, value: v.id
+              };
+            });
+            return of(data);
+          })
+        ))
+      )
+    );
+
     this.sub = this.activatedRoute.params.subscribe((params) => {
       this.requestId = +params['requestId'];
       this.fetchData();
     });
+
     this.sub.add(
       this.user$.subscribe((user) => {
         this.user = user;
         this.options.formState.disabled = !(user && user.authorities && user.authorities['write:organisations']);
       })
     );
+
+    this.sub.add(this.referringOrganisationContacts$.subscribe(data => {
+      this.referringOrganisationContactField.templateOptions['items'] = data;
+    }));
+  }
+
+  referringOrganisationContactName(data) {
+    return `${data.fullName || ''}||${data.id || ''}`
+      .split('||')
+      .filter(f => f.trim().length)
+      .join(' / ')
+      .trim();
   }
 
   ngOnDestroy() {
