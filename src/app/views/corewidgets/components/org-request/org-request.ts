@@ -53,6 +53,9 @@ query findAutocompleteReferringOrgs($term: String) {
   referringOrganisationsPublic(where: {
       name: {
         _contains: $term
+      },
+      archived: {
+        _eq: false 
       }
   }){
 
