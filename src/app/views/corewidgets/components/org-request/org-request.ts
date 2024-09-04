@@ -542,52 +542,49 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       {
         className: 'col-md-12',
         template: '<h6 class="m-0 font-weight-bold text-primary">Your client\'s needs</h6>'
-      },
+      },/* 
+      {
+        className: 'col-md-12',
+        template: '<p class="m-0">Please select the item your client needs. *</p>'
+      }, */
       {
         fieldGroupClassName: 'row',
         fieldGroup: [
           {
             key: 'deviceRequestItems',
-            type: 'repeat',
+            type: 'radio',
             className: 'col-md-6',
-            defaultValue: [{}],
             templateOptions: {
-              description: 'If your client needs another item, use this button ➜',
-              addText: 'Request another item',
-              removeText: 'Remove this item',
-              required: true,
-              min: 1,
-              maxItems: 1
-            },
-            fieldArray: {
-              key: 'item',
-              type: 'radio',
-              className: '',
-              templateOptions: {
-                label: 'Please select the item your client needs.',
-                description: 'If your client needs a SIM card in addition to a device, please select the main device above. Then tell us in the notes below that you also need a SIM card.',
-                options: [
-                  // TODO: find some way to derive these from requestedItems so it's
-                  // all defined in one place
-                  { value: 'laptops', label: 'Laptop' },
-                  { value: 'desktops', label: 'Desktop computer' },
-                  //{ value: 'phones', label: 'Smartphone' },
-                  { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
-                  // {value: 'tablets', label: 'Tablet' },
+              label: 'Please select the item your client needs. *',
+              //description: 'If your client needs a SIM card in addition to a device, select the main device above and check the below box. If they just need a SIM card, only select the box below.',
+              options: [
+                // TODO: find some way to derive these from requestedItems so it's
+                // all defined in one place
+                { value: 'laptops', label: 'Laptop' },
+                { value: 'desktops', label: 'Desktop computer' },
+                //{ value: 'phones', label: 'Smartphone' },
+                /* { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' } */,
+                // {value: 'tablets', label: 'Tablet' },
 
-                ],
-                required: true
-              },
-              // // validation: {
-              //   show: false
-              // },
-              // expressionProperties: {
-              //   'validation.show': 'model.showErrorState',
-              // }
-              //   }
-              // ]
+              ],
+              required: false
             }
-          }
+          },
+          {
+            className: 'col-md-12',
+            template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
+          },
+          {
+            key: 'isSimNeeded',
+            type: 'checkbox',
+            className: 'col-md-12',
+            templateOptions: {
+              label: 'SIM Card',
+              required: false, 
+              defaultValue: false,
+              indeterminate: false
+            }
+          },
         ]
       },
       {
@@ -1004,15 +1001,19 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
     }
   }
 
-  setDeviceRequestItems(deviceRequestItems: any) {
+  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any) {
 
+    
     var payload: any = {};
-    if (Object.keys(deviceRequestItems[0]).length == 0){
-      return null
-    }
+    
 
-    for (var device of deviceRequestItems) {
-      payload[device] = 1;
+    if (deviceRequestItem){
+      payload[deviceRequestItem] = 1;
+    }
+    
+
+    if (isSimNeeded === true){
+      payload['commsDevices'] = 1
     }
 
     return payload;
@@ -1039,9 +1040,9 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
     }
 
 
-    var requestItems =  this.setDeviceRequestItems(deviceRequest.deviceRequestItems)
+    var requestItems =  this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded)
 
-    if (requestItems == null){
+    if (Object.keys(requestItems).length === 0){
       this.toastr.error("Please select the item your client needs");
       return Promise.resolve(false)
     }
