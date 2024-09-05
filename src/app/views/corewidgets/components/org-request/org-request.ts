@@ -55,13 +55,11 @@ query findAutocompleteReferringOrgs($term: String) {
         _contains: $term
       },
       archived: {
-        _eq: false 
+        _eq: false
       }
   }){
-
      id
      name
-
   }
 }
 `;
@@ -72,6 +70,7 @@ query findOrganisationContact($fullName: String, $email: String, $refOrgId: Long
       fullName: { _ilike: $fullName }
       email: { _ilike: $email }
       referringOrganisation: { id: { _eq: $refOrgId } }
+      archived: { _eq: false }
     })
 }
 `;
@@ -92,16 +91,12 @@ mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
 }
 `;
 
-
-
 @Component({
   selector: 'org-request',
   styleUrls: ['org-request.scss'],
 
   templateUrl: './org-request.html'
 })
-
-
 
 export class OrgRequestComponent {
   sub: Subscription;
@@ -545,7 +540,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       {
         className: 'col-md-12',
         template: '<h6 class="m-0 font-weight-bold text-primary">Your client\'s needs</h6>'
-      },/* 
+      },/*
       {
         className: 'col-md-12',
         template: '<p class="m-0">Please select the item your client needs. *</p>'
@@ -583,7 +578,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
             className: 'col-md-12',
             templateOptions: {
               label: 'SIM Card',
-              required: false, 
+              required: false,
               defaultValue: false,
               indeterminate: false
             }
@@ -1006,14 +1001,14 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
 
   setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any) {
 
-    
+
     var payload: any = {};
-    
+
 
     if (deviceRequestItem){
       payload[deviceRequestItem] = 1;
     }
-    
+
 
     if (isSimNeeded === true){
       payload['commsDevices'] = 1
