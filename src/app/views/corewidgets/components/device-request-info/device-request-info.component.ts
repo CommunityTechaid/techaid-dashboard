@@ -131,12 +131,14 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
   }, where: {
    AND: {
     fullName: { _contains: $term },
-    referringOrganisation: { id: { _eq: $referringOrganisationId } }
+    referringOrganisation: { id: { _eq: $referringOrganisationId } },
+    archived: { _eq:false }
    }
   }){
     content  {
       id
       fullName
+      archived
       referringOrganisation {
           id
           name
