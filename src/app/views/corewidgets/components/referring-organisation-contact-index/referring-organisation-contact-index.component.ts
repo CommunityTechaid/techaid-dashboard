@@ -51,6 +51,7 @@ query findAllReferringOrgContacts(
      }
      createdAt
      updatedAt
+     archived
     }
   }
 }
@@ -282,6 +283,7 @@ export class ReferringOrganisationContactIndexComponent {
         { data: 'referringOrganisation.name' },
         { data: 'createdAt'},
         { data: 'updatedAt' },
+        { data: 'archived' },
       ]
     };
   }

@@ -40,6 +40,7 @@ query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: Refe
      requestCount
      createdAt
      updatedAt
+     archived
     }
   }
 }
@@ -288,6 +289,7 @@ export class ReferringOrganisationIndexComponent {
         { data: 'requestCount' },
         { data: 'createdAt' },
         { data: 'updatedAt' },
+        { data: 'archived' },
       ]
     };
   }

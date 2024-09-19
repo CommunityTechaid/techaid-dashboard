@@ -40,6 +40,7 @@
                                   <th>Open Request #</th>
                                   <th>Created</th>
                                   <th>Updated</th>
+                                  <th>Archived</th>
                               </tr>
                           </thead>
                           <tbody *ngIf="entities?.length != 0;">
@@ -69,6 +70,7 @@
                                   <td [title]="dt.updatedAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.updatedAt | date:'full'}}" triggers="click:blur">
                                       {{ dt.updatedAt | date:'medium' }}
                                   </td>
+                                  <td>{{dt.archived}}</td>
                               </tr>
                           </tbody>
                       </table>
