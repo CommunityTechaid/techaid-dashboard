@@ -704,15 +704,6 @@ export class KitIndexComponent {
       `
     },
     {
-      key: 'attributes.images',
-      type: 'gallery',
-      className: 'col-md-12',
-      templateOptions: {
-        label: 'Upload an image of your device if you can',
-        required: false
-      }
-    },
-    {
       key: 'attributes.consent',
       type: 'radio',
       className: 'col-md-12',
@@ -1077,12 +1068,7 @@ export class KitIndexComponent {
 
   createEntity(data: any) {
     data.status = 'DONATION_NEW';
-    data.attributes.images = (data.attributes.images || []).map(f => {
-      return {
-        image: f.image,
-        id: f.id
-      };
-    });
+
     this.apollo.mutate({
       mutation: CREATE_ENTITY,
       variables: { data }

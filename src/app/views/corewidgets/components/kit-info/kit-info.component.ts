@@ -117,9 +117,6 @@ query findKit($id: Long) {
       pickupAvailability
       notes
       network
-      images {
-        id
-      }
       consent
       state
       pickup
@@ -188,9 +185,6 @@ mutation updateKit($data: UpdateKitInput!) {
       status
       notes
       network
-      images {
-        id
-      }
       consent
       state
       pickup
@@ -212,8 +206,6 @@ mutation deleteKit($id: ID!) {
   deleteKit(id: $id)
 }
 `;
-
-
 
 const AUTOCOMPLETE_USERS = gql`
 query findAutocompleteVolunteers($term: String, $subGroup: String) {
@@ -323,7 +315,6 @@ export class KitInfoComponent {
   deviceModel = {};
   entityName: string;
   entityId: number;
-  album = [];
 
   organisers$: Observable<any>;
   organisersInput$ = new Subject<string>();
@@ -915,16 +906,6 @@ export class KitInfoComponent {
       `
     },
     {
-      key: 'attributes.images',
-      type: 'gallery',
-      className: 'col-md-12',
-      templateOptions: {
-        label: 'Upload an image of your device if you can',
-        prefix: '',
-        required: false
-      }
-    },
-    {
       key: 'attributes.consent',
       type: 'radio',
       className: 'col-md-12',
@@ -945,15 +926,7 @@ export class KitInfoComponent {
       variables: {}
     });
 
-  modal(content) {
-    this.modalService.open(content, { centered: true });
-  }
-
   private normalizeData(data: any) {
-    this.album = (data.attributes.images || []).map(function(src) {
-      src.url = `https://api.communitytechaid.org.uk/kits/${data.id}/images/${src.id}`;
-      return {src: src.url, thumb: src.url, caption: data.model};
-    });
     if (data.volunteers) {
       const volunteers = {};
       data.volunteers.forEach(v => {
@@ -999,13 +972,6 @@ export class KitInfoComponent {
       });
       this.notesField.templateOptions['notes'] = notes;
     }
-  }
-
-  open(index: number): void {
-    this.lightbox.open(this.album, index, {
-      alwaysShowNavOnTouchDevices: true,
-      centerVertically: true
-    });
   }
 
   private fetchData() {
@@ -1228,12 +1194,7 @@ export class KitInfoComponent {
 
   updateEntity(data: any) {
     data.id = this.entityId;
-    data.attributes.images = (data.attributes.images || []).map(f => {
-      return {
-        image: f.image,
-        id: f.id
-      };
-    });
+
     // we set the value of content to a blank string if it is null so as to not create issues in the back
     // it will be checked to see if it is blank in the backend anyway so that blank notes are not created
     if (data.note.content == null){
