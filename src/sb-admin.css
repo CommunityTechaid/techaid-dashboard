@@ -490,7 +490,7 @@
   .img-thumbnail {
     padding: 0.25rem;
     background-color: #fff;
-    border: 1px solid #dddfeb;
+    border: 1px solid var(--ctablue);
     border-radius: 0.35rem;
     max-width: 100%;
     height: auto;
@@ -4036,7 +4036,7 @@
   }
 
   .nav-tabs {
-    border-bottom: 1px solid #dddfeb;
+    border-bottom: 1px solid var(--ctablue);
   }
 
   .nav-tabs .nav-item {
@@ -4050,7 +4050,7 @@
   }
 
   .nav-tabs .nav-link:hover, .nav-tabs .nav-link:focus {
-    border-color: #eaecf4 #eaecf4 #dddfeb;
+    border-color: #eaecf4 #eaecf4 var(--ctablue);
   }
 
   .nav-tabs .nav-link.disabled {
@@ -4063,7 +4063,7 @@
   .nav-tabs .nav-item.show .nav-link {
     color: #6e707e;
     background-color: #fff;
-    border-color: #dddfeb #dddfeb #fff;
+    border-color: var(--ctablue) var(--ctablue) #fff;
   }
 
   .nav-tabs .dropdown-menu {
@@ -4731,7 +4731,7 @@
     line-height: 1.25;
     color: var(--ctablue);
     background-color: #fff;
-    border: 1px solid #dddfeb;
+    border: 1px solid var(--ctablue);
   }
 
   .page-link:hover {
@@ -4739,7 +4739,7 @@
     color: #224abe;
     text-decoration: none;
     background-color: #eaecf4;
-    border-color: #dddfeb;
+    border-color: var(--ctablue);
   }
 
   .page-link:focus {
@@ -4771,7 +4771,7 @@
     pointer-events: none;
     cursor: auto;
     background-color: #fff;
-    border-color: #dddfeb;
+    border-color: var(--ctablue);
   }
 
   .pagination-lg .page-link {
@@ -9694,7 +9694,7 @@
     }
     .table-bordered th,
     .table-bordered td {
-      border: 1px solid #dddfeb !important;
+      border: 1px solid var(--ctablue) !important;
     }
     .table-dark {
       color: inherit;
