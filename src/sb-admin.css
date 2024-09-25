@@ -4520,7 +4520,7 @@
   .card-header {
     padding: 0.75rem 1.25rem;
     margin-bottom: 0;
-    background-color: #f8f9fc;
+    background-color: #fff;
     border-bottom: 1px solid #e3e6f0;
   }
 
@@ -4689,7 +4689,10 @@
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
     list-style: none;
-    background-color: #eaecf4;
+    background-color: #fff;
+    border-color: var(--ctablue);
+    border-style: solid;
+    border-width: thin;
     border-radius: 0.35rem;
   }
 
@@ -9729,7 +9732,7 @@
   }
 
   #wrapper #content-wrapper {
-    background-color: #f8f9fc;
+    /* background-color: #f8f9fc; */
     width: 100%;
     overflow-x: hidden;
   }
