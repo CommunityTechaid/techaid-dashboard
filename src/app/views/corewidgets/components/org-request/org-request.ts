@@ -488,6 +488,15 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
    * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION
    *
    */
+  createNewOrganisationPrompt: FormlyFieldConfig = {
+    hideExpression: true,
+    className: 'col-md-12',
+    template: `<div class="border-bottom-danger card mb-3 p-3">
+<p>It looks like your organisation is not on our system. Please use <a href="#">this link</a> to tell us about your organisation and we will add you to our system. For any questions, please contact <a href="mailto:
+distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
+</div>`
+  }
+
   refOrganisationPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
@@ -496,6 +505,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         template: '<h6 class="m-0 font-weight-bold text-primary">About your organisation</h6>'
       },
       this.referringOrgField,
+      this.createNewOrganisationPrompt,
       this.referringOrganisationDetailFormGroup
     ]
   }
@@ -799,10 +809,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
                 });
 
                 if (data.length == 0) {
-                  this.hideNewOrganisationField(false);
-                  data = [{
-                    label: 'Use "' + term + '"', value: term, display: term
-                  }];
+                  this.hideNewOrganisationField(false)
                 } else {
                   this.hideNewOrganisationField(true);
                   this.showContactPage();
@@ -983,7 +990,8 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
   hideNewOrganisationField(hide: boolean) {
     this.isOrganisationExists = hide;
     this.isContactExists = hide;
-    this.referringOrganisationDetailFormGroup.hideExpression = this.isOrganisationExists;
+    this.createNewOrganisationPrompt.hideExpression = hide;
+    //this.referringOrganisationDetailFormGroup.hideExpression = this.isOrganisationExists;
     this.refContactPage.hideExpression = !this.isOrganisationExists;
   }
 
