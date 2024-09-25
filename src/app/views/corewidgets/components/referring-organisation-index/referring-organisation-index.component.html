@@ -70,7 +70,7 @@
                                   <td [title]="dt.updatedAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.updatedAt | date:'full'}}" triggers="click:blur">
                                       {{ dt.updatedAt | date:'medium' }}
                                   </td>
-                                  <td><input type="checkbox" [checked]="dt.archived" disabled="true"></td>
+                                  <td><input type="checkbox" [checked]="dt.archived" onclick="return false;"></td>
                               </tr>
                           </tbody>
                       </table>
