@@ -154,6 +154,15 @@ export class DeviceRequestIndexComponent {
   filterCount = 0;
   filterModel: any = {is_sales: [false]};
   filterForm: FormGroup = new FormGroup({});
+  filterDeviceTypes: any =[
+    {value: 'LAPTOPS', label: 'Laptops'},
+    {value: 'PHONES', label: 'Phones'},
+    {value: 'TABLETS', label: 'Tablets' },
+    {value: 'ALLINONES', label: 'All In Ones' },
+    {value: 'DESKTOPS', label: 'Desktops' },
+    {value: 'COMMSDEVICES', label: 'SIM Cards' },
+    {value: 'OTHER', label: 'Other' }
+  ];
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
@@ -184,6 +193,18 @@ export class DeviceRequestIndexComponent {
             required: false,
           }
         },
+        {
+          key: 'device_type',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          defaultValue: [false],
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Device Type?',
+            options: this.filterDeviceTypes,
+            required: false,
+          }
+        },
       ]
     }
   ];
@@ -209,6 +230,17 @@ export class DeviceRequestIndexComponent {
       count += data.is_sales.length;
       filter['isSales'] = {_in: data.is_sales};
     }
+
+    // if (data.device_type && data.device_type.length) {
+    //   count = count + data.device_type.length;
+
+    //   // for(device_type in data.device_type) {
+    //   //   const filt = { deviceRequestItems: { device_type: {_gt: 0} } };
+    //   //   filter['AND'].push(filt);
+    //   // }
+    //   const filt = { deviceRequestItems: { desktops: {_gt: 0} } };
+    //   filter['AND'].push(filt);
+    // }
 
     localStorage.setItem(`deviceRequestFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
