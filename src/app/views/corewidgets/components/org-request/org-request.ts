@@ -93,8 +93,7 @@ mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
 
 @Component({
   selector: 'org-request',
-  styleUrls: ['org-request.scss'],
-
+  styleUrls: ['./org-request.scss'],
   templateUrl: './org-request.html'
 })
 
@@ -588,10 +587,11 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       {
         key: 'details',
         type: 'textarea',
-        className: 'col-md-12',
+        className: 'col-md-12 device-request-details',
         defaultValue: '',
         templateOptions: {
           label: 'In order to support you as best as possible, please provide us with a brief overview of who this request is for, why they need a device and what they hope to do with it. Please do not include any identifiable details such as names or addresses but any background you can provide would be extremely helpful.',
+          placeholder: 'Please do not include any identifiable details',
           rows: 3,
           required: true
         }

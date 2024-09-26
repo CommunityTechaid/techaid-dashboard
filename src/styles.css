@@ -185,6 +185,11 @@ input[type="text"].srch {
     white-space: pre-line !important;
 }
 
+.ng-select {
+  border-radius: 4px;
+  border: 1px solid var(--ctablue);
+}
+
 .pac-container {
     z-index: 1051 !important;
 }

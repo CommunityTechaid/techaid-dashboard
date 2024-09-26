@@ -49,6 +49,7 @@ import { ReferringOrganisationContactIndexComponent } from './components/referri
 import { ReferringOrganisationContactInfoComponent } from './components/referring-organisation-contact-info/referring-organisation-contact-info.component';
 import { ReferringOrganisationContactComponent }  from './components/referring-organisation-contact-component/referring-organisation-contact-component.component';
 import { DeviceRequestComponent } from './components/device-request-component/device-request-component.component';
+import { AppLocalCSS } from './components/org-request/app-local-css.component';
 
 const routes: Routes = [
   { path: '', component: DashboardIndexComponent },
@@ -147,7 +148,8 @@ const routes: Routes = [
     ReferringOrganisationContactIndexComponent,
     ReferringOrganisationContactInfoComponent,
     ReferringOrganisationContactComponent,
-    DeviceRequestComponent
+    DeviceRequestComponent,
+    AppLocalCSS
   ],
   imports: [
     LightboxModule,

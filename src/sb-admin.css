@@ -1868,7 +1868,7 @@
     color: #6e707e;
     background-color: #fff;
     background-clip: padding-box;
-    border: 1px solid #d1d3e2;
+    border: 1px solid var(--ctablue);
     border-radius: 0.35rem;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   }
@@ -4471,7 +4471,7 @@
     word-wrap: break-word;
     background-color: #fff;
     background-clip: border-box;
-    border: 1px solid #e3e6f0;
+    border: 1px solid var(--ctablue);
     border-radius: 0.35rem;
   }
 
