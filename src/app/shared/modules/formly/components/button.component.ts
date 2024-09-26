@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 
 @Component({
@@ -6,7 +6,7 @@ import { FieldType } from '@ngx-formly/core';
   template: `
     <div>
       <button 
-        style="width: 150px" class="btn btn-primary btn-sm p-2"
+        style="width: 150px" [class]="to.className"
         [type]="to.type"
         [disabled]="to.disabled" 
         [ngClass]="'btn btn-' + to.btnType" 
@@ -16,7 +16,14 @@ import { FieldType } from '@ngx-formly/core';
     </div>
   `,
 })
-export class FormlyFieldButton extends FieldType {
+export class FormlyFieldButton extends FieldType implements OnInit  {
+
+  
+  ngOnInit() {
+    this.to.className = this.to.className || "btn btn-primary btn-sm p-2";
+  }
+
+
   onClick($event: Event) {
     if (this.to.onClick) {
       this.to.onClick($event);

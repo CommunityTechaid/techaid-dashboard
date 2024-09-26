@@ -65,13 +65,15 @@ query findAutocompleteReferringOrgs($term: String) {
 `;
 
 const FIND_ORGANISATION_CONTACT = gql`
-query findOrganisationContact($fullName: String, $email: String, $refOrgId: Long) {
+query findOrganisationContact($email: String, $refOrgId: Long) {
   referringOrganisationContactsPublic( where: {
-      fullName: { _ilike: $fullName }
       email: { _ilike: $email }
       referringOrganisation: { id: { _eq: $refOrgId } }
       archived: { _eq: false }
-    })
+    }){
+      id
+      fullName  
+    }
 }
 `;
 
@@ -131,6 +133,11 @@ export class OrgRequestComponent {
     hooks: {
       onInit: (field) => {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
+
+          this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = []
+          this.referringOrganisationContactsDropDown.hideExpression = true;
+          this.createNewOrganisationContactPrompt.hideExpression = true;
+
           if (!this.isOrganisationExists) {
             (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
           } else {
@@ -187,7 +194,7 @@ export class OrgRequestComponent {
         defaultValue: '',
         templateOptions: {
           label: '',
-          pattern:/^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
+          pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
           placeholder: 'Organisation website',
           required: true
         },
@@ -198,23 +205,23 @@ export class OrgRequestComponent {
           'validation.show': 'model.showErrorState',
         }
       },
-/*       {
-        key: 'referringOrganisation.address',
-        type: 'place',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          placeholder: 'Organisation Address',
-          postCode: false,
-          required: true
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': 'model.showErrorState'
-        }
-      }, */
+      /*       {
+              key: 'referringOrganisation.address',
+              type: 'place',
+              className: 'col-md-12',
+              defaultValue: '',
+              templateOptions: {
+                placeholder: 'Organisation Address',
+                postCode: false,
+                required: true
+              },
+              validation: {
+                show: false
+              },
+              expressionProperties: {
+                'validation.show': 'model.showErrorState'
+              }
+            }, */
       {
         key: 'referringOrganisation.phoneNumber',
         type: 'input',
@@ -279,6 +286,50 @@ export class OrgRequestComponent {
    * These fields collect details of a new organisation contact and is displayed only
    * if the contact with the entered name and email ID cannot be found
    */
+
+  referringOrganisationContactProceedButton: FormlyFieldConfig = {
+
+    hideExpression: true,
+    type: 'button',
+    templateOptions: {
+      text: 'Proceed',
+      onClick: () => {
+        this.showRequestPage();
+      }
+    },
+
+  }
+
+  referringOrganisationContactsDropDown: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        //key: 'referringOrganisationContact',
+        type: 'select',
+        className: 'col-md-12',
+        templateOptions: {
+          label: 'Choose your name from the list below',
+          options: [{
+            label: "hello",
+            value: "test"
+          }],
+          required: false
+        },
+        hooks: {
+          onInit: (field) => {
+            this.sub.add(field.formControl.valueChanges.subscribe(v => {
+              this.referringOrganisationContactProceedButton.hideExpression = false;
+              this.referringContactIdField.formControl.setValue(v)
+              this.isContactExists = true;
+            }));
+          }
+        }
+      },
+      this.referringOrganisationContactProceedButton
+    ]
+
+  }
+
   referringOrganisationContactDetailFormGroup: FormlyFieldConfig = {
     fieldGroupClassName: 'row',
     hideExpression: this.isOrganisationExists && this.isContactExists,
@@ -377,7 +428,7 @@ export class OrgRequestComponent {
   emailField: FormlyFieldConfig = {
     key: 'referringOrganisationContact.email',
     type: 'input',
-    className: 'col-md-12',
+    className: 'col-md-10',
     defaultValue: '',
     templateOptions: {
       label: '',
@@ -386,7 +437,7 @@ export class OrgRequestComponent {
       pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
       required: true
     },
-    hooks: {
+    /* hooks: {
       onInit: (field) => {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
           if (this.isOrganisationExists) {
@@ -396,7 +447,7 @@ export class OrgRequestComponent {
           }
         }));
       }
-    },
+    }, */
     validation: {
       show: false
     },
@@ -407,9 +458,11 @@ export class OrgRequestComponent {
 
   refContactSubmitButton: FormlyFieldConfig = {
     hideExpression: !this.isOrganisationExists,
+    className: 'col-md-2',
     type: 'button',
     templateOptions: {
-      text: 'Submit',
+      text: 'Find Email',
+      className: 'btn btn-info btn-sm p-2',
       onClick: () => this.getRefContact(),
     },
   }
@@ -418,6 +471,16 @@ export class OrgRequestComponent {
    * COLLECTION OF ALL THE FIELDS OF REFERRING ORGANISATION CONTACT
    *
    */
+
+  createNewOrganisationContactPrompt: FormlyFieldConfig = {
+    hideExpression: true,
+    className: 'col-md-12',
+    template: `<div class="border-bottom-danger card mb-3 p-3">
+<p>The email you entered was not found on our system. Please make sure you have entered the correct email address. If this is the first time you are making a request, please use <a href="#">this link</a> to fill in your details and we will register you on the system. For any questions, please contact <a href="mailto:
+distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
+</div>`
+  }
+
   refContactPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
@@ -425,9 +488,15 @@ export class OrgRequestComponent {
         className: 'col-md-12',
         template: '<h6 class="m-0 font-weight-bold text-primary">About you</h6>'
       },
-      this.fullNameField,
-      this.emailField,
-      this.refContactSubmitButton,
+      {
+        fieldGroupClassName: 'row',
+        fieldGroup: [
+          this.emailField,
+          this.refContactSubmitButton,
+        ]
+      },
+      this.referringOrganisationContactsDropDown,
+      this.createNewOrganisationContactPrompt,
       this.referringOrganisationContactDetailFormGroup
     ]
   };
@@ -454,10 +523,10 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         hooks: {
           onInit: (field) => {
             this.sub.add(field.formControl.valueChanges.subscribe(v => {
-              if (v){
+              if (v) {
                 this.refOrganisationPage.hideExpression = false;
                 this.isLambethErrorMessage.hideExpression = true;
-              }else{
+              } else {
                 this.refOrganisationPage.hideExpression = true;
                 this.isLambethErrorMessage.hideExpression = false;
               }
@@ -467,8 +536,8 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
         templateOptions: {
           label: 'Does your client live in either Lambeth or Southwark?',
           options: [
-            {value: true, label: 'Yes'},
-            {value: false , label: 'No'}
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' }
           ],
           required: true
         },
@@ -517,7 +586,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       disabled: this.submitting,
       onClick: () => {
 
-        if (this.submitting){
+        if (this.submitting) {
           return
         }
 
@@ -534,7 +603,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
             this.submitting = false;
             this.deviceRequestCreateButton.templateOptions.disabled = this.submitting
           })
-        ;
+          ;
       }
     },
   }
@@ -831,19 +900,19 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
   async saveNewReferringOrganisation(): Promise<boolean> {
 
     //var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
-    var website = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.website").formControl.value
-    if (!website){
+    var website = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key === "referringOrganisation.website").formControl.value
+    if (!website) {
       this.toastr.error("Please fill in a website");
       return false
 
     }
 
-    var nameField = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.name")
+    var nameField = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key === "referringOrganisation.name")
     var name = nameField.formControl.value
-    if (!name){
+    if (!name) {
       this.toastr.error("Please fill in the name of your organisation");
       return false
-    }else if (name.length < 3){
+    } else if (name.length < 3) {
       nameField.validation.show = true
       this.toastr.error("Name of organisation should be at least 3 characters.");
       return false
@@ -878,7 +947,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
 
     var isValid: boolean = true
     for (var field of this.referringOrganisationContactDetailFormGroup.fieldGroup) {
-      if (field.formControl.errors){
+      if (field.formControl.errors) {
         isValid = false;
         field.validation.show = true
       }
@@ -917,28 +986,40 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
 
   getRefContact() {
 
-    if (this.fullNameField.formControl.errors || this.emailField.formControl.errors) {
-      this.fullNameField.validation.show = true;
+    if (this.emailField.formControl.errors) {
       this.emailField.validation.show = true;
       return;
     }
+
+    this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = []
+    this.referringOrganisationContactsDropDown.hideExpression = true;
+    this.createNewOrganisationContactPrompt.hideExpression = true;
+
     this.apollo.query({
       query: FIND_ORGANISATION_CONTACT,
       variables: {
-        fullName: this.fullNameField.formControl.value.trim(),
         email: this.emailField.formControl.value.trim(),
         refOrgId: this.referringOrgIdField.formControl.value
       }
     }).toPromise().then(res => {
 
       var data = res["data"]["referringOrganisationContactsPublic"];
-      if (data && data.length >= 1) {
-        this.referringContactIdField.formControl.setValue(data[0]);
+      console.log(data)
+      if (data && data.length > 1) {
+        const contacts = data.map((r) => {
+          return { label: r.fullName, value: r.id };
+        });
+
+        this.referringOrganisationContactProceedButton.hideExpression = true;
+        this.referringOrganisationContactsDropDown.hideExpression = false;
+        this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = contacts;
+
+      } else if (data && data.length == 1) {
+        this.referringContactIdField.formControl.setValue(data[0].id);
         this.isContactExists = true;
         this.showRequestPage();
       } else {
-        this.refContactSubmitButton.hideExpression = true
-        this.hideNewContactRefDetailsField(false);
+        this.createNewOrganisationContactPrompt.hideExpression = false;
       }
     });
 
@@ -1013,12 +1094,12 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
     var payload: any = {};
 
 
-    if (deviceRequestItem){
+    if (deviceRequestItem) {
       payload[deviceRequestItem] = 1;
     }
 
 
-    if (isSimNeeded === true){
+    if (isSimNeeded === true) {
       payload['commsDevices'] = 1
     }
 
@@ -1034,26 +1115,26 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
 
     var isValid = true
     for (var field of this.requestPage.fieldGroup) {
-      if (field.formControl.errors){
+      if (field.formControl.errors) {
         isValid = false;
         field.validation.show = true
       }
     }
 
-    if (!deviceRequest.clientRef){
+    if (!deviceRequest.clientRef) {
       this.toastr.error("Please fill in a client reference");
       return Promise.resolve(false)
     }
 
 
-    var requestItems =  this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded)
+    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded)
 
-    if (Object.keys(requestItems).length === 0){
+    if (Object.keys(requestItems).length === 0) {
       this.toastr.error("Please select the item your client needs");
       return Promise.resolve(false)
     }
 
-    if (!isValid){
+    if (!isValid) {
       return Promise.resolve(false)
     }
 
@@ -1081,7 +1162,7 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
       }
     }).catch(error => {
       var message = error.message.split(':')[1]
-      if (message.trim().startsWith("Could not create new requests. This user already has")){
+      if (message.trim().startsWith("Could not create new requests. This user already has")) {
         this.showMoreThanThreeRequestsPage()
         return false;
       }
