@@ -68,7 +68,7 @@ export class DashboardIndexComponent {
     private apollo: Apollo,
     private titleService: Title
   ) {
-
+    titleService.setTitle("TaDa Dashboard");
   }
 
   styles = {

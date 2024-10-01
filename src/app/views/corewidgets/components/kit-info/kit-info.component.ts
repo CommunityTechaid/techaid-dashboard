@@ -15,6 +15,7 @@ import { Lightbox } from 'ngx-lightbox';
 import { isObject } from 'util';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { HashUtils } from '@app/shared/utils';
+import { Title } from '@angular/platform-browser';
 
 export const KIT_STATUS = {
   'DONATION_NEW': 'New device registered',
@@ -304,10 +305,12 @@ export class KitInfoComponent {
     private router: Router,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private lightbox: Lightbox
+    private lightbox: Lightbox,
+    private titleService: Title
   ) {
-
+    titleService.setTitle("TaDa Device Info");
   }
+
   sub: Subscription;
   form: FormGroup = new FormGroup({});
   options: FormlyFormOptions = {};
@@ -1150,6 +1153,7 @@ export class KitInfoComponent {
 
     this.sub = this.activatedRoute.params.subscribe(params => {
       this.entityId = +params['kitId'];
+      this.titleService.setTitle(`TaDa Device ${this.entityId}`);
       this.fetchData();
     });
 

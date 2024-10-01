@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+import { Title } from '@angular/platform-browser';
 
 export const DEVICE_REQUEST_STATUS = {
     'NEW':'New request',
@@ -160,8 +161,12 @@ export class DeviceRequestInfoComponent {
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
-    private apollo: Apollo
-  ) {}
+    private apollo: Apollo,
+    private titleService: Title
+  ) {
+    titleService.setTitle("TaDa Device Request");
+  }
+
   sub: Subscription;
   form: FormGroup = new FormGroup({});
   options: FormlyFormOptions = {
@@ -564,6 +569,7 @@ export class DeviceRequestInfoComponent {
 
     this.sub = this.activatedRoute.params.subscribe((params) => {
       this.requestId = +params['requestId'];
+      this.titleService.setTitle(`TaDa Device Request ${this.requestId}`);
       this.fetchData();
     });
 
