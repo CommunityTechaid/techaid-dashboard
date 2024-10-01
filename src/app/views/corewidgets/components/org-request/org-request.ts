@@ -72,7 +72,7 @@ query findOrganisationContact($email: String, $refOrgId: Long) {
       archived: { _eq: false }
     }){
       id
-      fullName  
+      fullName
     }
 }
 `;
@@ -476,8 +476,8 @@ export class OrgRequestComponent {
     hideExpression: true,
     className: 'col-md-12',
     template: `<div class="border-bottom-danger card mb-3 p-3">
-<p>The email you entered was not found on our system. Please make sure you have entered the correct email address. If this is the first time you are making a request, please use <a href="#">this link</a> to fill in your details and we will register you on the system. For any questions, please contact <a href="mailto:
-distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
+<p>The email you entered isn’t in our system. Please double-check the address for accuracy. If this is your first request, use <a href="https://ghjngk6ao4g.typeform.com/to/Qz4rILeN" target="_blank">this link</a> to provide your details so we can register you.</p>
+<p>For any questions, contact <a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
 </div>`
   }
 
@@ -509,8 +509,8 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
     hideExpression: true,
     className: 'col-md-12',
     template: `<div class="border-bottom-info card mb-3 p-3">
-<p>Unfortunately, we can only support people in Lambeth and Southwark currently. For any questions, please contact <a href="mailto:
-distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
+<p>Unfortunately, we can only support people in Lambeth and Southwark currently.</p>
+<p>For any questions, contact <a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
 </div>`
   }
 
@@ -561,8 +561,8 @@ distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a>
     hideExpression: true,
     className: 'col-md-12',
     template: `<div class="border-bottom-danger card mb-3 p-3">
-<p>It looks like your organisation is not on our system. Please use <a href="#">this link</a> to tell us about your organisation and we will add you to our system. For any questions, please contact <a href="mailto:
-distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
+<p>It looks like your organisation isn't listed in our system. Please use <a href="https://ghjngk6ao4g.typeform.com/to/Qz4rILeN" target="_blank">this link</a> to provide your details. If you think your organisation should be listed, try typing the first three letters again.</p>
+<p>For any questions, contact <a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
 </div>`
   }
 
