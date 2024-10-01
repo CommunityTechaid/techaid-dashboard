@@ -57,6 +57,14 @@ query findAllReferringOrgContacts(
 }
 `;
 
+const CREATE_ENTITY = gql`
+mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
+  createReferringOrganisationContact(data: $data){
+     id
+  }
+}
+`;
+
 @Component({
   selector: 'app-referring-organisation-contact-index',
   templateUrl: './referring-organisation-contact-index.component.html',
@@ -86,13 +94,49 @@ export class ReferringOrganisationContactIndexComponent {
 
   fields: Array<FormlyFieldConfig> = [
     {
-      key: 'name',
+      key: 'referringOrganisation',
       type: 'input',
       className: 'col-md-12',
       defaultValue: '',
       templateOptions: {
-        label: 'Name',
-        placeholder: '',
+        label: 'Referring Organisation ID',
+        placeholder: 'Please enter the referring organisation ID eg: 123',
+        required: true
+      },
+      validation: {
+        show: false
+      },
+      expressionProperties: {
+        'validation.show': 'model.showErrorState',
+      }
+    },
+    {
+      key: 'fullName',
+      type: 'input',
+      className: 'col-md-12',
+      defaultValue: '',
+      templateOptions: {
+        label: 'Full Name',
+        placeholder: 'Please enter referee\'s full name eg: John Doe',
+        required: true
+      },
+      validation: {
+        show: false
+      },
+      expressionProperties: {
+        'validation.show': 'model.showErrorState',
+      }
+    },
+    {
+      key: 'email',
+      type: 'input',
+      className: 'col-md-10',
+      defaultValue: '',
+      templateOptions: {
+        label: 'Email',
+        type: 'email',
+        placeholder: 'Referee email address',
+        pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
         required: true
       },
       validation: {
@@ -121,6 +165,23 @@ export class ReferringOrganisationContactIndexComponent {
         }
       ]
     },
+    {
+      key: 'address',
+      type: 'place',
+      className: 'col-md-12',
+      defaultValue: '',
+      templateOptions: {
+        label: 'Referee Address',
+        placeholder: 'Your address',
+        required: true
+      },
+      validation: {
+        show: false
+      },
+      expressionProperties: {
+        'validation.show': 'model.showErrorState',
+      }
+    }
   ];
 
   filter: any = {};
@@ -324,5 +385,22 @@ export class ReferringOrganisationContactIndexComponent {
     for (const k in this.selections) {
       this.selected.push(this.selections[k]);
     }
+  }
+
+  createEntity(data: any) {
+    this.apollo.mutate({
+      mutation: CREATE_ENTITY,
+      variables: { data }
+    }).subscribe(data => {
+      this.total = null;
+      this.table.ajax.reload(null, false);
+    }, err => {
+      this.toastr.error(`
+      <small>${err.message}</small>
+      `, 'Create Referee Error', {
+          enableHtml: true,
+          timeOut: 15000
+        });
+    });
   }
 }

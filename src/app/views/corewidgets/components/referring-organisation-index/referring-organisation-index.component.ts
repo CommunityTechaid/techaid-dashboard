@@ -11,6 +11,14 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 
+const CREATE_ENTITY = gql`
+mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
+  createReferringOrganisation(data: $data){
+     id
+  }
+}
+`;
+
 const QUERY_ENTITY = gql`
 query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: ReferringOrganisationWhereInput!) {
   referringOrganisationsConnection(page: $page, where: {
@@ -82,6 +90,7 @@ export class ReferringOrganisationIndexComponent {
       templateOptions: {
         label: 'Name',
         placeholder: '',
+        minLength: 3,
         required: true
       },
       validation: {
@@ -90,6 +99,25 @@ export class ReferringOrganisationIndexComponent {
       expressionProperties: {
         'validation.show': 'model.showErrorState',
       }
+    },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'website',
+          type: 'input',
+          className: 'col-md-12',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Organisation Website',
+            pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
+            required: true
+          },
+          expressionProperties: {
+            'templateOptions.required': '!model.website.length'
+          }
+        }
+      ]
     },
     {
       fieldGroupClassName: 'row',
@@ -109,24 +137,6 @@ export class ReferringOrganisationIndexComponent {
           }
         }
       ]
-/*         ,
-        {
-          key: 'address',
-          type: 'place',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Address',
-            description: 'The address of the organisation',
-            placeholder: '',
-            postCode: false,
-            required: true
-          },
-          expressionProperties: {
-            'templateOptions.required': '!model.address.length'
-          }
-        }
- */
     },
   ];
 
@@ -330,5 +340,22 @@ export class ReferringOrganisationIndexComponent {
     for (const k in this.selections) {
       this.selected.push(this.selections[k]);
     }
+  }
+
+  createEntity(data: any) {
+    this.apollo.mutate({
+      mutation: CREATE_ENTITY,
+      variables: { data }
+    }).subscribe(data => {
+      this.total = null;
+      this.table.ajax.reload(null, false);
+    }, err => {
+      this.toastr.error(`
+      <small>${err.message}</small>
+      `, 'Create Referee Error', {
+          enableHtml: true,
+          timeOut: 15000
+        });
+    });
   }
 }
