@@ -1,9 +1,12 @@
 import { Component } from '@angular/core';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
 import { Store, Actions, ofAction } from '@ngxs/store';
 import { Subscription } from 'rxjs';
 import { APP_VERSION } from '@env/version';
+import { Title } from '@angular/platform-browser';
+import { filter, map } from "rxjs/operators";
 
 @Component({
   selector: 'app-root',
@@ -16,8 +19,33 @@ export class AppComponent {
   constructor(
     private toastr: ToastrService,
     private store: Store,
-    private actions: Actions
+    private actions: Actions,
+    private titleService: Title,
+    private router: Router,
+    private activatedRoute: ActivatedRoute
   ) {
+    titleService.setTitle("TaDa");
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(() => {
+          let child = this.activatedRoute.firstChild;
+          while (child) {
+              if (child.firstChild) {
+                  child = child.firstChild;
+              } else if (child.snapshot.data && child.snapshot.data['title']) {
+                  return child.snapshot.data['title'];
+              } else {
+                  return null;
+              }
+          }
+          return null;
+      })
+    ).subscribe( (data: any) => {
+        if (data) {
+            this.titleService.setTitle('TaDa - ' + data);
+        }
+    });
   }
 
   ngOnInit() {

@@ -52,59 +52,39 @@ import { DeviceRequestComponent } from './components/device-request-component/de
 import { AppLocalCSS } from './components/org-request/app-local-css.component';
 
 const routes: Routes = [
-  { path: '', component: DashboardIndexComponent },
-  { path: 'donate-device', component: DonorRequestComponent },
-  { path: 'volunteer', component: VolunteerComponent },
-  { path: 'faqs', component: FaqListComponent },
-  { path: 'organisation-device-request', component: OrgRequestComponent},
-  { path: 'dashboard/map', component: MapViewComponent},
-  { path: 'dashboard/volunteers', component: VolunteersIndexComponent, canActivate: [AuthGuard] },
-  {
-    path: 'dashboard/volunteers/:userId', component: VolunteerInfoComponent, canActivate: [AuthGuard]
-  },
-  { path: 'dashboard/devices', component: KitIndexComponent, canActivate: [AuthGuard] },
-  {
-    path: 'dashboard/devices/:kitId', component: KitInfoComponent, canActivate: [AuthGuard]
-  },
-  { path: 'dashboard/donors', component: DonorIndexComponent, canActivate: [AuthGuard] },
-  {
-    path: 'dashboard/donors/:donorId', component: DonorInfoComponent, canActivate: [AuthGuard]
-  },
-  { path: 'dashboard/roles', component: RoleIndexComponent,  canActivate: [AuthGuard]},
-  {
-    path: 'dashboard/roles/:roleId', component: RoleInfoComponent,  canActivate: [AuthGuard]
-  },
-  { path: 'dashboard/users', component: UserIndexComponent,  canActivate: [AuthGuard] },
-  {
-    path: 'dashboard/users/:userId', component: UserInfoComponent,  canActivate: [AuthGuard]
-  },
-  { path: 'dashboard/faqs', component: FaqIndexComponent,  canActivate: [AuthGuard] },
-  {
-    path: 'dashboard/faqs/:faqId', component: FaqInfoComponent,  canActivate: [AuthGuard]
-  },
-  { path: 'dashboard/posts', component: PostIndexComponent,  canActivate: [AuthGuard] },
-  {
-    path: 'dashboard/posts/:postId', component: PostInfoComponent,  canActivate: [AuthGuard]
-  },
-  {
-    path: 'dashboard/email', component: EmailComposeComponent, canActivate: [AuthGuard]
-  },
-  {
-    path: 'dashboard/email/templates', component: EmailTemplatesIndexComponent, canActivate: [AuthGuard]
-  },
-  {
-    path: 'dashboard/email/templates/:templateId', component: EmailTemplatesInfoComponent,  canActivate: [AuthGuard]
-  },
-  { path: 'dashboard/device-requests', component: DeviceRequestIndexComponent, canActivate: [AuthGuard] },
+  { path: '', component: DashboardIndexComponent, data: { title: '' } },
+  { path: 'donate-device', component: DonorRequestComponent, data: { title: 'Donate Device' } },
+  { path: 'volunteer', component: VolunteerComponent, data: { title: 'Volunteer' } },
+  { path: 'faqs', component: FaqListComponent, data: { title: 'FAQs' } },
+  { path: 'organisation-device-request', component: OrgRequestComponent, data: { title: 'Device Request' } },
+  { path: 'dashboard/map', component: MapViewComponent, data: { title: 'Map' } },
+  { path: 'dashboard/volunteers', component: VolunteersIndexComponent, data: { title: 'Volunteers' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/volunteers/:userId', component: VolunteerInfoComponent, data: { title: 'Volunteer' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/devices', component: KitIndexComponent, data: { title: 'Devices' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/devices/:kitId', component: KitInfoComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard/donors', component: DonorIndexComponent, data: { title: 'Donors' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/donors/:donorId', component: DonorInfoComponent, data: { title: 'Donor' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/roles', component: RoleIndexComponent, data: { title: 'Roles' },  canActivate: [AuthGuard]},
+  { path: 'dashboard/roles/:roleId', component: RoleInfoComponent, data: { title: 'Role' },  canActivate: [AuthGuard] },
+  { path: 'dashboard/users', component: UserIndexComponent, data: { title: 'Users' },  canActivate: [AuthGuard] },
+  { path: 'dashboard/users/:userId', component: UserInfoComponent, data: { title: 'User' },  canActivate: [AuthGuard] },
+  { path: 'dashboard/faqs', component: FaqIndexComponent, data: { title: 'FAQs' },  canActivate: [AuthGuard] },
+  { path: 'dashboard/faqs/:faqId', component: FaqInfoComponent, data: { title: 'FAQ' },  canActivate: [AuthGuard] },
+  { path: 'dashboard/posts', component: PostIndexComponent, data: { title: 'Posts' },  canActivate: [AuthGuard] },
+  { path: 'dashboard/posts/:postId', component: PostInfoComponent, data: { title: 'Post' },  canActivate: [AuthGuard] },
+  { path: 'dashboard/email', component: EmailComposeComponent, data: { title: 'Email' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/email/templates', component: EmailTemplatesIndexComponent, data: { title: 'Templates' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/email/templates/:templateId', component: EmailTemplatesInfoComponent, data: { title: 'Template' },  canActivate: [AuthGuard] },
+  { path: 'dashboard/device-requests', component: DeviceRequestIndexComponent, data: { title: 'Device Requests' }, canActivate: [AuthGuard] },
   { path: 'dashboard/device-requests/:requestId', component: DeviceRequestInfoComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard/referring-organisations', component: ReferringOrganisationIndexComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard/referring-organisations/:orgId', component: ReferringOrganisationInfoComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard/referring-organisation-contacts', component: ReferringOrganisationContactIndexComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard/referring-organisation-contacts/:refereeId', component: ReferringOrganisationContactInfoComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard', component: DashboardIndexComponent, canActivate: [AuthGuard]},
-  { path: 'about-us', component: PostDataComponent},
-  { path: 'reports', component: ReportsComponent, canActivate: [AuthGuard] },
-  { path: '**', component: PostDataComponent},
+  { path: 'dashboard/referring-organisations', component: ReferringOrganisationIndexComponent, data: { title: 'Organisations' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/referring-organisations/:orgId', component: ReferringOrganisationInfoComponent, data: { title: 'Organisation' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/referring-organisation-contacts', component: ReferringOrganisationContactIndexComponent, data: { title: 'Referees' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/referring-organisation-contacts/:refereeId', component: ReferringOrganisationContactInfoComponent, data: { title: 'Referee' }, canActivate: [AuthGuard] },
+  { path: 'dashboard', component: DashboardIndexComponent, data: { title: 'Dashboard' }, canActivate: [AuthGuard] },
+  { path: 'about-us', component: PostDataComponent, data: { title: 'About Us' } },
+  { path: 'reports', component: ReportsComponent, data: { title: 'Reports' }, canActivate: [AuthGuard] },
+  { path: '**', component: PostDataComponent },
 ];
 
 @NgModule({

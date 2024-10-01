@@ -164,7 +164,7 @@ export class DeviceRequestInfoComponent {
     private apollo: Apollo,
     private titleService: Title
   ) {
-    titleService.setTitle("TaDa Device Request");
+    titleService.setTitle("TaDa - Device Request");
   }
 
   sub: Subscription;
@@ -569,7 +569,7 @@ export class DeviceRequestInfoComponent {
 
     this.sub = this.activatedRoute.params.subscribe((params) => {
       this.requestId = +params['requestId'];
-      this.titleService.setTitle(`TaDa Device Request ${this.requestId}`);
+      this.titleService.setTitle(`TaDa - Device Request ${this.requestId}`);
       this.fetchData();
     });
 

@@ -308,7 +308,7 @@ export class KitInfoComponent {
     private lightbox: Lightbox,
     private titleService: Title
   ) {
-    titleService.setTitle("TaDa Device Info");
+    titleService.setTitle("TaDa - Device Info");
   }
 
   sub: Subscription;
@@ -1153,7 +1153,7 @@ export class KitInfoComponent {
 
     this.sub = this.activatedRoute.params.subscribe(params => {
       this.entityId = +params['kitId'];
-      this.titleService.setTitle(`TaDa Device ${this.entityId}`);
+      this.titleService.setTitle(`TaDa - Device ${this.entityId}`);
       this.fetchData();
     });
 

@@ -12,7 +12,6 @@ import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
-import { Title } from '@angular/platform-browser';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
 
 const QUERY_ENTITY = gql`
@@ -65,11 +64,8 @@ export class DashboardIndexComponent {
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
-    private apollo: Apollo,
-    private titleService: Title
-  ) {
-    titleService.setTitle("TaDa Dashboard");
-  }
+    private apollo: Apollo
+  ) { }
 
   styles = {
     'LAPTOP': {title: 'Laptops', style: 'primary', progress: 0},
