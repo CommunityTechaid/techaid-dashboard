@@ -19,6 +19,7 @@ const QUERY_ENTITY = gql`
       fullName
       email
       phoneNumber
+      address
       createdAt
       updatedAt
       archived
@@ -37,6 +38,7 @@ const UPDATE_ENTITY = gql`
       fullName
       email
       phoneNumber
+      address
       archived
       referringOrganisation {
         id
@@ -181,7 +183,34 @@ export class ReferringOrganisationContactInfoComponent {
             'validation.show': 'model.showErrorState',
             'templateOptions.disabled': 'formState.disabled',
           },
-        },
+        }
+      ]
+    },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'address',
+          type: 'place',
+          className: 'col-md-12',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Referee Address',
+            placeholder: 'Your address',
+            required: true
+          },
+          validation: {
+            show: false
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
+          }
+        }
+      ]
+    },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
         {
           key: 'archived',
           type: 'radio',
