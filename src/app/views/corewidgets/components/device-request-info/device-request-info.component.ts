@@ -202,7 +202,7 @@ export class DeviceRequestInfoComponent {
   referringOrganisationContactField: FormlyFieldConfig = {
     key: 'referringOrganisationContactId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
+    className: 'text-left',
     templateOptions: {
       label: 'Referee',
       description: 'The referee this request is currently assigned to.',
@@ -247,7 +247,37 @@ export class DeviceRequestInfoComponent {
                 description: 'An organisation\'s internal reference for their client',
                 required: false
               }
-            }
+            },
+            {
+              key: 'deviceRequestNeeds.hasInternet',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Has no home internet',
+                placeholder: '',
+                required: false
+              }
+            },
+            {
+              key: 'deviceRequestNeeds.hasMobilityIssues',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Mobility issues',
+                placeholder: '',
+                required: false
+              }
+            },
+            {
+              key: 'deviceRequestNeeds.needQuickStart',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Training needs',
+                placeholder: '',
+                required: false
+              }
+            },
           ]
         },
         {
@@ -413,43 +443,14 @@ export class DeviceRequestInfoComponent {
             // },
             this.referringOrganisationContactField,
             {
-              key: 'deviceRequestNeeds.hasInternet',
-              type: 'checkbox',
-              className: '',
-              templateOptions: {
-                label: 'Has no home internet',
-                placeholder: '',
-                required: false
-              }
-            },
-            {
-              key: 'deviceRequestNeeds.hasMobilityIssues',
-              type: 'checkbox',
-              className: '',
-              templateOptions: {
-                label: 'Mobility issues',
-                placeholder: '',
-                required: false
-              }
-            },
-            {
-              key: 'deviceRequestNeeds.needQuickStart',
-              type: 'checkbox',
-              className: '',
-              templateOptions: {
-                label: 'Training needs',
-                placeholder: '',
-                required: false
-              }
-            },
-            {
               key: 'isSales',
               type: 'checkbox',
-              className: '',
+              className: 'px-1',
               templateOptions: {
                 label: 'Is this a commercial sale?',
                 placeholder: '',
-                required: false
+                required: false,
+                description: 'Optional flag to track commercial sales'
               }
             },
             this.newNoteField,
