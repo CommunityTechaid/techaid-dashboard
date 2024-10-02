@@ -13,21 +13,27 @@ import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from '
 
 const QUERY_ENTITY = gql`
 query findAllReferringOrgContacts(
-  $page: PaginationInput,, $term: String, $filter: ReferringOrganisationContactWhereInput!) {
+  $page: PaginationInput,
+  $where: ReferringOrganisationContactWhereInput!,
+  $term: String,
+  $filter: ReferringOrganisationContactWhereInput!) {
   referringOrganisationContactsConnection(page: $page, where: {
     AND: {
       OR: [
         {
           fullName: { _contains: $term }
-          AND: [$filter]
+          AND: [$filter, $where]
         },
         {
           phoneNumber: { _contains: $term }
-          AND: [$filter]
+          AND: [$filter, $where]
         },
         {
           email: { _contains: $term }
-          AND: [$filter]
+          AND: [$filter, $where]
+        },
+        {
+          AND: [$filter, $where]
         }
       ]
     }
@@ -39,6 +45,7 @@ query findAllReferringOrgContacts(
      email
      phoneNumber
      requestCount
+     archived
      referringOrganisation {
       id
       name
@@ -347,6 +354,7 @@ export class ReferringOrganisationContactComponent {
         { data: 'referringOrganisation.name' },
         { data: 'createdAt'},
         { data: 'updatedAt' },
+        { data: 'archived' }
       ]
     };
   }
