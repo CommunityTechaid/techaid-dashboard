@@ -56,6 +56,7 @@ const routes: Routes = [
   { path: 'donate-device', component: DonorRequestComponent, data: { title: 'Donate Device' } },
   { path: 'volunteer', component: VolunteerComponent, data: { title: 'Volunteer' } },
   { path: 'faqs', component: FaqListComponent, data: { title: 'FAQs' } },
+  { path: 'device-request-admin', component: OrgRequestComponent, data: { title: 'Device Request' }, canActivate: [AuthGuard] },
   { path: 'organisation-device-request', component: OrgRequestComponent, data: { title: 'Device Request' } },
   { path: 'dashboard/map', component: MapViewComponent, data: { title: 'Map' } },
   { path: 'dashboard/volunteers', component: VolunteersIndexComponent, data: { title: 'Volunteers' }, canActivate: [AuthGuard] },

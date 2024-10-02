@@ -1,6 +1,6 @@
 
 <!-- <app-local-css [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}'"></app-local-css> -->
-<app-local-css [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}textarea::placeholder { text-align: center; }'"></app-local-css>
+<app-local-css *ngIf="!isOrgAdmin" [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}textarea::placeholder { text-align: center; }'"></app-local-css>
 
 <!-- Content Row -->
 <div class="row d-flex justify-content-center align-items-center">

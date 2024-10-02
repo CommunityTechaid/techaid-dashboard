@@ -13,6 +13,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
+import { UserState } from '@app/state/state.module';
+import { User } from '@app/state/user/user.state';
 
 const CREATE_ENTITY = gql`
 mutation createOrganisation($data: CreateOrganisationInput!) {
@@ -109,7 +111,9 @@ export class OrgRequestComponent {
     showErrorState: false,
   };
   submited = false;
-
+  public user: User;
+  @Select(UserState.user) user$: Observable<User>;
+  isOrgAdmin = false;
 
   //TODO: not the ideal way to refresh the form, but it'll do for now
   reloadCurrentPage() {
@@ -612,6 +616,48 @@ export class OrgRequestComponent {
   * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
   *
   */
+  deviceTypesAdmin: FormlyFieldConfig = {
+    key: 'deviceRequestItems',
+    type: 'radio',
+    className: 'col-md-6',
+    templateOptions: {
+      label: 'Please select the item your client needs. *',
+      //description: 'If your client needs a SIM card in addition to a device, select the main device above and check the below box. If they just need a SIM card, only select the box below.',
+      options: [
+        // TODO: find some way to derive these from requestedItems so it's
+        // all defined in one place
+        { value: 'laptops', label: 'Laptop' },
+        { value: 'desktops', label: 'Desktop computer' },
+        { value: 'phones', label: 'Smartphone' },
+        { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
+        { value: 'tablets', label: 'Tablet' },
+      ],
+      required: false
+    }
+  }
+
+  deviceTypesPublic: FormlyFieldConfig = {
+    key: 'deviceRequestItems',
+    type: 'radio',
+    className: 'col-md-6',
+    templateOptions: {
+      label: 'Please select the item your client needs. *',
+      //description: 'If your client needs a SIM card in addition to a device, select the main device above and check the below box. If they just need a SIM card, only select the box below.',
+      options: [
+        // TODO: find some way to derive these from requestedItems so it's
+        // all defined in one place
+        { value: 'laptops', label: 'Laptop' },
+        { value: 'desktops', label: 'Desktop computer' },
+
+        //{ value: 'phones', label: 'Smartphone' },
+        /* { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' } */,
+        // {value: 'tablets', label: 'Tablet' },
+
+      ],
+      required: false
+    }
+  }
+
   requestPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
@@ -626,26 +672,8 @@ export class OrgRequestComponent {
       {
         fieldGroupClassName: 'row',
         fieldGroup: [
-          {
-            key: 'deviceRequestItems',
-            type: 'radio',
-            className: 'col-md-6',
-            templateOptions: {
-              label: 'Please select the item your client needs. *',
-              //description: 'If your client needs a SIM card in addition to a device, select the main device above and check the below box. If they just need a SIM card, only select the box below.',
-              options: [
-                // TODO: find some way to derive these from requestedItems so it's
-                // all defined in one place
-                { value: 'laptops', label: 'Laptop' },
-                { value: 'desktops', label: 'Desktop computer' },
-                //{ value: 'phones', label: 'Smartphone' },
-                /* { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' } */,
-                // {value: 'tablets', label: 'Tablet' },
-
-              ],
-              required: false
-            }
-          },
+          this.deviceTypesPublic,
+          this.deviceTypesAdmin,
           {
             className: 'col-md-12',
             template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
@@ -844,8 +872,6 @@ export class OrgRequestComponent {
       }
     });
 
-
-
     const orgRef = this.apollo
       .watchQuery({
         query: AUTOCOMPLETE_REFERRING_ORGANISATION,
@@ -894,6 +920,17 @@ export class OrgRequestComponent {
     this.sub = this.referringOrgs$.subscribe(data => {
       this.referringOrgField.templateOptions['items'] = data;
     });
+
+    this.sub.add(
+      this.user$.subscribe((user) => {
+        console.log('getting user');
+        this.isOrgAdmin = (user && user.authorities && user.authorities['write:organisations']);
+        this.deviceTypesPublic.hide = this.isOrgAdmin;
+        this.deviceTypesAdmin.hide = !this.isOrgAdmin;
+
+        console.log(this.isOrgAdmin, this.deviceTypesPublic.hide, this.deviceTypesAdmin.hide);
+      })
+    );
 
   }
 
@@ -1004,7 +1041,7 @@ export class OrgRequestComponent {
     }).toPromise().then(res => {
 
       var data = res["data"]["referringOrganisationContactsPublic"];
-      console.log(data)
+
       if (data && data.length > 1) {
         const contacts = data.map((r) => {
           return { label: r.fullName, value: r.id };
