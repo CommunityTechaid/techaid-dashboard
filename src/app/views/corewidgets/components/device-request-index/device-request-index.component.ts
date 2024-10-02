@@ -160,8 +160,8 @@ export class DeviceRequestIndexComponent {
     {value: 'TABLETS', label: 'Tablets' },
     {value: 'ALLINONES', label: 'All In Ones' },
     {value: 'DESKTOPS', label: 'Desktops' },
-    {value: 'COMMSDEVICES', label: 'SIM Cards' },
-    {value: 'OTHER', label: 'Other' }
+    {value: 'COMMSDEVICES', label: 'SIM Cards' }
+    // {value: 'OTHER', label: 'Other' }
   ];
   filterFields: Array<FormlyFieldConfig> = [
     {
@@ -197,7 +197,6 @@ export class DeviceRequestIndexComponent {
           key: 'device_type',
           type: 'multicheckbox',
           className: 'col-sm-4',
-          defaultValue: [false],
           templateOptions: {
             type: 'array',
             label: 'Filter by Device Type?',
@@ -215,11 +214,15 @@ export class DeviceRequestIndexComponent {
   applyFilter(data) {
     const filter = {};
     let count = 0;
-
-/*     if (data.archived && data.archived.length) {
-      count += data.archived.length;
-      filter['referringOrganisationContact'] = { 'archived': { _in: data.archived}};
-    } */
+    const deviceTypeLookup: Record<string, string> = {
+      "LAPTOPS": "laptops",
+      "PHONES": "phones",
+      "TABLETS": "tablets" ,
+      "ALLINONES": "allInOnes" ,
+      "DESKTOPS": "desktops" ,
+      "COMMSDEVICES": "commsDevices" ,
+      "OTHER" : "other"
+    }
 
     if (data.status && data.status.length) {
       count = count + data.status.length;
@@ -231,16 +234,17 @@ export class DeviceRequestIndexComponent {
       filter['isSales'] = {_in: data.is_sales};
     }
 
-    // if (data.device_type && data.device_type.length) {
-    //   count = count + data.device_type.length;
+    if (data.device_type && data.device_type.length) {
+      const deviceRequestItems = { };
 
-    //   // for(device_type in data.device_type) {
-    //   //   const filt = { deviceRequestItems: { device_type: {_gt: 0} } };
-    //   //   filter['AND'].push(filt);
-    //   // }
-    //   const filt = { deviceRequestItems: { desktops: {_gt: 0} } };
-    //   filter['AND'].push(filt);
-    // }
+      data.device_type.forEach(devType => {
+        if(devType in deviceTypeLookup) {
+          count++;
+          deviceRequestItems[deviceTypeLookup[devType]] = { _gt: 0 };
+        }
+      })
+      filter['deviceRequestItems'] = deviceRequestItems;
+    }
 
     localStorage.setItem(`deviceRequestFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
