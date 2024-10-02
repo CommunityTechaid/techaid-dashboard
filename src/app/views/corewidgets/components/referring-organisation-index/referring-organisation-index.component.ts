@@ -157,8 +157,8 @@ export class ReferringOrganisationIndexComponent {
             type: 'array',
             label: 'Filter by Archived?',
             options: [
-              {label: 'Active Requests', value: false },
-              {label: 'Archived Requests', value: true },
+              {label: 'Active Organisations', value: false },
+              {label: 'Archived Organisations', value: true },
             ],
             required: false,
           }

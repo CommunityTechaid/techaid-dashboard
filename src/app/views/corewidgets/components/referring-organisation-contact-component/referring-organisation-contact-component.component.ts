@@ -193,8 +193,8 @@ export class ReferringOrganisationContactComponent {
             type: 'array',
             label: 'Filter by Archived?',
             options: [
-              {label: 'Active Requests', value: false },
-              {label: 'Archived Requests', value: true },
+              {label: 'Active Referees', value: false },
+              {label: 'Archived Referees', value: true },
             ],
             required: false,
           }
