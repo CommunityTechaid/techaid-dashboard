@@ -32,12 +32,25 @@
             <span>Volunteers</span></a>
     </li>
 
+    <!-- Divider -->
+    <hr class="sidebar-divider" *ngIf="user?.authorities['read:volunteers']">
+
+    <!-- Nav Item - Tables -->
+    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:dropPoints']">
+      <a class="nav-link" href="#" routerLink="/dashboard/drop-points">
+          <i class="fa fa-fw fa-map-marked"></i>
+          <span>Drop Points</span></a>
+    </li>
+
     <!-- Nav Item - Tables -->
     <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:donors']">
         <a class="nav-link" href="#" routerLink="/dashboard/donors">
             <i class="fa fa-fw fa-table"></i>
             <span>Donors</span></a>
     </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider" *ngIf="user?.authorities['read:donors']">
 
     <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
       <a class="nav-link" href="#" routerLink="/dashboard/referring-organisations">
@@ -60,79 +73,30 @@
       </a>
     </li>
 
-<hr class="sidebar-divider my-0">
-
-    <div class="sidebar-heading mt-1">
-        Forms
-    </div>
-    <!-- Nav Item - Dashboard -->
-    <li class="nav-item" routerLinkActive="active">
-        <a class="nav-link" href="#" routerLink="/donate-device">
-            <i class="fas fa-laptop-house"></i>
-            <span>Donation Form</span></a>
-    </li>
     <!-- Divider -->
-    <hr class="sidebar-divider">
-    <!-- Nav Item - Charts -->
-    <!--<li class="nav-item" routerLinkActive="active">
-        <a class="nav-link" href="#" routerLink="/volunteer">
-            <i class="fas fa-hands-helping"></i>
-            <span>Volunteer Form</span></a>
+    <hr class="sidebar-divider my-0">
+
+    <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" href="#" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span></a>
     </li>
-    <hr class="sidebar-divider my-0">-->
-  <!--<li class="nav-item" routerLinkActive="active">
-          <a class="nav-link" href="https://app.communitytechaid.org.uk/faqs">
-              <i class="fas fa-question-circle"></i>
-              <span>FAQs</span></a>
-  </li>-->
-  <li class="nav-item" routerLinkActive="active">
-      <a class="nav-link" href="#" (click)="logout()">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Logout</span></a>
-  </li>
 </ul>
 <ul *ngIf="!user?.authenticated"
   class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-
-  <!-- Sidebar - Brand -->
+    <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="http://app.communitytechaid.org.uk/">
         <div class="sidebar-brand-icon">
             <i class="logo"></i>
         </div>
         <div class="sidebar-brand-text mx-3">Home</div>
     </a>
-
     <!-- Divider -->
     <hr class="sidebar-divider my-0">
-
-    <!-- Nav Item - Dashboard -->
-  <!--<li class="nav-item" routerLinkActive="active">
-      <a class="nav-link" href="#" routerLink="/donate-device">
-          <i class="fas fa-laptop-house"></i>
-          <span>Donate Device</span></a>
-  </li>-->
-
-  <!-- Divider -->
-    <hr class="sidebar-divider">
-
-    <!-- Nav Item - Charts -->
-    <!--<li class="nav-item" routerLinkActive="active">
-        <a class="nav-link" href="#" routerLink="/volunteer">
-        <i class="fas fa-hands-helping"></i>
-        <span>Volunteer</span></a>
-    </li>-->
-
-  <!--<li class="nav-item" routerLinkActive="active">
-      <a class="nav-link" href="https://app.communitytechaid.org.uk/faqs">
-      <i class="fas fa-question-circle"></i>
-      <span>FAQs</span></a>
-  </li>
-
-  <hr class="sidebar-divider my-0">-->
-  <li class="nav-item" routerLinkActive="active">
-      <a class="nav-link" href="#" (click)="login()">
-      <i class="fas fa-sign-in-alt"></i>
-      <span>Login</span></a>
-  </li>
+    <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" href="#" (click)="login()">
+        <i class="fas fa-sign-in-alt"></i>
+        <span>Login</span></a>
+    </li>
 </ul>
 <!-- End of Sidebar -->

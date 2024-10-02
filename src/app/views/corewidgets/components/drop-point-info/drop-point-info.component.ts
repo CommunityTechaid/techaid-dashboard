@@ -1,6 +1,5 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
-import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
+import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -16,8 +15,8 @@ import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
 
 const QUERY_ENTITY = gql`
-query findDonor($id: Long) {
-  donor(where: {
+query findDropPoint($id: Long) {
+  dropPoint(where: {
     id: {
       _eq: $id
     }
@@ -29,10 +28,6 @@ query findDonor($id: Long) {
     email
     referral
     consent
-    type
-    dropPoint {
-      id
-    }
     kits {
       id
       model
@@ -48,8 +43,8 @@ query findDonor($id: Long) {
 `;
 
 const UPDATE_ENTITY = gql`
-mutation updateDonor($data: UpdateDonorInput!) {
-  updateDonor(data: $data){
+mutation updateDropPoint($data: UpdateDropPointInput!) {
+  updateDropPoint(data: $data){
     id
     postCode
     phoneNumber
@@ -57,10 +52,6 @@ mutation updateDonor($data: UpdateDonorInput!) {
     name
     referral
     consent
-    type
-    dropPoint {
-      id
-    }
     kits {
       id
       model
@@ -76,32 +67,17 @@ mutation updateDonor($data: UpdateDonorInput!) {
 `;
 
 const DELETE_ENTITY = gql`
-mutation deleteDonor($id: ID!) {
-  deleteDonor(id: $id)
-}
-`;
-
-const AUTOCOMPLETE_DROP_POINTS = gql`
-query findAutocompleteDropPoints($term: String) {
-  dropPointsConnection(page: {
-    size: 50
-  }, where: {
-    name: { _contains: $term }
-  }){
-    content  {
-      id
-      name
-    }
-  }
+mutation deleteDropPoint($id: ID!) {
+  deleteDropPoint(id: $id)
 }
 `;
 
 @Component({
-  selector: 'donor-info',
-  styleUrls: ['donor-info.scss'],
-  templateUrl: './donor-info.html'
+  selector: 'drop-point-info',
+  styleUrls: ['drop-point-info.scss'],
+  templateUrl: './drop-point-info.html'
 })
-export class DonorInfoComponent {
+export class DropPointInfoComponent {
 
 
   constructor(
@@ -123,7 +99,6 @@ export class DonorInfoComponent {
   model: any = {};
   entityName: string;
   entityId: number;
-  dropPointId: number;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
 
@@ -134,27 +109,7 @@ export class DonorInfoComponent {
     4: '3 - 4 years',
     5: '5 - 6 years',
     6: 'more than 6 years old'
-  };
-
-  dropPoints$: Observable<any>;
-  dropPointInput$ = new Subject<string>();
-  dropPointLoading = false;
-  dropPointField: FormlyFieldConfig = {
-    key: 'dropPointId',
-    type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
-    templateOptions: {
-      label: 'Drop Point',
-      description: 'The drop point this donor is using.',
-      loading: this.dropPointLoading,
-      typeahead: this.dropPointInput$,
-      placeholder: 'Assign donor to an associated Drop Point',
-      multiple: false,
-      searchable: true,
-      items: [],
-      required: false
-    },
-  };
+ };
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -165,24 +120,6 @@ export class DonorInfoComponent {
       templateOptions: {
         label: 'Name',
         placeholder: '',
-        required: false
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
-    },
-    {
-      key: 'businessName',
-      type: 'input',
-      className: 'col-md-12 border-left-info card pt-3 mb-3',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Business Name',
-        placeholder: 'This will only be shown if the donor is a business type...',
         required: false
       },
       validation: {
@@ -256,7 +193,6 @@ export class DonorInfoComponent {
         'templateOptions.disabled': 'formState.disabled',
       },
     },
-    this.dropPointField,
     {
       key: 'referral',
       type: 'input',
@@ -274,20 +210,6 @@ export class DonorInfoComponent {
         'validation.show': 'model.showErrorState',
         'templateOptions.disabled': 'formState.disabled',
       },
-    },
-    {
-      key: 'type',
-      type: 'radio',
-      className: 'col-md-12  border-bottom-info card pt-3 mb-3',
-      templateOptions: {
-        label: 'Donor Type',
-        placeholder: '',
-        required: true,
-        options: [
-          { label: 'Individual', value: 'INDIVIDUAL' },
-          { label: 'Business', value: 'BUSINESS' }
-        ]
-      }
     },
     {
       key: 'consent',
@@ -318,14 +240,6 @@ export class DonorInfoComponent {
   }
 
   private normalizeData(data: any) {
-    // Not currently doing any normalization
-
-    if (data.dropPoint && data.dropPoint.id) {
-      data.dropPointId = data.dropPoint.id;
-      this.dropPointField.templateOptions['items'] = [
-        {label: this.dropPointName(data.dropPoint), value: data.dropPoint.id}
-      ];
-    }
     return data;
   }
 
@@ -337,10 +251,9 @@ export class DonorInfoComponent {
     this.queryRef.refetch({
       id: this.entityId
     }).then(res => {
-      if (res.data && res.data['donor']) {
-        const data = res.data['donor'];
+      if (res.data && res.data['dropPoint']) {
+        const data = res.data['dropPoint'];
         this.model = this.normalizeData(data);
-        this.dropPointId = this.model['dropPoint']['id'];
         this.entityName = `${this.model['name'] || ''}/${this.model['email'] || ''}/${this.model['phoneNumber'] || ''}`.trim().split('/').filter(f => f.trim().length > 0)[0];
       } else {
         this.model = {};
@@ -357,58 +270,16 @@ export class DonorInfoComponent {
     });
   }
 
+
   ngOnInit() {
-    const dropPointRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_DROP_POINTS,
-        variables: {
-        }
-      });
-
-    this.dropPoints$ = concat(
-      of([]),
-      this.dropPointInput$.pipe(
-        debounceTime(200),
-        distinctUntilChanged(),
-        tap(() => this.dropPointLoading = true),
-        switchMap(term => from(dropPointRef.refetch({
-          term: term
-        })).pipe(
-          catchError(() => of([])),
-          tap(() => this.dropPointLoading = false),
-          switchMap(res => {
-            const data = res['data']['dropPointsConnection']['content'].map(v => {
-              return {
-                label: `${this.dropPointName(v)}`, value: v.id
-              };
-            });
-            return of(data);
-          })
-        ))
-      )
-    );
-
     this.sub = this.activatedRoute.params.subscribe(params => {
-      this.entityId = +params['donorId'];
+      this.entityId = +params['dropPointId'];
       this.fetchData();
     });
-
     this.sub.add(this.user$.subscribe(user => {
         this.user = user;
-        this.options.formState.disabled = !(user && user.authorities && user.authorities['write:donors']);
+        this.options.formState.disabled = !(user && user.authorities && user.authorities['write:dropPoints']);
     }));
-
-    this.sub.add(this.dropPoints$.subscribe(data => {
-      this.dropPointField.templateOptions['items'] = data;
-    }));
-  }
-
-  dropPointName(data) {
-    return `${data.name || ''}||${data.id || ''}`
-      .split('||')
-      .filter(f => f.trim().length)
-      .join(' / ')
-      .trim();
   }
 
   ngOnDestroy() {
@@ -423,18 +294,17 @@ export class DonorInfoComponent {
       return;
     }
     data.id = this.entityId;
-    data.remove('businessName');
     this.apollo.mutate({
       mutation: UPDATE_ENTITY,
       variables: {
         data
       }
     }).subscribe(res => {
-      this.model = this.normalizeData(res.data['updateDonor']);
+      this.model = this.normalizeData(res.data['updateDropPoint']);
       this.entityName = `${this.model['name'] || ''} ${this.model['email'] || ''} ${this.model['phoneNumber'] || ''}`.trim().split(' ')[0];
       this.toastr.info(`
-      <small>Successfully updated donor ${this.entityName}</small>
-      `, 'Updated Donor', {
+      <small>Successfully updated dropPoint ${this.entityName}</small>
+      `, 'Updated DropPoint', {
           enableHtml: true
         });
     }, err => {
@@ -451,18 +321,18 @@ export class DonorInfoComponent {
       mutation: DELETE_ENTITY,
       variables: { id: this.entityId }
     }).subscribe(res => {
-      if (res.data.deleteDonor) {
+      if (res.data.deleteDropPoint) {
         this.toastr.info(`
-        <small>Successfully deleted donor ${this.entityName}</small>
-        `, 'Donor Deleted', {
+        <small>Successfully deleted dropPoint ${this.entityName}</small>
+        `, 'DropPoint Deleted', {
             enableHtml: true
           });
-        this.router.navigate(['/dashboard/donors']);
+        this.router.navigate(['/dashboard/dropPoints']);
       }
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
-      `, 'Error Deleting Donor', {
+      `, 'Error Deleting DropPoint', {
           enableHtml: true
         });
     });

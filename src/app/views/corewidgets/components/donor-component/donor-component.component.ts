@@ -16,23 +16,27 @@ import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 
 const QUERY_ENTITY = gql`
-query findAllDonors($page: PaginationInput, $term: String, $where: DonorWhereInput!) {
+query findAllDonors(
+  $page: PaginationInput,
+  $term: String,
+  $filter: DonorWhereInput!,
+  $where: DonorWhereInput!) {
   donorsConnection(page: $page, where: {
     AND: {
       postCode: { _contains: $term }
-      AND: [ $where ]
+      AND: [ $filter, $where ]
       OR: [
         {
           name: { _contains: $term }
-          AND: [ $where ]
+          AND: [ $filter, $where ]
         },
         {
           phoneNumber: { _contains: $term }
-          AND: [ $where ]
+          AND: [ $filter, $where ]
         },
         {
           email: { _contains: $term }
-          AND: [ $where ]
+          AND: [ $filter, $where ]
         }
       ]
     }
@@ -69,30 +73,12 @@ mutation createDonor($data: CreateDonorInput!) {
 }
 `;
 
-const AUTOCOMPLETE_DROP_POINTS = gql`
-query findAutocompleteDropPoints($term: String) {
-  dropPointsConnection(page: {
-    size: 50
-  }, where: {
-    name: { _contains: $term }
-  }){
-    content  {
-      id
-      name
-    }
-  }
-}
-`;
-
-
 @Component({
-  selector: 'donor-index',
-  styleUrls: ['donor-index.scss'],
-
-  templateUrl: './donor-index.html'
+  selector: 'donor-component',
+  styleUrls: ['donor-component.scss'],
+  templateUrl: './donor-component.html'
 })
-export class DonorIndexComponent {
-
+export class DonorComponent {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
@@ -111,31 +97,16 @@ export class DonorIndexComponent {
   entities = [];
   form: FormGroup = new FormGroup({});
   model = {};
-  dropPointId: number;
+
+  @Input()
+  set where(where: any) {
+    this._where = where;
+    if (this.table) {
+      this.applyFilter(this.filterModel);
+    }
+  }
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
-
-  dropPoints$: Observable<any>;
-  dropPointInput$ = new Subject<string>();
-  dropPointLoading = false;
-  dropPointField: FormlyFieldConfig = {
-    key: 'dropPointId',
-    type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
-    templateOptions: {
-      label: 'Drop Point',
-      description: 'The drop point this donor is using.',
-      loading: this.dropPointLoading,
-      typeahead: this.dropPointInput$,
-      placeholder: 'Assign donor to an associated Drop Point',
-      multiple: false,
-      searchable: true,
-      items: [],
-      required: false
-    },
-  };
-
-
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -196,7 +167,6 @@ export class DonorIndexComponent {
         required: false
       }
     },
-    this.dropPointField,
     {
       key: 'type',
       type: 'radio',
@@ -242,6 +212,8 @@ export class DonorIndexComponent {
 
   @Input()
   tableId = 'donor-index';
+
+  _where = {};
 
   applyFilter(data) {
     const filter = {};
@@ -292,35 +264,6 @@ export class DonorIndexComponent {
         variables: {}
       });
 
-    const dropPointRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_DROP_POINTS,
-        variables: {
-        }
-      });
-
-    this.dropPoints$ = concat(
-      of([]),
-      this.dropPointInput$.pipe(
-        debounceTime(200),
-        distinctUntilChanged(),
-        tap(() => this.dropPointLoading = true),
-        switchMap(term => from(dropPointRef.refetch({
-          term: term
-        })).pipe(
-          catchError(() => of([])),
-          tap(() => this.dropPointLoading = false),
-          switchMap(res => {
-            const data = res['data']['dropPointsConnection']['content'].map(v => {
-              return {
-                label: `${this.dropPointName(v)}`, value: v.id
-              };
-            });
-            return of(data);
-          })
-        ))
-      )
-    );
 
     this.sub = this.search$.subscribe(query => {
       if (this.table) {
@@ -328,10 +271,6 @@ export class DonorIndexComponent {
         this.table.ajax.reload(null, false);
       }
     });
-
-    this.sub.add(this.dropPoints$.subscribe(data => {
-      this.dropPointField.templateOptions['items'] = data;
-    }));
 
     this.dtOptions = {
       pagingType: 'simple_numbers',
@@ -361,7 +300,8 @@ export class DonorIndexComponent {
             page: Math.round(params.start / params.length),
           },
           term: params['search']['value'],
-          where: this.filter
+          where: this.filter,
+          filter: this._where || this.filter
         };
 
         queryRef.refetch(vars).then(res => {
@@ -409,14 +349,6 @@ export class DonorIndexComponent {
         { data: 'type' }
       ]
     };
-  }
-
-  dropPointName(data) {
-    return `${data.name || ''}||${data.id || ''}`
-      .split('||')
-      .filter(f => f.trim().length)
-      .join(' / ')
-      .trim();
   }
 
   ngOnDestroy() {
