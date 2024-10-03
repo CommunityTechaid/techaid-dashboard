@@ -631,6 +631,7 @@ export class OrgRequestComponent {
         { value: 'phones', label: 'Smartphone' },
         { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
         { value: 'tablets', label: 'Tablet' },
+        { value: 'other', label: 'Other' }
       ],
       required: false
     }
