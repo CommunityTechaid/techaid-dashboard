@@ -141,7 +141,6 @@ export class OrgRequestComponent {
           this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = []
           this.referringOrganisationContactsDropDown.hideExpression = true;
           this.createNewOrganisationContactPrompt.hideExpression = true;
-
           if (!this.isOrganisationExists) {
             (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
           } else {
@@ -905,7 +904,9 @@ export class OrgRequestComponent {
                 });
 
                 if (data.length == 0) {
-                  this.hideNewOrganisationField(false)
+                  this.hideNewOrganisationField(false);
+                  this.referringOrgField.formControl.setValue(null)
+                  
                 } else {
                   this.hideNewOrganisationField(true);
                   this.showContactPage();
