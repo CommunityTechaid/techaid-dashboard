@@ -23,18 +23,13 @@ query findDropPoint($id: Long) {
   }){
     id
     name
-    postCode
-    phoneNumber
-    email
-    referral
-    consent
-    kits {
+    address
+    website
+    donorCount
+    donors {
       id
-      model
-      age
+      name
       type
-      status
-      location
       updatedAt
       createdAt
     }
@@ -46,19 +41,13 @@ const UPDATE_ENTITY = gql`
 mutation updateDropPoint($data: UpdateDropPointInput!) {
   updateDropPoint(data: $data){
     id
-    postCode
-    phoneNumber
-    email
     name
-    referral
-    consent
-    kits {
+    address
+    website
+    donors {
       id
-      model
-      age
+      name
       type
-      status
-      location
       updatedAt
       createdAt
     }
@@ -102,15 +91,6 @@ export class DropPointInfoComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
 
-  ages = {
-    0: 'I don\'t know',
-    1: 'Less than a year',
-    2: '1 - 2 years',
-    4: '3 - 4 years',
-    5: '5 - 6 years',
-    6: 'more than 6 years old'
- };
-
   fields: Array<FormlyFieldConfig> = [
     {
       key: 'name',
@@ -118,116 +98,43 @@ export class DropPointInfoComponent {
       className: 'col-md-12 border-left-info card pt-3 mb-3',
       defaultValue: '',
       templateOptions: {
-        label: 'Name',
+        label: 'Drop Point Name',
         placeholder: '',
-        required: false
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
+        required: true
+      }
+    },
+    {
+      key: 'address',
+      type: 'place',
+      className: 'col-md-12',
+      defaultValue: '',
+      templateOptions: {
+        label: 'Drop Point Address',
+        placeholder: '',
+        postCode: false,
+        required: true
+      }
     },
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          key: 'email',
+          key: 'website',
           type: 'input',
-          className: 'col-md-6',
+          className: 'col-md-12',
           defaultValue: '',
           templateOptions: {
-            label: 'Email',
-            type: 'email',
-            pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-            placeholder: '',
+            label: 'Drop Point Website',
+            pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
             required: true
           },
-          validation: {
-            show: false,
-          },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
-          },
-        },
-        {
-          key: 'phoneNumber',
-          type: 'input',
-          className: 'col-md-6',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Phone Number',
-            pattern: /\+?[0-9]+/,
-            description: 'Required if email is not provided.',
-            required: true
-          },
-          validation: {
-            show: false,
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
-          },
+            'templateOptions.required': '!model.website.length'
+          }
         }
       ]
-    },
-    {
-      key: 'postCode',
-      type: 'place',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Address',
-        placeholder: '',
-        postCode: false,
-        required: false
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
-    },
-    {
-      key: 'referral',
-      type: 'input',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'How did you hear about us?',
-        placeholder: '',
-        required: false
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
-    },
-    {
-      key: 'consent',
-      type: 'radio',
-      className: 'col-md-12  border-bottom-info card pt-3 mb-3',
-      templateOptions: {
-        label: 'We would like to keep in touch with you about our vital work in bridging the digital divide, as well as fundraising appeals and opportunities to support us.',
-        placeholder: '',
-        required: true,
-        options: [
-          { label: 'Yes please, I would like to receive communications via email', value: true },
-          { label: 'No thank you, I would not like to receive communications via email', value: false }
-        ]
-      }
     }
   ];
-
-  kitStatus: any = KIT_STATUS;
 
   private queryRef = this.apollo
     .watchQuery({
@@ -254,7 +161,7 @@ export class DropPointInfoComponent {
       if (res.data && res.data['dropPoint']) {
         const data = res.data['dropPoint'];
         this.model = this.normalizeData(data);
-        this.entityName = `${this.model['name'] || ''}/${this.model['email'] || ''}/${this.model['phoneNumber'] || ''}`.trim().split('/').filter(f => f.trim().length > 0)[0];
+        this.entityName = `${this.model['name'] || ''}/${this.model['website'] || ''}`.trim().split('/').filter(f => f.trim().length > 0)[0];
       } else {
         this.model = {};
         this.entityName = 'Not Found!';
@@ -303,7 +210,7 @@ export class DropPointInfoComponent {
       this.model = this.normalizeData(res.data['updateDropPoint']);
       this.entityName = `${this.model['name'] || ''} ${this.model['email'] || ''} ${this.model['phoneNumber'] || ''}`.trim().split(' ')[0];
       this.toastr.info(`
-      <small>Successfully updated dropPoint ${this.entityName}</small>
+      <small>Successfully updated drop point ${this.entityName}</small>
       `, 'Updated DropPoint', {
           enableHtml: true
         });
@@ -323,7 +230,7 @@ export class DropPointInfoComponent {
     }).subscribe(res => {
       if (res.data.deleteDropPoint) {
         this.toastr.info(`
-        <small>Successfully deleted dropPoint ${this.entityName}</small>
+        <small>Successfully deleted drop point ${this.entityName}</small>
         `, 'DropPoint Deleted', {
             enableHtml: true
           });

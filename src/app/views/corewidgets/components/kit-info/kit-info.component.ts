@@ -252,12 +252,12 @@ query findAutocompleteDonors($term: String) {
   donorsConnection(page: {
     size: 50
   }, where: {
-    id: {
-      _contains: $term
-    }
+    id: { _contains: $term }
+    OR: { name: { _contains: $term } }
   }){
     content  {
      id
+     name
     }
   }
 }
@@ -1119,7 +1119,7 @@ export class KitInfoComponent {
           switchMap(res => {
             const data = res['data']['donorsConnection']['content'].map(v => {
               return {
-                label: v.id, value: v.id
+                label: `${this.donorName(v)}`, value: v.id
               };
             });
             return of(data);
@@ -1176,6 +1176,14 @@ export class KitInfoComponent {
     this.sub.add(this.deviceRequests$.subscribe(data => {
       this.deviceRequestField.templateOptions['items'] = data;
     }));
+  }
+
+  donorName(data) {
+    return `${data.name || ''}||${data.id || ''}`
+      .split('||')
+      .filter(f => f.trim().length)
+      .join(' / ')
+      .trim();
   }
 
   volunteerName(data) {

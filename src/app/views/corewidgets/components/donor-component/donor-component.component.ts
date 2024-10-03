@@ -106,6 +106,11 @@ export class DonorComponent {
     }
   }
 
+  @Input()
+  set dropPointId(dropPointId: any) {
+    this._dropPointId = dropPointId;
+  }
+
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
   fields: Array<FormlyFieldConfig> = [
@@ -214,6 +219,7 @@ export class DonorComponent {
   tableId = 'donor-index';
 
   _where = {};
+  _dropPointId = -1;
 
   applyFilter(data) {
     const filter = {};
@@ -376,6 +382,8 @@ export class DonorComponent {
 
 
   createEntity(data: any) {
+    data.dropPointId = this._dropPointId;
+
     this.apollo.mutate({
       mutation: CREATE_ENTITY,
       variables: { data }

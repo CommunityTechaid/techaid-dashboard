@@ -24,6 +24,7 @@ query findDonor($id: Long) {
   }){
     id
     name
+    businessName
     postCode
     phoneNumber
     email
@@ -32,6 +33,7 @@ query findDonor($id: Long) {
     type
     dropPoint {
       id
+      name
     }
     kits {
       id
@@ -55,11 +57,13 @@ mutation updateDonor($data: UpdateDonorInput!) {
     phoneNumber
     email
     name
+    businessName
     referral
     consent
     type
     dropPoint {
       id
+      name
     }
     kits {
       id
@@ -142,7 +146,7 @@ export class DonorInfoComponent {
   dropPointField: FormlyFieldConfig = {
     key: 'dropPointId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
+    className: 'text-left',
     templateOptions: {
       label: 'Drop Point',
       description: 'The drop point this donor is using.',
@@ -156,152 +160,168 @@ export class DonorInfoComponent {
     },
   };
 
+
   fields: Array<FormlyFieldConfig> = [
-    {
-      key: 'name',
-      type: 'input',
-      className: 'col-md-12 border-left-info card pt-3 mb-3',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Name',
-        placeholder: '',
-        required: false
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
-    },
-    {
-      key: 'businessName',
-      type: 'input',
-      className: 'col-md-12 border-left-info card pt-3 mb-3',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Business Name',
-        placeholder: 'This will only be shown if the donor is a business type...',
-        required: false
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
-    },
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          key: 'email',
-          type: 'input',
+          // column 1
+          fieldGroupClassName: 'd-flex flex-column justify-content-between',
           className: 'col-md-6',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Email',
-            type: 'email',
-            pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-            placeholder: '',
-            required: true
-          },
-          validation: {
-            show: false,
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
-          },
+          fieldGroup: [
+            {
+              key: 'type',
+              type: 'radio',
+              className: 'col-md-12  border-bottom-info card pt-3 mb-3',
+              templateOptions: {
+                label: 'Donor Type',
+                placeholder: '',
+                required: true,
+                options: [
+                  { label: 'Individual', value: 'INDIVIDUAL' },
+                  { label: 'Business', value: 'BUSINESS' }
+                ]
+              }
+            },
+            {
+              key: 'businessName',
+              type: 'input',
+              className: 'col-md-12 border-left-info card pt-3 mb-3',
+              defaultValue: '',
+              hideExpression: "field.parent.model.type === 'INDIVIDUAL'",
+              templateOptions: {
+                label: 'Business Name',
+                placeholder: 'This will only be shown if the donor is a business type...',
+                required: false
+              },
+              validation: {
+                show: false,
+              },
+              expressionProperties: {
+                'validation.show': 'model.showErrorState',
+                'templateOptions.disabled': 'formState.disabled',
+              },
+            },
+            {
+              key: 'name',
+              type: 'input',
+              className: 'col-md-12 border-left-info card pt-3 mb-3',
+              defaultValue: '',
+              templateOptions: {
+                label: 'Name',
+                placeholder: '',
+                required: false
+              },
+              validation: {
+                show: false,
+              },
+              expressionProperties: {
+                'validation.show': 'model.showErrorState',
+                'templateOptions.disabled': 'formState.disabled',
+              },
+            },
+            {
+              key: 'email',
+              type: 'input',
+              className: 'col-md-6',
+              defaultValue: '',
+              templateOptions: {
+                label: 'Email',
+                type: 'email',
+                pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+                placeholder: '',
+                required: true
+              },
+              validation: {
+                show: false,
+              },
+              expressionProperties: {
+                'validation.show': 'model.showErrorState',
+                'templateOptions.disabled': 'formState.disabled',
+              },
+            },
+            {
+              key: 'phoneNumber',
+              type: 'input',
+              className: 'col-md-6',
+              defaultValue: '',
+              templateOptions: {
+                label: 'Phone Number',
+                pattern: /\+?[0-9]+/,
+                description: 'Required if email is not provided.',
+                required: true
+              },
+              validation: {
+                show: false,
+              },
+              expressionProperties: {
+                'validation.show': 'model.showErrorState',
+                'templateOptions.disabled': 'formState.disabled',
+              },
+            }
+          ]
         },
         {
-          key: 'phoneNumber',
-          type: 'input',
+          fieldGroupClassName: 'd-flex flex-column justify-content-between',
           className: 'col-md-6',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Phone Number',
-            pattern: /\+?[0-9]+/,
-            description: 'Required if email is not provided.',
-            required: true
-          },
-          validation: {
-            show: false,
-          },
-          expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
-          },
+          // column 2
+          fieldGroup: [
+            this.dropPointField,
+            {
+              key: 'postCode',
+              type: 'place',
+              className: '',
+              defaultValue: '',
+              templateOptions: {
+                label: 'Address',
+                placeholder: '',
+                postCode: false,
+                required: false
+              },
+              validation: {
+                show: false,
+              },
+              expressionProperties: {
+                'validation.show': 'model.showErrorState',
+                'templateOptions.disabled': 'formState.disabled',
+              },
+            },
+            {
+              key: 'referral',
+              type: 'input',
+              className: '',
+              defaultValue: '',
+              templateOptions: {
+                label: 'How did you hear about us?',
+                placeholder: '',
+                required: false
+              },
+              validation: {
+                show: false,
+              },
+              expressionProperties: {
+                'validation.show': 'model.showErrorState',
+                'templateOptions.disabled': 'formState.disabled',
+              },
+            },
+            {
+              key: 'consent',
+              type: 'radio',
+              className: 'col-md-12  border-bottom-info card pt-3 mb-3',
+              templateOptions: {
+                label: 'We would like to keep in touch with you about our vital work in bridging the digital divide, as well as fundraising appeals and opportunities to support us.',
+                placeholder: '',
+                required: true,
+                options: [
+                  { label: 'Yes please, I would like to receive communications via email', value: true },
+                  { label: 'No thank you, I would not like to receive communications via email', value: false }
+                ]
+              }
+            }
+          ]
         }
       ]
-    },
-    {
-      key: 'postCode',
-      type: 'place',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Address',
-        placeholder: '',
-        postCode: false,
-        required: false
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
-    },
-    this.dropPointField,
-    {
-      key: 'referral',
-      type: 'input',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'How did you hear about us?',
-        placeholder: '',
-        required: false
-      },
-      validation: {
-        show: false,
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
-      },
-    },
-    {
-      key: 'type',
-      type: 'radio',
-      className: 'col-md-12  border-bottom-info card pt-3 mb-3',
-      templateOptions: {
-        label: 'Donor Type',
-        placeholder: '',
-        required: true,
-        options: [
-          { label: 'Individual', value: 'INDIVIDUAL' },
-          { label: 'Business', value: 'BUSINESS' }
-        ]
-      }
-    },
-    {
-      key: 'consent',
-      type: 'radio',
-      className: 'col-md-12  border-bottom-info card pt-3 mb-3',
-      templateOptions: {
-        label: 'We would like to keep in touch with you about our vital work in bridging the digital divide, as well as fundraising appeals and opportunities to support us.',
-        placeholder: '',
-        required: true,
-        options: [
-          { label: 'Yes please, I would like to receive communications via email', value: true },
-          { label: 'No thank you, I would not like to receive communications via email', value: false }
-        ]
-      }
     }
   ];
 
@@ -423,7 +443,7 @@ export class DonorInfoComponent {
       return;
     }
     data.id = this.entityId;
-    data.remove('businessName');
+    //data.remove('businessName');
     this.apollo.mutate({
       mutation: UPDATE_ENTITY,
       variables: {
