@@ -479,7 +479,7 @@ export class OrgRequestComponent {
     hideExpression: true,
     className: 'col-md-12',
     template: `<div class="border-bottom-danger card mb-3 p-3">
-<p>The email you entered isn’t in our system. Please double-check the address for accuracy. If this is your first request, use <a href="https://ghjngk6ao4g.typeform.com/to/Qz4rILeN" target="_blank">this link</a> to provide your details so we can register you.</p>
+<p>The email you entered isn’t in our system. Please double-check the address for accuracy. If this is your first request, use <a class="btn btn-primary" role="button" href="https://ghjngk6ao4g.typeform.com/to/Qz4rILeN" target="_blank">this link</a> to provide your details so we can register you.</p>
 <p>For any questions, contact <a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
 </div>`
   }
@@ -564,7 +564,7 @@ export class OrgRequestComponent {
     hideExpression: true,
     className: 'col-md-12',
     template: `<div class="border-bottom-danger card mb-3 p-3">
-<p>It looks like your organisation isn't listed in our system. Please use <a href="https://ghjngk6ao4g.typeform.com/to/Qz4rILeN" target="_blank">this link</a> to provide your details. If you think your organisation should be listed, try typing the first three letters again.</p>
+<p>It looks like your organisation isn't listed in our system. Please use <a class="btn btn-primary" role="button" href="https://ghjngk6ao4g.typeform.com/to/Qz4rILeN" target="_blank">this link</a> to provide your details. If you think your organisation should be listed, try typing the first three letters again.</p>
 <p>For any questions, contact <a href="mailto:distributions@communitytechaid.org.uk">distributions@communitytechaid.org.uk</a></p>
 </div>`
   }
@@ -906,7 +906,7 @@ export class OrgRequestComponent {
                 if (data.length == 0) {
                   this.hideNewOrganisationField(false);
                   this.referringOrgField.formControl.setValue(null)
-                  
+
                 } else {
                   this.hideNewOrganisationField(true);
                   this.showContactPage();
