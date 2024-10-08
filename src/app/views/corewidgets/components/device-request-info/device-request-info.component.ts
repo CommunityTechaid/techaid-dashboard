@@ -348,7 +348,7 @@ export class DeviceRequestInfoComponent {
                       label: 'Connectivity Devices',
                       description: '',
                       addonLeft: {
-                        class: 'fas fa-laptop-house'
+                        class: 'fas fa-laptop'
                       },
                       type: 'number',
                       placeholder: '',
@@ -414,7 +414,7 @@ export class DeviceRequestInfoComponent {
                       label: 'Other',
                       description: '',
                       addonLeft: {
-                        class: 'fas fa-laptop-house'
+                        class: 'fas fa-laptop'
                       },
                       type: 'number',
                       placeholder: '',

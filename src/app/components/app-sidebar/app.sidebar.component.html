@@ -16,7 +16,7 @@
     <!-- Nav Item - Dashboard -->
     <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:kits']">
         <a class="nav-link" href="#" routerLink="/dashboard/devices">
-            <i class="fas fa-laptop-house"></i>
+            <i class="fas fa-laptop"></i>
             <span>Devices</span></a>
     </li>
 
@@ -36,17 +36,17 @@
     <hr class="sidebar-divider" *ngIf="user?.authorities['read:volunteers']">
 
     <!-- Nav Item - Tables -->
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:dropPoints']">
-      <a class="nav-link" href="#" routerLink="/dashboard/drop-points">
-          <i class="fa fa-fw fa-map-marked"></i>
-          <span>Drop Points</span></a>
-    </li>
-
-    <!-- Nav Item - Tables -->
     <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:donors']">
         <a class="nav-link" href="#" routerLink="/dashboard/donors">
             <i class="fa fa-fw fa-table"></i>
             <span>Donors</span></a>
+    </li>
+
+    <!-- Nav Item - Tables -->
+    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:dropPoints']">
+      <a class="nav-link" href="#" routerLink="/dashboard/drop-points">
+          <i class="fa fa-fw fa-sitemap"></i>
+          <span>Parent Donors</span></a>
     </li>
 
     <!-- Divider -->
