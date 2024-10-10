@@ -15,8 +15,8 @@ import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
 
 const QUERY_ENTITY = gql`
-query findDropPoint($id: Long) {
-  dropPoint(where: {
+query findDonorParent($id: Long) {
+  donorParent(where: {
     id: {
       _eq: $id
     }
@@ -38,8 +38,8 @@ query findDropPoint($id: Long) {
 `;
 
 const UPDATE_ENTITY = gql`
-mutation updateDropPoint($data: UpdateDropPointInput!) {
-  updateDropPoint(data: $data){
+mutation updateDonorParent($data: UpdateDonorParentInput!) {
+  updateDonorParent(data: $data){
     id
     name
     address
@@ -56,17 +56,17 @@ mutation updateDropPoint($data: UpdateDropPointInput!) {
 `;
 
 const DELETE_ENTITY = gql`
-mutation deleteDropPoint($id: ID!) {
-  deleteDropPoint(id: $id)
+mutation deleteDonorParent($id: ID!) {
+  deleteDonorParent(id: $id)
 }
 `;
 
 @Component({
-  selector: 'drop-point-info',
-  styleUrls: ['drop-point-info.scss'],
-  templateUrl: './drop-point-info.html'
+  selector: 'donor-parent-info',
+  styleUrls: ['donor-parent-info.scss'],
+  templateUrl: './donor-parent-info.html'
 })
-export class DropPointInfoComponent {
+export class DonorParentInfoComponent {
 
 
   constructor(
@@ -98,7 +98,7 @@ export class DropPointInfoComponent {
       className: 'col-md-12 border-left-info card pt-3 mb-3',
       defaultValue: '',
       templateOptions: {
-        label: 'Drop Point Name',
+        label: 'Name',
         placeholder: '',
         required: true
       }
@@ -109,7 +109,7 @@ export class DropPointInfoComponent {
       className: 'col-md-12',
       defaultValue: '',
       templateOptions: {
-        label: 'Drop Point Address',
+        label: 'Address',
         placeholder: '',
         postCode: false,
         required: true
@@ -124,7 +124,7 @@ export class DropPointInfoComponent {
           className: 'col-md-12',
           defaultValue: '',
           templateOptions: {
-            label: 'Drop Point Website',
+            label: 'Website',
             pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
             required: true
           },
@@ -158,8 +158,8 @@ export class DropPointInfoComponent {
     this.queryRef.refetch({
       id: this.entityId
     }).then(res => {
-      if (res.data && res.data['dropPoint']) {
-        const data = res.data['dropPoint'];
+      if (res.data && res.data['donorParent']) {
+        const data = res.data['donorParent'];
         this.model = this.normalizeData(data);
         this.entityName = `${this.model['name'] || ''}/${this.model['website'] || ''}`.trim().split('/').filter(f => f.trim().length > 0)[0];
       } else {
@@ -180,12 +180,12 @@ export class DropPointInfoComponent {
 
   ngOnInit() {
     this.sub = this.activatedRoute.params.subscribe(params => {
-      this.entityId = +params['dropPointId'];
+      this.entityId = +params['donorParentId'];
       this.fetchData();
     });
     this.sub.add(this.user$.subscribe(user => {
         this.user = user;
-        this.options.formState.disabled = !(user && user.authorities && user.authorities['write:dropPoints']);
+        this.options.formState.disabled = !(user && user.authorities && user.authorities['write:donorParents']);
     }));
   }
 
@@ -207,11 +207,11 @@ export class DropPointInfoComponent {
         data
       }
     }).subscribe(res => {
-      this.model = this.normalizeData(res.data['updateDropPoint']);
+      this.model = this.normalizeData(res.data['updateDonorParent']);
       this.entityName = `${this.model['name'] || ''} ${this.model['email'] || ''} ${this.model['phoneNumber'] || ''}`.trim().split(' ')[0];
       this.toastr.info(`
-      <small>Successfully updated drop point ${this.entityName}</small>
-      `, 'Updated DropPoint', {
+      <small>Successfully updated parent donor ${this.entityName}</small>
+      `, 'Updated DonorParent', {
           enableHtml: true
         });
     }, err => {
@@ -228,18 +228,18 @@ export class DropPointInfoComponent {
       mutation: DELETE_ENTITY,
       variables: { id: this.entityId }
     }).subscribe(res => {
-      if (res.data.deleteDropPoint) {
+      if (res.data.deleteDonorParent) {
         this.toastr.info(`
-        <small>Successfully deleted drop point ${this.entityName}</small>
-        `, 'DropPoint Deleted', {
+        <small>Successfully deleted parent donor ${this.entityName}</small>
+        `, 'DonorParent Deleted', {
             enableHtml: true
           });
-        this.router.navigate(['/dashboard/dropPoints']);
+        this.router.navigate(['/dashboard/donorParents']);
       }
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
-      `, 'Error Deleting DropPoint', {
+      `, 'Error Deleting DonorParent', {
           enableHtml: true
         });
     });

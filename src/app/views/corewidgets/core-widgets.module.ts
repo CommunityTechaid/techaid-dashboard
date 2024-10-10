@@ -50,8 +50,8 @@ import { ReferringOrganisationContactInfoComponent } from './components/referrin
 import { ReferringOrganisationContactComponent }  from './components/referring-organisation-contact-component/referring-organisation-contact-component.component';
 import { DeviceRequestComponent } from './components/device-request-component/device-request-component.component';
 import { AppLocalCSS } from './components/org-request/app-local-css.component';
-import { DropPointIndexComponent } from './components/drop-point-index/drop-point-index.component';
-import { DropPointInfoComponent } from './components/drop-point-info/drop-point-info.component';
+import { DonorParentIndexComponent } from './components/donor-parent-index/donor-parent-index.component';
+import { DonorParentInfoComponent } from './components/donor-parent-info/donor-parent-info.component';
 import { DonorComponent } from './components/donor-component/donor-component.component';
 
 const routes: Routes = [
@@ -67,8 +67,8 @@ const routes: Routes = [
   { path: 'dashboard/devices/:kitId', component: KitInfoComponent, canActivate: [AuthGuard] },
   { path: 'dashboard/donors', component: DonorIndexComponent, data: { title: 'Donors' }, canActivate: [AuthGuard] },
   { path: 'dashboard/donors/:donorId', component: DonorInfoComponent, data: { title: 'Donor' }, canActivate: [AuthGuard] },
-  { path: 'dashboard/drop-points', component: DropPointIndexComponent, data: { title: 'Drop Points' }, canActivate: [AuthGuard] },
-  { path: 'dashboard/drop-points/:dropPointId', component: DropPointInfoComponent, data: { title: 'Drop Point' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/donor-parents', component: DonorParentIndexComponent, data: { title: 'Parent DOnors' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/donor-parents/:donorParentId', component: DonorParentInfoComponent, data: { title: 'Parent Donor' }, canActivate: [AuthGuard] },
   { path: 'dashboard/roles', component: RoleIndexComponent, data: { title: 'Roles' },  canActivate: [AuthGuard]},
   { path: 'dashboard/roles/:roleId', component: RoleInfoComponent, data: { title: 'Role' },  canActivate: [AuthGuard] },
   { path: 'dashboard/users', component: UserIndexComponent, data: { title: 'Users' },  canActivate: [AuthGuard] },
@@ -135,8 +135,8 @@ const routes: Routes = [
     ReferringOrganisationContactComponent,
     DeviceRequestComponent,
     AppLocalCSS,
-    DropPointIndexComponent,
-    DropPointInfoComponent,
+    DonorParentIndexComponent,
+    DonorParentInfoComponent,
     DonorComponent
   ],
   imports: [

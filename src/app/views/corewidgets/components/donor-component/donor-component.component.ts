@@ -53,7 +53,7 @@ query findAllDonors(
      updatedAt
      consent
      type
-     dropPoint {
+     donorParent {
       id
      }
     }
@@ -107,8 +107,8 @@ export class DonorComponent {
   }
 
   @Input()
-  set dropPointId(dropPointId: any) {
-    this._dropPointId = dropPointId;
+  set donorParentId(donorParentId: any) {
+    this._donorParentId = donorParentId;
   }
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
@@ -219,7 +219,7 @@ export class DonorComponent {
   tableId = 'donor-index';
 
   _where = {};
-  _dropPointId = -1;
+  _donorParentId = -1;
 
   applyFilter(data) {
     const filter = {};
@@ -382,7 +382,7 @@ export class DonorComponent {
 
 
   createEntity(data: any) {
-    data.dropPointId = this._dropPointId;
+    data.donorParentId = this._donorParentId;
 
     this.apollo.mutate({
       mutation: CREATE_ENTITY,

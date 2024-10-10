@@ -16,8 +16,8 @@ import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 
 const QUERY_ENTITY = gql`
-query findAllDropPoints($page: PaginationInput,, $term: String) {
-  dropPointsConnection(page: $page, where: {
+query findAllDonorParents($page: PaginationInput,, $term: String) {
+  donorParentsConnection(page: $page, where: {
     AND: {
       address: { _contains: $term }
       OR: [
@@ -41,8 +41,8 @@ query findAllDropPoints($page: PaginationInput,, $term: String) {
 `;
 
 const CREATE_ENTITY = gql`
-mutation createDropPoint($data: CreateDropPointInput!) {
-  createDropPoint(data: $data){
+mutation createDonorParent($data: CreateDonorParentInput!) {
+  createDonorParent(data: $data){
     id
     name
     address
@@ -52,11 +52,11 @@ mutation createDropPoint($data: CreateDropPointInput!) {
 `;
 
 @Component({
-  selector: 'drop-point-index',
-  styleUrls: ['drop-point-index.scss'],
-  templateUrl: './drop-point-index.html'
+  selector: 'donor-parent-index',
+  styleUrls: ['donor-parent-index.scss'],
+  templateUrl: './donor-parent-index.html'
 })
-export class DropPointIndexComponent {
+export class DonorParentIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -77,7 +77,7 @@ export class DropPointIndexComponent {
       className: 'col-md-12 border-left-info card pt-3 mb-3',
       defaultValue: '',
       templateOptions: {
-        label: 'Drop Point Name',
+        label: 'Name',
         placeholder: '',
         required: true
       }
@@ -88,7 +88,7 @@ export class DropPointIndexComponent {
       className: 'col-md-12',
       defaultValue: '',
       templateOptions: {
-        label: 'Drop Point Address',
+        label: 'Address',
         placeholder: '',
         postCode: false,
         required: false
@@ -103,7 +103,7 @@ export class DropPointIndexComponent {
           className: 'col-md-12',
           defaultValue: '',
           templateOptions: {
-            label: 'Drop Point Website',
+            label: 'Website',
             pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
             required: true
           },
@@ -180,7 +180,7 @@ export class DropPointIndexComponent {
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res.data) {
-            data = res['data']['dropPointsConnection'];
+            data = res['data']['donorParentsConnection'];
             if (!this.total) {
               this.total = data['totalElements'];
             }
@@ -246,7 +246,7 @@ export class DropPointIndexComponent {
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
-      `, 'Create Drop Point Error', {
+      `, 'Create Parent Donor Error', {
           enableHtml: true,
           timeOut: 15000
         });

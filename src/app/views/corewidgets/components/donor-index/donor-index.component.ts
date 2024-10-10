@@ -49,7 +49,7 @@ query findAllDonors($page: PaginationInput, $term: String, $where: DonorWhereInp
      updatedAt
      consent
      type
-     dropPoint {
+     donorParent {
       id
      }
     }
@@ -69,9 +69,9 @@ mutation createDonor($data: CreateDonorInput!) {
 }
 `;
 
-const AUTOCOMPLETE_DROP_POINTS = gql`
-query findAutocompleteDropPoints($term: String) {
-  dropPointsConnection(page: {
+const AUTOCOMPLETE_DONOR_PARENTS = gql`
+query findAutocompleteDonorParents($term: String) {
+  donorParentsConnection(page: {
     size: 50
   }, where: {
     name: { _contains: $term }
@@ -111,23 +111,23 @@ export class DonorIndexComponent {
   entities = [];
   form: FormGroup = new FormGroup({});
   model = {};
-  dropPointId: number;
+  donorParentId: number;
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
-  dropPoints$: Observable<any>;
-  dropPointInput$ = new Subject<string>();
-  dropPointLoading = false;
-  dropPointField: FormlyFieldConfig = {
-    key: 'dropPointId',
+  donorParents$: Observable<any>;
+  donorParentInput$ = new Subject<string>();
+  donorParentLoading = false;
+  donorParentField: FormlyFieldConfig = {
+    key: 'donorParentId',
     type: 'choice',
     className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
-      label: 'Drop Point',
-      description: 'The drop point this donor is using.',
-      loading: this.dropPointLoading,
-      typeahead: this.dropPointInput$,
-      placeholder: 'Assign donor to an associated Drop Point',
+      label: 'Parent Donor',
+      description: 'The parent donor for this donor.',
+      loading: this.donorParentLoading,
+      typeahead: this.donorParentInput$,
+      placeholder: 'Assign donor to an associated Parent Donor',
       multiple: false,
       searchable: true,
       items: [],
@@ -196,7 +196,7 @@ export class DonorIndexComponent {
         required: false
       }
     },
-    this.dropPointField,
+    this.donorParentField,
     {
       key: 'type',
       type: 'radio',
@@ -292,28 +292,28 @@ export class DonorIndexComponent {
         variables: {}
       });
 
-    const dropPointRef = this.apollo
+    const donorParentRef = this.apollo
       .watchQuery({
-        query: AUTOCOMPLETE_DROP_POINTS,
+        query: AUTOCOMPLETE_DONOR_PARENTS,
         variables: {
         }
       });
 
-    this.dropPoints$ = concat(
+    this.donorParents$ = concat(
       of([]),
-      this.dropPointInput$.pipe(
+      this.donorParentInput$.pipe(
         debounceTime(200),
         distinctUntilChanged(),
-        tap(() => this.dropPointLoading = true),
-        switchMap(term => from(dropPointRef.refetch({
+        tap(() => this.donorParentLoading = true),
+        switchMap(term => from(donorParentRef.refetch({
           term: term
         })).pipe(
           catchError(() => of([])),
-          tap(() => this.dropPointLoading = false),
+          tap(() => this.donorParentLoading = false),
           switchMap(res => {
-            const data = res['data']['dropPointsConnection']['content'].map(v => {
+            const data = res['data']['donorParentsConnection']['content'].map(v => {
               return {
-                label: `${this.dropPointName(v)}`, value: v.id
+                label: `${this.donorParentName(v)}`, value: v.id
               };
             });
             return of(data);
@@ -329,8 +329,8 @@ export class DonorIndexComponent {
       }
     });
 
-    this.sub.add(this.dropPoints$.subscribe(data => {
-      this.dropPointField.templateOptions['items'] = data;
+    this.sub.add(this.donorParents$.subscribe(data => {
+      this.donorParentField.templateOptions['items'] = data;
     }));
 
     this.dtOptions = {
@@ -411,7 +411,7 @@ export class DonorIndexComponent {
     };
   }
 
-  dropPointName(data) {
+  donorParentName(data) {
     return `${data.name || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)

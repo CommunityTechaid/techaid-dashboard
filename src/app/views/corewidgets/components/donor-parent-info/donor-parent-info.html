@@ -7,7 +7,7 @@
       <!-- Project Card Example -->
       <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
-              <li class="breadcrumb-item"><a href="#" [routerLink]="['../']">Drop Points</a></li>
+              <li class="breadcrumb-item"><a href="#" [routerLink]="['../']">Parent Donors</a></li>
               <li class="breadcrumb-item active" aria-current="page">{{ entityName }}</li>
           </ol>
       </nav>
@@ -32,14 +32,14 @@
                               </button>
                           </form>
 
-                          <div class="delete-api mt-5 " *ngIf="user?.authorities['delete:dropPoints']">
+                          <div class="delete-api mt-5 " *ngIf="user?.authorities['delete:donorParents']">
                               <h3>Danger Zone</h3>
                               <div class="border-bottom-danger card">
                                   <div class="card-body">
                                       <div class="d-flex justify-content-between">
                                           <div>
-                                              <h4>Delete Drop Point</h4>
-                                              <p class="text-muted">The drop point will be removed, this action is not reversable</p>
+                                              <h4>Delete Parent Donor</h4>
+                                              <p class="text-muted">The donor parent will be removed, this action is not reversable</p>
                                           </div>
                                           <div>
                                               <button type="submit" (click)="modal(confirmDelete);"
@@ -58,14 +58,14 @@
           <ngb-tab title="Donors">
             <ng-template ngbTabContent>
                 <div class="mt-2">
-                    <donor-component *ngIf="model?.id" [where]="{dropPoint: {id: {_eq: model.id}}}" [tableId]="'drop-point-info-donors-' + model.id" [dropPointId]="model.id"></donor-component>
+                    <donor-component *ngIf="model?.id" [where]="{donorParent: {id: {_eq: model.id}}}" [tableId]="'donor-parent-info-donors-' + model.id" [donorParentId]="model.id"></donor-component>
                 </div>
             </ng-template>
         </ngb-tab>
           <ngb-tab title="Devices">
             <ng-template ngbTabContent>
                 <div class="mt-2">
-                    <kit-component *ngIf="model?.id" [where]="{donor: {dropPoint: {id: {_eq: model.id}}}}" [tableId]="'drop-point-info-devices-' + model.id"></kit-component>
+                    <kit-component *ngIf="model?.id" [where]="{donor: {donorParent: {id: {_eq: model.id}}}}" [tableId]="'donor-parent-info-devices-' + model.id"></kit-component>
                 </div>
             </ng-template>
         </ngb-tab>
