@@ -67,7 +67,7 @@ const routes: Routes = [
   { path: 'dashboard/devices/:kitId', component: KitInfoComponent, canActivate: [AuthGuard] },
   { path: 'dashboard/donors', component: DonorIndexComponent, data: { title: 'Donors' }, canActivate: [AuthGuard] },
   { path: 'dashboard/donors/:donorId', component: DonorInfoComponent, data: { title: 'Donor' }, canActivate: [AuthGuard] },
-  { path: 'dashboard/donor-parents', component: DonorParentIndexComponent, data: { title: 'Parent DOnors' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/donor-parents', component: DonorParentIndexComponent, data: { title: 'Parent Donors' }, canActivate: [AuthGuard] },
   { path: 'dashboard/donor-parents/:donorParentId', component: DonorParentInfoComponent, data: { title: 'Parent Donor' }, canActivate: [AuthGuard] },
   { path: 'dashboard/roles', component: RoleIndexComponent, data: { title: 'Roles' },  canActivate: [AuthGuard]},
   { path: 'dashboard/roles/:roleId', component: RoleInfoComponent, data: { title: 'Role' },  canActivate: [AuthGuard] },

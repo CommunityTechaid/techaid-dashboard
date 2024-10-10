@@ -144,7 +144,7 @@ export class DonorInfoComponent {
     type: 'choice',
     className: 'text-left',
     templateOptions: {
-      label: 'Parent DOnor',
+      label: 'Parent Donor',
       description: 'The parent donor for this donor.',
       loading: this.donorParentLoading,
       typeahead: this.donorParentInput$,
