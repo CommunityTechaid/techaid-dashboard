@@ -59,13 +59,14 @@ query findAutocompleteReferringOrganisations($term: String) {
   referringOrganisationsConnection(page: {
     size: 50
   }, where: {
-    name: {
-      _contains: $term
-    }
+    name: { _contains: $term }
+    archived: { _eq: false }
+
   }){
     content  {
       id
       name
+      archived
     }
   }
 }
