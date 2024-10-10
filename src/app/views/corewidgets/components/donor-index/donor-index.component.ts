@@ -16,23 +16,19 @@ import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 
 const QUERY_ENTITY = gql`
-query findAllDonors($page: PaginationInput, $term: String, $where: DonorWhereInput!) {
+query findAllDonors($page: PaginationInput, $term: String) {
   donorsConnection(page: $page, where: {
     AND: {
       postCode: { _contains: $term }
-      AND: [ $where ]
       OR: [
         {
           name: { _contains: $term }
-          AND: [ $where ]
         },
         {
           phoneNumber: { _contains: $term }
-          AND: [ $where ]
         },
         {
           email: { _contains: $term }
-          AND: [ $where ]
         }
       ]
     }
@@ -48,7 +44,6 @@ query findAllDonors($page: PaginationInput, $term: String, $where: DonorWhereInp
      createdAt
      updatedAt
      consent
-     type
      donorParent {
       id
      }
@@ -64,7 +59,6 @@ mutation createDonor($data: CreateDonorInput!) {
     name
     email
     phoneNumber
-    type
   }
 }
 `;
@@ -88,7 +82,6 @@ query findAutocompleteDonorParents($term: String) {
 @Component({
   selector: 'donor-index',
   styleUrls: ['donor-index.scss'],
-
   templateUrl: './donor-index.html'
 })
 export class DonorIndexComponent {
@@ -134,8 +127,6 @@ export class DonorIndexComponent {
       required: false
     },
   };
-
-
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -196,68 +187,11 @@ export class DonorIndexComponent {
         required: false
       }
     },
-    this.donorParentField,
-    {
-      key: 'type',
-      type: 'radio',
-      className: 'px-1',
-      defaultValue: 'INDIVIDUAL',
-      templateOptions: {
-       label: "Donor Type",
-       type: "select",
-       options: [
-          {label: 'Individual', value: 'INDIVIDUAL' },
-          {label: 'Business', value: 'BUSINESS' }
-       ],
-       required: true
-      }
-    },
-  ];
-
-  filter: any = {};
-  filterCount = 0;
-  filterModel: any = {};
-  filterForm: FormGroup = new FormGroup({});
-  filterFields: Array<FormlyFieldConfig> = [
-    {
-      fieldGroupClassName: 'row',
-      fieldGroup: [
-        {
-          key: 'type',
-          type: 'multicheckbox',
-          className: 'col-sm-4',
-          templateOptions: {
-            type: 'array',
-            label: 'Filter by Donor Type?',
-            options: [
-              {label: 'Individual', value: 'INDIVIDUAL' },
-              {label: 'Business', value: 'BUSINESS' },
-            ],
-            required: false
-          }
-        }
-      ]
-    }
+    this.donorParentField
   ];
 
   @Input()
   tableId = 'donor-index';
-
-  applyFilter(data) {
-    const filter = {};
-    let count = 0;
-
-    if (data.type && data.type.length) {
-      count += data.type.length;
-      filter['type'] = {_in: data.type};
-    }
-
-    localStorage.setItem(`donorFilters-${this.tableId}`, JSON.stringify(data));
-    this.filter = filter;
-    this.filterCount = count;
-    this.filterModel = data;
-    this.table.ajax.reload(null, false);
-  }
 
   modal(content) {
     this.modalService.open(content, { centered: true, size: 'lg' });
@@ -266,22 +200,6 @@ export class DonorIndexComponent {
   clearSelection() {
     this.selections = {};
     this.selected = [];
-  }
-
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
   }
 
 
@@ -360,8 +278,7 @@ export class DonorIndexComponent {
             size: params.length,
             page: Math.round(params.start / params.length),
           },
-          term: params['search']['value'],
-          where: this.filter
+          term: params['search']['value']
         };
 
         queryRef.refetch(vars).then(res => {
@@ -405,8 +322,7 @@ export class DonorIndexComponent {
         { data: 'kitCount'},
         { data: 'postCode' },
         { data: 'createdAt' },
-        { data: 'updatedAt' },
-        { data: 'type' }
+        { data: 'updatedAt' }
       ]
     };
   }
@@ -428,20 +344,8 @@ export class DonorIndexComponent {
   ngAfterViewInit() {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
-      try {
-        this.filterModel = JSON.parse(localStorage.getItem(`donorFilters-${this.tableId}`)) || { };
-      } catch (_) {
-        this.filterModel = { };
-      }
-
-      try {
-        this.applyFilter(this.filterModel);
-        this.filterForm.patchValue(this.filterModel);
-      } catch (_) {
-      }
     });
   }
-
 
   createEntity(data: any) {
     this.apollo.mutate({

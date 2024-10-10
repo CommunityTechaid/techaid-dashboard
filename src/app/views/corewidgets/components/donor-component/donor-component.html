@@ -11,12 +11,6 @@
                       <h6 class="m-0 font-weight-bold text-primary">Donors</h6>
                   </div>
                   <div>
-                      <a href="#" (click)="modal(filters); false;" class="btn btn-info btn-icon-split btn-sm mr-1 mb-1">
-                        <span class="icon text-white-50">
-                            <i class="fas fa-filter"></i>
-                        </span>
-                        <span class="text">Filter <span *ngIf="filterCount > 0" class="badge badge-danger">{{filterCount}}</span></span>
-                      </a>
                       <a href="#" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm mr-1 mb-1">
                           <span class="icon text-white-50">
                               <i class="far fa-address-card"></i>
@@ -39,7 +33,6 @@
                                   <th>Address</th>
                                   <th>Created</th>
                                   <th>Updated</th>
-                                  <th>Type</th>
                               </tr>
                           </thead>
                           <tbody *ngIf="entities?.length;">
@@ -71,9 +64,6 @@
                                   </td>
                                   <td>
                                   {{ dt.updatedAt | date:'medium' }}
-                                  </td>
-                                  <td>
-                                  {{ dt.type }}
                                   </td>
                               </tr>
                           </tbody>
@@ -108,23 +98,4 @@
           CREATE
       </button>
   </div>
-</ng-template>
-
-<ng-template #filters let-c="close" let-d="dismiss">
-<div class="modal-header">
-    <h4 class="modal-title">Donor Filters</h4>
-</div>
-<div class="modal-body">
-    <form [formGroup]="filterForm">
-        <formly-form [model]="filterModel" [form]="filterForm" [fields]="filterFields">
-        </formly-form>
-    </form>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button [disabled]="form.invalid" type="button" class="btn btn-primary btn-sm"
-        (click)="applyFilter(filterForm.value); c('Close click')">
-        Filter
-    </button>
-</div>
 </ng-template>

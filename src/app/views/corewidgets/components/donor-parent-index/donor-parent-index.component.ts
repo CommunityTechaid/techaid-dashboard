@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -16,13 +16,20 @@ import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 
 const QUERY_ENTITY = gql`
-query findAllDonorParents($page: PaginationInput,, $term: String) {
+query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorParentWhereInput!) {
   donorParentsConnection(page: $page, where: {
     AND: {
       address: { _contains: $term }
+      AND: [ $where ]
       OR: [
-        { name: { _contains: $term } },
-        { website: { _contains: $term } }
+        {
+          name: { _contains: $term }
+          AND: [ $where ]
+        },
+        {
+          website: { _contains: $term }
+          AND: [ $where ]
+        }
       ]
     }
   }){
@@ -72,6 +79,21 @@ export class DonorParentIndexComponent {
 
   fields: Array<FormlyFieldConfig> = [
     {
+      key: 'type',
+      type: 'radio',
+      className: 'px-1',
+      defaultValue: 'DROPPOINT',
+      templateOptions: {
+       label: "Type",
+       type: "select",
+       options: [
+          {label: 'Business', value: 'BUSINESS' },
+          {label: 'Drop Point', value: 'DROPPOINT' }
+       ],
+       required: true
+      }
+    },
+    {
       key: 'name',
       type: 'input',
       className: 'col-md-12 border-left-info card pt-3 mb-3',
@@ -115,6 +137,34 @@ export class DonorParentIndexComponent {
     }
   ];
 
+
+  filter: any = {};
+  filterCount = 0;
+  filterModel: any = {};
+  filterForm: FormGroup = new FormGroup({});
+  filterFields: Array<FormlyFieldConfig> = [
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'type',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Type?',
+            options: [
+              {label: 'Business', value: 'BUSINESS' },
+              {label: 'Drop Point', value: 'DROPPOINT' },
+            ],
+            required: false
+          }
+        }
+      ]
+    }
+  ];
+
+
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
@@ -123,6 +173,25 @@ export class DonorParentIndexComponent {
 
   }
 
+  applyFilter(data) {
+    const filter = {};
+    let count = 0;
+
+    if (data.type && data.type.length) {
+      count += data.type.length;
+      filter['type'] = {_in: data.type};
+    }
+
+    localStorage.setItem(`donorFilters-${this.tableId}`, JSON.stringify(data));
+    this.filter = filter;
+    this.filterCount = count;
+    this.filterModel = data;
+    this.table.ajax.reload(null, false);
+  }
+
+  @Input()
+  tableId = 'donor-parent-index';
+
   modal(content) {
     this.modalService.open(content, { centered: true, size: 'lg' });
   }
@@ -130,6 +199,22 @@ export class DonorParentIndexComponent {
   clearSelection() {
     this.selections = {};
     this.selected = [];
+  }
+
+  query(evt?: any, filter?: string) {
+    if (filter === undefined) {
+      filter = this.table.search();
+    }
+
+    if (evt) {
+      const code = (evt.keyCode ? evt.keyCode : evt.which);
+      if (code !== 13) {
+        return;
+      }
+    }
+
+    this.table.search(filter);
+    this.table.ajax.reload(null, false);
   }
 
   ngOnInit() {
@@ -174,7 +259,8 @@ export class DonorParentIndexComponent {
             size: params.length,
             page: Math.round(params.start / params.length),
           },
-          term: params['search']['value']
+          term: params['search']['value'],
+          where: this.filter
         };
 
         queryRef.refetch(vars).then(res => {
@@ -219,7 +305,8 @@ export class DonorParentIndexComponent {
         { data: 'website' },
         { data: 'donorCount'},
         { data: 'createdAt' },
-        { data: 'updatedAt' }
+        { data: 'updatedAt' },
+        { data: 'type' }
       ]
     };
   }
@@ -230,11 +317,25 @@ export class DonorParentIndexComponent {
     }
   }
 
+
   ngAfterViewInit() {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
+      try {
+        this.filterModel = JSON.parse(localStorage.getItem(`donorParentFilters-${this.tableId}`)) || { };
+      } catch (_) {
+        this.filterModel = { };
+      }
+
+      try {
+        this.applyFilter(this.filterModel);
+        this.filterForm.patchValue(this.filterModel);
+      } catch (_) {
+      }
     });
   }
+
+
 
   createEntity(data: any) {
     this.apollo.mutate({

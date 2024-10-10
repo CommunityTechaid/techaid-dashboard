@@ -25,11 +25,11 @@ query findDonorParent($id: Long) {
     name
     address
     website
+    type
     donorCount
     donors {
       id
       name
-      type
       updatedAt
       createdAt
     }
@@ -44,10 +44,10 @@ mutation updateDonorParent($data: UpdateDonorParentInput!) {
     name
     address
     website
+    type
     donors {
       id
       name
-      type
       updatedAt
       createdAt
     }
@@ -92,6 +92,20 @@ export class DonorParentInfoComponent {
   @Select(UserState.user) user$: Observable<User>;
 
   fields: Array<FormlyFieldConfig> = [
+    {
+      key: 'type',
+      type: 'radio',
+      className: 'col-md-12  border-bottom-info card pt-3 mb-3',
+      templateOptions: {
+        label: 'Type',
+        placeholder: '',
+        required: true,
+        options: [
+          { label: 'Business', value: 'BUSINESS' },
+          { label: 'Drop Point', value: 'DROPPOINT' },
+        ]
+      }
+    },
     {
       key: 'name',
       type: 'input',

@@ -24,13 +24,11 @@ query findDonor($id: Long) {
   }){
     id
     name
-    businessName
     postCode
     phoneNumber
     email
     referral
     consent
-    type
     donorParent {
       id
       name
@@ -57,10 +55,8 @@ mutation updateDonor($data: UpdateDonorInput!) {
     phoneNumber
     email
     name
-    businessName
     referral
     consent
-    type
     donorParent {
       id
       name
@@ -170,39 +166,7 @@ export class DonorInfoComponent {
           fieldGroupClassName: 'd-flex flex-column justify-content-between',
           className: 'col-md-6',
           fieldGroup: [
-            {
-              key: 'type',
-              type: 'radio',
-              className: 'col-md-12  border-bottom-info card pt-3 mb-3',
-              templateOptions: {
-                label: 'Donor Type',
-                placeholder: '',
-                required: true,
-                options: [
-                  { label: 'Individual', value: 'INDIVIDUAL' },
-                  { label: 'Business', value: 'BUSINESS' }
-                ]
-              }
-            },
-            {
-              key: 'businessName',
-              type: 'input',
-              className: 'col-md-12 border-left-info card pt-3 mb-3',
-              defaultValue: '',
-              hideExpression: "field.parent.model.type === 'INDIVIDUAL'",
-              templateOptions: {
-                label: 'Business Name',
-                placeholder: 'This will only be shown if the donor is a business type...',
-                required: false
-              },
-              validation: {
-                show: false,
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState',
-                'templateOptions.disabled': 'formState.disabled',
-              },
-            },
+
             {
               key: 'name',
               type: 'input',
