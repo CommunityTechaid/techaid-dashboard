@@ -40,6 +40,7 @@ query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorP
      address
      website
      donorCount
+     type
      createdAt
      updatedAt
     }
@@ -54,6 +55,7 @@ mutation createDonorParent($data: CreateDonorParentInput!) {
     name
     address
     website
+    type
   }
 }
 `;
