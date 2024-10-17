@@ -98,7 +98,7 @@ export class DonorParentInfoComponent {
         {
           key: 'name',
           type: 'input',
-          className: 'col-md-6 border-left-info card pt-3 mb-3',
+          className: 'col-md-6',
           defaultValue: '',
           templateOptions: {
             label: 'Name',
@@ -109,7 +109,7 @@ export class DonorParentInfoComponent {
         {
           key: 'type',
           type: 'radio',
-          className: 'col-md-6  border-bottom-info card pt-3 mb-3',
+          className: 'col-md-6',
           templateOptions: {
             label: 'Type',
             placeholder: '',
