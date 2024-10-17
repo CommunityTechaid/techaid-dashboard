@@ -162,132 +162,72 @@ export class DonorInfoComponent {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          // column 1
-          fieldGroupClassName: 'd-flex flex-column justify-content-between',
+          key: 'name',
+          type: 'input',
+          className: 'col-md-12 border-left-info card pt-3 mb-3',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Full Name',
+            placeholder: '',
+            required: false
+          },
+          validation: {
+            show: false,
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
+            'templateOptions.disabled': 'formState.disabled',
+          },
+        },
+        this.donorParentField
+      ]
+    },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'email',
+          type: 'input',
           className: 'col-md-6',
-          fieldGroup: [
-
-            {
-              key: 'name',
-              type: 'input',
-              className: 'col-md-12 border-left-info card pt-3 mb-3',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Name',
-                placeholder: '',
-                required: false
-              },
-              validation: {
-                show: false,
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState',
-                'templateOptions.disabled': 'formState.disabled',
-              },
-            },
-            {
-              key: 'email',
-              type: 'input',
-              className: 'col-md-6',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Email',
-                type: 'email',
-                pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-                placeholder: '',
-                required: true
-              },
-              validation: {
-                show: false,
-              },
-              expressionProperties: {
-                'templateOptions.required': 'model.phoneNumber.length == 0',
-                'validation.show': 'model.showErrorState',
-                'templateOptions.disabled': 'formState.disabled',
-              },
-            },
-            {
-              key: 'phoneNumber',
-              type: 'input',
-              className: 'col-md-6',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Phone Number',
-                pattern: /\+?[0-9]+/,
-                required: true
-              },
-              validation: {
-                show: false,
-              },
-              expressionProperties: {
-                'templateOptions.required': 'model.email.length == 0',
-                'validation.show': 'model.showErrorState',
-                'templateOptions.disabled': 'formState.disabled',
-              },
-            }
-          ]
+          defaultValue: '',
+          templateOptions: {
+            label: 'Email',
+            type: 'email',
+            pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+            placeholder: '',
+            required: true
+          },
+          validation: {
+            show: false,
+          },
+          expressionProperties: {
+            'templateOptions.required': 'model.phoneNumber.length == 0',
+            'validation.show': 'model.showErrorState',
+            'templateOptions.disabled': 'formState.disabled',
+          },
         },
         {
-          fieldGroupClassName: 'd-flex flex-column justify-content-between',
+          key: 'phoneNumber',
+          type: 'input',
           className: 'col-md-6',
-          // column 2
-          fieldGroup: [
-            this.donorParentField,
-            // {
-            //   key: 'postCode',
-            //   type: 'place',
-            //   className: '',
-            //   defaultValue: '',
-            //   templateOptions: {
-            //     label: 'Address',
-            //     placeholder: '',
-            //     postCode: false,
-            //     required: false
-            //   },
-            //   validation: {
-            //     show: false,
-            //   },
-            //   expressionProperties: {
-            //     'validation.show': 'model.showErrorState',
-            //     'templateOptions.disabled': 'formState.disabled',
-            //   },
-            // },
-            // {
-            //   key: 'referral',
-            //   type: 'input',
-            //   className: '',
-            //   defaultValue: '',
-            //   templateOptions: {
-            //     label: 'How did you hear about us?',
-            //     placeholder: '',
-            //     required: false
-            //   },
-            //   validation: {
-            //     show: false,
-            //   },
-            //   expressionProperties: {
-            //     'validation.show': 'model.showErrorState',
-            //     'templateOptions.disabled': 'formState.disabled',
-            //   },
-            // },
-            // {
-            //   key: 'consent',
-            //   type: 'radio',
-            //   className: 'col-md-12  border-bottom-info card pt-3 mb-3',
-            //   templateOptions: {
-            //     label: 'We would like to keep in touch with you about our vital work in bridging the digital divide, as well as fundraising appeals and opportunities to support us.',
-            //     placeholder: '',
-            //     required: true,
-            //     options: [
-            //       { label: 'Yes please, I would like to receive communications via email', value: true },
-            //       { label: 'No thank you, I would not like to receive communications via email', value: false }
-            //     ]
-            //   }
-            // }
-          ]
+          defaultValue: '',
+          templateOptions: {
+            label: 'Phone Number',
+            pattern: /\+?[0-9]+/,
+            required: true
+          },
+          validation: {
+            show: false,
+          },
+          expressionProperties: {
+            'templateOptions.required': 'model.email.length == 0',
+            'validation.show': 'model.showErrorState',
+            'templateOptions.disabled': 'formState.disabled',
+          },
         }
+
       ]
-    }
+    },
   ];
 
   kitStatus: any = KIT_STATUS;
