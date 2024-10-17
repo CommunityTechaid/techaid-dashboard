@@ -213,8 +213,7 @@ export class DonorInfoComponent {
               templateOptions: {
                 label: 'Phone Number',
                 pattern: /\+?[0-9]+/,
-                description: 'Required if email is not provided.',
-                required: true
+                required: false
               },
               validation: {
                 show: false,
