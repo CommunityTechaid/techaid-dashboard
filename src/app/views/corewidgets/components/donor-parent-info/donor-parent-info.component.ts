@@ -93,57 +93,67 @@ export class DonorParentInfoComponent {
 
   fields: Array<FormlyFieldConfig> = [
     {
-      key: 'type',
-      type: 'radio',
-      className: 'col-md-12  border-bottom-info card pt-3 mb-3',
-      templateOptions: {
-        label: 'Type',
-        placeholder: '',
-        required: true,
-        options: [
-          { label: 'Business', value: 'BUSINESS' },
-          { label: 'Drop Point', value: 'DROPPOINT' },
-        ]
-      }
-    },
-    {
-      key: 'name',
-      type: 'input',
-      className: 'col-md-12 border-left-info card pt-3 mb-3',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Name',
-        placeholder: '',
-        required: true
-      }
-    },
-    {
-      key: 'address',
-      type: 'place',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Address',
-        placeholder: '',
-        postCode: false,
-        required: true
-      }
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'name',
+          type: 'input',
+          className: 'col-md-6 border-left-info card pt-3 mb-3',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Name',
+            placeholder: '',
+            required: true
+          }
+        },
+        {
+          key: 'type',
+          type: 'radio',
+          className: 'col-md-6  border-bottom-info card pt-3 mb-3',
+          templateOptions: {
+            label: 'Type',
+            placeholder: '',
+            required: true,
+            options: [
+              { label: 'Business', value: 'BUSINESS' },
+              { label: 'Drop Point', value: 'DROPPOINT' },
+            ]
+          }
+        }
+      ]
     },
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          key: 'website',
-          type: 'input',
-          className: 'col-md-12',
+          fieldGroupClassName: 'row',
+          fieldGroup: [
+            {
+              key: 'website',
+              type: 'input',
+              className: 'col-md-6',
+              defaultValue: '',
+              templateOptions: {
+                label: 'Website',
+                pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
+                required: true
+              },
+              expressionProperties: {
+                'templateOptions.required': '!model.website.length'
+              }
+            }
+          ]
+        },
+        {
+          key: 'address',
+          type: 'place',
+          className: 'col-md-6',
           defaultValue: '',
           templateOptions: {
-            label: 'Website',
-            pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
+            label: 'Address',
+            placeholder: '',
+            postCode: false,
             required: true
-          },
-          expressionProperties: {
-            'templateOptions.required': '!model.website.length'
           }
         }
       ]
