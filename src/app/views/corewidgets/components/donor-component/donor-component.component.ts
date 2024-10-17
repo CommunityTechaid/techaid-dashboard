@@ -66,7 +66,6 @@ mutation createDonor($data: CreateDonorInput!) {
     name
     email
     phoneNumber
-    type
   }
 }
 `;
@@ -166,22 +165,7 @@ export class DonorComponent {
         postCode: false,
         required: false
       }
-    },
-    {
-      key: 'type',
-      type: 'radio',
-      className: 'px-1',
-      defaultValue: 'INDIVIDUAL',
-      templateOptions: {
-       label: "Donor Type",
-       type: "select",
-       options: [
-          {label: 'Individual', value: 'INDIVIDUAL' },
-          {label: 'Business', value: 'BUSINESS' }
-       ],
-       required: true
-      }
-    },
+    }
   ];
 
   @Input()
