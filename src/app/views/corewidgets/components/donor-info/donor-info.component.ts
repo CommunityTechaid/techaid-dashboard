@@ -201,6 +201,7 @@ export class DonorInfoComponent {
                 show: false,
               },
               expressionProperties: {
+                'templateOptions.required': 'model.phoneNumber.length == 0',
                 'validation.show': 'model.showErrorState',
                 'templateOptions.disabled': 'formState.disabled',
               },
@@ -213,12 +214,13 @@ export class DonorInfoComponent {
               templateOptions: {
                 label: 'Phone Number',
                 pattern: /\+?[0-9]+/,
-                required: false
+                required: true
               },
               validation: {
                 show: false,
               },
               expressionProperties: {
+                'templateOptions.required': 'model.email.length == 0',
                 'validation.show': 'model.showErrorState',
                 'templateOptions.disabled': 'formState.disabled',
               },
