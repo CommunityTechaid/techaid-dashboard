@@ -53,6 +53,7 @@ query findAllDonors(
      consent
      donorParent {
       id
+      name
      }
     }
   }

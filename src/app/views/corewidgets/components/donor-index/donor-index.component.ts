@@ -46,6 +46,7 @@ query findAllDonors($page: PaginationInput, $term: String) {
      consent
      donorParent {
       id
+      name
      }
     }
   }

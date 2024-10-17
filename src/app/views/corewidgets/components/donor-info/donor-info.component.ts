@@ -233,57 +233,57 @@ export class DonorInfoComponent {
           // column 2
           fieldGroup: [
             this.donorParentField,
-            {
-              key: 'postCode',
-              type: 'place',
-              className: '',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Address',
-                placeholder: '',
-                postCode: false,
-                required: false
-              },
-              validation: {
-                show: false,
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState',
-                'templateOptions.disabled': 'formState.disabled',
-              },
-            },
-            {
-              key: 'referral',
-              type: 'input',
-              className: '',
-              defaultValue: '',
-              templateOptions: {
-                label: 'How did you hear about us?',
-                placeholder: '',
-                required: false
-              },
-              validation: {
-                show: false,
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState',
-                'templateOptions.disabled': 'formState.disabled',
-              },
-            },
-            {
-              key: 'consent',
-              type: 'radio',
-              className: 'col-md-12  border-bottom-info card pt-3 mb-3',
-              templateOptions: {
-                label: 'We would like to keep in touch with you about our vital work in bridging the digital divide, as well as fundraising appeals and opportunities to support us.',
-                placeholder: '',
-                required: true,
-                options: [
-                  { label: 'Yes please, I would like to receive communications via email', value: true },
-                  { label: 'No thank you, I would not like to receive communications via email', value: false }
-                ]
-              }
-            }
+            // {
+            //   key: 'postCode',
+            //   type: 'place',
+            //   className: '',
+            //   defaultValue: '',
+            //   templateOptions: {
+            //     label: 'Address',
+            //     placeholder: '',
+            //     postCode: false,
+            //     required: false
+            //   },
+            //   validation: {
+            //     show: false,
+            //   },
+            //   expressionProperties: {
+            //     'validation.show': 'model.showErrorState',
+            //     'templateOptions.disabled': 'formState.disabled',
+            //   },
+            // },
+            // {
+            //   key: 'referral',
+            //   type: 'input',
+            //   className: '',
+            //   defaultValue: '',
+            //   templateOptions: {
+            //     label: 'How did you hear about us?',
+            //     placeholder: '',
+            //     required: false
+            //   },
+            //   validation: {
+            //     show: false,
+            //   },
+            //   expressionProperties: {
+            //     'validation.show': 'model.showErrorState',
+            //     'templateOptions.disabled': 'formState.disabled',
+            //   },
+            // },
+            // {
+            //   key: 'consent',
+            //   type: 'radio',
+            //   className: 'col-md-12  border-bottom-info card pt-3 mb-3',
+            //   templateOptions: {
+            //     label: 'We would like to keep in touch with you about our vital work in bridging the digital divide, as well as fundraising appeals and opportunities to support us.',
+            //     placeholder: '',
+            //     required: true,
+            //     options: [
+            //       { label: 'Yes please, I would like to receive communications via email', value: true },
+            //       { label: 'No thank you, I would not like to receive communications via email', value: false }
+            //     ]
+            //   }
+            // }
           ]
         }
       ]

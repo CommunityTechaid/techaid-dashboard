@@ -31,6 +31,7 @@
                                   <th>Email</th>
                                   <th>Devices</th>
                                   <th>Address</th>
+                                  <th>Parent Donor</th>
                                   <th>Created</th>
                                   <th>Updated</th>
                               </tr>
@@ -59,6 +60,7 @@
                                       <span class="badge badge-info">{{dt.kitCount}}</span>
                                   </td>
                                   <td>{{ dt.postCode }}</td>
+                                  <td><a href="#" [routerLink]="['/dashboard/donor-parents', dt.donorParent.id]">{{dt.donorParent.name}}</a></td>
                                   <td>
                                       {{ dt.createdAt | date:'medium' }}
                                   </td>

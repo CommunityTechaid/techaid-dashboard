@@ -55,7 +55,7 @@
                   </div>
               </ng-template>
           </ngb-tab>
-          <ngb-tab title="Donors">
+          <ngb-tab title="Individual Donors">
             <ng-template ngbTabContent>
                 <div class="mt-2">
                     <donor-component *ngIf="model?.id" [where]="{donorParent: {id: {_eq: model.id}}}" [tableId]="'donor-parent-info-donors-' + model.id" [donorParentId]="model.id"></donor-component>
