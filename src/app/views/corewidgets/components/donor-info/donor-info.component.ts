@@ -142,7 +142,7 @@ export class DonorInfoComponent {
   donorParentField: FormlyFieldConfig = {
     key: 'donorParentId',
     type: 'choice',
-    className: 'text-left',
+    className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Parent Donor',
       description: 'The parent donor for this donor.',
@@ -164,7 +164,7 @@ export class DonorInfoComponent {
         {
           key: 'name',
           type: 'input',
-          className: 'col-md-12 border-left-info card pt-3 mb-3',
+          className: 'col-md-6',
           defaultValue: '',
           templateOptions: {
             label: 'Full Name',
