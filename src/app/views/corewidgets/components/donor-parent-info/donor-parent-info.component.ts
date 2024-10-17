@@ -126,23 +126,18 @@ export class DonorParentInfoComponent {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          fieldGroupClassName: 'row',
-          fieldGroup: [
-            {
-              key: 'website',
-              type: 'input',
-              className: 'col-md-6',
-              defaultValue: '',
-              templateOptions: {
-                label: 'Website',
-                pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
-                required: true
-              },
-              expressionProperties: {
-                'templateOptions.required': '!model.website.length'
-              }
-            }
-          ]
+          key: 'website',
+          type: 'input',
+          className: 'col-md-6',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Website',
+            pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
+            required: true
+          },
+          expressionProperties: {
+            'templateOptions.required': '!model.website.length'
+          }
         },
         {
           key: 'address',
