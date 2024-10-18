@@ -51,6 +51,7 @@ query findAllDonors(
      createdAt
      updatedAt
      consent
+     archived
      donorParent {
       id
       name
@@ -289,7 +290,8 @@ export class DonorComponent {
         { data: 'postCode' },
         { data: 'donorParent.name' },
         { data: 'createdAt' },
-        { data: 'updatedAt' }
+        { data: 'updatedAt' },
+        { data: 'archived' }
       ]
     };
   }

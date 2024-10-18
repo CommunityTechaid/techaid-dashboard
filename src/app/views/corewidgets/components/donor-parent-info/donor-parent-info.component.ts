@@ -27,6 +27,7 @@ query findDonorParent($id: Long) {
     website
     type
     donorCount
+    archived
     donors {
       id
       name
@@ -45,6 +46,7 @@ mutation updateDonorParent($data: UpdateDonorParentInput!) {
     address
     website
     type
+    archived
     donors {
       id
       name
@@ -149,6 +151,26 @@ export class DonorParentInfoComponent {
             placeholder: '',
             postCode: false,
             required: true
+          }
+        }
+      ]
+    },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'archived',
+          type: 'radio',
+          className: 'col-md-6',
+          templateOptions: {
+            type: 'array',
+            label: 'Archived?',
+            description: 'Archived requests are hidden from view',
+            options: [
+              {label: 'Request active and visible', value: false },
+              {label: 'Archive and hide this request', value: true },
+            ],
+            required: true,
           }
         }
       ]

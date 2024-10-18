@@ -44,6 +44,7 @@ query findAllDonors($page: PaginationInput, $term: String) {
      createdAt
      updatedAt
      consent
+     archived
      donorParent {
       id
       name
@@ -70,6 +71,7 @@ query findAutocompleteDonorParents($term: String) {
     size: 50
   }, where: {
     name: { _contains: $term }
+    archived: { _eq: false }
   }){
     content  {
       id
@@ -324,7 +326,8 @@ export class DonorIndexComponent {
         { data: 'postCode' },
         { data: 'donorParent.name' },
         { data: 'createdAt' },
-        { data: 'updatedAt' }
+        { data: 'updatedAt' },
+        { data: 'archived' }
       ]
     };
   }

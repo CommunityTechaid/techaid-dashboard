@@ -40,6 +40,7 @@
                                   <th>Created</th>
                                   <th>Updated</th>
                                   <th>Type</th>
+                                  <th>Archived</th>
                               </tr>
                           </thead>
                           <tbody *ngIf="entities?.length;">
@@ -55,6 +56,7 @@
                                   <td>{{ dt.createdAt | date:'medium' }}</td>
                                   <td>{{ dt.updatedAt | date:'medium' }}</td>
                                   <td>{{ dt.type }}</td>
+                                  <td>{{ dt.archived }}</td>
                               </tr>
                           </tbody>
                           <tbody *ngIf="!entities?.length">

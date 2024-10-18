@@ -43,6 +43,7 @@ query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorP
      type
      createdAt
      updatedAt
+     archived
      donors {
       id
       kitCount
@@ -321,7 +322,8 @@ export class DonorParentIndexComponent {
         { data: 'donorCount'},
         { data: 'createdAt' },
         { data: 'updatedAt' },
-        { data: 'type' }
+        { data: 'type' },
+        { data: 'archived' }
       ]
     };
   }

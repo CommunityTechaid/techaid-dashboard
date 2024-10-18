@@ -34,6 +34,7 @@
                                     <th>Parent Donor</th>
                                     <th>Created</th>
                                     <th>Updated</th>
+                                    <th>Archived</th>
                                 </tr>
                             </thead>
                             <tbody *ngIf="entities?.length;">
@@ -67,6 +68,7 @@
                                     <td>
                                     {{ dt.updatedAt | date:'medium' }}
                                     </td>
+                                    <td>{{ dt.archived }}</td>
                                 </tr>
                             </tbody>
                             <tbody *ngIf="!entities?.length">

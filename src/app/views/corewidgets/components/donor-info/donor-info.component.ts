@@ -29,6 +29,7 @@ query findDonor($id: Long) {
     email
     referral
     consent
+    archived
     donorParent {
       id
       name
@@ -57,6 +58,7 @@ mutation updateDonor($data: UpdateDonorInput!) {
     name
     referral
     consent
+    archived
     donorParent {
       id
       name
@@ -87,6 +89,7 @@ query findAutocompleteDonorParents($term: String) {
     size: 50
   }, where: {
     name: { _contains: $term }
+    archived: { _eq: false }
   }){
     content  {
       id
@@ -228,6 +231,26 @@ export class DonorInfoComponent {
 
       ]
     },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'archived',
+          type: 'radio',
+          className: 'col-md-6',
+          templateOptions: {
+            type: 'array',
+            label: 'Archived?',
+            description: 'Archived requests are hidden from view',
+            options: [
+              {label: 'Request active and visible', value: false },
+              {label: 'Archive and hide this request', value: true },
+            ],
+            required: true,
+          }
+        }
+      ]
+    }
   ];
 
   kitStatus: any = KIT_STATUS;
