@@ -166,6 +166,21 @@ export class DonorParentIndexComponent {
             ],
             required: false
           }
+        },
+        {
+          key: 'archived',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          defaultValue: [false],
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Archived?',
+            options: [
+              {label: 'Active Parent Donors', value: false },
+              {label: 'Archived Parent Donors', value: true },
+            ],
+            required: false,
+          }
         }
       ]
     }
@@ -189,7 +204,12 @@ export class DonorParentIndexComponent {
       filter['type'] = {_in: data.type};
     }
 
-    localStorage.setItem(`donorFilters-${this.tableId}`, JSON.stringify(data));
+    if (data.archived && data.archived.length) {
+      count += data.archived.length;
+      filter['archived'] = {_in: data.archived};
+    }
+
+    localStorage.setItem(`donorParentFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;

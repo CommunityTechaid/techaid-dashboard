@@ -16,19 +16,23 @@ import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 
 const QUERY_ENTITY = gql`
-query findAllDonors($page: PaginationInput, $term: String) {
+query findAllDonors($page: PaginationInput, $term: String, $where: DonorWhereInput!) {
   donorsConnection(page: $page, where: {
     AND: {
       postCode: { _contains: $term }
+      AND: [ $where ]
       OR: [
         {
           name: { _contains: $term }
+          AND: [ $where ]
         },
         {
           phoneNumber: { _contains: $term }
+          AND: [ $where ]
         },
         {
           email: { _contains: $term }
+          AND: [ $where ]
         }
       ]
     }
@@ -193,8 +197,50 @@ export class DonorIndexComponent {
     this.donorParentField
   ];
 
+  filter: any = {};
+  filterCount = 0;
+  filterModel: any = {};
+  filterForm: FormGroup = new FormGroup({});
+  filterFields: Array<FormlyFieldConfig> = [
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'archived',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          defaultValue: [false],
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Archived?',
+            options: [
+              {label: 'Active Donors', value: false },
+              {label: 'Archived Donors', value: true },
+            ],
+            required: false,
+          }
+        }
+      ]
+    }
+  ];
+
+
   @Input()
   tableId = 'donor-index';
+
+  applyFilter(data) {
+    const filter = {};
+    let count = 0;
+    if (data.archived && data.archived.length) {
+      count += data.archived.length;
+      filter['archived'] = {_in: data.archived};
+    }
+    localStorage.setItem(`donorFilters-${this.tableId}`, JSON.stringify(data));
+    this.filter = filter;
+    this.filterCount = count;
+    this.filterModel = data;
+    this.table.ajax.reload(null, false);
+  }
 
   modal(content) {
     this.modalService.open(content, { centered: true, size: 'lg' });
@@ -205,6 +251,19 @@ export class DonorIndexComponent {
     this.selected = [];
   }
 
+  query(evt?: any, filter?: string) {
+    if (filter === undefined) {
+      filter = this.table.search();
+    }
+    if (evt) {
+      const code = (evt.keyCode ? evt.keyCode : evt.which);
+      if (code !== 13) {
+        return;
+      }
+    }
+    this.table.search(filter);
+    this.table.ajax.reload(null, false);
+  }
 
   ngOnInit() {
     const queryRef = this.apollo
@@ -281,7 +340,8 @@ export class DonorIndexComponent {
             size: params.length,
             page: Math.round(params.start / params.length),
           },
-          term: params['search']['value']
+          term: params['search']['value'],
+          where: this.filter
         };
 
         queryRef.refetch(vars).then(res => {
@@ -349,6 +409,16 @@ export class DonorIndexComponent {
   ngAfterViewInit() {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
+      try {
+        this.filterModel = JSON.parse(localStorage.getItem(`donorFilters-${this.tableId}`)) || { };
+      } catch (_) {
+        this.filterModel = { };
+      }
+      try {
+        this.applyFilter(this.filterModel);
+        this.filterForm.patchValue(this.filterModel);
+      } catch (_) {
+      }
     });
   }
 

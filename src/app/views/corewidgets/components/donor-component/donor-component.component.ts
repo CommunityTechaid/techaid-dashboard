@@ -19,23 +19,24 @@ const QUERY_ENTITY = gql`
 query findAllDonors(
   $page: PaginationInput,
   $term: String,
+  $filter: DonorWhereInput!,
   $where: DonorWhereInput!) {
   donorsConnection(page: $page, where: {
     AND: {
       postCode: { _contains: $term }
-      AND: [ $where ]
+      AND: [ $filter, $where ]
       OR: [
         {
           name: { _contains: $term }
-          AND: [ $where ]
+          AND: [ $filter, $where ]
         },
         {
           phoneNumber: { _contains: $term }
-          AND: [ $where ]
+          AND: [ $filter, $where ]
         },
         {
           email: { _contains: $term }
-          AND: [ $where ]
+          AND: [ $filter, $where ]
         }
       ]
     }
@@ -100,6 +101,9 @@ export class DonorComponent {
   @Input()
   set where(where: any) {
     this._where = where;
+    if (this.table) {
+      this.applyFilter(this.filterModel);
+    }
   }
 
   @Input()
@@ -170,11 +174,52 @@ export class DonorComponent {
     }
   ];
 
+  filter: any = {};
+  filterCount = 0;
+  filterModel: any = {};
+  filterForm: FormGroup = new FormGroup({});
+  filterFields: Array<FormlyFieldConfig> = [
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'archived',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          defaultValue: [false],
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Archived?',
+            options: [
+              {label: 'Active Donors', value: false },
+              {label: 'Archived Donors', value: true },
+            ],
+            required: false,
+          }
+        }
+      ]
+    }
+  ];
+
   @Input()
   tableId = 'donor-component-index';
 
   _where = {};
   _donorParentId = -1;
+
+  applyFilter(data) {
+    const filter = {};
+    let count = 0;
+    if (data.archivd && data.archived.length) {
+      count += data.archived.length;
+      filter['archived'] = {_in: data.archived};
+    }
+    localStorage.setItem(`donorFilters-${this.tableId}`, JSON.stringify(data));
+    this.filter = filter;
+    this.filterCount = count;
+    this.filterModel = data;
+    this.table.ajax.reload(null, false);
+  }
 
   modal(content) {
     this.modalService.open(content, { centered: true, size: 'lg' });
@@ -245,7 +290,8 @@ export class DonorComponent {
             page: Math.round(params.start / params.length),
           },
           term: params['search']['value'],
-          where: this._where
+          where: this._where,
+          filter: this._where || this.filter
         };
 
         queryRef.refetch(vars).then(res => {
@@ -305,6 +351,16 @@ export class DonorComponent {
   ngAfterViewInit() {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
+      try {
+        this.filterModel = JSON.parse(localStorage.getItem(`donorFilters-${this.tableId}`)) || { };
+      } catch (_) {
+        this.filterModel = { };
+      }
+      try {
+        this.applyFilter(this.filterModel);
+        this.filterForm.patchValue(this.filterModel);
+      } catch (_) {
+      }
     });
   }
 
