@@ -186,7 +186,6 @@ export class DonorComponent {
           key: 'archived',
           type: 'multicheckbox',
           className: 'col-sm-4',
-          defaultValue: [false],
           templateOptions: {
             type: 'array',
             label: 'Filter by Archived?',
@@ -214,7 +213,7 @@ export class DonorComponent {
       count += data.archived.length;
       filter['archived'] = {_in: data.archived};
     }
-    localStorage.setItem(`donorFilters-${this.tableId}`, JSON.stringify(data));
+    localStorage.setItem(`donorComponentFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
@@ -352,7 +351,7 @@ export class DonorComponent {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
       try {
-        this.filterModel = JSON.parse(localStorage.getItem(`donorFilters-${this.tableId}`)) || { };
+        this.filterModel = JSON.parse(localStorage.getItem(`donorComponentFilters-${this.tableId}`)) || { };
       } catch (_) {
         this.filterModel = { };
       }

@@ -209,7 +209,6 @@ export class DonorIndexComponent {
           key: 'archived',
           type: 'multicheckbox',
           className: 'col-sm-4',
-          defaultValue: [false],
           templateOptions: {
             type: 'array',
             label: 'Filter by Archived?',
