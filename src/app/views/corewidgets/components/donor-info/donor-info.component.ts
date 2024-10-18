@@ -241,10 +241,10 @@ export class DonorInfoComponent {
           templateOptions: {
             type: 'array',
             label: 'Archived?',
-            description: 'Archived requests are hidden from view',
+            description: 'Archived donors are hidden from view',
             options: [
-              {label: 'Request active and visible', value: false },
-              {label: 'Archive and hide this request', value: true },
+              {label: 'Donor active and visible', value: false },
+              {label: 'Archive and hide this donor', value: true },
             ],
             required: true,
           }
