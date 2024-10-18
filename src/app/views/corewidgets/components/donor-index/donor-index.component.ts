@@ -131,7 +131,7 @@ export class DonorIndexComponent {
       multiple: false,
       searchable: true,
       items: [],
-      required: false
+      required: true
     },
   };
 

@@ -155,7 +155,7 @@ export class DonorInfoComponent {
       multiple: false,
       searchable: true,
       items: [],
-      required: false
+      required: true
     },
   };
 
