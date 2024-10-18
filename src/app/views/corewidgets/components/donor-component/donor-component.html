@@ -68,7 +68,7 @@
                                   <td>
                                   {{ dt.updatedAt | date:'medium' }}
                                   </td>
-                                  <td>{{ dt.archived }}</td>
+                                  <td><input type="checkbox" [checked]="dt.archived" onclick="return false;"></td>
                               </tr>
                           </tbody>
                           <tbody *ngIf="!entities?.length">
