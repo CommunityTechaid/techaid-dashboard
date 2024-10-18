@@ -290,7 +290,7 @@ export class DonorComponent {
           },
           term: params['search']['value'],
           where: this._where,
-          filter: this._where || this.filter
+          filter: this.filter || this._where
         };
 
         queryRef.refetch(vars).then(res => {
