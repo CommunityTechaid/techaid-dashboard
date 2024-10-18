@@ -209,7 +209,7 @@ export class DonorComponent {
   applyFilter(data) {
     const filter = {};
     let count = 0;
-    if (data.archivd && data.archived.length) {
+    if (data.archived && data.archived.length) {
       count += data.archived.length;
       filter['archived'] = {_in: data.archived};
     }
@@ -376,7 +376,7 @@ export class DonorComponent {
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
-      `, 'Create Volunteer Error', {
+      `, 'Create Donor Error', {
           enableHtml: true,
           timeOut: 15000
         });
