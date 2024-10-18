@@ -182,18 +182,6 @@ export class DonorIndexComponent {
         }
       ]
     },
-    {
-      key: 'postCode',
-      type: 'place',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Address',
-        placeholder: '',
-        postCode: false,
-        required: false
-      }
-    },
     this.donorParentField
   ];
 
