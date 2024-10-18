@@ -36,7 +36,7 @@
                                   <th></th>
                                   <th>Name</th>
                                   <th>Address</th>
-                                  <th># Donors</th>
+                                  <th># Donors / Devices</th>
                                   <th>Created</th>
                                   <th>Updated</th>
                                   <th>Type</th>
@@ -51,7 +51,7 @@
                                   </td>
                                   <td><a href="#" [routerLink]="['./', dt.id]">{{ dt.name }}</a></td>
                                   <td>{{ dt.address }}</td>
-                                  <td><span class="badge badge-info">{{dt.donorCount}}</span></td>
+                                  <td><span class="badge badge-info">{{dt.donorCount}}</span> / <span class="badge badge-info">{{dt.deviceCount}}</span></td>
                                   <td>{{ dt.createdAt | date:'medium' }}</td>
                                   <td>{{ dt.updatedAt | date:'medium' }}</td>
                                   <td>{{ dt.type }}</td>

@@ -43,6 +43,10 @@ query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorP
      type
      createdAt
      updatedAt
+     donors {
+      id
+      kitCount
+     }
     }
   }
 }
@@ -272,6 +276,16 @@ export class DonorParentIndexComponent {
             if (!this.total) {
               this.total = data['totalElements'];
             }
+
+            data.content.forEach(d => {
+              d.deviceCount = 0;
+              if (d.donors && d.donors.length) {
+                d.donors.forEach(k => {
+                  d.deviceCount += k.kitCount;
+                });
+              }
+            });
+
             this.entities = data.content;
           }
 
