@@ -948,7 +948,7 @@ export class KitInfoComponent {
     if (data.donor && data.donor.id) {
       data.donorId = data.donor.id;
       this.donorField.templateOptions['items'] = [
-        {label: data.donorId, value: data.donor.id}
+        {label: this.donorName(data.donor), value: data.donor.id}
       ];
     }
 

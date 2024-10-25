@@ -17,24 +17,21 @@ import { HashUtils } from '@app/shared/utils';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 
 const QUERY_ENTITY = gql`
-query findAllKits($page: PaginationInput,$term: String, $where: KitWhereInput!) {
+query findAllKits(
+  $page: PaginationInput,
+  $term: String,
+  $where: KitWhereInput!) {
   kitsConnection(page: $page, where: {
     AND: {
-      model: {
-        _contains: $term
-      }
+      model: { _contains: $term }
       AND: [ $where ]
       OR: [
         {
-          serialNo: {
-            _contains: $term
-          }
+          serialNo: { _contains: $term }
           AND: [ $where ]
         }
         {
-          id: {
-            _contains: $term
-          }
+          id: { _contains: $term }
           AND: [ $where ]
         }
         {
@@ -42,9 +39,7 @@ query findAllKits($page: PaginationInput,$term: String, $where: KitWhereInput!) 
             filters: [
               {
                 key: "notes",
-                _text: {
-                  _contains: $term
-                }
+                _text: { _contains: $term }
               }
             ]
           }
@@ -69,6 +64,11 @@ query findAllKits($page: PaginationInput,$term: String, $where: KitWhereInput!) 
        name
        email
        phoneNumber
+       donorParent {
+        id
+        name
+        type
+       }
      }
      deviceRequest {
        id
@@ -82,15 +82,6 @@ query findAllKits($page: PaginationInput,$term: String, $where: KitWhereInput!) 
      }
      attributes {
        notes
-     }
-     volunteers {
-      type
-      volunteer {
-        id
-        name
-        email
-        phoneNumber
-      }
      }
     }
   }
@@ -117,52 +108,17 @@ mutation quickCreateKit($data: QuickCreateKitInput!) {
 }
 `;
 
-const AUTOCOMPLETE_USERS = gql`
-query findAutocompleteVolunteers($term: String, $ids: [Long!]) {
-  volunteersConnection(page: {
-    size: 50
-  }, where: {
-    name: {
-      _contains: $term
-    }
-    OR: [
-    {
-      id: {
-        _in: $ids
-      }
-    },
-    {
-      phoneNumber: {
-        _contains: $term
-      }
-    },
-    {
-      email: {
-        _contains: $term
-      }
-    }]
-  }){
-    content  {
-     id
-     name
-     email
-     phoneNumber
-    }
-  }
-}
-`;
-
 const AUTOCOMPLETE_DEVICE_REQUESTS = gql`
 query findAutocompleteDeviceRequests($term: String, $ids: [Long!]) {
   deviceRequestConnection(page: {
     size: 50
   }, where: {
-    referringOrganisationConact: {referringOrganisation: { name: { _contains: $term } } }
+    referringOrganisationContact: {referringOrganisation: { name: { _contains: $term } } }
     OR: [
     { id: { _in: $ids } },
-    { referringOrganisationConact: { phoneNumber: { _contains: $term } } },
-    { referringOrganisationConact: { fullName: { _contains: $term } } },
-    { referringOrganisationConact: { email: { _contains: $term } } }
+    { referringOrganisationContact: { phoneNumber: { _contains: $term } } },
+    { referringOrganisationContact: { fullName: { _contains: $term } } },
+    { referringOrganisationContact: { email: { _contains: $term } } }
     ]
   }){
     content  {
@@ -183,22 +139,9 @@ query findAutocompleteDeviceRequests($term: String, $ids: [Long!]) {
 `;
 
 const FIND_USERS = gql`
-query findAutocompleteVolunteers($volunteerIds: [Long!], $deviceRequestIds: [Long!]) {
-  volunteers(where: {
-    id: {
-      _in: $volunteerIds
-    }
-  }){
-     id
-     name
-     email
-     phoneNumber
-  }
-
+query findUsers($deviceRequestIds: [Long!], $donorParentId: [Long!]) {
   deviceRequests(where: {
-    id: {
-      _in: $deviceRequestIds
-    }
+    id: { _in: $deviceRequestIds }
   }){
      id
      referringOrganisationContact {
@@ -213,6 +156,13 @@ query findAutocompleteVolunteers($volunteerIds: [Long!], $deviceRequestIds: [Lon
      }
      name
   }
+
+  donorParents(where: {
+    id: { _in: $donorParentId }
+  }){
+    id
+    name
+  }
 }
 `;
 
@@ -221,20 +171,10 @@ query findAutocompleteDonors($term: String) {
   donorsConnection(page: {
     size: 50
   }, where: {
-    name: {
-      _contains: $term
-    }
+    name: { _contains: $term }
     OR: [
-    {
-      phoneNumber: {
-        _contains: $term
-      }
-    },
-    {
-      email: {
-        _contains: $term
-      }
-    }
+      { phoneNumber: { _contains: $term } },
+      { email: { _contains: $term } }
     ]
   }){
     content  {
@@ -247,10 +187,26 @@ query findAutocompleteDonors($term: String) {
 }
 `;
 
+const AUTOCOMPLETE_DONOR_PARENTS = gql`
+query findAutocompleteDonorParents($term: String) {
+  donorParentsConnection(page: {
+    size: 50
+  }, where: {
+    name: { _contains: $term }
+    archived: { _eq: false }
+  }){
+    content  {
+      id
+      name
+      type
+    }
+  }
+}
+`;
+
 @Component({
   selector: 'kit-index',
   styleUrls: ['kit-index.scss'],
-
   templateUrl: './kit-index.html'
 })
 export class KitIndexComponent {
@@ -289,25 +245,6 @@ export class KitIndexComponent {
 
   statusTypes: any = KIT_STATUS;
 
-  users$: Observable<any>;
-  userInput$ = new Subject<string>();
-  usersLoading = false;
-  userField: FormlyFieldConfig = {
-    key: 'userIds',
-    type: 'choice',
-    className: 'col-md-12',
-    templateOptions: {
-      label: 'Assigned Volunteer',
-      description: 'Filter by assigned user.',
-      loading: this.usersLoading,
-      typeahead: this.userInput$,
-      multiple: true,
-      searchable: true,
-      items: [],
-      required: false
-    },
-  };
-
   deviceRequests$: Observable<any>;
   deviceRequestInput$ = new Subject<string>();
   deviceRequestLoading = false;
@@ -324,6 +261,25 @@ export class KitIndexComponent {
       searchable: true,
       items: [],
       required: false
+    },
+  };
+
+  donorParents$: Observable<any>;
+  donorParentInput$ = new Subject<string>();
+  donorParentLoading = false;
+  donorParentField: FormlyFieldConfig = {
+    key: 'donorParentId',
+    type: 'choice',
+    className: 'col-md-12',
+    templateOptions: {
+      label: 'Parent Donor',
+      description: 'The parent donor for this donor.',
+      loading: this.donorParentLoading,
+      typeahead: this.donorParentInput$,
+      placeholder: 'Filter by associated Parent Donor',
+      multiple: false,
+      searchable: true,
+      items: []
     },
   };
 
@@ -399,8 +355,22 @@ export class KitIndexComponent {
             required: false
           }
         },
-        this.userField,
-        this.deviceRequestField
+        this.deviceRequestField,
+        this.donorParentField,
+        {
+          key: 'donorParentType',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          templateOptions: {
+            type: 'array',
+            label: 'Parent Donor\'s Type?',
+            options: [
+              {label: 'Business', value: 'BUSINESS' },
+              {label: 'Drop Point', value: 'DROPPOINT' }
+            ],
+            required: false,
+          }
+        }
       ]
     }
   ];
@@ -748,14 +718,19 @@ export class KitIndexComponent {
       filter['archived'] = {_in: data.archived};
     }
 
-    if (data.userIds && data.userIds.length) {
-      count += data.userIds.length;
-      filter['volunteer'] = {id: {_in: data.userIds}};
-    }
-
     if (data.deviceRequestIds && data.deviceRequestIds.length) {
       count += data.deviceRequestIds.length;
       filter['deviceRequest'] = {id: {_in: data.deviceRequestIds}};
+    }
+
+    if (data.donorParentId && data.donorParentId.length) {
+      count += data.donorParentId.length;
+      filter['donor'] = {donorParent: {id: {_in: data.donorParentId}}};
+    }
+
+    if (data.donorParentType && data.donorParentType.length) {
+      count += data.donorParentType.length;
+      filter['donor'] = {donorParent: {type: {_in: data.donorParentType}}};
     }
 
     localStorage.setItem(`kitFilters-${this.tableId}`, JSON.stringify(data));
@@ -791,33 +766,12 @@ export class KitIndexComponent {
   }
 
   ngOnInit() {
+
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_ENTITY,
         variables: {}
       });
-
-      const userRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_USERS,
-        variables: {
-        }
-      });
-
-      const deviceRequestRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_DEVICE_REQUESTS,
-        variables: {
-        }
-      });
-
-      const donorRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_DONORS,
-        variables: {
-        }
-      });
-
 
     this.sub = this.search$.subscribe(query => {
       if (this.table) {
@@ -826,30 +780,12 @@ export class KitIndexComponent {
       }
     });
 
-
-    this.users$ = concat(
-      of([]),
-      this.userInput$.pipe(
-        debounceTime(200),
-        distinctUntilChanged(),
-        tap(() => this.usersLoading = true),
-        switchMap(term => from(userRef.refetch({
-          term: term,
-          ids: this.filterModel.userIds || [],
-        })).pipe(
-          catchError(() => of([])),
-          tap(() => this.usersLoading = false),
-          switchMap(res => {
-            const data = res['data']['volunteersConnection']['content'].map(v => {
-              return {
-                label: this.volunteerName(v), value: v.id
-              };
-            });
-            return of(data);
-          })
-        ))
-      )
-    );
+    const deviceRequestRef = this.apollo
+    .watchQuery({
+      query: AUTOCOMPLETE_DEVICE_REQUESTS,
+      variables: {
+      }
+    });
 
     this.deviceRequests$ = concat(
       of([]),
@@ -875,6 +811,17 @@ export class KitIndexComponent {
       )
     );
 
+    this.sub.add(this.deviceRequests$.subscribe(data => {
+      this.deviceRequestField.templateOptions['items'] = data;
+    }));
+
+    const donorRef = this.apollo
+    .watchQuery({
+      query: AUTOCOMPLETE_DONORS,
+      variables: {
+      }
+    });
+
     this.donors$ = concat(
       of([]),
       this.donorInput$.pipe(
@@ -889,7 +836,7 @@ export class KitIndexComponent {
           switchMap(res => {
             const data = res['data']['donorsConnection']['content'].map(v => {
               return {
-                label: `${this.volunteerName(v)}`, value: v.id
+                label: this.donorName(v), value: v.id
               };
             });
             return of(data);
@@ -898,18 +845,43 @@ export class KitIndexComponent {
       )
     );
 
-    this.sub.add(this.deviceRequests$.subscribe(data => {
-      this.deviceRequestField.templateOptions['items'] = data;
-    }));
-
-    this.sub.add(this.users$.subscribe(data => {
-      this.userField.templateOptions['items'] = data;
-    }));
-
     this.sub.add(this.donors$.subscribe(data => {
       this.donorField.templateOptions['items'] = data;
     }));
 
+    const donorParentRef = this.apollo
+    .watchQuery({
+      query: AUTOCOMPLETE_DONOR_PARENTS,
+      variables: {
+      }
+    });
+
+    this.donorParents$ = concat(
+      of([]),
+      this.donorParentInput$.pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        tap(() => this.donorParentLoading = true),
+        switchMap(term => from(donorParentRef.refetch({
+          term: term
+        })).pipe(
+          catchError(() => of([])),
+          tap(() => this.donorParentLoading = false),
+          switchMap(res => {
+            const data = res['data']['donorParentsConnection']['content'].map(v => {
+              return {
+                label: `${this.donorParentName(v)}`, value: v.id
+              };
+            });
+            return of(data);
+          })
+        ))
+      )
+    );
+
+    this.sub.add(this.donorParents$.subscribe(data => {
+      this.donorParentField.templateOptions['items'] = data;
+    }));
 
     this.dtOptions = {
       pagingType: 'simple_numbers',
@@ -950,10 +922,7 @@ export class KitIndexComponent {
             }
             data.content.forEach(d => {
               if (d.donor) {
-                d.donorName = this.userName(d.donor);
-              }
-              if (d.volunteer) {
-                d.volunteerName = this.userName(d.volunteer);
+                d.donorName = this.donorName(d.donor);
               }
             });
             this.entities = data.content;
@@ -988,7 +957,6 @@ export class KitIndexComponent {
         { data: null, width: '15px', orderable: false  },
         { data: 'model' },
         { data: 'donor' },
-        { data: 'volunteers.volunteer.name', orderable: false },
         { data: 'createdAt'},
         { data: 'updatedAt'},
         { data: 'age'},
@@ -996,12 +964,6 @@ export class KitIndexComponent {
         { data: 'status' },
       ]
     };
-  }
-
-  userName(data) {
-    return `${data.name || ''}||${data.email || ''}||${data.phoneNumber || ''}`
-      .split('||')
-      .filter(f => f.trim().length)[0];
   }
 
   deviceRequestName(data) {
@@ -1012,14 +974,21 @@ export class KitIndexComponent {
       .trim();
   }
 
-  volunteerName(data) {
-    return `${data.name || ''}||${data.email || ''}||${data.phoneNumber || ''}`
+  donorName(data) {
+    return `${data.name || ''}||${data.email || ''}`
       .split('||')
       .filter(f => f.trim().length)
       .join(' / ')
       .trim();
   }
 
+  donorParentName(data) {
+    return `${data.name || ''}||${data.id || ''}`
+      .split('||')
+      .filter(f => f.trim().length)
+      .join(' / ')
+      .trim();
+  }
 
   ngOnDestroy() {
     if (this.sub) {
@@ -1032,23 +1001,23 @@ export class KitIndexComponent {
       this.table = tbl;
       try {
         this.filterModel = JSON.parse(localStorage.getItem(`kitFilters-${this.tableId}`)) || {archived: [false]};
-        if (this.filterModel && (this.filterModel.userIds || this.filterModel.deviceRequestIds) ) {
+        if (this.filterModel && (this.filterModel.deviceRequestIds || this.filterModel.donorParentId) ) {
           this.apollo.query({
             query: FIND_USERS,
             variables: {
-              volunteerIds: this.filterModel.userIds || [],
-              deviceRequestIds: this.filterModel.deviceRequestIds || []
+              deviceRequestIds: this.filterModel.deviceRequestIds || [],
+              donorParentId: this.filterModel.donorParentId || []
             }
           }).toPromise().then(res => {
             if (res.data) {
-              if (res.data['volunteers']) {
-                this.userField.templateOptions['items'] = res.data['volunteers'].map(v => {
-                  return {label: this.volunteerName(v), value: v.id };
-                });
-              }
               if (res.data['deviceRequests']) {
                 this.deviceRequestField.templateOptions['items'] = res.data['deviceRequests'].map(v => {
                   return {label: this.deviceRequestName(v), value: v.id };
+                });
+              }
+              if (res.data['donorParents']) {
+                this.donorParentField.templateOptions['items'] = res.data['donorParents'].map(v => {
+                  return {label: this.donorParentName(v), value: v.id };
                 });
               }
             }
