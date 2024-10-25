@@ -15,6 +15,8 @@ import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { HashUtils } from '@app/shared/utils';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
+import { UserState } from '@app/state/state.module';
+import { User } from '@app/state/user/user.state';
 
 const QUERY_ENTITY = gql`
 query findAllKits(
@@ -226,6 +228,11 @@ export class KitIndexComponent {
   selections = {};
   selected = [];
   entities = [];
+  options: FormlyFormOptions = {
+    formState: {
+      disabled: false
+    }
+  };
   form: FormGroup = new FormGroup({});
   model = {};
   ages = {
@@ -236,6 +243,8 @@ export class KitIndexComponent {
      5: '5 - 6 years',
      6: 'more than 6 years old'
   };
+  public user: User;
+  @Select(UserState.user) user$: Observable<User>;
 
   classes = {
     'LOGISTICS': 'dark',
@@ -281,6 +290,9 @@ export class KitIndexComponent {
       searchable: true,
       items: []
     },
+    // expressionProperties: {
+    //   'templateOptions.disabled': 'formState.disabled',
+    // },
   };
 
   filter: any = {};
@@ -369,7 +381,10 @@ export class KitIndexComponent {
               {label: 'Drop Point', value: 'DROPPOINT' }
             ],
             required: false,
-          }
+          },
+          // expressionProperties: {
+          //   'templateOptions.disabled': 'formState.disabled',
+          // },
         },
       ]
     },
@@ -814,6 +829,13 @@ export class KitIndexComponent {
         this.table.ajax.reload(null, false);
       }
     });
+
+    this.sub.add(
+      this.user$.subscribe((user) => {
+        this.user = user;
+        this.options.formState.disabled = !(user && user.authorities && user.authorities['read:donorParents']);
+      })
+    );
 
     const deviceRequestRef = this.apollo
     .watchQuery({
