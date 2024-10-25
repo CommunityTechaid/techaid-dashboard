@@ -344,7 +344,6 @@ export class DeviceRequestInfoComponent {
                     defaultValue: 0,
                     templateOptions: {
                       min: 0,
-                      max: 5,
                       label: 'Connectivity Devices',
                       description: '',
                       addonLeft: {
@@ -410,7 +409,6 @@ export class DeviceRequestInfoComponent {
                     defaultValue: 0,
                     templateOptions: {
                       min: 0,
-                      max: 5,
                       label: 'Other',
                       description: '',
                       addonLeft: {
