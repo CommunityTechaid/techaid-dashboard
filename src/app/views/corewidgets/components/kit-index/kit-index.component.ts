@@ -370,9 +370,32 @@ export class KitIndexComponent {
             ],
             required: false,
           }
-        }
+        },
       ]
-    }
+    },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'after',
+          type: 'date',
+          className: 'col-md-6',
+          templateOptions: {
+            label: 'Devices created after?',
+            required: false
+          }
+        },
+        {
+          key: 'before',
+          type: 'date',
+          className: 'col-md-6',
+          templateOptions: {
+            label: 'Devices created before?',
+            required: false
+          }
+        },
+      ]
+  }
   ];
 
 
@@ -695,7 +718,7 @@ export class KitIndexComponent {
   tableId = 'kit-index';
 
   applyFilter(data) {
-    const filter = {};
+    const filter = {AND: []};
     let count = 0;
 
     if (data.type && data.type.length) {
@@ -731,6 +754,18 @@ export class KitIndexComponent {
     if (data.donorParentType && data.donorParentType.length) {
       count += data.donorParentType.length;
       filter['donor'] = {donorParent: {type: {_in: data.donorParentType}}};
+    }
+
+    if(data.after){
+      console.log(data.after);
+      count += 1;
+      filter['AND'].push({createdAt: {_gt: data.after }});
+    }
+
+    if(data.before){
+      console.log(data.before)
+      count += 1;
+      filter['AND'].push({createdAt: {_lt: data.before }});
     }
 
     localStorage.setItem(`kitFilters-${this.tableId}`, JSON.stringify(data));
