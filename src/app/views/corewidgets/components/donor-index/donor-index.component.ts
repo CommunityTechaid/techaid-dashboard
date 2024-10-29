@@ -419,7 +419,7 @@ export class DonorIndexComponent {
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
-      `, 'Create Volunteer Error', {
+      `, 'Create Donor Error', {
           enableHtml: true,
           timeOut: 15000
         });
