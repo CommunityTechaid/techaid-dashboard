@@ -56,11 +56,11 @@ import { DonorComponent } from './components/donor-component/donor-component.com
 
 const routes: Routes = [
   { path: '', component: DashboardIndexComponent, data: { title: '' } },
-  { path: 'volunteer', component: VolunteerComponent, data: { title: 'Volunteer' } },
-  { path: 'faqs', component: FaqListComponent, data: { title: 'FAQs' } },
+  // { path: 'volunteer', component: VolunteerComponent, data: { title: 'Volunteer' } },
+  // { path: 'faqs', component: FaqListComponent, data: { title: 'FAQs' } },
   { path: 'device-request-admin', component: OrgRequestComponent, data: { title: 'Device Request' }, canActivate: [AuthGuard] },
   { path: 'organisation-device-request', component: OrgRequestComponent, data: { title: 'Device Request' } },
-  { path: 'dashboard/map', component: MapViewComponent, data: { title: 'Map' } },
+  // { path: 'dashboard/map', component: MapViewComponent, data: { title: 'Map' }, canActivate: [AuthGuard] },
   { path: 'dashboard/volunteers', component: VolunteersIndexComponent, data: { title: 'Volunteers' }, canActivate: [AuthGuard] },
   { path: 'dashboard/volunteers/:userId', component: VolunteerInfoComponent, data: { title: 'Volunteer' }, canActivate: [AuthGuard] },
   { path: 'dashboard/devices', component: KitIndexComponent, data: { title: 'Devices' }, canActivate: [AuthGuard] },
@@ -87,8 +87,8 @@ const routes: Routes = [
   { path: 'dashboard/referring-organisation-contacts', component: ReferringOrganisationContactIndexComponent, data: { title: 'Referees' }, canActivate: [AuthGuard] },
   { path: 'dashboard/referring-organisation-contacts/:refereeId', component: ReferringOrganisationContactInfoComponent, data: { title: 'Referee' }, canActivate: [AuthGuard] },
   { path: 'dashboard', component: DashboardIndexComponent, data: { title: 'Dashboard' }, canActivate: [AuthGuard] },
-  { path: 'about-us', component: PostDataComponent, data: { title: 'About Us' } },
-  { path: 'reports', component: ReportsComponent, data: { title: 'Reports' }, canActivate: [AuthGuard] },
+  // { path: 'about-us', component: PostDataComponent, data: { title: 'About Us' } },
+  // { path: 'reports', component: ReportsComponent, data: { title: 'Reports' }, canActivate: [AuthGuard] },
   { path: '**', component: PostDataComponent },
 ];
 
