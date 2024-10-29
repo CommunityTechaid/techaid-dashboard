@@ -1,93 +1,91 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
-import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
+import { Component, ViewChild, Input } from '@angular/core';
+import { concat, Subject, of, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { query } from '@angular/animations';
-import { FormControl, FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
-import { HashUtils } from '@app/shared/utils';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 
 const QUERY_ENTITY = gql`
-query findAllKits(
-  $page: PaginationInput,
-  $term: String,
-  $where: KitWhereInput!) {
-  kitsConnection(page: $page, where: {
-    AND: {
-      model: { _contains: $term }
-      AND: [ $where ]
-      OR: [
-        {
-          serialNo: { _contains: $term }
-          AND: [ $where ]
-        }
-        {
-          id: { _contains: $term }
-          AND: [ $where ]
-        }
-        {
-          attributes: {
-            filters: [
-              {
-                key: "notes",
-                _text: { _contains: $term }
-              }
-            ]
+  query findAllKits(
+    $page: PaginationInput,
+    $term: String,
+    $where: KitWhereInput!
+  ) {
+    kitsConnection(
+      page: $page,
+      where: {
+      AND: {
+        model: { _contains: $term }
+        AND: [ $where ]
+        OR: [
+          {
+            serialNo: { _contains: $term }
+            AND: [ $where ]
           }
-          AND: [ $where ]
-        }
-      ]
-    }
-  }){
-    totalElements
-    number
-    content{
-     id
-     model
-     age
-     type
-     status
-     location
-     updatedAt
-     createdAt
-     donor {
-       id
-       name
-       email
-       phoneNumber
-       donorParent {
+          {
+            id: { _contains: $term }
+            AND: [ $where ]
+          }
+          {
+            attributes: {
+              filters: [
+                {
+                  key: "notes",
+                  _text: { _contains: $term }
+                }
+              ]
+            }
+            AND: [ $where ]
+          }
+        ]
+      }
+    }){
+      totalElements
+      number
+      content{
         id
-        name
+        model
+        age
         type
-       }
-     }
-     deviceRequest {
-       id
-       referringOrganisationContact {
-        id
-        referringOrganisation {
+        status
+        location
+        updatedAt
+        createdAt
+        donor {
           id
           name
+          email
+          phoneNumber
+          donorParent {
+            id
+            name
+            type
+          }
         }
-       }
-     }
-     attributes {
-       notes
-     }
+        deviceRequest {
+          id
+          referringOrganisationContact {
+            id
+            referringOrganisation {
+              id
+              name
+            }
+          }
+        }
+      }
     }
   }
-}
 `;
 
 const CREATE_ENTITY = gql`
@@ -141,31 +139,30 @@ query findAutocompleteDeviceRequests($term: String, $ids: [Long!]) {
 `;
 
 const FIND_USERS = gql`
-query findUsers($deviceRequestIds: [Long!], $donorParentId: [Long!]) {
-  deviceRequests(where: {
-    id: { _in: $deviceRequestIds }
-  }){
-     id
-     referringOrganisationContact {
+  query findUsers($deviceRequestIds: [Long!], $donorParentId: [Long!]) {
+    deviceRequests(where: {
+      id: { _in: $deviceRequestIds }
+    }){
       id
-      fullName
-      email
-      phoneNumber
-      referringOrganisation {
+      referringOrganisationContact {
         id
-        name
+        fullName
+        email
+        phoneNumber
+        referringOrganisation {
+          id
+          name
+        }
       }
-     }
-     name
-  }
+    }
 
-  donorParents(where: {
-    id: { _in: $donorParentId }
-  }){
-    id
-    name
+    donorParents(where: {
+      id: { _in: $donorParentId }
+    }){
+      id
+      name
+    }
   }
-}
 `;
 
 const AUTOCOMPLETE_DONORS = gql`
@@ -263,7 +260,7 @@ export class KitIndexComponent {
     className: 'col-md-12',
     templateOptions: {
       label: 'Assigned Device Request',
-      description: 'Filter by assigned device requests.',
+      description: 'Filter by assigned device request.',
       loading: this.deviceRequestLoading,
       typeahead: this.deviceRequestInput$,
       multiple: true,
@@ -312,14 +309,14 @@ export class KitIndexComponent {
             label: 'Type of device',
             type: 'array',
             options: [
-              {label: 'Laptop', value: 'LAPTOP' },
-              {label: 'Chromebook', value: 'CHROMEBOOK' },
-              {label: 'Tablet', value: 'TABLET' },
-              {label: 'Smart Phone', value: 'SMARTPHONE' },
-              {label: 'All In One (PC)', value: 'ALLINONE' },
-              {label: 'Desktop', value: 'DESKTOP' },
-              {label: 'Connectivity Device', value: 'COMMSDEVICE' },
-              {label: 'Other', value: 'OTHER' }
+              { label: 'Laptop', value: 'LAPTOP' },
+              { label: 'Chromebook', value: 'CHROMEBOOK' },
+              { label: 'Tablet', value: 'TABLET' },
+              { label: 'Smart Phone', value: 'SMARTPHONE' },
+              { label: 'All In One (PC)', value: 'ALLINONE' },
+              { label: 'Desktop', value: 'DESKTOP' },
+              { label: 'Connectivity Device', value: 'COMMSDEVICE' },
+              { label: 'Other', value: 'OTHER' }
             ],
           }
         },
@@ -331,12 +328,12 @@ export class KitIndexComponent {
             label: 'Roughly how old is your device?',
             type: 'array',
             options: [
-              {label: 'Less than a year', value: 1},
-              {label: '1 - 2 years', value: 2},
-              {label: '3 - 4 years', value: 4 },
-              {label: '5 - 6 years', value: 5},
-              {label: 'More than 6 years old', value: 6 },
-              {label: 'I don\'t know!', value: 0 }
+              { label: 'Less than a year', value: 1 },
+              { label: '1 - 2 years', value: 2 },
+              { label: '3 - 4 years', value: 4 },
+              { label: '5 - 6 years', value: 5 },
+              { label: 'More than 6 years old', value: 6 },
+              { label: 'I don\'t know!', value: 0 },
             ],
             required: false
           }
@@ -350,8 +347,8 @@ export class KitIndexComponent {
             type: 'array',
             label: 'Filter by Archived?',
             options: [
-              {label: 'Active Devices', value: false },
-              {label: 'Archived Devices', value: true },
+              { label: 'Active Devices', value: false },
+              { label: 'Archived Devices', value: true },
             ],
             required: false,
           }
@@ -410,7 +407,7 @@ export class KitIndexComponent {
           }
         },
       ]
-  }
+    }
   ];
 
 
@@ -960,6 +957,7 @@ export class KitIndexComponent {
             value: o.dir
           };
         });
+
         const vars = {
           page: {
             sort: sort,
@@ -1024,9 +1022,9 @@ export class KitIndexComponent {
   }
 
   deviceRequestName(data) {
-    return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.referringOrganisationContact.email || ''}||${data.referringOrganisationContact.phoneNumber || ''}`
+    return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.id || ''}||${data.referringOrganisationContact.email || ''}||${data.referringOrganisationContact.phoneNumber || ''}`
       .split('||')
-      .filter(f => f.trim().length)
+      .filter((f) => f.trim().length)
       .join(' / ')
       .trim();
   }
@@ -1059,13 +1057,16 @@ export class KitIndexComponent {
       try {
         this.filterModel = JSON.parse(localStorage.getItem(`kitFilters-${this.tableId}`)) || {archived: [false]};
         if (this.filterModel && (this.filterModel.deviceRequestIds || this.filterModel.donorParentId) ) {
-          this.apollo.query({
+          this.apollo
+          .query({
             query: FIND_USERS,
             variables: {
               deviceRequestIds: this.filterModel.deviceRequestIds || [],
               donorParentId: this.filterModel.donorParentId || []
             }
-          }).toPromise().then(res => {
+          })
+          .toPromise()
+          .then(res => {
             if (res.data) {
               if (res.data['deviceRequests']) {
                 this.deviceRequestField.templateOptions['items'] = res.data['deviceRequests'].map(v => {

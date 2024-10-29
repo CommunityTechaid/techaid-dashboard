@@ -65,7 +65,7 @@
           <ngb-tab title="Devices">
             <ng-template ngbTabContent>
                 <div class="mt-2">
-                    <kit-component *ngIf="model?.id" [where]="{donor: {donorParent: {id: {_eq: model.id}}}}" [tableId]="'donor-parent-info-devices-' + model.id"></kit-component>
+                    <kit-component *ngIf="model?.id" [where]="{donor: {donorParent: {id: {_eq: model.id}}}}" [tableId]="'donor-parent-info-devices-' + model.id" [donorParentId]="model.id"></kit-component>
                 </div>
             </ng-template>
         </ngb-tab>
