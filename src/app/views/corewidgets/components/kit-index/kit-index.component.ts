@@ -227,7 +227,7 @@ export class KitIndexComponent {
   entities = [];
   options: FormlyFormOptions = {
     formState: {
-      disabled: false
+      donorParentVisible: false
     }
   };
   form: FormGroup = new FormGroup({});
@@ -242,6 +242,7 @@ export class KitIndexComponent {
   };
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
+  isDonorParentAdmin = false;
 
   classes = {
     'LOGISTICS': 'dark',
@@ -287,9 +288,23 @@ export class KitIndexComponent {
       searchable: true,
       items: []
     },
-    // expressionProperties: {
-    //   'templateOptions.disabled': 'formState.disabled',
-    // },
+    hideExpression: true
+  };
+
+  donorParentTypeField: FormlyFieldConfig = {
+    key: 'donorParentType',
+    type: 'multicheckbox',
+    className: 'col-sm-4',
+    templateOptions: {
+      type: 'array',
+      label: 'Parent Donor\'s Type?',
+      options: [
+        {label: 'Business', value: 'BUSINESS' },
+        {label: 'Drop Point', value: 'DROPPOINT' }
+      ],
+      required: false,
+    },
+    hideExpression: true
   };
 
   filter: any = {};
@@ -366,23 +381,7 @@ export class KitIndexComponent {
         },
         this.deviceRequestField,
         this.donorParentField,
-        {
-          key: 'donorParentType',
-          type: 'multicheckbox',
-          className: 'col-sm-4',
-          templateOptions: {
-            type: 'array',
-            label: 'Parent Donor\'s Type?',
-            options: [
-              {label: 'Business', value: 'BUSINESS' },
-              {label: 'Drop Point', value: 'DROPPOINT' }
-            ],
-            required: false,
-          },
-          // expressionProperties: {
-          //   'templateOptions.disabled': 'formState.disabled',
-          // },
-        },
+        this.donorParentTypeField
       ]
     },
     {
@@ -830,7 +829,10 @@ export class KitIndexComponent {
     this.sub.add(
       this.user$.subscribe((user) => {
         this.user = user;
-        this.options.formState.disabled = !(user && user.authorities && user.authorities['read:donorParents']);
+        this.isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
+        console.log(this.isDonorParentAdmin);
+        this.donorParentField.hideExpression = !this.isDonorParentAdmin;
+        this.donorParentTypeField.hideExpression = !this.isDonorParentAdmin;
       })
     );
 

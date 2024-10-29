@@ -26,6 +26,8 @@ import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
+import { UserState } from '@app/state/state.module';
+import { User } from '@app/state/user/user.state';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -178,6 +180,8 @@ export class KitComponent {
      5: '5 - 6 years',
      6: 'more than 6 years old'
   };
+  public user: User;
+  @Select(UserState.user) user$: Observable<User>;
 
   classes = {
     'LOGISTICS': 'dark',
@@ -223,9 +227,7 @@ export class KitComponent {
       searchable: true,
       items: []
     },
-    // expressionProperties: {
-    //   'templateOptions.disabled': 'formState.disabled',
-    // },
+    hideExpression: true
   };
 
   filter: any = {};
@@ -497,6 +499,15 @@ export class KitComponent {
     this.sub.add(
       this.deviceRequests$.subscribe((data) => {
         this.deviceRequestField.templateOptions['items'] = data;
+      })
+    );
+
+    this.sub.add(
+      this.user$.subscribe((user) => {
+        this.user = user;
+        const isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
+        console.log(isDonorParentAdmin);
+        this.donorParentField.hideExpression = !isDonorParentAdmin;
       })
     );
 
