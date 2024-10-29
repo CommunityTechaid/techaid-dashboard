@@ -30,7 +30,6 @@
                                     <th></th>
                                     <th>Model</th>
                                     <th>Donor</th>
-                                    <th>Assigned</th>
                                     <th>Created</th>
                                     <th>Updated</th>
                                     <th>Age</th>
@@ -45,7 +44,7 @@
                                                 <span class="badge badge-secondary">
                                                     {{dt.id}}
                                                 </span>
-                                              </a>
+                                            </a>
                                     </td>
                                     <td>
                                         <div class="d-flex">
@@ -67,15 +66,6 @@
                                     <td>
                                         <a *ngIf="dt.donorName?.length" href="#" [routerLink]="['/dashboard/donors', dt.donor.id]">{{ dt.donorName }}</a>
                                         <span *ngIf="!dt.donorName?.length">--</span>
-                                    </td>
-                                    <td>
-                                        <a *ngIf="dt.volunteerName?.length" href="#" [routerLink]="['/dashboard/volunteers', dt.volunteer.id]">{{ dt.volunteerName }}</a>
-                                        <span *ngFor="let v of dt.volunteers" class="mr-1 mb-1">
-                                            <span [class]="'badge badge-' + classes[v.type]"><span class="badge badge-primary mr-1">{{v.type}}</span>
-                                            <a [class]="'btn-'+ classes[v.type]" [routerLink]="['/dashboard/volunteers', v.volunteer.id]">{{v.volunteer.name}}</a>
-                                            </span>
-                                        </span>
-                                        <span *ngIf="!dt.volunteers?.length">--</span>
                                     </td>
                                     <td>{{ dt.createdAt | date:'medium' }}</td>
                                     <td>{{ dt.updatedAt | date:'medium' }}</td>
