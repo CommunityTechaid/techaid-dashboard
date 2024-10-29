@@ -385,6 +385,9 @@ export class KitIndexComponent {
       ]
     },
     {
+      validators: {
+        validation: [{ name: 'dateRange', options: { errorPath: 'after' } }],
+      },
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
@@ -392,7 +395,7 @@ export class KitIndexComponent {
           type: 'date',
           className: 'col-md-6',
           templateOptions: {
-            label: 'Devices created after?',
+            label: 'Devices created on or after?',
             required: false
           }
         },
