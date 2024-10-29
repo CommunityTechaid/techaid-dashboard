@@ -13,7 +13,7 @@ import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig  } from '@ngx-formly/core';
+import { FormlyFieldConfig } from '@ngx-formly/core';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -305,6 +305,9 @@ export class KitComponent {
       ],
     },
     {
+      validators: {
+        validation: [{ name: 'dateRange', options: { errorPath: 'after' } }],
+      },
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
@@ -312,10 +315,16 @@ export class KitComponent {
           type: 'date',
           className: 'col-md-6',
           templateOptions: {
-            label: 'Devices created after?',
+            label: 'Devices created on or after?',
             required: false
+          },
+          validation: {
+            show: false
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
           }
-        },
+            },
         {
           key: 'before',
           type: 'date',
@@ -323,6 +332,12 @@ export class KitComponent {
           templateOptions: {
             label: 'Devices created before?',
             required: false
+          },
+          validation: {
+            show: false
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
           }
         },
       ]

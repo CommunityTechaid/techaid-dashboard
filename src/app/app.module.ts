@@ -19,7 +19,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ConfigService } from '@app/shared/services/config.service';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { AppStateModule } from '@app/state/state.module';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, AbstractControl } from '@angular/forms';
 import { GraphQLModule } from './graphql.module';
 import { FormlyCustomNote } from './views/corewidgets/components/kit-info/custom-notes';
 import { FormlyCustomCreateNote } from './views/corewidgets/components/kit-info/custom-create-note';
@@ -44,7 +44,9 @@ import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/compone
     FormsModule,
     BrowserAnimationsModule,
     AppSharedModule.forRoot(),
-    FormlyModule.forRoot(),
+    FormlyModule.forRoot({
+      validators: [{ name: 'dateRange', validation: dateRangeValidator }]
+    }),
     FormlyBootstrapModule,
     NgbModule,
     AppFormModule.forRoot(),
@@ -83,6 +85,20 @@ import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/compone
 })
 export class AppModule { }
 
+export function dateRangeValidator(control: AbstractControl) {
+  const { after, before } = control.value;
+
+  // avoid displaying the message error when values are empty
+  if (!after || !before) {
+    return null;
+  }
+
+  if (after < before) {
+    return null;
+  }
+
+  return { dateRange: { message: 'Date range is invalid' } };
+}
 
 export function configServiceFactory(config: ConfigService) {
   return () => config.load();
