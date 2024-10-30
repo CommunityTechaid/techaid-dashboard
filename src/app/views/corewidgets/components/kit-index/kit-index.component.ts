@@ -404,7 +404,7 @@ export class KitIndexComponent {
           type: 'date',
           className: 'col-md-6',
           templateOptions: {
-            label: 'Devices created before?',
+            label: 'Devices created on or before?',
             required: false
           }
         },
@@ -771,15 +771,16 @@ export class KitIndexComponent {
     }
 
     if(data.after){
-      console.log(data.after);
       count += 1;
       filter['AND'].push({createdAt: {_gt: data.after }});
     }
 
     if(data.before){
-      console.log(data.before)
+      const endDate : Date = data.before;
+      endDate.setDate(endDate.getDate() + 1);
+
       count += 1;
-      filter['AND'].push({createdAt: {_lt: data.before }});
+      filter['AND'].push({createdAt: {_lt: endDate }});
     }
 
     localStorage.setItem(`kitFilters-${this.tableId}`, JSON.stringify(data));
@@ -833,7 +834,7 @@ export class KitIndexComponent {
       this.user$.subscribe((user) => {
         this.user = user;
         this.isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
-        console.log(this.isDonorParentAdmin);
+        //console.log(this.isDonorParentAdmin);
         this.donorParentField.hideExpression = !this.isDonorParentAdmin;
         this.donorParentTypeField.hideExpression = !this.isDonorParentAdmin;
       })
