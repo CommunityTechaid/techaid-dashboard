@@ -383,6 +383,17 @@ export class KitInfoComponent {
             descriptor: "GB"
           }
         },
+        {
+          key: 'tpmVersion',
+          type: 'kit-info-input',
+          className: 'px-1',
+          defaultValue: '',
+          templateOptions: {
+            label: "TPM Version",
+            type: "number",
+            descriptor: ""
+          }
+        },
         this.donorField
       ]
     },
