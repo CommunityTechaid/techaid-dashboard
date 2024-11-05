@@ -30,6 +30,7 @@ query findDonor($id: Long) {
     referral
     consent
     archived
+    isLeadContact
     donorParent {
       id
       name
@@ -59,6 +60,7 @@ mutation updateDonor($data: UpdateDonorInput!) {
     referral
     consent
     archived
+    isLeadContact
     donorParent {
       id
       name

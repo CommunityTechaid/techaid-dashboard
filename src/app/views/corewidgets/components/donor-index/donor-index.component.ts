@@ -49,6 +49,7 @@ query findAllDonors($page: PaginationInput, $term: String, $where: DonorWhereInp
      updatedAt
      consent
      archived
+     isLeadContact
      donorParent {
       id
       name
@@ -65,6 +66,8 @@ mutation createDonor($data: CreateDonorInput!) {
     name
     email
     phoneNumber
+    postCode
+    isLeadContact
   }
 }
 `;
@@ -407,7 +410,7 @@ export class DonorIndexComponent {
       },
       columns: [
         { data: null, width: '15px', orderable: false },
-        { data: 'email' },
+        { data: 'name' },
         { data: 'kitCount'},
         { data: 'postCode' },
         { data: 'donorParent.name' },
