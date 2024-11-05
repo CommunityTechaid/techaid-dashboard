@@ -159,7 +159,45 @@ export class DonorComponent {
           },
         }
       ]
-    }
+    },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'postCode',
+          type: 'place',
+          className: 'col-md-6',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Address',
+            placeholder: '',
+            postCode: false,
+            required: false
+          },
+          validation: {
+            show: false,
+          },
+          expressionProperties: {
+            'validation.show': 'model.showErrorState',
+            'templateOptions.disabled': 'formState.disabled',
+          },
+        },
+        {
+          key: 'isLeadContact',
+          type: 'checkbox',
+          className: 'col-md-6 text-right mt-4',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Is a lead contact?',
+            placeholder: 'This preserves contacts for drop points so they kept permanently',
+            required: false
+          },
+          validation: {
+            show: false
+          }
+        }
+      ]
+    },
   ];
 
   filter: any = {};
