@@ -116,7 +116,7 @@ query findAutocompleteDeviceRequests($term: String, $ids: [Long!]) {
     referringOrganisationContact: {referringOrganisation: { name: { _contains: $term } } }
     OR: [
     { id: { _in: $ids } },
-    { referringOrganisationContact: { phoneNumber: { _contains: $term } } },
+    { id: { _contains: $term } },
     { referringOrganisationContact: { fullName: { _contains: $term } } },
     { referringOrganisationContact: { email: { _contains: $term } } }
     ]
