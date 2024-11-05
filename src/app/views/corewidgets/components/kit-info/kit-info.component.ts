@@ -86,15 +86,6 @@ query findKit($id: Long) {
     cpuType
     cpuCores
     tpmVersion
-    volunteers {
-      type
-      volunteer {
-        id
-        name
-        email
-        phoneNumber
-      }
-    }
     donor {
       id
       name
@@ -155,15 +146,6 @@ mutation updateKit($data: UpdateKitInput!) {
     cpuType
     cpuCores
     tpmVersion
-    volunteers {
-      type
-      volunteer {
-        id
-        name
-        email
-        phoneNumber
-      }
-    }
     donor {
       id
       name
@@ -205,45 +187,6 @@ mutation updateKit($data: UpdateKitInput!) {
 const DELETE_ENTITY = gql`
 mutation deleteKit($id: ID!) {
   deleteKit(id: $id)
-}
-`;
-
-const AUTOCOMPLETE_USERS = gql`
-query findAutocompleteVolunteers($term: String, $subGroup: String) {
-  volunteersConnection(page: {
-    size: 50
-  }, where: {
-    name: {
-      _contains: $term
-    }
-    subGroup: {
-      _contains: $subGroup
-    }
-    OR: [
-    {
-      subGroup: {
-        _contains: $subGroup
-      }
-      phoneNumber: {
-        _contains: $term
-      }
-    },
-    {
-       subGroup: {
-        _contains: $subGroup
-      }
-      email: {
-        _contains: $term
-      }
-    }]
-  }){
-    content  {
-     id
-     name
-     email
-     phoneNumber
-    }
-  }
 }
 `;
 
@@ -318,63 +261,6 @@ export class KitInfoComponent {
   deviceModel = {};
   entityName: string;
   entityId: number;
-
-  organisers$: Observable<any>;
-  organisersInput$ = new Subject<string>();
-  organisersLoading = false;
-  organisersField: FormlyFieldConfig = {
-    key: 'organiserIds',
-    type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
-    templateOptions: {
-      label: 'Organisation request',
-      loading: this.organisersLoading,
-      typeahead: this.organisersInput$,
-      placeholder: 'Assign device to Organiser Volunteers',
-      multiple: true,
-      searchable: true,
-      items: [],
-      required: false,
-    },
-  };
-
-  logistics$: Observable<any>;
-  logisticsInput$ = new Subject<string>();
-  logisticsLoading = false;
-  logisticsField: FormlyFieldConfig = {
-    key: 'logisticIds',
-    type: 'choice',
-    className: 'col-md-12',
-    templateOptions: {
-      label: 'Logistics Volunteer',
-      loading: this.logisticsLoading,
-      typeahead: this.logisticsInput$,
-      placeholder: 'Assign device to Logistic Volunteers',
-      multiple: true,
-      searchable: true,
-      items: [],
-      required: false
-    },
-  };
-
-  technicians$: Observable<any>;
-  techniciansInput$ = new Subject<string>();
-  techniciansLoading = false;
-  techniciansField: FormlyFieldConfig = {
-    key: 'technicianIds',
-    type: 'choice',
-    className: 'col-md-12',
-    templateOptions: {
-      label: 'Tech Volunteer',
-      loading: this.techniciansLoading,
-      typeahead: this.techniciansInput$,
-      placeholder: 'Assign device to Tech Volunteers',
-      multiple: true,
-      searchable: true,
-      items: [],
-      required: false
-    },
-  };
 
   donors$: Observable<any>;
   donorInput$ = new Subject<string>();
@@ -930,21 +816,6 @@ export class KitInfoComponent {
     });
 
   private normalizeData(data: any) {
-    if (data.volunteers) {
-      const volunteers = {};
-      data.volunteers.forEach(v => {
-        volunteers[v.type] = volunteers[v.type] || [];
-        volunteers[v.type].push({label: this.volunteerName(v.volunteer), value: v.volunteer.id});
-      });
-
-      data.organiserIds = (volunteers['ORGANISER'] || []).map(v => v.value);
-      data.technicianIds = (volunteers['TECHNICIAN'] || []).map(v => v.value);
-      data.logisticIds = (volunteers['LOGISTICS'] || []).map(v => v.value);
-
-      this.organisersField.templateOptions['items'] = volunteers['ORGANISER'];
-      this.techniciansField.templateOptions['items'] = volunteers['TECHNICIAN'];
-      this.logisticsField.templateOptions['items'] = volunteers['LOGISTICS'];
-    }
     if (data.donor && data.donor.id) {
       data.donorId = data.donor.id;
       this.donorField.templateOptions['items'] = [
@@ -1013,12 +884,6 @@ export class KitInfoComponent {
 
 
   ngOnInit() {
-    const userRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_USERS,
-        variables: {
-        }
-      });
     const donorRef = this.apollo
       .watchQuery({
         query: AUTOCOMPLETE_DONORS,
@@ -1032,78 +897,6 @@ export class KitInfoComponent {
         variables: {
         }
       });
-
-    this.organisers$ = concat(
-      of([]),
-      this.organisersInput$.pipe(
-        debounceTime(200),
-        distinctUntilChanged(),
-        tap(() => this.organisersLoading = true),
-        switchMap(term => from(userRef.refetch({
-          term: term,
-          subGroup: 'Organizing'
-        })).pipe(
-          catchError(() => of([])),
-          tap(() => this.organisersLoading = false),
-          switchMap(res => {
-            const data = res['data']['volunteersConnection']['content'].map(v => {
-              return {
-                label: `${this.volunteerName(v)}`, value: v.id
-              };
-            });
-            return of(data);
-          })
-        ))
-      )
-    );
-
-    this.logistics$ = concat(
-      of([]),
-      this.logisticsInput$.pipe(
-        debounceTime(200),
-        distinctUntilChanged(),
-        tap(() => this.logisticsLoading = true),
-        switchMap(term => from(userRef.refetch({
-          term: term,
-          subGroup: 'Transport'
-        })).pipe(
-          catchError(() => of([])),
-          tap(() => this.logisticsLoading = false),
-          switchMap(res => {
-            const data = res['data']['volunteersConnection']['content'].map(v => {
-              return {
-                label: `${this.volunteerName(v)}`, value: v.id
-              };
-            });
-            return of(data);
-          })
-        ))
-      )
-    );
-
-    this.technicians$ = concat(
-      of([]),
-      this.techniciansInput$.pipe(
-        debounceTime(200),
-        distinctUntilChanged(),
-        tap(() => this.techniciansLoading = true),
-        switchMap(term => from(userRef.refetch({
-          term: term,
-          subGroup: 'Technical'
-        })).pipe(
-          catchError(() => of([])),
-          tap(() => this.techniciansLoading = false),
-          switchMap(res => {
-            const data = res['data']['volunteersConnection']['content'].map(v => {
-              return {
-                label: `${this.volunteerName(v)}`, value: v.id
-              };
-            });
-            return of(data);
-          })
-        ))
-      )
-    );
 
     this.donors$ = concat(
       of([]),
@@ -1157,18 +950,6 @@ export class KitInfoComponent {
       this.fetchData();
     });
 
-    this.sub.add(this.organisers$.subscribe(data => {
-      this.organisersField.templateOptions['items'] = data;
-    }));
-
-    this.sub.add(this.logistics$.subscribe(data => {
-      this.logisticsField.templateOptions['items'] = data;
-    }));
-
-    this.sub.add(this.technicians$.subscribe(data => {
-      this.techniciansField.templateOptions['items'] = data;
-    }));
-
     this.sub.add(this.donors$.subscribe(data => {
       this.donorField.templateOptions['items'] = data;
     }));
@@ -1184,10 +965,6 @@ export class KitInfoComponent {
       .filter(f => f.trim().length)
       .join(' / ')
       .trim();
-  }
-
-  volunteerName(data) {
-    return `${data.name || ''}||${data.email || ''}||${data.phoneNumber || ''}`.split('||').filter(f => f.trim().length).join(' / ').trim();
   }
 
   organisationName(data) {

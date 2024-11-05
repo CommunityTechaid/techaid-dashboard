@@ -24,9 +24,6 @@ query findAll {
   donors: donorsConnection(where: {}) {
     totalElements
   }
-  volunteers: volunteersConnection(where: {}) {
-    totalElements
-  }
   typeCount {
     type
     count

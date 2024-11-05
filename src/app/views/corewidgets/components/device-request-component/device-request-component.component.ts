@@ -742,10 +742,6 @@ export class DeviceRequestComponent {
     };
   }
 
-  volunteerName(data) {
-    return `${data.name || ''}||${data.email || ''}||${data.phoneNumber || ''}`.split('||').filter(f => f.trim().length).join(' / ').trim();
-  }
-
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();

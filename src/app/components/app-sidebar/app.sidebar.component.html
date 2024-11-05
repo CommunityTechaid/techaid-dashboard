@@ -21,19 +21,7 @@
     </li>
 
     <!-- Divider -->
-    <hr class="sidebar-divider" *ngIf="user?.authorities['read:kits']">
-
-    <!-- Heading -->
-
-    <!-- Nav Item - Charts -->
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:volunteers']">
-        <a class="nav-link" href="#" routerLink="/dashboard/volunteers">
-            <i class="fa fa-fw fa-user"></i>
-            <span>Volunteers</span></a>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider" *ngIf="user?.authorities['read:volunteers']">
+    <hr class="sidebar-divider my-0" *ngIf="user?.authorities['read:kits']">
 
     <!-- Nav Item - Tables -->
     <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:donors']">
@@ -50,7 +38,7 @@
     </li>
 
     <!-- Divider -->
-    <hr class="sidebar-divider" *ngIf="user?.authorities['read:donors']">
+    <hr class="sidebar-divider my-0" *ngIf="user?.authorities['read:donors']">
 
     <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
       <a class="nav-link" href="#" routerLink="/dashboard/referring-organisations">
