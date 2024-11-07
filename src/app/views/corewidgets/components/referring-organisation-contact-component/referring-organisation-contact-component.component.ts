@@ -31,9 +31,6 @@ query findAllReferringOrgContacts(
         {
           email: { _contains: $term }
           AND: [$filter, $where]
-        },
-        {
-          AND: [$filter, $where]
         }
       ]
     }
@@ -305,7 +302,7 @@ export class ReferringOrganisationContactComponent {
             size: params.length,
             page: Math.round(params.start / params.length),
           },
-          where: this.filter,
+          where: this._where,
           term: params['search']['value'],
           filter: this._where || this.filter
         };
