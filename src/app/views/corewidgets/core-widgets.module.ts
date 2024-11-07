@@ -42,6 +42,7 @@ import { AppLocalCSS } from './components/org-request/app-local-css.component';
 import { DonorParentIndexComponent } from './components/donor-parent-index/donor-parent-index.component';
 import { DonorParentInfoComponent } from './components/donor-parent-info/donor-parent-info.component';
 import { DonorComponent } from './components/donor-component/donor-component.component';
+import { KitAuditComponent } from './components/kit-audit-component/kit-audit-component.component'
 
 const routes: Routes = [
   { path: '', component: DashboardIndexComponent, data: { title: '' } },
@@ -103,7 +104,8 @@ const routes: Routes = [
     AppLocalCSS,
     DonorParentIndexComponent,
     DonorParentInfoComponent,
-    DonorComponent
+    DonorComponent,
+    KitAuditComponent
   ],
   imports: [
     LightboxModule,
