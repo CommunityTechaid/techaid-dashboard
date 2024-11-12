@@ -463,7 +463,7 @@ export class KitIndexComponent {
       className: 'col-md-12',
       defaultValue: '',
       templateOptions: {
-        label: 'Device Make or model*',
+        label: 'Device Make or model',
         rows: 2,
         placeholder: '',
         required: true
