@@ -104,6 +104,9 @@ mutation quickCreateKit($data: QuickCreateKitInput!) {
     id
     type
     model
+    donor {
+      id
+    }
   }
 }
 `;
@@ -436,19 +439,38 @@ export class KitIndexComponent {
   quickForm: FormGroup = new FormGroup({});
   quickFields: Array<FormlyFieldConfig> = [
     {
-      key: 'serialNo',
+      key: 'type',
+      type: 'radio',
+      className: '',
+      defaultValue: 'LAPTOP',
+      templateOptions: {
+        label: 'Type of device',
+        options: [
+          {label: 'Laptop', value: 'LAPTOP' },
+          {label: 'Tablet', value: 'TABLET' },
+          {label: 'Smart Phone', value: 'SMARTPHONE' },
+          {label: 'All In One (PC)', value: 'ALLINONE' },
+          {label: 'Desktop', value: 'DESKTOP' },
+          {label: 'Connectivity Device', value: 'COMMSDEVICE' },
+          {label: 'Other', value: 'OTHER' }
+        ],
+        required: true
+      }
+    },
+    {
+      key: 'model',
       type: 'input',
       className: 'col-md-12',
       defaultValue: '',
       templateOptions: {
-        label: 'Enter Serial No',
+        label: 'Device Make or model*',
         rows: 2,
         placeholder: '',
         required: true
       }
-    }, this.donorField
+    },
+    this.donorField
   ]
-
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
