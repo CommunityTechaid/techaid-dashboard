@@ -326,10 +326,10 @@ export class DonorComponent {
           let data: any = {};
           if (res.data) {
             data = res['data']['donorsConnection'];
-            if (!this.total) {
+            if (!this.total && data != null) {
               this.total = data['totalElements'];
             }
-            this.entities = data.content;
+            this.entities = data?.content;
           }
 
           callback({
