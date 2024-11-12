@@ -325,7 +325,6 @@ export class KitIndexComponent {
             type: 'array',
             options: [
               { label: 'Laptop', value: 'LAPTOP' },
-              { label: 'Chromebook', value: 'CHROMEBOOK' },
               { label: 'Tablet', value: 'TABLET' },
               { label: 'Smart Phone', value: 'SMARTPHONE' },
               { label: 'All In One (PC)', value: 'ALLINONE' },
@@ -530,7 +529,6 @@ export class KitIndexComponent {
                 label: 'Type of device',
                 options: [
                   {label: 'Laptop', value: 'LAPTOP' },
-                  {label: 'Chromebook', value: 'CHROMEBOOK' },
                   {label: 'Tablet', value: 'TABLET' },
                   {label: 'Smart Phone', value: 'SMARTPHONE' },
                   {label: 'All In One (PC)', value: 'ALLINONE' },
@@ -580,11 +578,6 @@ export class KitIndexComponent {
                       {label: 'I have the charger / power cable for the Laptop', value: 'CHARGER'},
                       {label: 'I don\'t have the charger / power cable for the Laptop', value: 'NO_CHARGER'},
                       {label: 'Does the Laptop have a password set?', value: 'PASSWORD_PROTECTED'}
-                    ],
-                    'CHROMEBOOK': [
-                      {label: 'I have the charger / power cable for the Chromebook', value: 'CHARGER'},
-                      {label: 'I don\'t have the charger / power cable for the Chromebook', value: 'NO_CHARGER'},
-                      {label: 'Does the Chromebook have a password set?', value: 'PASSWORD_PROTECTED'}
                     ],
                     'TABLET': [
                       {label: 'I have the charger for the Tablet', value: 'CHARGER'},
