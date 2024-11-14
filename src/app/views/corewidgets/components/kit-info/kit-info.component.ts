@@ -19,10 +19,6 @@ import { Title } from '@angular/platform-browser';
 
 export const KIT_STATUS = {
   'DONATION_NEW': 'New device registered',
-  'DONATION_DECLINED': 'Device declined',
-  'DONATION_ACCEPTED': 'Donor contacted',
-  'DONATION_NO_RESPONSE': 'No response from donor',
-  'DONATION_ARRANGED': 'Device drop off scheduled by donor',
   'PROCESSING_START': 'Device received into CTA',
   'PROCESSING_WIPED': 'Device wiped',
   'PROCESSING_FAILED_WIPE': 'Device wipe failed',
@@ -41,10 +37,6 @@ export const KIT_STATUS = {
 
 export const KIT_STATUS_LABELS = [
   {label: 'New device registered', value: 'DONATION_NEW'},
-  {label: 'Device declined', value: 'DONATION_DECLINED'},
-  {label: 'Donor contacted', value: 'DONATION_ACCEPTED'},
-  {label: 'No response from donor', value: 'DONATION_NO_RESPONSE'},
-  {label: 'Device drop off scheduled by donor', value: 'DONATION_ARRANGED'},
   {label: 'Device received into CTA', value: 'PROCESSING_START'},
   {label: 'Device wiped', value: 'PROCESSING_WIPED'},
   {label: 'Device wipe failed', value: 'PROCESSING_FAILED_WIPE'},
