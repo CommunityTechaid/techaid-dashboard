@@ -43,7 +43,7 @@
                                 </button>
                             </form>
 
-                            <div class="delete-api mt-5 ">
+                            <div  *ngIf="user?.authorities['delete:kits']" class="delete-api mt-5 ">
                                 <h3>Danger Zone</h3>
                                 <div class="border-bottom-danger card">
                                     <div class="card-body">
@@ -73,7 +73,7 @@
                   </div>
               </ng-template>
             </ngb-tab>
-            <ngb-tab title="Audit Table" *ngIf="model?.id">
+            <ngb-tab title="Audit Table" *ngIf="model?.id && user?.authorities['admin:kits']">
               <ng-template ngbTabContent>
                   <div class="mt-2">
                       <kit-audit-component [kitId]="model.id" [tableId]="'kit-audit-' + model.id"></kit-audit-component>

@@ -16,6 +16,8 @@ import { isObject } from 'util';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { HashUtils } from '@app/shared/utils';
 import { Title } from '@angular/platform-browser';
+import { UserState } from '@app/state/state.module';
+import { User } from '@app/state/user/user.state';
 
 export const KIT_STATUS = {
   'DONATION_NEW': 'New device registered',
@@ -247,6 +249,9 @@ export class KitInfoComponent {
   ) {
     titleService.setTitle("TaDa - Device Info");
   }
+
+  public user: User;
+  @Select(UserState.user) user$: Observable<User>;
 
   sub: Subscription;
   form: FormGroup = new FormGroup({});
@@ -957,6 +962,12 @@ export class KitInfoComponent {
       this.titleService.setTitle(`TaDa - Device ${this.entityId}`);
       this.fetchData();
     });
+
+    this.sub.add(
+      this.user$.subscribe((user) => {
+        this.user = user;
+      })
+    );
 
     this.sub.add(this.donors$.subscribe(data => {
       this.donorField.templateOptions['items'] = data;
