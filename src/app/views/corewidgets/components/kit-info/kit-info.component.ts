@@ -78,6 +78,7 @@ query findKit($id: Long) {
     cpuType
     cpuCores
     tpmVersion
+    batteryHealth
     donor {
       id
       name
@@ -138,6 +139,7 @@ mutation updateKit($data: UpdateKitInput!) {
     cpuType
     cpuCores
     tpmVersion
+    batteryHealth
     donor {
       id
       name
@@ -381,6 +383,17 @@ export class KitInfoComponent {
           defaultValue: '',
           templateOptions: {
             label: "TPM Version",
+            type: "number",
+            descriptor: ""
+          }
+        },
+        {
+          key: 'batteryHealth',
+          type: 'kit-info-input',
+          className: 'px-1',
+          defaultValue: '',
+          templateOptions: {
+            label: "Battery Health",
             type: "number",
             descriptor: ""
           }
