@@ -42,6 +42,7 @@ form {
     }
 }
 
-tr > td:nth-child(2) {
-    min-width: 250px;
+tr > td:nth-child(2),
+tr > td:nth-child(5) {
+    min-width: 200px;
 }

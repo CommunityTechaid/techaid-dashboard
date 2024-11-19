@@ -15,40 +15,38 @@
             <div class="card-body">
                 <div class="w-100">
                     <div class="table-responsive">
-                        <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable [dtOptions]="dtOptions" style="width:100%;">
+                        <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable [dtOptions]="dtOptions">
                             <thead>
                                 <tr>
                                     <th>Revision #</th>
                                     <th>When</th>
                                     <th>Who</th>
-                                    <th>Type</th>
+                                    <!-- <th>Type</th> -->
                                     <th>Model</th>
-                                    <th>Updated</th>
-                                    <th>Age</th>
-                                    <th>Type</th>
+                                    <!-- <th>Updated</th> -->
+                                    <!-- <th>Age</th> -->
+                                    <!-- <th>Type</th> -->
                                     <th>Status</th>
+                                    <th>Serial #</th>
                                 </tr>
                             </thead>
                             <tbody *ngIf="entities?.length > 0;">
-                                <tr *ngFor="let dt of entities" [class.selected]="selections[dt.entity.id]" (click)="select(dt)">
-                                    <td>
-                                        <span class="badge badge-secondary">
-                                            {{dt.revision.id}}
-                                        </span>
-                                    </td>
+                                <tr *ngFor="let dt of entities">
+                                    <td> <span class="badge badge-secondary"> {{dt.revision.id}} </span> </td>
                                     <td>{{ dt.revision.timestamp | date:'medium' }}</td>
                                     <td>{{ dt.revision.customUser }}</td>
-                                    <td>{{ dt.type }} </td>
+                                    <!-- <td>{{ dt.type }} </td> -->
                                     <td>{{ dt.entity.model }}</td>
-                                    <td>{{ dt.entity.updatedAt | date:'medium' }}</td>
-                                    <td>{{ ages[dt.entity.age] }}</td>
-                                    <td>{{ dt.entity.type}}</td>
+                                    <!-- <td>{{ dt.entity.updatedAt | date:'medium' }}</td>
+                                    <td>{{ ages[dt.entity.age] }}</td> -->
+                                    <!-- <td>{{ dt.entity.type}}</td> -->
                                     <td>{{ statusTypes[dt.entity.status] || dt.entity.status }}</td>
+                                    <td>{{ dt.entity.serialNo }}</td>
                                 </tr>
                             </tbody>
                             <tbody *ngIf="entities?.length == 0">
                                 <tr>
-                                   <td colspan="9" class="no-data-available">No data!</td>
+                                   <td colspan="5" class="no-data-available">No data!</td>
                                 </tr>
                             </tbody>
                         </table>

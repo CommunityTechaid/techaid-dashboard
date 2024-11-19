@@ -37,12 +37,9 @@ const QUERY_ENTITY = gql`
       }
       type
       entity {
-        id
         model
-        age
-        type
         status
-        location
+        serialNo
         updatedAt
         createdAt
       }
@@ -143,18 +140,18 @@ export class KitAuditComponent {
     });
 
     this.dtOptions = {
-      pagingType: 'simple_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: this.pageLength,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [1, 'desc'],
+      // dom:
+      //   '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
+      //   '<\'row\'<\'col-sm-12\'tr>>' +
+      //   '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
+      //order: [1, 'desc'],
+      ordering: false,
+      info: false,
+      paging: false,
       serverSide: true,
       stateSave: true,
       processing: true,
-      searching: true,
+      searching: false,
       stateDuration: -1,
       ajax: (params: any, callback) => {
         const sort = params.order.map(o => {
@@ -182,6 +179,7 @@ export class KitAuditComponent {
                 this.total = 10;
               }
               this.entities = data;
+
             }
 
             callback({
@@ -216,14 +214,8 @@ export class KitAuditComponent {
         );
       },
       columns: [
-        { data: null, width: '15px', orderable: false },
-        { data: 'model' },
-        { data: 'donor' },
-        { data: 'createdAt' },
-        { data: 'updatedAt' },
-        { data: 'age' },
-        { data: 'type' },
-        { data: 'status' },
+        { width: '100px' },
+        { width: '200px' }
       ],
     };
   }
