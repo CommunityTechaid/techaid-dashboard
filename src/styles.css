@@ -523,26 +523,23 @@ i.input-group-text {
 .kit-status .custom-control:nth-child(2),
 .kit-status .custom-control:nth-child(3),
 .kit-status .custom-control:nth-child(4),
-.kit-status .custom-control:nth-child(5),
-.kit-status .custom-control:nth-child(6),
-.kit-status .custom-control:nth-child(7),
-.kit-status .custom-control:nth-child(8),
-.kit-status .custom-control:nth-child(9){
+.kit-status .custom-control:nth-child(5){
     background-color: #FBCBC0;
 }
 
-.kit-status .custom-control:nth-child(10),
-.kit-status .custom-control:nth-child(11),
-.kit-status .custom-control:nth-child(12){
+.kit-status .custom-control:nth-child(6),
+.kit-status .custom-control:nth-child(7){
+    background-color: #BFCEF9;
+}
+.kit-status .custom-control:nth-child(8),
+.kit-status .custom-control:nth-child(9){
+    background-color: #BAE3D7;
+}
+.kit-status .custom-control:nth-child(10){
     background-color: #DDB4E7;
 }
-
-.kit-status .custom-control:nth-child(13),
-.kit-status .custom-control:nth-child(14){
-  background-color: #BFCEF9;
-}
-.kit-status .custom-control:nth-child(15){
-    background-color: #BFCEF9;
+.kit-status .custom-control:nth-child(11){
+    background-color: #DDB4E7;
     border-radius: 0px 0px 5px 5px;
 }
 
