@@ -622,8 +622,6 @@ export class KitInfoComponent {
           ]
         },
         {
-            fieldGroupClassName: 'd-flex flex-column justify-content-between',
-            className: 'col-md-4',
           fieldGroupClassName: 'd-flex flex-column justify-content-between',
           className: 'col-md-4',
           fieldGroup: [
