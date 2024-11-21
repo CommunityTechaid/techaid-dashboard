@@ -47,6 +47,20 @@ export const KIT_STATUS_LABELS = [
   {label: 'Device stored', value: 'PROCESSING_STORED'}
 ];
 
+export const KIT_STATUS_LABELS_WITH_DISABLED = [
+  {label: 'New device registered', value: 'DONATION_NEW'},
+  {label: 'Device received into CTA', value: 'PROCESSING_START'},
+  {label: 'Device wiped', value: 'PROCESSING_WIPED'},
+  {label: 'OS installed', value: 'PROCESSING_OS_INSTALLED'},
+  {label: 'Assessment check completed - ready for allocation', value: 'ALLOCATION_READY', disabled: 'true'},
+  {label: 'Quality check completed', value: 'ALLOCATION_QC_COMPLETED', disabled: 'true'},
+  {label: 'Collection/drop off to beneficiary arranged', value: 'ALLOCATION_DELIVERY_ARRANGED', disabled: 'true'},
+  {label: 'Device received by beneficiary', value: 'DISTRIBUTION_DELIVERED', disabled: 'true'},
+  {label: 'Device recycled', value: 'DISTRIBUTION_RECYCLED'},
+  {label: 'Device in for repair', value: 'DISTRIBUTION_REPAIR_RETURN'},
+  {label: 'Device stored', value: 'PROCESSING_STORED'}
+];
+
 const QUERY_ENTITY = gql`
 query findKit($id: Long) {
   kit(where: {
@@ -107,7 +121,16 @@ query findKit($id: Long) {
       volunteer
       createdAt
       updatedAt
-  }
+    }
+    subStatus {
+      installationOfOSFailed
+      wipeFailed
+      needsSparePart
+      needsFurtherInvestigation
+      network
+      installedOSName
+      lockedToUser
+    }
   }
 }
 `;
@@ -167,6 +190,15 @@ mutation updateKit($data: UpdateKitInput!) {
       volunteer
       createdAt
       updatedAt
+    }
+    subStatus {
+      installationOfOSFailed
+      wipeFailed
+      needsSparePart
+      needsFurtherInvestigation
+      network
+      installedOSName
+      lockedToUser
     }
   }
 }
@@ -252,6 +284,7 @@ export class KitInfoComponent {
   deviceModel = {};
   entityName: string;
   entityId: number;
+  disabledStatuses: boolean = false;
 
   donors$: Observable<any>;
   donorInput$ = new Subject<string>();
@@ -306,6 +339,27 @@ export class KitInfoComponent {
     templateOptions: {
       notes: [],
     },
+  }
+
+  statusField: FormlyFieldConfig = {
+    key: 'status',
+    type: 'radio',
+    className: 'col-md-4 kit-status',
+    defaultValue: 'DONATION_NEW',
+    templateOptions: {
+      label: 'Status of the device',
+      options: KIT_STATUS_LABELS,
+      required: true
+    },
+    expressionProperties: {
+      'templateOptions.options': (model, state, field) => {
+        if(this.disabledStatuses) {
+          return KIT_STATUS_LABELS_WITH_DISABLED;
+        } else {
+          return KIT_STATUS_LABELS;
+        }
+      }
+    }
   }
 
   /*
@@ -428,23 +482,13 @@ export class KitInfoComponent {
     {
       fieldGroupClassName: 'row border-bottom-warning bordered p-2 mb-3',
       fieldGroup: [
-        {
-          key: 'status',
-          type: 'radio',
-          className: 'col-md-4 kit-status',
-          defaultValue: 'DONATION_NEW',
-          templateOptions: {
-            label: 'Status of the device',
-            options: KIT_STATUS_LABELS,
-            required: true
-          }
-        },
+        this.statusField,
         {
           fieldGroupClassName: 'd-flex flex-column justify-content-between',
           className: 'col-md-4',
           fieldGroup: [
             {
-              key: 'network',
+              key: 'subStatus.network',
               type: 'choice',
               className: '',
               templateOptions: {
@@ -470,7 +514,7 @@ export class KitInfoComponent {
               hideExpression: 'model.type != \'SMARTPHONE\''
             },
             {
-              key: 'network',
+              key: 'subStatus.network',
               type: 'choice',
               className: '',
               templateOptions: {
@@ -495,7 +539,7 @@ export class KitInfoComponent {
               hideExpression: 'model.type != \'COMMSDEVICE\''
             },
             {
-                key: 'installedOSName',
+                key: 'subStatus.installedOSName',
                 type: 'choice',
                 className: '',
                 templateOptions: {
@@ -540,13 +584,17 @@ export class KitInfoComponent {
                 },
             },
             {
-              key: 'lockedToUser',
+              key: 'subStatus.lockedToUser',
               type: 'checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
                 label: 'Locked to user?',
-                required: false
+                required: false,
+                change: (field, $event) => {
+                  const data = field.parent.formControl.value || {};
+                  this.disabledStatuses = data['subStatus.needsFurtherInvestigation'] || data['subStatus.needsSparePart'] || data['subStatus.installationOfOSFailed'] || data['subStatus.wipeFailed'] || data['subStatus.lockedToUser'];
+                },
               },
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
@@ -558,13 +606,21 @@ export class KitInfoComponent {
               }
             },
             {
-              key: 'wipeFailed',
+              key: 'subStatus.wipeFailed',
               type: 'checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
                 label: 'Device wipe failed?',
-                required: false
+                required: false,
+                change: (field, $event) => {
+                  const data = field.parent.formControl.value || {};
+                  this.disabledStatuses = data['subStatus.needsFurtherInvestigation'] || data['subStatus.needsSparePart'] || data['subStatus.installationOfOSFailed'] || data['subStatus.wipeFailed'] || data['subStatus.lockedToUser'];
+                  console.log(this.disabledStatuses);
+                  // if(this.disabledStatuses) {
+                  //   this.statusField.templateOptions['options'] = KIT_STATUS_LABELS_WITH_DISABLED;
+                  // }
+                },
               },
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
@@ -576,13 +632,17 @@ export class KitInfoComponent {
               }
             },
             {
-              key: 'installationOfOSFailed',
+              key: 'subStatus.installationOfOSFailed',
               type: 'checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
                 label: 'OS Installation failed?',
-                required: false
+                required: false,
+                change: (field, $event) => {
+                  const data = field.parent.formControl.value || {};
+                  this.disabledStatuses = data['subStatus.needsFurtherInvestigation'] || data['subStatus.needsSparePart'] || data['subStatus.installationOfOSFailed'] || data['subStatus.wipeFailed'] || data['subStatus.lockedToUser'];
+                },
               },
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
@@ -594,26 +654,39 @@ export class KitInfoComponent {
               }
             },
             {
-              key: 'needsFurtherInvestigation',
+              key: 'subStatus.needsFurtherInvestigation',
               type: 'checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
                 label: 'Needs further investigation?',
-                required: false
+                required: false,
+                change: (field, $event) => {
+                  const data = field.parent.formControl.value || {};
+                  this.disabledStatuses = data['subStatus.needsFurtherInvestigation'] || data['subStatus.needsSparePart'] || data['subStatus.installationOfOSFailed'] || data['subStatus.wipeFailed'] || data['subStatus.lockedToUser'];
+                },
               },
               validation: {
                 show: false
               }
             },
             {
-              key: 'needsSparePart',
+              key: 'subStatus.needsSparePart',
               type: 'checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
                 label: 'Needs spare part?',
-                required: false
+                required: false,
+                change: (field, $event) => {
+                  const data = field.parent.formControl.value || {};
+                  this.disabledStatuses = data['subStatus']['needsFurtherInvestigation'] || data['subStatus']['needsSparePart'] || data['subStatus']['installationOfOSFailed'] || data['subStatus']['wipeFailed'] || data['subStatus']['lockedToUser'];
+                  console.log(this.disabledStatuses);
+                  // if(this.disabledStatuses) {
+                  //   this.statusField.templateOptions['options'] = KIT_STATUS_LABELS_WITH_DISABLED;
+                  // }
+                },
+
               },
               validation: {
                 show: false
