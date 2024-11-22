@@ -351,6 +351,9 @@ export class KitInfoComponent {
       options: KIT_STATUS_LABELS,
       required: true
     },
+    validation: {
+      show: true,
+    },
     expressionProperties: {
       'templateOptions.options': (model, state, field) => {
         if(this.disabledStatuses) {
@@ -358,7 +361,8 @@ export class KitInfoComponent {
         } else {
           return KIT_STATUS_LABELS;
         }
-      }
+      },
+      'validation.show': 'model.showErrorState'
     }
   }
 
@@ -593,7 +597,7 @@ export class KitInfoComponent {
                 required: false,
                 change: (field, $event) => {
                   const data = field.parent.formControl.value || {};
-                  this.disabledStatuses = data['subStatus.needsFurtherInvestigation'] || data['subStatus.needsSparePart'] || data['subStatus.installationOfOSFailed'] || data['subStatus.wipeFailed'] || data['subStatus.lockedToUser'];
+                  this.updateDisabledStatusFlag(data);
                 },
               },
               hideExpression: (model, state, field) => {
@@ -615,11 +619,7 @@ export class KitInfoComponent {
                 required: false,
                 change: (field, $event) => {
                   const data = field.parent.formControl.value || {};
-                  this.disabledStatuses = data['subStatus.needsFurtherInvestigation'] || data['subStatus.needsSparePart'] || data['subStatus.installationOfOSFailed'] || data['subStatus.wipeFailed'] || data['subStatus.lockedToUser'];
-                  console.log(this.disabledStatuses);
-                  // if(this.disabledStatuses) {
-                  //   this.statusField.templateOptions['options'] = KIT_STATUS_LABELS_WITH_DISABLED;
-                  // }
+                  this.updateDisabledStatusFlag(data);
                 },
               },
               hideExpression: (model, state, field) => {
@@ -641,7 +641,7 @@ export class KitInfoComponent {
                 required: false,
                 change: (field, $event) => {
                   const data = field.parent.formControl.value || {};
-                  this.disabledStatuses = data['subStatus.needsFurtherInvestigation'] || data['subStatus.needsSparePart'] || data['subStatus.installationOfOSFailed'] || data['subStatus.wipeFailed'] || data['subStatus.lockedToUser'];
+                  this.updateDisabledStatusFlag(data);
                 },
               },
               hideExpression: (model, state, field) => {
@@ -663,7 +663,7 @@ export class KitInfoComponent {
                 required: false,
                 change: (field, $event) => {
                   const data = field.parent.formControl.value || {};
-                  this.disabledStatuses = data['subStatus.needsFurtherInvestigation'] || data['subStatus.needsSparePart'] || data['subStatus.installationOfOSFailed'] || data['subStatus.wipeFailed'] || data['subStatus.lockedToUser'];
+                  this.updateDisabledStatusFlag(data);
                 },
               },
               validation: {
@@ -680,11 +680,7 @@ export class KitInfoComponent {
                 required: false,
                 change: (field, $event) => {
                   const data = field.parent.formControl.value || {};
-                  this.disabledStatuses = data['subStatus']['needsFurtherInvestigation'] || data['subStatus']['needsSparePart'] || data['subStatus']['installationOfOSFailed'] || data['subStatus']['wipeFailed'] || data['subStatus']['lockedToUser'];
-                  console.log(this.disabledStatuses);
-                  // if(this.disabledStatuses) {
-                  //   this.statusField.templateOptions['options'] = KIT_STATUS_LABELS_WITH_DISABLED;
-                  // }
+                  this.updateDisabledStatusFlag(data);
                 },
 
               },
@@ -802,6 +798,25 @@ export class KitInfoComponent {
 //   `
 // },
 
+  updateDisabledStatusFlag(data: any) {
+    this.disabledStatuses = data['subStatus']['needsFurtherInvestigation'] || data['subStatus']['needsSparePart'] || data['subStatus']['installationOfOSFailed'] || data['subStatus']['wipeFailed'] || data['subStatus']['lockedToUser'];
+
+    const disabledStatusGroup = ['ALLOCATION_DELIVERY_ARRANGED','ALLOCATION_QC_COMPLETED','ALLOCATION_READY','DISTRIBUTION_DELIVERED'];
+    var currentStatus = data['status'];
+
+    if(this.disabledStatuses && disabledStatusGroup.includes(currentStatus)) {
+      console.log('Invalidating');
+      setTimeout(() => this.statusField.formControl.setErrors({incorrect: true, serverError: { message: "Error"}}));
+      this.statusField.formControl.markAsTouched();
+      this.toastr.error(`
+        <small></small>
+        `, 'Choose a valid status', {
+          enableHtml: true
+        });
+    } else {
+      this.form.get('status').setErrors(null);
+    }
+  }
 
   private queryRef = this.apollo
     .watchQuery({
@@ -854,6 +869,7 @@ export class KitInfoComponent {
         const data = res.data['kit'];
         this.model = this.normalizeData(data);
         this.entityName = this.model['model'];
+        this.updateDisabledStatusFlag(data);
       } else {
         this.model = {};
         this.entityName = 'Not Found!';
@@ -982,6 +998,7 @@ export class KitInfoComponent {
   }
 
   updateEntity(data: any) {
+    console.log(this.form.invalid);
     data.id = this.entityId;
 
     // we set the value of content to a blank string if it is null so as to not create issues in the back
