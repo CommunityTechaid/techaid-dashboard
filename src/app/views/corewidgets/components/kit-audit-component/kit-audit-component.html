@@ -27,6 +27,11 @@
                                     <!-- <th>Age</th> -->
                                     <!-- <th>Type</th> -->
                                     <th>Status</th>
+                                    <th>OS Install Failed</th>
+                                    <th>Wipe Failed</th>
+                                    <th>Needs Spare Part</th>
+                                    <th>Needs Further Investigation</th>
+                                    <th>Locked to User</th>
                                     <th>Serial #</th>
                                 </tr>
                             </thead>
@@ -41,6 +46,11 @@
                                     <td>{{ ages[dt.entity.age] }}</td> -->
                                     <!-- <td>{{ dt.entity.type}}</td> -->
                                     <td>{{ statusTypes[dt.entity.status] || dt.entity.status }}</td>
+                                    <td><input type="checkbox" [checked]="dt.entity.subStatus?.installationOfOSFailed" onclick="return false;"></td>
+                                    <td><input type="checkbox" [checked]="dt.entity.subStatus?.wipeFailed" onclick="return false;"></td>
+                                    <td><input type="checkbox" [checked]="dt.entity.subStatus?.needsSparePart" onclick="return false;"></td>
+                                    <td><input type="checkbox" [checked]="dt.entity.subStatus?.needsFurtherInvestigation" onclick="return false;"></td>
+                                    <td><input type="checkbox" [checked]="dt.entity.subStatus?.lockedToUser" onclick="return false;"></td>
                                     <td>{{ dt.entity.serialNo }}</td>
                                 </tr>
                             </tbody>

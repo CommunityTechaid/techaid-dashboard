@@ -42,6 +42,15 @@ const QUERY_ENTITY = gql`
         serialNo
         updatedAt
         createdAt
+        subStatus {
+          installationOfOSFailed
+          wipeFailed
+          needsSparePart
+          needsFurtherInvestigation
+          network
+          installedOSName
+          lockedToUser
+        }
       }
     }
   }
