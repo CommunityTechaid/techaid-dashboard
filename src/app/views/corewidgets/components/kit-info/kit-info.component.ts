@@ -442,7 +442,7 @@ export class KitInfoComponent {
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
-            const unSupportedDevices = ['OTHER','COMMSDEVICE'];
+            const unSupportedDevices = ['OTHER'];
             return unSupportedDevices.includes(data['type']);
           }
         },
