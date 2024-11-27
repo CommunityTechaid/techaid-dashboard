@@ -488,13 +488,13 @@ export class KitInfoComponent {
       fieldGroup: [
         this.statusField,
         {
-          fieldGroupClassName: 'd-flex flex-column justify-content-between',
+          fieldGroupClassName: 'd-flex flex-column justify-content-between text-right',
           className: 'col-md-4',
           fieldGroup: [
             {
               key: 'subStatus.network',
               type: 'choice',
-              className: '',
+              className: 'text-left',
               templateOptions: {
                 label: 'Network provider?',
                 description: '',
@@ -520,7 +520,7 @@ export class KitInfoComponent {
             {
               key: 'subStatus.network',
               type: 'choice',
-              className: '',
+              className: 'text-left',
               templateOptions: {
                 label: 'Network provider?',
                 description: '',
@@ -545,7 +545,7 @@ export class KitInfoComponent {
             {
                 key: 'subStatus.installedOSName',
                 type: 'choice',
-                className: '',
+                className: 'text-left',
                 templateOptions: {
                   label: 'Installed OS',
                   description: 'What OS is installed on this device?',
@@ -589,7 +589,7 @@ export class KitInfoComponent {
             },
             {
               key: 'subStatus.lockedToUser',
-              type: 'checkbox',
+              type: 'kit-checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
@@ -611,7 +611,7 @@ export class KitInfoComponent {
             },
             {
               key: 'subStatus.wipeFailed',
-              type: 'checkbox',
+              type: 'kit-checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
@@ -633,7 +633,7 @@ export class KitInfoComponent {
             },
             {
               key: 'subStatus.installationOfOSFailed',
-              type: 'checkbox',
+              type: 'kit-checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
@@ -655,7 +655,7 @@ export class KitInfoComponent {
             },
             {
               key: 'subStatus.needsFurtherInvestigation',
-              type: 'checkbox',
+              type: 'kit-checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {
@@ -672,7 +672,7 @@ export class KitInfoComponent {
             },
             {
               key: 'subStatus.needsSparePart',
-              type: 'checkbox',
+              type: 'kit-checkbox',
               className: '',
               defaultValue: '',
               templateOptions: {

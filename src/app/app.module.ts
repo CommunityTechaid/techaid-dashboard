@@ -23,6 +23,7 @@ import { FormsModule, AbstractControl } from '@angular/forms';
 import { GraphQLModule } from './graphql.module';
 import { FormlyCustomNote } from './views/corewidgets/components/kit-info/custom-notes';
 import { FormlyCustomCreateNote } from './views/corewidgets/components/kit-info/custom-create-note';
+import { FormlyCustomKitCheckboxType } from './views/corewidgets/components/kit-info/custom-kit-checkbox'
 import { FormlyCustomKitInfoType } from './views/corewidgets/components/kit-info/custom-kit-info-input'
 import { FormlyCustomDeviceRequestNote } from './views/corewidgets/components/device-request-info/custom-notes';
 import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/components/device-request-info/custom-create-notes';
@@ -38,6 +39,7 @@ import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/compone
     FormlyCustomCreateNote,
     FormlyCustomDeviceRequestNote,
     FormlyCustomCreateDeviceRequestNote,
+    FormlyCustomKitCheckboxType,
     FormlyCustomKitInfoType
   ],
   imports: [
@@ -68,6 +70,7 @@ import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/compone
         { name: 'new-note', component: FormlyCustomCreateNote},
         { name: 'device-request-notes', component: FormlyCustomDeviceRequestNote },
         { name: 'device-request-new-note', component: FormlyCustomCreateDeviceRequestNote},
+        { name: 'kit-checkbox', component: FormlyCustomKitCheckboxType},
         { name: 'kit-info-input', component: FormlyCustomKitInfoType}
       ]
     })

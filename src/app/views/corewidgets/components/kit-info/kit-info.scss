@@ -49,3 +49,53 @@ form {
     width: 100%;
 
 }
+
+.kit-checkbox {
+  text-align: right !important;
+}
+
+.kit-checkbox-label {
+  padding-right: 12px;
+  vertical-align: middle;
+}
+
+.kit-checkbox-input {
+  -webkit-appearance: initial;
+  appearance: initial;
+  background: white;
+  width: 15px;
+  height: 15px;
+  border: black;
+  border-width: 1px;
+  border-style:solid;
+  position: relative;
+}
+
+.kit-checkbox-input:checked {
+  //background: red;
+}
+
+.kit-checkbox-input:checked:after {
+  /* Heres your symbol replacement */
+  content: "X";
+  color: red;
+  /* The following positions my tick in the center,
+  * but you could just overlay the entire box
+  * with a full after element with a background if you want to */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translate(-50%,-50%);
+  -moz-transform: translate(-50%,-50%);
+  -ms-transform: translate(-50%,-50%);
+  transform: translate(-50%,-50%);
+  /*
+  * If you want to fully change the check appearance, use the following:
+  * content: " ";
+  * width: 100%;
+  * height: 100%;
+  * background: blue;
+  * top: 0;
+  * left: 0;
+  */
+}
