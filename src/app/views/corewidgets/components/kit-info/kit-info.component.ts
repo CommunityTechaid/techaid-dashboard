@@ -571,7 +571,7 @@ export class KitInfoComponent {
                 hideExpression: (model, state, field) => {
                   const data = field.parent.formControl.value || {};
                   const unSupportedDevices = ['OTHER','COMMSDEVICE'];
-                  return data['type'] in unSupportedDevices;
+                  return unSupportedDevices.includes(data['type']);
                 },
                 expressionProperties: {
                   'templateOptions.items': (model, state, field) => {
@@ -618,7 +618,7 @@ export class KitInfoComponent {
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
                 const supportedDevices = ['SMARTPHONE','TABLET'];
-                return !(data['type'] in supportedDevices);
+                return !(supportedDevices.includes(data['type']));
               },
               validation: {
                 show: false
@@ -640,7 +640,7 @@ export class KitInfoComponent {
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
                 const supportedDevices = ['DESKTOP','LAPTOP','ALLINONE'];
-                return !(data['type'] in supportedDevices);
+                return !(supportedDevices.includes(data['type']));
               },
               validation: {
                 show: false
@@ -662,7 +662,7 @@ export class KitInfoComponent {
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
                 const unSupportedDevices = ['OTHER','COMMSDEVICE'];
-                return data['type'] in unSupportedDevices;
+                return unSupportedDevices.includes(data['type']);
               },
               validation: {
                 show: false
@@ -831,6 +831,10 @@ export class KitInfoComponent {
         });
     } else {
       this.form.get('status').setErrors(null);
+      console.log(this.toastr.currentlyActive,this.toastr.toasts);
+      if(this.toastr.currentlyActive > 0) {
+        this.toastr.remove(this.toastr.toasts[0].toastId);
+      }
     }
   }
 
