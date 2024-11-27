@@ -338,24 +338,6 @@ export class KitIndexComponent {
           }
         },
         {
-          key: 'age',
-          type: 'multicheckbox',
-          className: 'col-sm-4',
-          templateOptions: {
-            label: 'Roughly how old is your device?',
-            type: 'array',
-            options: [
-              { label: 'Less than a year', value: 1 },
-              { label: '1 - 2 years', value: 2 },
-              { label: '3 - 4 years', value: 4 },
-              { label: '5 - 6 years', value: 5 },
-              { label: 'More than 6 years old', value: 6 },
-              { label: 'I don\'t know!', value: 0 },
-            ],
-            required: false
-          }
-        },
-        {
           key: 'archived',
           type: 'multicheckbox',
           className: 'col-sm-4',
@@ -1111,25 +1093,6 @@ export class KitIndexComponent {
         this.filterForm.patchValue(this.filterModel);
       } catch (_) {
       }
-    });
-  }
-
-  createEntity(data: any) {
-    data.status = 'DONATION_NEW';
-
-    this.apollo.mutate({
-      mutation: CREATE_ENTITY,
-      variables: { data }
-    }).subscribe(data => {
-      this.total = null;
-      this.table.ajax.reload(null, false);
-    }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Create Device Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
     });
   }
 

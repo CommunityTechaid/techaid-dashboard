@@ -20,17 +20,11 @@
                             </span>
                             <span class="text">Filter <span *ngIf="filterCount > 0" class="badge badge-danger">{{filterCount}}</span></span>
                         </a>
-                        <a href="#" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm mr-1 mb-1">
-                            <span class="icon text-white-50">
-                                <i class="fas fa-laptop"></i>
-                            </span>
-                            <span class="text">Create Device</span>
-                        </a>
                         <a href="#" (click)="model={}; modal(quickCreateApi); false;" class="btn btn-primary btn-icon-split btn-sm mr-1 mb-1">
                             <span class="icon text-white-50">
                                 <i class="fas fa-laptop"></i>
                             </span>
-                            <span class="text">Quick Create Device</span>
+                            <span class="text">Create Device</span>
                         </a>
                     </div>
                 </div>
@@ -105,7 +99,7 @@
 
 <ng-template #quickCreateApi let-c="close" let-d="dismiss">
     <div class="modal-header">
-        <h4 class="modal-title">Quick New Device</h4>
+        <h4 class="modal-title">New Device</h4>
     </div>
     <div class="modal-body">
         <form [formGroup]="quickForm">
@@ -117,26 +111,6 @@
         <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
         <button [disabled]="form.invalid" type="button" class="btn btn-primary btn-sm"
             (click)="quickCreateEntity(quickForm.value); c('Close click')">
-            CREATE
-        </button>
-    </div>
-</ng-template>
-
-
-<ng-template #createApi let-c="close" let-d="dismiss">
-    <div class="modal-header">
-        <h4 class="modal-title">New Device</h4>
-    </div>
-    <div class="modal-body">
-        <form [formGroup]="form">
-            <formly-form [options]="options" [form]="form" [model]="model" [fields]="fields">
-            </formly-form>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-        <button [disabled]="form.invalid" type="button" class="btn btn-primary btn-sm"
-            (click)="createEntity(form.value); c('Close click')">
             CREATE
         </button>
     </div>
