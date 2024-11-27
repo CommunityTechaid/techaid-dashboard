@@ -462,7 +462,7 @@ export class KitInfoComponent {
                 return 'yellow';
               } else if(health >= 25) {
                 return 'orange';
-              } else if(health >= 0){
+              } else {
                 return 'red';
               }
             }
