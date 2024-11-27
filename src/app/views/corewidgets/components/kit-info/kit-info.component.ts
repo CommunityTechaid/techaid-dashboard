@@ -456,11 +456,13 @@ export class KitInfoComponent {
             'templateOptions.bgcolor': (model, state, field) => {
               const data = field.parent.formControl.value || {};
               const health = data['batteryHealth'];
-              if (health > 90) {
+              if (health >= 75) {
                 return 'green';
-              } else if(health > 30) {
+              } else if(health >= 50) {
                 return 'yellow';
-              } else {
+              } else if(health >= 25) {
+                return 'orange';
+              } else if(health >= 0){
                 return 'red';
               }
             }
