@@ -826,7 +826,8 @@ export class KitInfoComponent {
       this.toastr.error(`
         <small></small>
         `, 'Choose a valid status', {
-          enableHtml: true
+          enableHtml: true,
+          disableTimeOut: true
         });
     } else {
       this.form.get('status').setErrors(null);
