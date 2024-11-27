@@ -402,7 +402,12 @@ export class KitInfoComponent {
             label: "RAM",
             descriptor: "GB",
             type:"number"
-          }
+          },
+          hideExpression: (model, state, field) => {
+            const data = field.parent.formControl.value || {};
+            const unSupportedDevices = ['OTHER','COMMSDEVICE'];
+            return unSupportedDevices.includes(data['type']);
+          },
         },
         {
           key: 'typeOfStorage',
@@ -418,6 +423,11 @@ export class KitInfoComponent {
               {label: 'Hybrid', value: 'HYBRID' },
               {label: 'Unknown', value: 'UNKNOWN' }
             ]
+          },
+          hideExpression: (model, state, field) => {
+            const data = field.parent.formControl.value || {};
+            const unSupportedDevices = ['OTHER','COMMSDEVICE','PHONE','TABLET'];
+            return unSupportedDevices.includes(data['type']);
           }
         },
         {
@@ -429,6 +439,11 @@ export class KitInfoComponent {
             label: "Capacity",
             type: "number",
             descriptor: "GB"
+          },
+          hideExpression: (model, state, field) => {
+            const data = field.parent.formControl.value || {};
+            const unSupportedDevices = ['OTHER','COMMSDEVICE'];
+            return unSupportedDevices.includes(data['type']);
           }
         },
         {
@@ -440,6 +455,11 @@ export class KitInfoComponent {
             label: "TPM Version",
             type: "number",
             descriptor: ""
+          },
+          hideExpression: (model, state, field) => {
+            const data = field.parent.formControl.value || {};
+            const unSupportedDevices = ['OTHER','COMMSDEVICE','PHONE','TABLET'];
+            return unSupportedDevices.includes(data['type']);
           }
         },
         {
@@ -466,6 +486,11 @@ export class KitInfoComponent {
                 return 'red';
               }
             }
+          },
+          hideExpression: (model, state, field) => {
+            const data = field.parent.formControl.value || {};
+            const unSupportedDevices = ['OTHER','COMMSDEVICE'];
+            return unSupportedDevices.includes(data['type']);
           }
         },
         {
@@ -831,7 +856,6 @@ export class KitInfoComponent {
         });
     } else {
       this.form.get('status').setErrors(null);
-      console.log(this.toastr.currentlyActive,this.toastr.toasts);
       if(this.toastr.currentlyActive > 0) {
         this.toastr.remove(this.toastr.toasts[0].toastId);
       }
