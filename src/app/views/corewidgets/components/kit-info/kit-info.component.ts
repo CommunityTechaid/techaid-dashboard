@@ -474,7 +474,7 @@ export class KitInfoComponent {
           className: 'col-md-4',
           defaultValue: '',
           templateOptions: {
-            label: 'Make or model (if known)',
+            label: 'Make or model',
             rows: 2,
             placeholder: '',
             required: true
