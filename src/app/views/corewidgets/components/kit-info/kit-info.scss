@@ -78,6 +78,7 @@ form {
 .kit-checkbox-input:checked:after {
   /* Heres your symbol replacement */
   content: "X";
+  font-size: 1.5em;
   color: red;
   /* The following positions my tick in the center,
   * but you could just overlay the entire box
