@@ -451,6 +451,19 @@ export class KitInfoComponent {
             label: "Battery Health",
             type: "number",
             descriptor: ""
+          },
+          expressionProperties: {
+            'templateOptions.bgcolor': (model, state, field) => {
+              const data = field.parent.formControl.value || {};
+              const health = data['batteryHealth'];
+              if (health > 90) {
+                return 'green';
+              } else if(health > 30) {
+                return 'yellow';
+              } else {
+                return 'red';
+              }
+            }
           }
         },
         {

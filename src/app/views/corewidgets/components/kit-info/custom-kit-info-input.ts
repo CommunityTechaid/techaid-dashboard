@@ -30,7 +30,7 @@ Ideally, the input field should be dynamically rendered using custom selector bu
   styleUrls: ['kit-info.scss'],
   template: `
   <label *ngIf="to.label">{{to.label}}</label>
-    <div class="kit-info-input d-flex w-100 align-items-center justify-content-between">
+    <div class="kit-info-input d-flex w-100 align-items-center justify-content-between" style="background-color: {{ to.bgcolor || 'white' }}">
     <div style="font-size:smaller" class="d-flex">
 
       <select *ngIf="to.type=='select'" [hidden]="!editable" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="infoValue">
