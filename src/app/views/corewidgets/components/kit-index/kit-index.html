@@ -122,12 +122,13 @@
     </div>
     <div class="modal-body">
         <form [formGroup]="filterForm">
-            <formly-form [model]="filterModel" [form]="filterForm" [fields]="filterFields">
+            <formly-form [model]="filterModel" [form]="filterForm" [fields]="filterFields" [options]="filterOptions">
             </formly-form>
         </form>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+        <button type="button" class="btn btn-light btn-sm" (click)="filterOptions.resetModel();resetFilterForm()">RESET</button>
         <button [disabled]="form.invalid" type="button" class="btn btn-primary btn-sm"
             (click)="applyFilter(filterForm.value); c('Close click')">
             Filter
