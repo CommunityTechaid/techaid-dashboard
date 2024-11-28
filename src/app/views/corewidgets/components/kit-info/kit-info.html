@@ -14,7 +14,7 @@
         <ngb-tabset [destroyOnHide]="false">
             <ngb-tab title="Details">
                 <ng-template ngbTabContent>
-                    <div class="card shadow mb-4 mt-1">
+                    <div class="card shadow mb-4 mt-1" (keyup.enter)="updateEntity(form.value)">
                         <div class="card-header py-3">
                             <div class="d-flex justify-content-between">
                                 <div>

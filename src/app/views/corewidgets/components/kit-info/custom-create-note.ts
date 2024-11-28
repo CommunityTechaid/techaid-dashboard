@@ -21,7 +21,7 @@ mutation createNote($data: CreateNoteInput!) {
     template: `
   <div class="note-new" style="margin-bottom:20px">
     <label>Add a new note for this device</label>
-    <textarea class="form-control" #newNoteContent rows="4" [name]=key [formControl]="formControl" [placeholder]=to.placeholder></textarea>
+    <textarea class="form-control" #newNoteContent rows="4" [name]=key [formControl]="formControl" [placeholder]=to.placeholder (keyup.enter)="$event.stopPropagation()"></textarea>
   </div>
  `,
 })
