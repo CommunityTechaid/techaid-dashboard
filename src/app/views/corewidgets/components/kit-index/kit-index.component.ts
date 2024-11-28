@@ -313,6 +313,7 @@ export class KitIndexComponent {
   filter: any = {};
   filterCount = 0;
   filterModel: any = {archived: [false]};
+  filterOptions: FormlyFormOptions = {};
   filterForm: FormGroup = new FormGroup({});
   filterFields: Array<FormlyFieldConfig> = [
     {
@@ -785,6 +786,10 @@ export class KitIndexComponent {
     this.filterCount = count;
     this.filterModel = data;
     this.table.ajax.reload(null, false);
+  }
+
+  resetFilterForm() {
+    this.filterForm.reset();
   }
 
   modal(content) {
