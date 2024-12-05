@@ -642,7 +642,7 @@ export class KitInfoComponent {
               },
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
-                const supportedDevices = ['SMARTPHONE','TABLET'];
+                const supportedDevices = ['SMARTPHONE','TABLET','OTHER'];
                 return !(supportedDevices.includes(data['type']));
               },
               validation: {
@@ -664,7 +664,7 @@ export class KitInfoComponent {
               },
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
-                const supportedDevices = ['DESKTOP','LAPTOP','ALLINONE'];
+                const supportedDevices = ['DESKTOP','LAPTOP','ALLINONE','OTHER'];
                 return !(supportedDevices.includes(data['type']));
               },
               validation: {
@@ -684,11 +684,7 @@ export class KitInfoComponent {
                   this.updateDisabledStatusFlag(data);
                 },
               },
-              hideExpression: (model, state, field) => {
-                const data = field.parent.formControl.value || {};
-                const unSupportedDevices = ['OTHER','COMMSDEVICE'];
-                return unSupportedDevices.includes(data['type']);
-              },
+              hideExpression: 'model.type == \'COMMSDEVICE\'',
               validation: {
                 show: false
               }
