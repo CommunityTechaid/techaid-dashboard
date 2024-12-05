@@ -175,6 +175,7 @@ query findAutocompleteDonors($term: String) {
   }, where: {
     name: { _contains: $term }
     OR: [
+      { id: { _contains: $term } },
       { phoneNumber: { _contains: $term } },
       { email: { _contains: $term } }
     ]
