@@ -355,6 +355,57 @@ export class KitIndexComponent {
           }
         },
         {
+          className: 'col-sm-4',
+          fieldGroup: [
+            {
+              key: 'subStatus.lockedToUser',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Locked to user?',
+                required: false,
+              },
+            },
+            {
+              key: 'subStatus.wipeFailed',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Device wipe failed?',
+                required: false,
+              },
+            },
+            {
+              key: 'subStatus.installationOfOSFailed',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'OS Installation failed?',
+                required: false,
+              },
+            },
+            {
+              key: 'subStatus.needsFurtherInvestigation',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Needs further investigation?',
+                required: false,
+              },
+            },
+            {
+              key: 'subStatus.needsSparePart',
+              type: 'checkbox',
+              className: '',
+              templateOptions: {
+                label: 'Needs spare part?',
+                required: false,
+              },
+            }
+
+          ]
+        },
+        {
           key: 'status',
           type: 'choice',
           className: 'col-md-12',
@@ -478,10 +529,18 @@ export class KitIndexComponent {
       filter['status'] = {'_in': data.status };
     }
 
-    if (data.age && data.age.length) {
-      count = count + data.age.length;
-      filter['age'] = {'_in': data.age };
-    }
+    if(data.subStatus) {
+      const subStatusItems = { };
+
+      for (let key in data.subStatus) {
+        if(data.subStatus[key]) {
+          count++;
+          subStatusItems[key] = { _in: data.subStatus[key] };
+        }
+      }
+
+    filter['subStatus'] = subStatusItems;
+  }
 
     if (data.archived && data.archived.length) {
       count += data.archived.length;
