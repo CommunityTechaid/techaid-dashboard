@@ -46,6 +46,7 @@ Ideally, the input field should be dynamically rendered using custom selector bu
       <span class="pr-1" *ngIf="to.descriptor">{{to.descriptor }}</span>
     </div>
     <div>
+    <div *ngIf="!to.readonly">
       <i (click)="editField()" class="fas fa-edit fa-xs align-self-end"></i>
     </div>
       

@@ -454,7 +454,8 @@ export class KitInfoComponent {
           templateOptions: {
             label: "TPM Version",
             type: "number",
-            descriptor: ""
+            descriptor: "",
+            readonly: true
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
