@@ -195,11 +195,11 @@ query findAutocompleteDonorParents($term: String, $id: Long) {
   donorParentsConnection(page: {
     size: 50
   }, where: {
-    name: { _contains: $term }
-    archived: { _eq: false }
-    OR: [
-      { id: { _eq: $id } }
-    ]
+    AND: {
+      name: { _contains: $term },
+      id: { _eq: $id },
+      archived: { _eq: false }
+    }
   }){
     content  {
       id
