@@ -556,9 +556,8 @@ export class KitIndexComponent {
     }
 
     if (data.donorParentId && data.donorParentId.length) {
-      count += data.donorParentId.length;
+      count += 1;
       filter['donor'] = {donorParent: {id: {_eq: data.donorParentId}}};
-      console.log('filtering by donor parent',data.donorParentId);
     }
 
     if (data.donorParentType && data.donorParentType.length) {
@@ -577,10 +576,6 @@ export class KitIndexComponent {
 
       count += 1;
       filter['AND'].push({createdAt: {_lt: endDate }});
-    }
-
-    if(count > 0) {
-      console.log(count, data, filter);
     }
 
     localStorage.setItem(`kitFilters-${this.tableId}`, JSON.stringify(data));
