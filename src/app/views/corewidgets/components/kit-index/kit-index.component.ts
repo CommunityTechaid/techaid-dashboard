@@ -191,12 +191,15 @@ query findAutocompleteDonors($term: String) {
 `;
 
 const AUTOCOMPLETE_DONOR_PARENTS = gql`
-query findAutocompleteDonorParents($term: String) {
+query findAutocompleteDonorParents($term: String, $id: Long) {
   donorParentsConnection(page: {
     size: 50
   }, where: {
     name: { _contains: $term }
     archived: { _eq: false }
+    OR: [
+      { id: { _eq: $id } }
+    ]
   }){
     content  {
       id
@@ -554,7 +557,7 @@ export class KitIndexComponent {
 
     if (data.donorParentId && data.donorParentId.length) {
       count += data.donorParentId.length;
-      filter['donor'] = {donorParent: {id: {_in: data.donorParentId}}};
+      filter['donor'] = {donorParent: {id: {_eq: data.donorParentId}}};
       console.log('filtering by donor parent',data.donorParentId);
     }
 
@@ -574,6 +577,10 @@ export class KitIndexComponent {
 
       count += 1;
       filter['AND'].push({createdAt: {_lt: endDate }});
+    }
+
+    if(count > 0) {
+      console.log(count, data, filter);
     }
 
     localStorage.setItem(`kitFilters-${this.tableId}`, JSON.stringify(data));
@@ -720,7 +727,8 @@ export class KitIndexComponent {
         distinctUntilChanged(),
         tap(() => this.donorParentLoading = true),
         switchMap(term => from(donorParentRef.refetch({
-          term: term
+          term: term,
+          id: this.filterModel.donorParentId || null
         })).pipe(
           catchError(() => of([])),
           tap(() => this.donorParentLoading = false),
