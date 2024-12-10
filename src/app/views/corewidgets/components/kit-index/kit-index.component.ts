@@ -555,6 +555,7 @@ export class KitIndexComponent {
     if (data.donorParentId && data.donorParentId.length) {
       count += data.donorParentId.length;
       filter['donor'] = {donorParent: {id: {_in: data.donorParentId}}};
+      console.log('filtering by donor parent',data.donorParentId);
     }
 
     if (data.donorParentType && data.donorParentType.length) {
