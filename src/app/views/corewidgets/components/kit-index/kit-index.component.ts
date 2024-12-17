@@ -836,7 +836,7 @@ export class KitIndexComponent {
   }
 
   donorName(data) {
-    return `${data.name || ''}||${data.email || ''}`
+    return `${data.name || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
       .join(' / ')
