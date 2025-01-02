@@ -39,7 +39,7 @@
                                 <tr *ngFor="let dt of entities">
                                     <td> <span class="badge badge-secondary"> {{dt.revision.id}} </span> </td>
                                     <td>{{ dt.revision.timestamp | date:'medium' }}</td>
-                                    <td>{{ dt.revision.customUser }}</td>
+                                    <td>{{ dt.revision.customUser?.split("|")[1] }}</td>
                                     <!-- <td>{{ dt.type }} </td> -->
                                     <td>{{ dt.entity.model }}</td>
                                     <!-- <td>{{ dt.entity.updatedAt | date:'medium' }}</td>
