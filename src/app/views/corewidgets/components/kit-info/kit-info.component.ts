@@ -236,6 +236,7 @@ query findAutocompleteDeviceRequests($term: String) {
     }
     OR: [
     { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } },
+    { referringOrganisationContact: { fullName: { _contains: $term } } },
     { clientRef: { _contains: $term } }
     ]
   }){
@@ -244,6 +245,7 @@ query findAutocompleteDeviceRequests($term: String) {
      clientRef
      referringOrganisationContact {
       id
+      fullName
       referringOrganisation {
         id
         name
@@ -942,13 +944,6 @@ export class KitInfoComponent {
         }
       });
 
-    const deviceRequestRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_DEVICE_REQUESTS,
-        variables: {
-        }
-      });
-
     this.donors$ = concat(
       of([]),
       this.donorInput$.pipe(
@@ -971,6 +966,13 @@ export class KitInfoComponent {
         ))
       )
     );
+
+    const deviceRequestRef = this.apollo
+      .watchQuery({
+        query: AUTOCOMPLETE_DEVICE_REQUESTS,
+        variables: {
+        }
+      });
 
     this.deviceRequests$ = concat(
       of([]),
@@ -1025,7 +1027,7 @@ export class KitInfoComponent {
   }
 
   organisationName(data) {
-    return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.id || ''}`
+    return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.referringOrganisationContact.fullName || ''}||${data.clientRef || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
       .join(' / ')
