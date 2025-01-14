@@ -647,7 +647,7 @@ export class OrgRequestComponent {
         // TODO: find some way to derive these from requestedItems so it's
         // all defined in one place
         { value: 'laptops', label: 'Laptop' },
-        { value: 'desktops', label: 'Desktop computer' },
+        // { value: 'desktops', label: 'Desktop computer' }, // Temp. disabling per Steph's request on Jan. 14, 2025
 
         //{ value: 'phones', label: 'Smartphone' },
         /* { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' } */,
