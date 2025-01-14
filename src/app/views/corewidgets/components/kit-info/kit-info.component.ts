@@ -1027,7 +1027,7 @@ export class KitInfoComponent {
   }
 
   organisationName(data) {
-    return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.referringOrganisationContact.fullName || ''}||${data.clientRef || ''}||${data.id || ''}`
+    return `${data.referringOrganisationContact.referringOrganisation.name || ''}||${data.referringOrganisationContact.fullName || ''}||${data.id || ''}`
       .split('||')
       .filter(f => f.trim().length)
       .join(' / ')
