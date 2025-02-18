@@ -670,17 +670,19 @@ export class OrgRequestComponent {
             className: 'col-md-12',
             template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
           },
+          */
           {
             key: 'isSimNeeded',
             type: 'checkbox',
             className: 'col-md-12',
+            hideExpression: true,
             templateOptions: {
               label: 'SIM Card',
               required: false,
               defaultValue: false,
               indeterminate: false
             }
-            */
+            
           },
         ]
       },
