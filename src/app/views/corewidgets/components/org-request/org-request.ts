@@ -1132,11 +1132,11 @@ export class OrgRequestComponent {
       payload[deviceRequestItem] = 1;
     }
 
-
+/*
     if (isSimNeeded === true) {
       payload['commsDevices'] = 1
     }
-
+*/
     return payload;
 
 
