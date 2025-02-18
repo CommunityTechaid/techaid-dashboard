@@ -674,6 +674,7 @@ export class OrgRequestComponent {
         fieldGroup: [
           this.deviceTypesPublic,
           this.deviceTypesAdmin,
+          /*
           {
             className: 'col-md-12',
             template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
@@ -688,6 +689,7 @@ export class OrgRequestComponent {
               defaultValue: false,
               indeterminate: false
             }
+            */
           },
         ]
       },
