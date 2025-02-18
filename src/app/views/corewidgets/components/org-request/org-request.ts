@@ -1132,11 +1132,11 @@ export class OrgRequestComponent {
       payload[deviceRequestItem] = 1;
     }
 
-/*
+
     if (isSimNeeded === true) {
       payload['commsDevices'] = 1
     }
-*/
+
     return payload;
 
 
@@ -1161,7 +1161,7 @@ export class OrgRequestComponent {
     }
 
 
-    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded)
+    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, false) //deviceRequest.isSimNeeded)
 
     if (Object.keys(requestItems).length === 0) {
       this.toastr.error("Please select the item your client needs");
