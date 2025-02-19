@@ -253,7 +253,7 @@ export class DeviceRequestInfoComponent {
               type: 'checkbox',
               className: '',
               templateOptions: {
-                label: 'Has no home internet',
+                label: 'Has home internet',
                 placeholder: '',
                 required: false
               }
