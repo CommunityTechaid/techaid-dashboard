@@ -682,7 +682,7 @@ export class OrgRequestComponent {
               defaultValue: false,
               indeterminate: false
             }
-            
+
           },
         ]
       },
@@ -751,7 +751,11 @@ export class OrgRequestComponent {
           required: false
         }
       },
-      this.deviceRequestCreateButton
+      this.deviceRequestCreateButton,
+      {
+        className: 'col-md-12',
+        template: '<div class="text-secondary"><span>* By submitting this form, I confirm that I have obtained the necessary permission to share the information provided.</span></div>'
+      }
     ]
   }
 
@@ -1122,7 +1126,7 @@ export class OrgRequestComponent {
     }
   }
 
-  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any) {
+  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any = false) {
 
 
     var payload: any = {};
