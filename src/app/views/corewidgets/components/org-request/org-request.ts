@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -102,6 +102,8 @@ export class OrgRequestComponent {
     showErrorState: false,
   };
   submited = false;
+  tfSubmitted = false;
+  responseId = null;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
   isOrgAdmin = false;
@@ -520,9 +522,11 @@ export class OrgRequestComponent {
               if (v) {
                 this.refOrganisationPage.hideExpression = false;
                 this.isLambethErrorMessage.hideExpression = true;
+                this.changeDetectorRef.detectChanges();
               } else {
                 this.refOrganisationPage.hideExpression = true;
                 this.isLambethErrorMessage.hideExpression = false;
+                this.changeDetectorRef.detectChanges();
               }
             }));
           }
@@ -809,7 +813,10 @@ export class OrgRequestComponent {
 
   constructor(
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private elementRef:ElementRef,
+    private renderer: Renderer2,
+    private changeDetectorRef: ChangeDetectorRef
   ) {
 
   }
@@ -934,6 +941,28 @@ export class OrgRequestComponent {
     );
 
   }
+
+  ngAfterViewInit(){
+
+
+    // Submit function for TypeForm
+    (window as any).submit = ({ formId, responseId }) => {
+      console.log(`Form ${formId} submitted, response id: ${responseId}`);
+      this.responseId = responseId;
+      this.tfSubmitted = true;
+
+      this.changeDetectorRef.detectChanges();
+    };
+
+    // Create the script element dynamically
+    const script = this.renderer.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://embed.typeform.com/next/embed.js'; // Correct URL
+    this.renderer.appendChild(this.elementRef.nativeElement, script);
+
+
+  }
+
 
   async saveNewReferringOrganisation(): Promise<boolean> {
 

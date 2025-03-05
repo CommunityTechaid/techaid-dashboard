@@ -32,7 +32,10 @@
                     <div *ngIf="content?.content" class="row">
                         <div [innerHtml]="content?.content"></div>
                     </div>
-                    <form *ngIf="!submited" [formGroup]="form">
+                    <div *ngIf="!tfSubmitted">
+                      <div data-tf-live="01JMJ02MAP1X0W9TK3R7S3FAFQ" data-tf-on-submit="submit"></div>
+                    </div>
+                    <form *ngIf="!submited && tfSubmitted" [formGroup]="form">
                       <formly-form [options]="options" (ngSubmit)="form.valid && createEntity(form.value)"
                                    [form]="form" [model]="model" [fields]="fields">
                       </formly-form>
