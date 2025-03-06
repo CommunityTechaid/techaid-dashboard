@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -522,11 +522,9 @@ export class OrgRequestComponent {
               if (v) {
                 this.refOrganisationPage.hideExpression = false;
                 this.isLambethErrorMessage.hideExpression = true;
-                this.changeDetectorRef.detectChanges();
               } else {
                 this.refOrganisationPage.hideExpression = true;
                 this.isLambethErrorMessage.hideExpression = false;
-                this.changeDetectorRef.detectChanges();
               }
             }));
           }
@@ -816,7 +814,8 @@ export class OrgRequestComponent {
     private apollo: Apollo,
     private elementRef:ElementRef,
     private renderer: Renderer2,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
 
   }
@@ -951,7 +950,13 @@ export class OrgRequestComponent {
       this.responseId = responseId;
       this.tfSubmitted = true;
 
-      this.changeDetectorRef.detectChanges();
+     
+      // Angular is not aware of field changes so we run detectChanges to force it
+      this.ngZone.run(() => {
+        this.changeDetectorRef.detectChanges();
+      });
+     
+
     };
 
     // Create the script element dynamically
