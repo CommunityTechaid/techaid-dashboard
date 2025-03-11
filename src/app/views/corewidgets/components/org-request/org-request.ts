@@ -815,7 +815,9 @@ export class OrgRequestComponent {
     private elementRef:ElementRef,
     private renderer: Renderer2,
     private changeDetectorRef: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
 
   }
@@ -950,12 +952,12 @@ export class OrgRequestComponent {
       this.responseId = responseId;
       this.tfSubmitted = true;
 
-     
+
       // Angular is not aware of field changes so we run detectChanges to force it
       this.ngZone.run(() => {
         this.changeDetectorRef.detectChanges();
       });
-     
+
 
     };
 
@@ -1240,6 +1242,14 @@ export class OrgRequestComponent {
       }
       this.toastr.error(message);
       return false;
+    });
+  }
+
+  addParamsToUrl(borough: string, ward: string) {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { borough, ward },
+      queryParamsHandling: 'merge',
     });
   }
 
