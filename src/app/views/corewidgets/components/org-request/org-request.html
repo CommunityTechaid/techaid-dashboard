@@ -33,13 +33,14 @@
                         <div [innerHtml]="content?.content"></div>
                     </div>
                     <div *ngIf="!tfSubmitted">
-                      <iframe
+
+                      <iframe *ngIf="!showTypeform"
                         src="https://communitytechaid.github.io/ward_lookup.html"
                         width="100%"
                         height="600px"
                         style="border: none;">
                       </iframe>
-                      <div data-tf-live="01JMJ02MAP1X0W9TK3R7S3FAFQ" data-tf-on-submit="submit"></div>
+                      <div id="tf-form" style="width: 100%; height: auto"></div>
                     </div>
                     <form *ngIf="!submited && tfSubmitted" [formGroup]="form">
                       <formly-form [options]="options" (ngSubmit)="form.valid && createEntity(form.value)"
@@ -52,7 +53,7 @@
                 </div>
             </div>
     </div>
-  <button (click)="addParamsToUrl('Lambeth', 'Brixton Hill')">
-    Add borough & ward to URL
-  </button>
 </div>
+<button (click)="addParamsToUrl('Lambeth', 'Brixton Hill')">
+   Add borough & ward to URL
+ </button>

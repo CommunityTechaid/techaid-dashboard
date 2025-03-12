@@ -1,20 +1,22 @@
-import { Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ToastrService } from 'ngx-toastr';
+import {Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef, NgZone} from '@angular/core';
+import {Subject, of, forkJoin, Observable, Subscription, concat, from} from 'rxjs';
+import {AppGridDirective} from '@app/shared/modules/grid/app-grid.directive';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {ToastrService} from 'ngx-toastr';
 import gql from 'graphql-tag';
-import { Apollo } from 'apollo-angular';
+import {Apollo} from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
-import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
-import { UpdateFormDirty } from '@ngxs/form-plugin';
-import { Select } from '@ngxs/store';
-import { UserState } from '@app/state/state.module';
-import { User } from '@app/state/user/user.state';
+import {debounceTime, distinctUntilChanged, tap, switchMap, catchError} from 'rxjs/operators';
+import {FormGroup, ValidationErrors, AbstractControl} from '@angular/forms';
+import {FormlyFormOptions, FormlyFieldConfig} from '@ngx-formly/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {isInteger} from '@ng-bootstrap/ng-bootstrap/util/util';
+import {UpdateFormDirty} from '@ngxs/form-plugin';
+import {Select} from '@ngxs/store';
+import {UserState} from '@app/state/state.module';
+import {User} from '@app/state/user/user.state';
+
+declare var window: any;
 
 const CREATE_ENTITY = gql`
 mutation createOrganisation($data: CreateOrganisationInput!) {
@@ -117,6 +119,7 @@ export class OrgRequestComponent {
   isOrganisationExists = true;
   isContactExists = true;
   newOrganisationName = ""
+  showTypeform = false;
 
 
   //Review and remove
@@ -532,8 +535,8 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client live in either Lambeth or Southwark?',
           options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' }
+            {value: true, label: 'Yes'},
+            {value: false, label: 'No'}
           ],
           required: true
         },
@@ -599,15 +602,15 @@ export class OrgRequestComponent {
             this.submitting = false;
             this.deviceRequestCreateButton.templateOptions.disabled = this.submitting
           })
-          ;
+        ;
       }
     },
   }
 
   /**
-  * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
-  *
-  */
+   * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
+   *
+   */
   deviceTypesAdmin: FormlyFieldConfig = {
     key: 'deviceRequestItems',
     type: 'radio',
@@ -618,12 +621,12 @@ export class OrgRequestComponent {
       options: [
         // TODO: find some way to derive these from requestedItems so it's
         // all defined in one place
-        { value: 'laptops', label: 'Laptop' },
-        { value: 'desktops', label: 'Desktop computer' },
-        { value: 'phones', label: 'Smartphone' },
-        { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
-        { value: 'tablets', label: 'Tablet' },
-        { value: 'other', label: 'Other' }
+        {value: 'laptops', label: 'Laptop'},
+        {value: 'desktops', label: 'Desktop computer'},
+        {value: 'phones', label: 'Smartphone'},
+        {value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)'},
+        {value: 'tablets', label: 'Tablet'},
+        {value: 'other', label: 'Other'}
       ],
       required: false
     }
@@ -639,7 +642,7 @@ export class OrgRequestComponent {
       options: [
         // TODO: find some way to derive these from requestedItems so it's
         // all defined in one place
-        { value: 'laptops', label: 'Laptop' },
+        {value: 'laptops', label: 'Laptop'},
         // { value: 'desktops', label: 'Desktop computer' }, // Temp. disabling per Steph's request on Jan. 14, 2025
 
         //{ value: 'phones', label: 'Smartphone' },
@@ -718,9 +721,9 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client have access to the internet at home?',
           options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
+            {value: true, label: 'Yes'},
+            {value: false, label: 'No'},
+            {value: null, label: 'Don\'t know'}
           ],
           required: false
         }
@@ -732,9 +735,9 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
           options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
+            {value: true, label: 'Yes'},
+            {value: false, label: 'No'},
+            {value: null, label: 'Don\'t know'}
           ],
           required: false
         }
@@ -746,9 +749,9 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
           options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
+            {value: true, label: 'Yes'},
+            {value: false, label: 'No'},
+            {value: null, label: 'Don\'t know'}
           ],
           required: false
         }
@@ -812,7 +815,7 @@ export class OrgRequestComponent {
   constructor(
     private toastr: ToastrService,
     private apollo: Apollo,
-    private elementRef:ElementRef,
+    private elementRef: ElementRef,
     private renderer: Renderer2,
     private changeDetectorRef: ChangeDetectorRef,
     private ngZone: NgZone,
@@ -882,8 +885,7 @@ export class OrgRequestComponent {
     const orgRef = this.apollo
       .watchQuery({
         query: AUTOCOMPLETE_REFERRING_ORGANISATION,
-        variables: {
-        }
+        variables: {}
       });
 
     this.referringOrgs$ = concat(
@@ -892,8 +894,8 @@ export class OrgRequestComponent {
         debounceTime(200),
         distinctUntilChanged(),
         tap(() => {
-          this.referringOrgLoading = true;
-        }
+            this.referringOrgLoading = true;
+          }
         ),
         switchMap(term => {
           this.referringOrganisationContactDetailFormGroup.hideExpression = true
@@ -921,7 +923,8 @@ export class OrgRequestComponent {
                 return of(data);
               })
             )
-          } return []
+          }
+          return []
         })
       )
     );
@@ -943,29 +946,29 @@ export class OrgRequestComponent {
 
   }
 
-  ngAfterViewInit(){
+  ngAfterViewInit() {
 
 
     // Submit function for TypeForm
-    (window as any).submit = ({ formId, responseId }) => {
-      console.log(`Form ${formId} submitted, response id: ${responseId}`);
-      this.responseId = responseId;
-      this.tfSubmitted = true;
+    /*  (window as any).submit = ({ formId, responseId }) => {
+        console.log(`Form ${formId} submitted, response id: ${responseId}`);
+        this.responseId = responseId;
+        this.tfSubmitted = true;
 
 
-      // Angular is not aware of field changes so we run detectChanges to force it
-      this.ngZone.run(() => {
-        this.changeDetectorRef.detectChanges();
-      });
+        // Angular is not aware of field changes so we run detectChanges to force it
+        this.ngZone.run(() => {
+          this.changeDetectorRef.detectChanges();
+        });
 
 
-    };
+      };*/
 
-    // Create the script element dynamically
+    /*// Create the script element dynamically
     const script = this.renderer.createElement('script');
     script.type = 'text/javascript';
     script.src = 'https://embed.typeform.com/next/embed.js'; // Correct URL
-    this.renderer.appendChild(this.elementRef.nativeElement, script);
+    this.renderer.appendChild(this.elementRef.nativeElement, script);*/
 
 
   }
@@ -995,7 +998,7 @@ export class OrgRequestComponent {
     var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION,
-      variables: { data }
+      variables: {data}
     }).toPromise().then(res => {
 
       var data = res["data"]["createReferringOrganisation"]["id"];
@@ -1038,7 +1041,7 @@ export class OrgRequestComponent {
     Object.keys(data).forEach(k => data[k] = typeof data[k] == 'string' ? data[k].trim() : data[k]);
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION_CONTACT,
-      variables: { data }
+      variables: {data}
     }).toPromise().then(res => {
 
       var data = res["data"]["createReferringOrganisationContact"]["id"];
@@ -1081,7 +1084,7 @@ export class OrgRequestComponent {
 
       if (data && data.length > 1) {
         const contacts = data.map((r) => {
-          return { label: r.fullName, value: r.id };
+          return {label: r.fullName, value: r.id};
         });
 
         this.referringOrganisationContactProceedButton.hideExpression = true;
@@ -1223,7 +1226,7 @@ export class OrgRequestComponent {
 
     return this.apollo.mutate({
       mutation: CREATE_DEVICE_REQUEST,
-      variables: { data }
+      variables: {data}
     }).toPromise().then(res => {
 
       var data = res["data"]["createDeviceRequest"]["id"];
@@ -1246,11 +1249,14 @@ export class OrgRequestComponent {
   }
 
   addParamsToUrl(borough: string, ward: string) {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { borough, ward },
-      queryParamsHandling: 'merge',
-    });
+    this.showTypeform = true;
+    window.tf.createWidget('MV7n79FJ', {
+      container: document.querySelector('#tf-form'),
+      hidden: {
+        borough:borough,
+        ward: ward
+      }
+    })
   }
 
   createEntity(data: any) {
@@ -1264,7 +1270,7 @@ export class OrgRequestComponent {
     this.submitting = true;
     this.apollo.mutate({
       mutation: CREATE_ENTITY,
-      variables: { data }
+      variables: {data}
     }).subscribe(data => {
       this.submited = true;
       this.submitting = false;
