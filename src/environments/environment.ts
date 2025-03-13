@@ -3,14 +3,14 @@
 // `ng build --env=prod` then `environment.prod.ts` will be used instead.
 // The list of which env maps to which file can be found in `.angular-cli.json`.
 declare var require: any;
-import { APP_VERSION, API_HOST } from './version';
+import { APP_VERSION } from './version';
 
 import { ConfigParams } from '@app/state/config-params';
 
 export const environment: ConfigParams = {
   production: false,
   environment: 'development',
-  graphql_endpoint: `${API_HOST}/graphql`,
+  graphql_endpoint: '/api/graphql',
   version: APP_VERSION,
   auth_endpoint: 'https://api.communitytechaid.org.uk/auth/user',
   auth_audience: 'https://api.communitytechaid.org.uk',
