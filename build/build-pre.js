@@ -23,12 +23,17 @@ function dateFormat (date, fstr, utc) {
 }
 
 const build = dateFormat(today, '%y.%m.%d-%H%M');
-const src = `export const APP_VERSION = {version: '${appVersion}', build: '${build}', date: '${today.toISOString()}'};`;
+const api_host = process.env.API_HOST || '/api';
+const src = `
+export const APP_VERSION = {version: '${appVersion}', build: '${build}', date: '${today.toISOString()}'};
+export const API_HOST = '${api_host}';
+`;
 fs.writeFile(versionFilePath, src, { flat: 'w' }, function (err) {
     if (err) {
         return console.log(err);
     }
 
     console.log(`Updating application version ${appVersion} build: ${build}`);
+    console.log(`Updating API_HOST to ${api_host}`);
     console.log(`${'Writing version module to '}${versionFilePath}\n`);
 });
