@@ -19,49 +19,49 @@ import {User} from '@app/state/user/user.state';
 declare var window: any;
 
 const CREATE_ENTITY = gql`
-mutation createOrganisation($data: CreateOrganisationInput!) {
-  createOrganisation(data: $data){
-     id
+  mutation createOrganisation($data: CreateOrganisationInput!) {
+    createOrganisation(data: $data){
+      id
+    }
   }
-}
 `;
 
 const CREATE_REFERRING_ORGANISATION = gql`
-mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
-  createReferringOrganisation(data: $data){
-     id
+  mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
+    createReferringOrganisation(data: $data){
+      id
+    }
   }
-}
 `;
 
 const QUERY_CONTENT = gql`
-query findContent {
-  post(where: {slug: {_eq: "/organisation-device-request"}}){
-    id
-    content
-  }
-}`;
+  query findContent {
+    post(where: {slug: {_eq: "/organisation-device-request"}}){
+      id
+      content
+    }
+  }`;
 
 
 const AUTOCOMPLETE_REFERRING_ORGANISATION = gql`
-query findAutocompleteReferringOrgs($term: String) {
-  referringOrganisationsPublic(where: {
+  query findAutocompleteReferringOrgs($term: String) {
+    referringOrganisationsPublic(where: {
       name: {
         _contains: $term
       },
       archived: {
         _eq: false
       }
-  }){
-     id
-     name
+    }){
+      id
+      name
+    }
   }
-}
 `;
 
 const FIND_ORGANISATION_CONTACT = gql`
-query findOrganisationContact($email: String, $refOrgId: Long) {
-  referringOrganisationContactsPublic( where: {
+  query findOrganisationContact($email: String, $refOrgId: Long) {
+    referringOrganisationContactsPublic( where: {
       email: { _ilike: $email }
       referringOrganisation: { id: { _eq: $refOrgId } }
       archived: { _eq: false }
@@ -69,23 +69,30 @@ query findOrganisationContact($email: String, $refOrgId: Long) {
       id
       fullName
     }
-}
+  }
 `;
 
 const CREATE_REFERRING_ORGANISATION_CONTACT = gql`
-mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
-  createReferringOrganisationContact(data: $data){
-     id
+  mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
+    createReferringOrganisationContact(data: $data){
+      id
+    }
   }
-}
 `;
 
 const CREATE_DEVICE_REQUEST = gql`
-mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
-  createDeviceRequest(data: $data){
-     id
+  mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
+    createDeviceRequest(data: $data){
+      id,
+      correlationId
+    }
   }
-}
+`;
+
+const DELETE_CORRELATION_ID = gql`
+  mutation deleteCorrelationId($id: ID!) {
+    deleteCorrelationId(id: $id)
+  }
 `;
 
 @Component({
@@ -104,7 +111,7 @@ export class OrgRequestComponent {
     showErrorState: false,
   };
   submited = false;
-  tfSubmitted = false;
+  wardSubmitted = false;
   responseId = null;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
@@ -120,6 +127,9 @@ export class OrgRequestComponent {
   isContactExists = true;
   newOrganisationName = ""
   showTypeform = false;
+  borough: string = "";
+  ward: string = "";
+  private deviceRequestId: any;
 
 
   //Review and remove
@@ -950,19 +960,28 @@ export class OrgRequestComponent {
 
 
     // Submit function for TypeForm
-    /*  (window as any).submit = ({ formId, responseId }) => {
+      (window as any).submit = ({ formId, responseId }) => {
         console.log(`Form ${formId} submitted, response id: ${responseId}`);
-        this.responseId = responseId;
-        this.tfSubmitted = true;
+        return this.apollo.mutate({
+          mutation: DELETE_CORRELATION_ID,
+          variables: { id: this.deviceRequestId }
+        }).toPromise().then(res => {
 
+          const result = res?.data["deleteCorrelationId"];
+          if (result === true) {
+            this.toastr.success("Request created successfully.");
+            return true;
+          }
 
-        // Angular is not aware of field changes so we run detectChanges to force it
-        this.ngZone.run(() => {
-          this.changeDetectorRef.detectChanges();
+          this.toastr.error("There was an error with the request. Please try again or contact support.");
+          return false;
+
+        }).catch(error => {
+          const message = error.message?.split(':')[1]?.trim() || "Unknown error";
+          this.toastr.error(message);
+          return false;
         });
-
-
-      };*/
+      };
 
     /*// Create the script element dynamically
     const script = this.renderer.createElement('script');
@@ -1229,14 +1248,21 @@ export class OrgRequestComponent {
       variables: {data}
     }).toPromise().then(res => {
 
-      var data = res["data"]["createDeviceRequest"]["id"];
+      let data = res["data"]["createDeviceRequest"];
+      console.log(data);
+      console.log('res',res);
       if (data) {
-        this.toastr.info("Your request was made successfully.")
-        return true;
-      } else {
-        this.toastr.error("Could not create your request.");
-        return false;
+        if (data["id"]) {
+          this.deviceRequestId = data["id"];
+          this.displayTypeForm(data["correlationId"]);
+          this.toastr.info("Please fill in the equalities data ")
+          return true;
+        }
       }
+
+      this.toastr.error("Could not create your request.");
+      return false;
+
     }).catch(error => {
       var message = error.message.split(':')[1]
       if (message.trim().startsWith("Could not create new requests. This user already has")) {
@@ -1248,13 +1274,27 @@ export class OrgRequestComponent {
     });
   }
 
-  addParamsToUrl(borough: string, ward: string) {
+  storeBoroughAndWard(borough: string, ward: string) {
+    this.borough = borough;
+    this.ward = ward;
+    window.tf.createWidget('MV7n79FJ', {
+      container: document.querySelector('#tf-form'),
+      hidden: {
+        borough: this.borough,
+        ward: this.ward
+      }
+    })
+    this.wardSubmitted = true;
+  }
+
+  displayTypeForm(correlationId: any) {
     this.showTypeform = true;
     window.tf.createWidget('MV7n79FJ', {
       container: document.querySelector('#tf-form'),
       hidden: {
-        borough:borough,
-        ward: ward
+        borough: this.borough,
+        ward: this.ward,
+        corr_id: correlationId
       }
     })
   }
