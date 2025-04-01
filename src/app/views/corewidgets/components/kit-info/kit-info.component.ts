@@ -512,12 +512,24 @@ export class KitInfoComponent {
       fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
       fieldGroup: [
         {
-          key: 'model',
+          key: 'make',
           type: 'input',
-          className: 'col-md-4',
+          className: 'col-md-2',
           defaultValue: '',
           templateOptions: {
-            label: 'Make or model',
+            label: 'Make',
+            rows: 2,
+            placeholder: '',
+            required: true
+          }
+        },
+        {
+          key: 'model',
+          type: 'input',
+          className: 'col-md-2',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Model',
             rows: 2,
             placeholder: '',
             required: true
