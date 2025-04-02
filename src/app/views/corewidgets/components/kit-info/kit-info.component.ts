@@ -912,6 +912,14 @@ export class KitInfoComponent {
     }
   }
 
+  private formatMakeAndModel(make: string, model: string) {
+    return `${make || ''}||${model || ''}`
+      .split('||')
+      .filter(f => f.trim().length)
+      .join(' ')
+      .trim();
+  }
+
   private fetchData() {
     if (!this.entityId) {
       return;
@@ -923,7 +931,7 @@ export class KitInfoComponent {
       if (res.data && res.data['kit']) {
         const data = res.data['kit'];
         this.model = this.normalizeData(data);
-        this.entityName = this.model['model'];
+        this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
         this.updateDisabledStatusFlag(data);
       } else {
         this.model = {};
@@ -1068,7 +1076,7 @@ export class KitInfoComponent {
       }
     }).subscribe(res => {
       this.model = this.normalizeData(res.data['updateKit']);
-      this.entityName = this.model['model'];
+      this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
       this.toastr.info(`
       <small>Successfully updated device ${this.entityName}</small>
       `, 'Updated Device', {
