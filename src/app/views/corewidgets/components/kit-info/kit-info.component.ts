@@ -520,7 +520,7 @@ export class KitInfoComponent {
             label: 'Make',
             rows: 2,
             placeholder: '',
-            required: true
+            required: false
           }
         },
         {
