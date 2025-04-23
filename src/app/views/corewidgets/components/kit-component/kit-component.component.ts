@@ -52,6 +52,7 @@ const QUERY_ENTITY = gql`
       number
       content {
         id
+        make
         model
         age
         type
@@ -593,6 +594,7 @@ export class KitComponent {
       },
       columns: [
         { data: null, width: '15px', orderable: false },
+        { data: 'make' },
         { data: 'model' },
         { data: 'donor' },
         { data: 'createdAt' },
