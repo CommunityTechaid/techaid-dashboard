@@ -1,4 +1,4 @@
-import {Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef, NgZone} from '@angular/core';
+import {Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef, NgZone, HostListener} from '@angular/core';
 import {Subject, of, forkJoin, Observable, Subscription, concat, from} from 'rxjs';
 import {AppGridDirective} from '@app/shared/modules/grid/app-grid.directive';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
@@ -954,6 +954,11 @@ export class OrgRequestComponent {
       })
     );
 
+  }
+
+  @HostListener('window:message', ['$event'])
+  messageEvent(event: any) {
+    console.log("Message", event);
   }
 
   ngAfterViewInit() {
