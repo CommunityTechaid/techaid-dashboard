@@ -497,16 +497,33 @@ export class KitIndexComponent {
       }
     },
     {
-      key: 'model',
-      type: 'input',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Device Make or model',
-        rows: 2,
-        placeholder: '',
-        required: true
-      }
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'make',
+          type: 'input',
+          className: 'col-md-3',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Device Make',
+            rows: 2,
+            placeholder: '',
+            required: false
+          }
+        },
+        {
+          key: 'model',
+          type: 'input',
+          className: 'col-md-9',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Device Model',
+            rows: 2,
+            placeholder: '',
+            required: true
+          }
+        }
+      ]
     },
     this.donorField
   ]
