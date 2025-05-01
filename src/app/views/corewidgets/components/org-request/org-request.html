@@ -1,6 +1,6 @@
 <!-- <app-local-css [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}'"></app-local-css> -->
 <app-local-css *ngIf="!isOrgAdmin"
-               [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}textarea::placeholder { text-align: center; }'"></app-local-css>
+  [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}textarea::placeholder { text-align: center; }'"></app-local-css>
 
 <!-- Content Row -->
 <div class="row d-flex justify-content-center align-items-center">
@@ -8,11 +8,21 @@
   <div class="col-lg-10 mb-4">
     <div class="card shadow mb-4 mt-4">
       <div class="card-header py-3">
-        <div class="d-flex justify-content-center">
-          <i class="logo"></i>
-        </div>
-        <div class="d-flex justify-content-center">
-          <h5 class="m-0 font-weight-bold text-primary">Request devices</h5>
+
+        <div class="row justify-content-center align-items-end">
+          <div class="col-10">
+            <div class="d-flex justify-content-center">
+              <i class="logo"></i>
+            </div>
+            <div class="d-flex justify-content-center">
+              <h5 class="m-0 font-weight-bold text-primary">Request devices</h5>
+            </div>
+          </div>
+          <div *ngIf="showTypeform" class="col-2">
+            <div id="countdownTimer" class="d-flex align-items-center justify-content-center p-3" style="width: 200px; height: 80px; font-size: 1.5rem;">
+              <span id="timerDisplay">15:00</span>
+          </div>
+          </div>
         </div>
       </div>
       <div class="card-body">
@@ -22,10 +32,7 @@
               <p>Thank you for your request. We are currently dealing with a high volume of requests and
                 will do our best to contact you in the next 7 days.</p>
               <p>
-                <button
-                  style="width: 200px"
-                  class="btn btn-primary btn-sm p-2"
-                  (click)="reloadCurrentPage()">Make
+                <button style="width: 200px" class="btn btn-primary btn-sm p-2" (click)="reloadCurrentPage()">Make
                   another request
                 </button>
               </p>
@@ -39,18 +46,15 @@
         </div>
         <div *ngIf="!wardSubmitted">
 
-          <iframe *ngIf="!showTypeform"
-                  src="https://communitytechaid.github.io/ward_lookup.html?tada=true"
-                  width="100%"
-                  height="600px"
-                  style="border: none;">
+          <iframe *ngIf="!showTypeform" src="https://communitytechaid.github.io/ward_lookup.html?tada=true" width="100%"
+            height="600px" style="border: none;">
           </iframe>
         </div>
 
 
         <form *ngIf="!submited && wardSubmitted && !showTypeform" [formGroup]="form">
-          <formly-form [options]="options" (ngSubmit)="form.valid && createEntity(form.value)"
-                       [form]="form" [model]="model" [fields]="fields">
+          <formly-form [options]="options" (ngSubmit)="form.valid && createEntity(form.value)" [form]="form"
+            [model]="model" [fields]="fields">
           </formly-form>
           <button *ngIf="submiting" [disabled]="true" class="btn btn-info btn-sm p-2">
             <i class="fas fa-spinner fa-spin"></i> Saving ...

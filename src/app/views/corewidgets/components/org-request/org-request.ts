@@ -1,20 +1,20 @@
-import {Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef, NgZone, HostListener} from '@angular/core';
-import {Subject, of, forkJoin, Observable, Subscription, concat, from} from 'rxjs';
-import {AppGridDirective} from '@app/shared/modules/grid/app-grid.directive';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {ToastrService} from 'ngx-toastr';
+import { Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
+import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
+import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
-import {Apollo} from 'apollo-angular';
+import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
-import {debounceTime, distinctUntilChanged, tap, switchMap, catchError} from 'rxjs/operators';
-import {FormGroup, ValidationErrors, AbstractControl} from '@angular/forms';
-import {FormlyFormOptions, FormlyFieldConfig} from '@ngx-formly/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {isInteger} from '@ng-bootstrap/ng-bootstrap/util/util';
-import {UpdateFormDirty} from '@ngxs/form-plugin';
-import {Select} from '@ngxs/store';
-import {UserState} from '@app/state/state.module';
-import {User} from '@app/state/user/user.state';
+import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
+import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
+import { UpdateFormDirty } from '@ngxs/form-plugin';
+import { Select } from '@ngxs/store';
+import { UserState } from '@app/state/state.module';
+import { User } from '@app/state/user/user.state';
 
 declare var window: any;
 
@@ -545,8 +545,8 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client live in either Lambeth or Southwark?',
           options: [
-            {value: true, label: 'Yes'},
-            {value: false, label: 'No'}
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' }
           ],
           required: true
         },
@@ -612,7 +612,7 @@ export class OrgRequestComponent {
             this.submitting = false;
             this.deviceRequestCreateButton.templateOptions.disabled = this.submitting
           })
-        ;
+          ;
       }
     },
   }
@@ -631,12 +631,12 @@ export class OrgRequestComponent {
       options: [
         // TODO: find some way to derive these from requestedItems so it's
         // all defined in one place
-        {value: 'laptops', label: 'Laptop'},
-        {value: 'desktops', label: 'Desktop computer'},
-        {value: 'phones', label: 'Smartphone'},
-        {value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)'},
-        {value: 'tablets', label: 'Tablet'},
-        {value: 'other', label: 'Other'}
+        { value: 'laptops', label: 'Laptop' },
+        { value: 'desktops', label: 'Desktop computer' },
+        { value: 'phones', label: 'Smartphone' },
+        { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
+        { value: 'tablets', label: 'Tablet' },
+        { value: 'other', label: 'Other' }
       ],
       required: false
     }
@@ -652,7 +652,7 @@ export class OrgRequestComponent {
       options: [
         // TODO: find some way to derive these from requestedItems so it's
         // all defined in one place
-        {value: 'laptops', label: 'Laptop'},
+        { value: 'laptops', label: 'Laptop' },
         // { value: 'desktops', label: 'Desktop computer' }, // Temp. disabling per Steph's request on Jan. 14, 2025
 
         //{ value: 'phones', label: 'Smartphone' },
@@ -731,9 +731,9 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client have access to the internet at home?',
           options: [
-            {value: true, label: 'Yes'},
-            {value: false, label: 'No'},
-            {value: null, label: 'Don\'t know'}
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+            { value: null, label: 'Don\'t know' }
           ],
           required: false
         }
@@ -745,9 +745,9 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
           options: [
-            {value: true, label: 'Yes'},
-            {value: false, label: 'No'},
-            {value: null, label: 'Don\'t know'}
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+            { value: null, label: 'Don\'t know' }
           ],
           required: false
         }
@@ -759,9 +759,9 @@ export class OrgRequestComponent {
         templateOptions: {
           label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
           options: [
-            {value: true, label: 'Yes'},
-            {value: false, label: 'No'},
-            {value: null, label: 'Don\'t know'}
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+            { value: null, label: 'Don\'t know' }
           ],
           required: false
         }
@@ -904,8 +904,8 @@ export class OrgRequestComponent {
         debounceTime(200),
         distinctUntilChanged(),
         tap(() => {
-            this.referringOrgLoading = true;
-          }
+          this.referringOrgLoading = true;
+        }
         ),
         switchMap(term => {
           this.referringOrganisationContactDetailFormGroup.hideExpression = true
@@ -965,28 +965,28 @@ export class OrgRequestComponent {
 
 
     // Submit function for TypeForm
-      (window as any).submit = ({ formId, responseId }) => {
-        console.log(`Form ${formId} submitted, response id: ${responseId}`);
-        return this.apollo.mutate({
-          mutation: DELETE_CORRELATION_ID,
-          variables: { id: this.deviceRequestId }
-        }).toPromise().then(res => {
+    (window as any).submit = ({ formId, responseId }) => {
+      console.log(`Form ${formId} submitted, response id: ${responseId}`);
+      return this.apollo.mutate({
+        mutation: DELETE_CORRELATION_ID,
+        variables: { id: this.deviceRequestId }
+      }).toPromise().then(res => {
 
-          const result = res?.data["deleteCorrelationId"];
-          if (result === true) {
-            this.toastr.success("Request created successfully.");
-            return true;
-          }
+        const result = res?.data["deleteCorrelationId"];
+        if (result === true) {
+          this.toastr.success("Request created successfully.");
+          return true;
+        }
 
-          this.toastr.error("There was an error with the request. Please try again or contact support.");
-          return false;
+        this.toastr.error("There was an error with the request. Please try again or contact support.");
+        return false;
 
-        }).catch(error => {
-          const message = error.message?.split(':')[1]?.trim() || "Unknown error";
-          this.toastr.error(message);
-          return false;
-        });
-      };
+      }).catch(error => {
+        const message = error.message?.split(':')[1]?.trim() || "Unknown error";
+        this.toastr.error(message);
+        return false;
+      });
+    };
 
     /*// Create the script element dynamically
     const script = this.renderer.createElement('script');
@@ -997,6 +997,21 @@ export class OrgRequestComponent {
 
   }
 
+  startTimer() {
+    let duration = 15 * 60; // 15 minutes in seconds
+    const display = document.getElementById('timerDisplay');
+    const timerInterval = setInterval(() => {
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      if (display) {
+        display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        if (--duration < 0) {
+          clearInterval(timerInterval);
+          display.textContent = "Time's up!";
+        }
+      }
+    }, 100);
+  }
 
   async saveNewReferringOrganisation(): Promise<boolean> {
 
@@ -1022,7 +1037,7 @@ export class OrgRequestComponent {
     var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION,
-      variables: {data}
+      variables: { data }
     }).toPromise().then(res => {
 
       var data = res["data"]["createReferringOrganisation"]["id"];
@@ -1065,7 +1080,7 @@ export class OrgRequestComponent {
     Object.keys(data).forEach(k => data[k] = typeof data[k] == 'string' ? data[k].trim() : data[k]);
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION_CONTACT,
-      variables: {data}
+      variables: { data }
     }).toPromise().then(res => {
 
       var data = res["data"]["createReferringOrganisationContact"]["id"];
@@ -1108,7 +1123,7 @@ export class OrgRequestComponent {
 
       if (data && data.length > 1) {
         const contacts = data.map((r) => {
-          return {label: r.fullName, value: r.id};
+          return { label: r.fullName, value: r.id };
         });
 
         this.referringOrganisationContactProceedButton.hideExpression = true;
@@ -1250,12 +1265,12 @@ export class OrgRequestComponent {
 
     return this.apollo.mutate({
       mutation: CREATE_DEVICE_REQUEST,
-      variables: {data}
+      variables: { data }
     }).toPromise().then(res => {
 
       let data = res["data"]["createDeviceRequest"];
       console.log(data);
-      console.log('res',res);
+      console.log('res', res);
       if (data) {
         if (data["id"]) {
           this.deviceRequestId = data["id"];
@@ -1290,6 +1305,8 @@ export class OrgRequestComponent {
       }
     })
     this.wardSubmitted = true;
+    this.showTypeform = true;
+    this.startTimer();
   }
 
   displayTypeForm(correlationId: any) {
@@ -1315,7 +1332,7 @@ export class OrgRequestComponent {
     this.submitting = true;
     this.apollo.mutate({
       mutation: CREATE_ENTITY,
-      variables: {data}
+      variables: { data }
     }).subscribe(data => {
       this.submited = true;
       this.submitting = false;
