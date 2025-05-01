@@ -1259,7 +1259,8 @@ export class OrgRequestComponent {
       deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
       details: deviceRequest.details,
       referringOrganisationContact: deviceRequest.referringOrganisationContactId,
-      deviceRequestItems: requestItems
+      deviceRequestItems: requestItems,
+      borough: this.borough
     };
 
 
