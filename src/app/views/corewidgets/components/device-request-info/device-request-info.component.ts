@@ -60,6 +60,7 @@ const QUERY_ENTITY = gql`
       isSales
       clientRef
       details
+      borough
       deviceRequestNeeds {
         hasInternet
         hasMobilityIssues
@@ -103,6 +104,7 @@ const UPDATE_ENTITY = gql`
       }
       clientRef
       details
+      borough
       deviceRequestNeeds {
         hasInternet
         hasMobilityIssues
@@ -246,6 +248,17 @@ export class DeviceRequestInfoComponent {
                 // TODO: should this be required
                 description: 'An organisation\'s internal reference for their client',
                 required: false
+              }
+            },
+            {
+              key: 'borough',
+              type: 'input',
+              className: '',
+              defaultValue: '',
+              templateOptions: {
+                label: 'Borough',
+                description: 'Borough associated with the request',
+                readonly: true
               }
             },
             {
