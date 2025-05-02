@@ -1,20 +1,25 @@
-import { Component, ViewChild, ViewEncapsulation, ElementRef, Renderer2, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
-import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ToastrService } from 'ngx-toastr';
+import {
+  AfterViewChecked,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener,
+  NgZone,
+  Renderer2,
+  ViewChild
+} from '@angular/core';
+import {concat, from, Observable, of, Subject, Subscription} from 'rxjs';
+import {ToastrService} from 'ngx-toastr';
 import gql from 'graphql-tag';
-import { Apollo } from 'apollo-angular';
+import {Apollo} from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
-import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
-import { UpdateFormDirty } from '@ngxs/form-plugin';
-import { Select } from '@ngxs/store';
-import { UserState } from '@app/state/state.module';
-import { User } from '@app/state/user/user.state';
+import {catchError, debounceTime, distinctUntilChanged, switchMap, tap} from 'rxjs/operators';
+import {AbstractControl, FormGroup} from '@angular/forms';
+import {FormlyFieldConfig, FormlyFormOptions} from '@ngx-formly/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Select} from '@ngxs/store';
+import {UserState} from '@app/state/state.module';
+import {User} from '@app/state/user/user.state';
 
 declare var window: any;
 
@@ -101,7 +106,7 @@ const DELETE_CORRELATION_ID = gql`
   templateUrl: './org-request.html'
 })
 
-export class OrgRequestComponent {
+export class OrgRequestComponent implements AfterViewChecked {
   sub: Subscription;
   form: FormGroup = new FormGroup({});
   options: FormlyFormOptions = {};
@@ -129,7 +134,11 @@ export class OrgRequestComponent {
   showTypeform = false;
   borough: string = "";
   ward: string = "";
-  private deviceRequestId: any;
+  unsupported = false;
+  pendingCorrelationId: null;
+  deviceRequestId: any;
+
+  @ViewChild('tfForm') tfForm: ElementRef | undefined;
 
 
   //Review and remove
@@ -576,7 +585,7 @@ export class OrgRequestComponent {
   }
 
   refOrganisationPage: FormlyFieldConfig = {
-    hideExpression: true,
+    hideExpression: false,
     fieldGroup: [
       {
         className: 'col-md-12',
@@ -807,15 +816,30 @@ export class OrgRequestComponent {
   }
 
 
+  notSupportedPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'row',
+        template: '<h3 class="font-weight-bold text-primary">Oops!</h3>'
+      },
+      {
+        className: 'row',
+        template: '<p class="">We cannot do that</p>'
+      }
+    ]
+  }
+
+
   fields: Array<FormlyFieldConfig> = [
     {
       fieldGroup: [
-        this.isLambethPage,
         this.refOrganisationPage,
         this.refContactPage,
         this.requestPage,
         this.thankYouPage,
-        this.moreThanThreeRequestsPage
+        this.moreThanThreeRequestsPage,
+        this.notSupportedPage
       ]
     },
     this.referringOrgIdField,
@@ -957,9 +981,35 @@ export class OrgRequestComponent {
   }
 
   @HostListener('window:message', ['$event'])
-  messageEvent(event: any) {
-    console.log("Message", event);
+  messageEvent(event: MessageEvent) {
+
+    if (event.origin !== 'https://communitytechaid.github.io') {
+      return;
+    }
+
+    if (
+      typeof event.data !== 'object' ||
+      event.data === null ||
+      !event.data.borough ||
+      !event.data.ward
+    ) {
+      alert("Unknown error. Please contact support.");
+      return;
+    }
+
+    if (event.data.ward === "unsupported" || event.data.borough === "unsupported") {
+      this.unsupported = true;
+      this.wardSubmitted = true;
+      this.showNotSupportedPage();
+      return
+    }
+
+    this.ward = event.data.ward;
+    this.borough = event.data.borough;
+    this.wardSubmitted = true;
   }
+
+
 
   ngAfterViewInit() {
 
@@ -1010,7 +1060,7 @@ export class OrgRequestComponent {
           display.textContent = "Time's up!";
         }
       }
-    }, 100);
+    }, 1000);
   }
 
   async saveNewReferringOrganisation(): Promise<boolean> {
@@ -1157,6 +1207,14 @@ export class OrgRequestComponent {
     this.moreThanThreeRequestsPage.hideExpression = false;
   }
 
+  showNotSupportedPage() {
+    this.content = {}
+    this.refOrganisationPage.hideExpression = true;
+    this.refContactPage.hideExpression = true;
+    this.requestPage.hideExpression = true;
+    this.notSupportedPage.hideExpression = false;
+  }
+
   showRequestPage() {
     this.isLambethPage.hideExpression = true
     this.referringOrgField.hideExpression = true;
@@ -1295,31 +1353,26 @@ export class OrgRequestComponent {
     });
   }
 
-  storeBoroughAndWard(borough: string, ward: string) {
-    this.borough = borough;
-    this.ward = ward;
-    window.tf.createWidget('MV7n79FJ', {
-      container: document.querySelector('#tf-form'),
-      hidden: {
-        borough: this.borough,
-        ward: this.ward
-      }
-    })
-    this.wardSubmitted = true;
-    this.showTypeform = true;
-    this.startTimer();
-  }
-
   displayTypeForm(correlationId: any) {
     this.showTypeform = true;
-    window.tf.createWidget('MV7n79FJ', {
-      container: document.querySelector('#tf-form'),
-      hidden: {
-        borough: this.borough,
-        ward: this.ward,
-        corr_id: correlationId
-      }
-    })
+    this.pendingCorrelationId = correlationId;
+  }
+
+  ngAfterViewChecked() {
+    // Create typeform widget based on the condition
+    if (this.showTypeform && this.tfForm && this.pendingCorrelationId) {
+      window.tf.createWidget('f93D0s88', {
+        container: this.tfForm.nativeElement,
+        hidden: {
+          borough: this.borough,
+          ward: this.ward,
+          corr_id: this.pendingCorrelationId
+        }
+      });
+      this.pendingCorrelationId = null;
+      this.startTimer();
+    }
+
   }
 
   createEntity(data: any) {
