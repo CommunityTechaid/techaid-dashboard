@@ -821,11 +821,15 @@ export class OrgRequestComponent implements AfterViewChecked {
     fieldGroup: [
       {
         className: 'row',
-        template: '<h3 class="font-weight-bold text-primary">Oops!</h3>'
+        template: '<h3 class="font-weight-bold text-primary">Oops! Unfortunately, we can only provide devices to individuals who live in Lambeth or Southwark.</h3>'
       },
       {
         className: 'row',
-        template: '<p class="">We cannot do that</p>'
+        template: '<p>If the person you’re requesting a device for lives outside these boroughs, we’re not able to support them through our service.</p>'
+      },
+      {
+        className: 'row',
+        template: '<p class="">Please check the postcode and ensure it falls within Lambeth or Southwark before continuing.</p>'
       }
     ]
   }
