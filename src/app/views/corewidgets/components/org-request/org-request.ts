@@ -614,7 +614,7 @@ export class OrgRequestComponent implements AfterViewChecked {
           .then((success: boolean) => {
             if (success) {
               this.submitting = false;
-              this.showThankYouPage()
+              //this.showThankYouPage()
             }
           })
           .finally(() => {
@@ -834,6 +834,20 @@ export class OrgRequestComponent implements AfterViewChecked {
     ]
   }
 
+  timerUpPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'row my-4',
+        template: '<h3 class="font-weight-bold text-primary">Oops! Unfortunately, your request has been timed out.</h3>'
+      },
+      {
+        className: 'row',
+        template: '<p>If you wish to make a request, please start a new one.</p>'
+      }
+    ]
+  }
+
 
   fields: Array<FormlyFieldConfig> = [
     {
@@ -843,7 +857,8 @@ export class OrgRequestComponent implements AfterViewChecked {
         this.requestPage,
         this.thankYouPage,
         this.moreThanThreeRequestsPage,
-        this.notSupportedPage
+        this.notSupportedPage,
+        this.timerUpPage
       ]
     },
     this.referringOrgIdField,
@@ -1062,6 +1077,7 @@ export class OrgRequestComponent implements AfterViewChecked {
         if (--duration < 0) {
           clearInterval(timerInterval);
           display.textContent = "Time's up!";
+          this.showTimerUpPage();
         }
       }
     }, 1000);
@@ -1219,6 +1235,16 @@ export class OrgRequestComponent implements AfterViewChecked {
     this.notSupportedPage.hideExpression = false;
   }
 
+  showTimerUpPage() {
+    this.showTypeform = false;
+    this.content = {}
+    this.refOrganisationPage.hideExpression = true;
+    this.refContactPage.hideExpression = true;
+    this.requestPage.hideExpression = true;
+    this.timerUpPage.hideExpression = false;
+  }
+
+
   showRequestPage() {
     this.isLambethPage.hideExpression = true
     this.referringOrgField.hideExpression = true;
@@ -1359,6 +1385,7 @@ export class OrgRequestComponent implements AfterViewChecked {
 
   displayTypeForm(correlationId: any) {
     this.showTypeform = true;
+    this.content = {}
     this.pendingCorrelationId = correlationId;
   }
 
