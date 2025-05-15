@@ -13,13 +13,17 @@ import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from '
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 
 const QUERY_ENTITY = gql`
-query findAllOrgs($page: PaginationInput,, $term: String, $filter: DeviceRequestWhereInput!) {
+query findAllOrgs(
+  $page: PaginationInput,
+  $where: DeviceRequestWhereInput!,
+  $term: String,
+  $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
-    AND: [$filter]
+    AND: [$where, $filter]
     OR: [
       {
         referringOrganisationContact: { phoneNumber: { _contains: $term } }
-        AND: [$filter]
+        AND: [$where, $filter]
       },
       {
         referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }
@@ -27,15 +31,15 @@ query findAllOrgs($page: PaginationInput,, $term: String, $filter: DeviceRequest
       },
       {
         referringOrganisationContact: { fullName: { _contains: $term } }
-        AND: [$filter]
+        AND: [$where, $filter]
       },
       {
         referringOrganisationContact: { email: { _contains: $term } }
-        AND: [$filter]
+        AND: [$where, $filter]
       },
       {
         clientRef: { _contains: $term }
-        AND: [$filter]
+        AND: [$where, $filter]
       }
     ]
 
