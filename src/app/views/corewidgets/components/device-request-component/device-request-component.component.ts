@@ -27,7 +27,7 @@ query findAllOrgs(
       },
       {
         referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }
-        AND: [$filter]
+        AND: [$where, $filter]
       },
       {
         referringOrganisationContact: { fullName: { _contains: $term } }
