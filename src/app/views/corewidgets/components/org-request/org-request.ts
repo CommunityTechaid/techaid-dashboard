@@ -261,7 +261,7 @@ export class OrgRequestComponent implements AfterViewChecked {
       {
         type: 'button',
         templateOptions: {
-          text: 'Submit',
+          text: 'Next',
           onClick: () => {
             this.saveNewReferringOrganisation().then(success => {
               if (success) {
@@ -397,7 +397,7 @@ export class OrgRequestComponent implements AfterViewChecked {
       {
         type: 'button',
         templateOptions: {
-          text: 'Submit',
+          text: 'Next',
           onClick: () => {
             this.saveNewReferringOrganisationContact().then(success => {
               if (success) {
@@ -600,7 +600,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   deviceRequestCreateButton: FormlyFieldConfig = {
     type: 'button',
     templateOptions: {
-      text: 'Submit',
+      text: 'Next',
       disabled: this.submitting,
       onClick: () => {
 
