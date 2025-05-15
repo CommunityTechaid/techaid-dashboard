@@ -510,6 +510,15 @@ export class DeviceRequestComponent {
   filterCount = 0;
   filterModel: any = {archived: [false]};
   filterForm: FormGroup = new FormGroup({});
+  filterDeviceTypes: any =[
+    {value: 'LAPTOPS', label: 'Laptops'},
+    {value: 'PHONES', label: 'Phones'},
+    {value: 'TABLETS', label: 'Tablets' },
+    {value: 'ALLINONES', label: 'All In Ones' },
+    {value: 'DESKTOPS', label: 'Desktops' },
+    {value: 'COMMSDEVICES', label: 'SIM Cards' },
+    {value: 'OTHER', label: 'Other' }
+  ];
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
@@ -526,23 +535,49 @@ export class DeviceRequestComponent {
           }
         },
         {
-          key: 'accepts',
+          key: 'is_sales',
           type: 'multicheckbox',
           className: 'col-sm-4',
-          defaultValue: [],
+          defaultValue: [false],
           templateOptions: {
-            label: 'Accepts',
             type: 'array',
+            label: 'Filter by Commercial Sales?',
             options: [
-              {label: 'Laptop', value: 'LAPTOPS' },
-              {label: 'Tablet', value: 'TABLETS' },
-              {label: 'Smart Phone', value: 'PHONES' },
-              {label: 'All In One (PC)', value: 'ALLINONES' },
-              {label: 'Desktop', value: 'DESKTOPS' },
-              {label: 'Connectivity Device', value: 'COMMSDEVICES' }
-            ]
+              {label: 'Non-commercial', value: false },
+              {label: 'Commercial', value: true },
+            ],
+            required: false,
           }
         },
+        {
+          key: 'device_type',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Device Type?',
+            options: this.filterDeviceTypes,
+            required: false,
+          }
+        },
+        // {
+        //   key: 'accepts',
+        //   type: 'multicheckbox',
+        //   className: 'col-sm-4',
+        //   defaultValue: [],
+        //   templateOptions: {
+        //     label: 'Accepts',
+        //     type: 'array',
+        //     options: [
+        //       {label: 'Laptop', value: 'LAPTOPS' },
+        //       {label: 'Tablet', value: 'TABLETS' },
+        //       {label: 'Smart Phone', value: 'PHONES' },
+        //       {label: 'All In One (PC)', value: 'ALLINONES' },
+        //       {label: 'Desktop', value: 'DESKTOPS' },
+        //       {label: 'Connectivity Device', value: 'COMMSDEVICES' }
+        //     ]
+        //   }
+        // },
         // {
         //   key: 'needs',
         //   type: 'multicheckbox',
@@ -558,21 +593,21 @@ export class DeviceRequestComponent {
         //     ]
         //   }
         // },
-        {
-          key: 'archived',
-          type: 'multicheckbox',
-          className: 'col-sm-4',
-          defaultValue: [false],
-          templateOptions: {
-            type: 'array',
-            label: 'Filter by Archived?',
-            options: [
-              {label: 'Active Requests', value: false },
-              {label: 'Archived Requests', value: true },
-            ],
-            required: false,
-          }
-        }
+        // {
+        //   key: 'archived',
+        //   type: 'multicheckbox',
+        //   className: 'col-sm-4',
+        //   defaultValue: [false],
+        //   templateOptions: {
+        //     type: 'array',
+        //     label: 'Filter by Archived?',
+        //     options: [
+        //       {label: 'Active Requests', value: false },
+        //       {label: 'Archived Requests', value: true },
+        //     ],
+        //     required: false,
+        //   }
+        // }
       ]
     }
   ];
@@ -585,26 +620,54 @@ export class DeviceRequestComponent {
   applyFilter(data) {
     const filter = {};
     let count = 0;
-
-    if (data.accepts && data.accepts.length) {
-      count = count + data.accepts.length;
-      filter['accepts'] = {'_in': data.accepts };
+    const deviceTypeLookup: Record<string, string> = {
+      "LAPTOPS": "laptops",
+      "PHONES": "phones",
+      "TABLETS": "tablets" ,
+      "ALLINONES": "allInOnes" ,
+      "DESKTOPS": "desktops" ,
+      "COMMSDEVICES": "commsDevices" ,
+      "OTHER" : "other"
     }
+
+
+    // if (data.accepts && data.accepts.length) {
+    //   count = count + data.accepts.length;
+    //   filter['accepts'] = {'_in': data.accepts };
+    // }
 
     if (data.status && data.status.length) {
       count = count + data.status.length;
       filter['status'] = {'_in': data.status };
     }
 
-    if (data.needs && data.needs.length) {
-      count = count + data.needs.length;
-      filter['needs'] = {'_in': data.needs };
+    if (data.is_sales && data.is_sales.length) {
+      count += data.is_sales.length;
+      filter['isSales'] = {_in: data.is_sales};
     }
 
-    if (data.archived && data.archived.length) {
-      count += data.archived.length;
-      filter['archived'] = {_in: data.archived};
+    if (data.device_type && data.device_type.length) {
+      const deviceRequestItems = { };
+
+      data.device_type.forEach(devType => {
+        if(devType in deviceTypeLookup) {
+          count++;
+          deviceRequestItems[deviceTypeLookup[devType]] = { _gt: 0 };
+        }
+      })
+      filter['deviceRequestItems'] = deviceRequestItems;
     }
+
+
+    // if (data.needs && data.needs.length) {
+    //   count = count + data.needs.length;
+    //   filter['needs'] = {'_in': data.needs };
+    // }
+
+    // if (data.archived && data.archived.length) {
+    //   count += data.archived.length;
+    //   filter['archived'] = {_in: data.archived};
+    // }
 
     localStorage.setItem(`orgFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
