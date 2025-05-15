@@ -733,48 +733,48 @@ export class OrgRequestComponent implements AfterViewChecked {
           required: true
         }
       },
-      {
-        key: 'deviceRequestNeeds.hasInternet',
-        type: 'radio',
-        className: '',
-        templateOptions: {
-          label: 'Does your client have access to the internet at home?',
-          options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
-          ],
-          required: false
-        }
-      },
-      {
-        key: 'deviceRequestNeeds.hasMobilityIssues',
-        type: 'radio',
-        className: '',
-        templateOptions: {
-          label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
-          options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
-          ],
-          required: false
-        }
-      },
-      {
-        key: 'deviceRequestNeeds.needQuickStart',
-        type: 'radio',
-        className: '',
-        templateOptions: {
-          label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
-          options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
-          ],
-          required: false
-        }
-      },
+      // {
+      //   key: 'deviceRequestNeeds.hasInternet',
+      //   type: 'radio',
+      //   className: '',
+      //   templateOptions: {
+      //     label: 'Does your client have access to the internet at home?',
+      //     options: [
+      //       { value: true, label: 'Yes' },
+      //       { value: false, label: 'No' },
+      //       { value: null, label: 'Don\'t know' }
+      //     ],
+      //     required: false
+      //   }
+      // },
+      // {
+      //   key: 'deviceRequestNeeds.hasMobilityIssues',
+      //   type: 'radio',
+      //   className: '',
+      //   templateOptions: {
+      //     label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
+      //     options: [
+      //       { value: true, label: 'Yes' },
+      //       { value: false, label: 'No' },
+      //       { value: null, label: 'Don\'t know' }
+      //     ],
+      //     required: false
+      //   }
+      // },
+      // {
+      //   key: 'deviceRequestNeeds.needQuickStart',
+      //   type: 'radio',
+      //   className: '',
+      //   templateOptions: {
+      //     label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
+      //     options: [
+      //       { value: true, label: 'Yes' },
+      //       { value: false, label: 'No' },
+      //       { value: null, label: 'Don\'t know' }
+      //     ],
+      //     required: false
+      //   }
+      // },
       this.deviceRequestCreateButton,
       {
         className: 'col-md-12',
@@ -1344,7 +1344,7 @@ export class OrgRequestComponent implements AfterViewChecked {
 
     const data: any = {
       clientRef: deviceRequest.clientRef,
-      deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
+      //deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
       details: deviceRequest.details,
       referringOrganisationContact: deviceRequest.referringOrganisationContactId,
       deviceRequestItems: requestItems,

@@ -511,6 +511,17 @@ export class DeviceRequestComponent {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
+          key: 'status',
+          type: 'choice',
+          className: 'col-md-12',
+          templateOptions: {
+            label: 'Status of the request',
+            items: DEVICE_REQUEST_STATUS_LABELS,
+            multiple: true,
+            required: false
+          }
+        },
+        {
           key: 'accepts',
           type: 'multicheckbox',
           className: 'col-sm-4',
@@ -528,21 +539,21 @@ export class DeviceRequestComponent {
             ]
           }
         },
-        {
-          key: 'needs',
-          type: 'multicheckbox',
-          className: 'col-sm-4',
-          defaultValue: [],
-          templateOptions: {
-            label: 'Client needs',
-            type: 'array',
-            options: [
-              {value: 'internet', label: 'Has no home internet'},
-              {value: 'mobility' , label: 'Mobility issues'},
-              {value: 'training', label: 'Training needs'}
-            ]
-          }
-        },
+        // {
+        //   key: 'needs',
+        //   type: 'multicheckbox',
+        //   className: 'col-sm-4',
+        //   defaultValue: [],
+        //   templateOptions: {
+        //     label: 'Client needs',
+        //     type: 'array',
+        //     options: [
+        //       {value: 'internet', label: 'Has no home internet'},
+        //       {value: 'mobility' , label: 'Mobility issues'},
+        //       {value: 'training', label: 'Training needs'}
+        //     ]
+        //   }
+        // },
         {
           key: 'archived',
           type: 'multicheckbox',
@@ -584,6 +595,11 @@ export class DeviceRequestComponent {
         }
       };
       filter['AND'].push(filt);
+    }
+
+    if (data.status && data.status.length) {
+      count = count + data.status.length;
+      filter['status'] = {'_in': data.status };
     }
 
     if (data.needs && data.needs.length) {

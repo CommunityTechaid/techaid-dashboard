@@ -261,36 +261,36 @@ export class DeviceRequestInfoComponent {
                 readonly: true
               }
             },
-            {
-              key: 'deviceRequestNeeds.hasInternet',
-              type: 'checkbox',
-              className: '',
-              templateOptions: {
-                label: 'Has home internet',
-                placeholder: '',
-                required: false
-              }
-            },
-            {
-              key: 'deviceRequestNeeds.hasMobilityIssues',
-              type: 'checkbox',
-              className: '',
-              templateOptions: {
-                label: 'Mobility issues',
-                placeholder: '',
-                required: false
-              }
-            },
-            {
-              key: 'deviceRequestNeeds.needQuickStart',
-              type: 'checkbox',
-              className: '',
-              templateOptions: {
-                label: 'Training needs',
-                placeholder: '',
-                required: false
-              }
-            },
+            // {
+            //   key: 'deviceRequestNeeds.hasInternet',
+            //   type: 'checkbox',
+            //   className: '',
+            //   templateOptions: {
+            //     label: 'Has home internet',
+            //     placeholder: '',
+            //     required: false
+            //   }
+            // },
+            // {
+            //   key: 'deviceRequestNeeds.hasMobilityIssues',
+            //   type: 'checkbox',
+            //   className: '',
+            //   templateOptions: {
+            //     label: 'Mobility issues',
+            //     placeholder: '',
+            //     required: false
+            //   }
+            // },
+            // {
+            //   key: 'deviceRequestNeeds.needQuickStart',
+            //   type: 'checkbox',
+            //   className: '',
+            //   templateOptions: {
+            //     label: 'Training needs',
+            //     placeholder: '',
+            //     required: false
+            //   }
+            // },
           ]
         },
         {
