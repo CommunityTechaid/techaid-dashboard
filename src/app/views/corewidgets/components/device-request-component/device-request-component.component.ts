@@ -579,22 +579,12 @@ export class DeviceRequestComponent {
   _where = {};
 
   applyFilter(data) {
-    const filter = {'OR': [], 'AND': []};
+    const filter = {};
     let count = 0;
 
     if (data.accepts && data.accepts.length) {
       count = count + data.accepts.length;
-      const filt = {
-        attributes: {
-          filters: [
-            {
-              key: 'accepts',
-              _in: data.accepts
-            }
-          ]
-        }
-      };
-      filter['AND'].push(filt);
+      filter['accepts'] = {'_in': data.accepts };
     }
 
     if (data.status && data.status.length) {
@@ -604,17 +594,7 @@ export class DeviceRequestComponent {
 
     if (data.needs && data.needs.length) {
       count = count + data.needs.length;
-      const filt = {
-        attributes: {
-          filters: [
-            {
-              key: 'needs',
-              _in: data.needs
-            }
-          ]
-        }
-      };
-      filter['AND'].push(filt);
+      filter['needs'] = {'_in': data.needs };
     }
 
     if (data.archived && data.archived.length) {
