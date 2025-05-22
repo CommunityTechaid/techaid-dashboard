@@ -512,12 +512,24 @@ export class KitInfoComponent {
       fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
       fieldGroup: [
         {
-          key: 'model',
+          key: 'make',
           type: 'input',
-          className: 'col-md-4',
+          className: 'col-md-2',
           defaultValue: '',
           templateOptions: {
-            label: 'Make or model',
+            label: 'Make',
+            rows: 2,
+            placeholder: '',
+            required: false
+          }
+        },
+        {
+          key: 'model',
+          type: 'input',
+          className: 'col-md-2',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Model',
             rows: 2,
             placeholder: '',
             required: true
@@ -900,6 +912,14 @@ export class KitInfoComponent {
     }
   }
 
+  private formatMakeAndModel(make: string, model: string) {
+    return `${make || ''}||${model || ''}`
+      .split('||')
+      .filter(f => f.trim().length)
+      .join(' ')
+      .trim();
+  }
+
   private fetchData() {
     if (!this.entityId) {
       return;
@@ -911,7 +931,7 @@ export class KitInfoComponent {
       if (res.data && res.data['kit']) {
         const data = res.data['kit'];
         this.model = this.normalizeData(data);
-        this.entityName = this.model['model'];
+        this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
         this.updateDisabledStatusFlag(data);
       } else {
         this.model = {};
@@ -1056,7 +1076,7 @@ export class KitInfoComponent {
       }
     }).subscribe(res => {
       this.model = this.normalizeData(res.data['updateKit']);
-      this.entityName = this.model['model'];
+      this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
       this.toastr.info(`
       <small>Successfully updated device ${this.entityName}</small>
       `, 'Updated Device', {

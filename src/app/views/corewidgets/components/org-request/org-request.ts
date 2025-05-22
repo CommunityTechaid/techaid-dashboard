@@ -689,17 +689,16 @@ export class OrgRequestComponent implements AfterViewChecked {
         fieldGroup: [
           this.deviceTypesPublic,
           this.deviceTypesAdmin,
-          /*
+
           {
             className: 'col-md-12',
             template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
           },
-          */
+
           {
             key: 'isSimNeeded',
             type: 'checkbox',
             className: 'col-md-12',
-            hideExpression: true,
             templateOptions: {
               label: 'SIM Card',
               required: false,
@@ -1292,7 +1291,7 @@ export class OrgRequestComponent implements AfterViewChecked {
     }
   }
 
-  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any = false) {
+  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any) {
 
 
     var payload: any = {};
@@ -1331,7 +1330,7 @@ export class OrgRequestComponent implements AfterViewChecked {
     }
 
 
-    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, false) //deviceRequest.isSimNeeded)
+    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded)
 
     if (Object.keys(requestItems).length === 0) {
       this.toastr.error("Please select the item your client needs");
