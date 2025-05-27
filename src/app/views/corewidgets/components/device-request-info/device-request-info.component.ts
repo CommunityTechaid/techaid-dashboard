@@ -185,7 +185,7 @@ export class DeviceRequestInfoComponent {
     key: 'deviceRequestNote.content',
     type: 'device-request-new-note',
     templateOptions: {
-      placeholder: "Enter text and your initials. The current date and time will be automatically added to the note. Click the save button to save all your changes"
+      placeholder: "Type your note here and hit save"
     }
   }
 
