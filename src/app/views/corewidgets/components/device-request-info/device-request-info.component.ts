@@ -347,7 +347,7 @@ export class DeviceRequestInfoComponent {
                       label: 'Connectivity Devices',
                       description: '',
                       addonLeft: {
-                        class: 'fas fa-laptop'
+                        class: 'fas fa-microchip'
                       },
                       type: 'number',
                       placeholder: '',

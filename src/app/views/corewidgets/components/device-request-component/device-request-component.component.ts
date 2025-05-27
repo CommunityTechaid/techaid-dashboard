@@ -338,7 +338,7 @@ export class DeviceRequestComponent {
             min: 0,
             label: 'Connectivity Devices',
             addonLeft: {
-              class: 'fas fa-desktop'
+              class: 'fas fa-microchip'
             },
             type: 'number',
             placeholder: '',
@@ -491,7 +491,7 @@ export class DeviceRequestComponent {
             min: 0,
             label: 'Connectivity Devices',
             addonLeft: {
-              class: 'fas fa-desktop'
+              class: 'fas fa-microchip'
             },
             type: 'number',
             placeholder: '',
