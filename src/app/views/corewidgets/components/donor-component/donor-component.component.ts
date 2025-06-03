@@ -51,7 +51,6 @@ query findAllDonors(
      kitCount
      createdAt
      updatedAt
-     consent
      archived
      isLeadContact
      donorParent {

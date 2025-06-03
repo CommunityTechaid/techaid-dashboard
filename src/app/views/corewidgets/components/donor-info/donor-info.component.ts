@@ -28,7 +28,6 @@ query findDonor($id: Long) {
     phoneNumber
     email
     referral
-    consent
     archived
     isLeadContact
     donorParent {
@@ -58,7 +57,6 @@ mutation updateDonor($data: UpdateDonorInput!) {
     email
     name
     referral
-    consent
     archived
     isLeadContact
     donorParent {

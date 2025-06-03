@@ -47,7 +47,6 @@ query findAllDonors($page: PaginationInput, $term: String, $where: DonorWhereInp
      kitCount
      createdAt
      updatedAt
-     consent
      archived
      isLeadContact
      donorParent {

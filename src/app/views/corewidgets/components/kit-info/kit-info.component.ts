@@ -110,7 +110,6 @@ query findKit($id: Long) {
       pickupAvailability
       notes
       network
-      consent
       state
       pickup
       otherType
@@ -179,7 +178,6 @@ mutation updateKit($data: UpdateKitInput!) {
       status
       notes
       network
-      consent
       state
       pickup
       otherType
