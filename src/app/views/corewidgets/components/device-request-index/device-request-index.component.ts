@@ -15,26 +15,24 @@ import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-r
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
-    AND: {
       OR: [
         {
-          clientRef: { _contains: $term }
-          AND: [ $filter ]
+
+          AND: [ clientRef: { _contains: $term }, $filter ]
         }
         {
-          id: { _contains: $term }
-          AND: [ $filter ]
+
+          AND: [ id: { _contains: $term }, $filter ]
         }
         {
-          referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }
-          AND: [ $filter ]
+
+          AND: [ referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }, $filter ]
         }
         {
-          referringOrganisationContact: { fullName: { _contains: $term } }
-          AND: [ $filter ]
+
+          AND: [ referringOrganisationContact: { fullName: { _contains: $term } }, $filter ]
         }
       ]
-    }
   }){
     totalElements
     content{
