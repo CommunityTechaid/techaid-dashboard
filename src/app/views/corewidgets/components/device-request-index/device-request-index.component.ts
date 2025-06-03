@@ -16,9 +16,11 @@ const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
     AND: {
-      clientRef: { _contains: $term }
-      AND: [ $filter ]
       OR: [
+        {
+          clientRef: { _contains: $term }
+          AND: [ $filter ]
+        }
         {
           id: { _contains: $term }
           AND: [ $filter ]
