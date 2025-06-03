@@ -107,11 +107,9 @@ query findKit($id: Long) {
     attributes {
       credentials
       status
-      pickupAvailability
       notes
       network
       state
-      pickup
       otherType
     }
     notes {
@@ -174,12 +172,10 @@ mutation updateKit($data: UpdateKitInput!) {
     }
     attributes {
       credentials
-      pickupAvailability
       status
       notes
       network
       state
-      pickup
       otherType
     }
     notes {
