@@ -17,20 +17,16 @@ query findAllDeviceRequests($page: PaginationInput, $term: String, $filter: Devi
   deviceRequestConnection(page: $page, where: {
       OR: [
         {
-
-          AND: [ clientRef: { _contains: $term }, $filter ]
+          AND: [ { clientRef: { _contains: $term } }, $filter ]
         }
         {
-
-          AND: [ id: { _contains: $term }, $filter ]
+          AND: [ { id: { _contains: $term } }, $filter ]
         }
         {
-
-          AND: [ referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }, $filter ]
+          AND: [ { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } }, $filter ]
         }
         {
-
-          AND: [ referringOrganisationContact: { fullName: { _contains: $term } }, $filter ]
+          AND: [ { referringOrganisationContact: { fullName: { _contains: $term } } }, $filter ]
         }
       ]
   }){
