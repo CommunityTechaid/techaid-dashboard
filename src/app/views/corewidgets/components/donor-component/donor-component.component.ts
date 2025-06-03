@@ -189,7 +189,7 @@ export class DonorComponent {
           key: 'isLeadContact',
           type: 'checkbox',
           className: 'col-md-6 text-right mt-4',
-          defaultValue: '',
+          defaultValue: false,
           templateOptions: {
             label: 'Is a lead contact?',
             placeholder: 'This preserves contacts for drop points so they kept permanently',
