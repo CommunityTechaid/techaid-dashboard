@@ -316,10 +316,10 @@ export class DeviceRequestIndexComponent {
             page: Math.round(params.start / params.length),
           },
           term: params['search']['value'],
-          numericterm: params['search']['value'] ? parseInt(params['search']['value'], 10) : null,
+          numericterm: isNaN(Number(params['search']['value'])) ? -1 : Number(params['search']['value']),
           filter: this.filter
         };
-
+        console.log('vars', vars);
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res.data) {
