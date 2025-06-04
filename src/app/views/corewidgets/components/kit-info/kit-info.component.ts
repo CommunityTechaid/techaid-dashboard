@@ -8,7 +8,6 @@ import { Apollo } from 'apollo-angular';
 import { FormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { Lightbox } from 'ngx-lightbox';
@@ -996,8 +995,8 @@ export class KitInfoComponent {
         tap(() => this.deviceRequestLoading = true),
         switchMap(term => from(deviceRequestRef.refetch({
           term: term,
-          numericterm: isInteger(term) ? +term : -1
-        })).pipe(
+          numericterm: isNaN(Number(term)) ? -1 : Number(term)
+          })).pipe(
           catchError(() => of([])),
           tap(() => this.deviceRequestLoading = false),
           switchMap(res => {
