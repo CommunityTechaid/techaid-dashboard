@@ -221,12 +221,12 @@ query findAutocompleteDonors($term: String) {
 `;
 
 const AUTOCOMPLETE_DEVICE_REQUESTS = gql`
-query findAutocompleteDeviceRequests($term: String) {
+query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
   deviceRequestConnection(page: {
     size: 50
   }, where: {
     id: {
-      _contains: $term
+      _eq: $numericterm
     }
     OR: [
     { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } },
@@ -995,7 +995,8 @@ export class KitInfoComponent {
         distinctUntilChanged(),
         tap(() => this.deviceRequestLoading = true),
         switchMap(term => from(deviceRequestRef.refetch({
-          term: term
+          term: term,
+          numericterm: isInteger(term) ? +term : -1
         })).pipe(
           catchError(() => of([])),
           tap(() => this.deviceRequestLoading = false),
