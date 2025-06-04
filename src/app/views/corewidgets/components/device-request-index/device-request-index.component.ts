@@ -13,14 +13,14 @@ import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from '
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 
 const QUERY_ENTITY = gql`
-query findAllDeviceRequests($page: PaginationInput, $term: String, $filter: DeviceRequestWhereInput!) {
+query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
       OR: [
         {
           AND: [ { clientRef: { _contains: $term } }, $filter ]
         }
         {
-          AND: [ { id: { _eq: $term } }, $filter ]
+          AND: [ { id: { _eq: $numericterm } }, $filter ]
         }
         {
           AND: [ { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } }, $filter ]
@@ -316,6 +316,7 @@ export class DeviceRequestIndexComponent {
             page: Math.round(params.start / params.length),
           },
           term: params['search']['value'],
+          numericterm: params['search']['value'].toLongOrNull(),
           filter: this.filter
         };
 
