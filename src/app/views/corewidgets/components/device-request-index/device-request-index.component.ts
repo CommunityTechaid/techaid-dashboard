@@ -316,7 +316,7 @@ export class DeviceRequestIndexComponent {
             page: Math.round(params.start / params.length),
           },
           term: params['search']['value'],
-          numericterm: params['search']['value'].toLongOrNull(),
+          numericterm: params['search']['value'] ? parseInt(params['search']['value'], 10) : null,
           filter: this.filter
         };
 
