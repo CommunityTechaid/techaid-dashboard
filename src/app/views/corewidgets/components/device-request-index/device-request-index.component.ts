@@ -20,7 +20,7 @@ query findAllDeviceRequests($page: PaginationInput, $term: String, $filter: Devi
           AND: [ { clientRef: { _contains: $term } }, $filter ]
         }
         {
-          AND: [ { id: { _contains: $term } }, $filter ]
+          AND: [ { id: { _eq: $term } }, $filter ]
         }
         {
           AND: [ { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } }, $filter ]
