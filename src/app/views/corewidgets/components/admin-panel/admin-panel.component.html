@@ -16,7 +16,7 @@
               <div class="d-flex justify-content-between">
                 <div>
                   <h6 class="m-0 font-weight-bold text-primary">
-                    Application Configuration Settings
+                    Application Configuration Settings (Last updated: {{ model?.updatedAt | date:'short' }})
                   </h6>
                 </div>
               <div>
@@ -34,42 +34,9 @@
                   </formly-form>
               </form>
 
-              <!-- Configuration Actions -->
-              <div class="config-actions mt-5" *ngIf="user?.authorities['write:config']">
-                  <h3>Configuration Actions</h3>
-                  <div class="border-bottom-info card">
-                      <div class="card-body">
-                          <div class="d-flex justify-content-between">
-                              <div>
-                                  <h4>Reset to Defaults</h4>
-                                  <p class="text-muted">Reset all configuration values to their default settings</p>
-                              </div>
-                              <div>
-                                  <button type="button" (click)="modal(confirmReset);"
-                                      class="btn btn-warning btn-sm">
-                                      <small>RESET TO DEFAULTS</small>
-                                  </button>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
+
           </div>
       </div>
   </div>
 </div>
 
-<ng-template #confirmReset let-c="close" let-d="dismiss">
-  <div class="modal-header">
-      <h4 class="modal-title">Reset Configuration to Defaults?</h4>
-  </div>
-  <div class="modal-body">
-      <small>
-          <p>Are you sure you want to reset all configuration settings to their default values? This action cannot be undone!</p>
-      </small>
-  </div>
-  <div class="modal-footer">
-      <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-      <button type="button" class="btn btn-warning btn-sm" (click)="resetToDefaults(); c('Close click')">YES, RESET</button>
-  </div>
-</ng-template>

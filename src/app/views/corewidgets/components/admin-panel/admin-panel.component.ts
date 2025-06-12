@@ -13,8 +13,8 @@ import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
 
 const QUERY_CONFIG = gql`
-  query getAppConfig {
-    appConfig {
+  query adminConfig {
+    adminConfig {
       id
       canPublicRequestSIMCard
       canPublicRequestLaptop
@@ -27,8 +27,8 @@ const QUERY_CONFIG = gql`
 `;
 
 const UPDATE_CONFIG = gql`
-  mutation updateAppConfig($input: AppConfigInput!) {
-    updateAppConfig(input: $input) {
+  mutation updateAdminConfig($data: UpdateAdminConfigInput!) {
+    updateAdminConfig(data: $data) {
       id
       canPublicRequestSIMCard
       canPublicRequestLaptop
@@ -129,25 +129,6 @@ export class AdminPanelComponent {
               }
             },
           ]
-        },
-        {
-          // Column 2 - System Settings
-          fieldGroupClassName: 'd-flex flex-column justify-content-between',
-          className: 'col-md-6',
-          fieldGroup: [
-            {
-              className: 'mt-4',
-              template: `
-                <div class="alert alert-info" role="alert">
-                  <h6><i class="fas fa-info-circle"></i> Configuration Info</h6>
-                  <small>
-                    <strong>Last Updated:</strong> {{ model?.updatedAt | date:'medium' }}<br>
-                    <strong>Created:</strong> {{ model?.createdAt | date:'medium' }}
-                  </small>
-                </div>
-              `
-            }
-          ]
         }
       ]
     }
@@ -167,8 +148,8 @@ export class AdminPanelComponent {
       .refetch()
       .then(
         (res) => {
-          if (res.data && res.data['appConfig']) {
-            this.model = res.data['appConfig'];
+          if (res.data && res.data['adminConfig']) {
+            this.model = res.data['adminConfig'];
           } else {
             // If no config exists, initialize with defaults
             this.model = {
@@ -219,12 +200,12 @@ export class AdminPanelComponent {
       .mutate({
         mutation: UPDATE_CONFIG,
         variables: {
-          input: data,
+          data: data,
         },
       })
       .subscribe(
         (res) => {
-          this.model = res.data['updateAppConfig'];
+          this.model = res.data['updateAdminConfig'];
           this.toastr.success(
             `
       <small>Successfully updated application configuration</small>
@@ -249,38 +230,4 @@ export class AdminPanelComponent {
       );
   }
 
-  resetToDefaults() {
-    this.apollo
-      .mutate<any>({
-        mutation: RESET_CONFIG,
-        variables: {},
-      })
-      .subscribe(
-        (res) => {
-          if (res.data.resetAppConfigToDefaults) {
-            this.model = res.data.resetAppConfigToDefaults;
-            this.toastr.info(
-              `
-        <small>Successfully reset configuration to defaults</small>
-        `,
-              'Configuration Reset',
-              {
-                enableHtml: true,
-              }
-            );
-          }
-        },
-        (err) => {
-          this.toastr.error(
-            `
-      <small>${err.message}</small>
-      `,
-            'Reset Error',
-            {
-              enableHtml: true,
-            }
-          );
-        }
-      );
-  }
 }
