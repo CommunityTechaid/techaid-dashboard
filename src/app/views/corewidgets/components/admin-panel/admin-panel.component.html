@@ -1,0 +1,75 @@
+<!-- Content Row -->
+<div class="row">
+  <!-- Content Column -->
+  <div class="col-lg-12 mb-4">
+      <div *ngIf="!model?.id" class="overlay"></div>
+      <!-- Project Card Example -->
+      <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="#" [routerLink]="['/dashboard']">Dashboard</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Application Configuration</li>
+          </ol>
+      </nav>
+
+      <div class="card shadow mb-4 mt-1">
+          <div class="card-header py-3">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h6 class="m-0 font-weight-bold text-primary">
+                    Application Configuration Settings
+                  </h6>
+                </div>
+              <div>
+                  <button [disabled]="form.invalid" (click)="updateConfig(form.value)"
+                      type="submit" class="btn btn-primary btn-sm">
+                      <small>Save Configuration</small>
+                  </button>
+                  </div>
+              </div>
+          </div>
+          <div class="card-body">
+              <form [formGroup]="form">
+                  <formly-form [options]="options" (ngSubmit)="updateConfig(form.value)"
+                      [form]="form" [model]="model" [fields]="fields">
+                  </formly-form>
+              </form>
+
+              <!-- Configuration Actions -->
+              <div class="config-actions mt-5" *ngIf="user?.authorities['write:config']">
+                  <h3>Configuration Actions</h3>
+                  <div class="border-bottom-info card">
+                      <div class="card-body">
+                          <div class="d-flex justify-content-between">
+                              <div>
+                                  <h4>Reset to Defaults</h4>
+                                  <p class="text-muted">Reset all configuration values to their default settings</p>
+                              </div>
+                              <div>
+                                  <button type="button" (click)="modal(confirmReset);"
+                                      class="btn btn-warning btn-sm">
+                                      <small>RESET TO DEFAULTS</small>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<ng-template #confirmReset let-c="close" let-d="dismiss">
+  <div class="modal-header">
+      <h4 class="modal-title">Reset Configuration to Defaults?</h4>
+  </div>
+  <div class="modal-body">
+      <small>
+          <p>Are you sure you want to reset all configuration settings to their default values? This action cannot be undone!</p>
+      </small>
+  </div>
+  <div class="modal-footer">
+      <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+      <button type="button" class="btn btn-warning btn-sm" (click)="resetToDefaults(); c('Close click')">YES, RESET</button>
+  </div>
+</ng-template>

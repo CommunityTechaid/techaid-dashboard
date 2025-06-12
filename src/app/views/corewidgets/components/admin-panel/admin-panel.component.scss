@@ -1,0 +1,61 @@
+.dashboard-container {
+  margin-top: 15%;
+}
+
+.modal-title{
+  font-size: 0.9em;
+}
+
+form {
+  font-size: 0.9em;
+}
+
+.config-actions {
+  .card {
+      border: 1px solid #17a2b8;
+  }
+
+  h3 {
+      font-size: 1em;
+      color: #333333;
+      font-weight: bold;
+  }
+
+  h4 {
+      color: #17a2b8;
+      font-size: 0.9em;
+  }
+
+  p {
+      color: #6c757d;
+      font-size: 0.9em;
+  }
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+}
+
+// Custom styling for maintenance mode toggle
+::ng-deep .maintenance-mode-field {
+  .form-check-input:checked {
+    background-color: #ffc107;
+    border-color: #ffc107;
+  }
+}
+
+// Info alert styling
+.alert-info {
+  border-left: 4px solid #17a2b8;
+
+  h6 {
+    color: #17a2b8;
+    font-weight: bold;
+  }
+}
