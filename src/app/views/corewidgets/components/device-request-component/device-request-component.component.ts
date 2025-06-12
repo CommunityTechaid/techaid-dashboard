@@ -13,29 +13,33 @@ import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from '
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 
 const QUERY_ENTITY = gql`
-query findAllOrgs($page: PaginationInput,, $term: String, $filter: DeviceRequestWhereInput!) {
+query findAllOrgs(
+  $page: PaginationInput,
+  $where: DeviceRequestWhereInput!,
+  $term: String,
+  $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
-    AND: [$filter]
+    AND: [$where, $filter]
     OR: [
       {
         referringOrganisationContact: { phoneNumber: { _contains: $term } }
-        AND: [$filter]
+        AND: [$where, $filter]
       },
       {
         referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }
-        AND: [$filter]
+        AND: [$where, $filter]
       },
       {
         referringOrganisationContact: { fullName: { _contains: $term } }
-        AND: [$filter]
+        AND: [$where, $filter]
       },
       {
         referringOrganisationContact: { email: { _contains: $term } }
-        AND: [$filter]
+        AND: [$where, $filter]
       },
       {
         clientRef: { _contains: $term }
-        AND: [$filter]
+        AND: [$where, $filter]
       }
     ]
 
@@ -506,58 +510,104 @@ export class DeviceRequestComponent {
   filterCount = 0;
   filterModel: any = {archived: [false]};
   filterForm: FormGroup = new FormGroup({});
+  filterDeviceTypes: any =[
+    {value: 'LAPTOPS', label: 'Laptops'},
+    {value: 'PHONES', label: 'Phones'},
+    {value: 'TABLETS', label: 'Tablets' },
+    {value: 'ALLINONES', label: 'All In Ones' },
+    {value: 'DESKTOPS', label: 'Desktops' },
+    {value: 'COMMSDEVICES', label: 'SIM Cards' },
+    {value: 'OTHER', label: 'Other' }
+  ];
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
         {
-          key: 'accepts',
-          type: 'multicheckbox',
-          className: 'col-sm-4',
-          defaultValue: [],
+          key: 'status',
+          type: 'choice',
+          className: 'col-md-12',
           templateOptions: {
-            label: 'Accepts',
-            type: 'array',
-            options: [
-              {label: 'Laptop', value: 'LAPTOPS' },
-              {label: 'Tablet', value: 'TABLETS' },
-              {label: 'Smart Phone', value: 'PHONES' },
-              {label: 'All In One (PC)', value: 'ALLINONES' },
-              {label: 'Desktop', value: 'DESKTOPS' },
-              {label: 'Connectivity Device', value: 'COMMSDEVICES' }
-            ]
+            label: 'Status of the request',
+            items: DEVICE_REQUEST_STATUS_LABELS,
+            multiple: true,
+            required: false
           }
         },
         {
-          key: 'needs',
-          type: 'multicheckbox',
-          className: 'col-sm-4',
-          defaultValue: [],
-          templateOptions: {
-            label: 'Client needs',
-            type: 'array',
-            options: [
-              {value: 'internet', label: 'Has no home internet'},
-              {value: 'mobility' , label: 'Mobility issues'},
-              {value: 'training', label: 'Training needs'}
-            ]
-          }
-        },
-        {
-          key: 'archived',
+          key: 'is_sales',
           type: 'multicheckbox',
           className: 'col-sm-4',
           defaultValue: [false],
           templateOptions: {
             type: 'array',
-            label: 'Filter by Archived?',
+            label: 'Filter by Commercial Sales?',
             options: [
-              {label: 'Active Requests', value: false },
-              {label: 'Archived Requests', value: true },
+              {label: 'Non-commercial', value: false },
+              {label: 'Commercial', value: true },
             ],
             required: false,
           }
-        }
+        },
+        {
+          key: 'device_type',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Device Type?',
+            options: this.filterDeviceTypes,
+            required: false,
+          }
+        },
+        // {
+        //   key: 'accepts',
+        //   type: 'multicheckbox',
+        //   className: 'col-sm-4',
+        //   defaultValue: [],
+        //   templateOptions: {
+        //     label: 'Accepts',
+        //     type: 'array',
+        //     options: [
+        //       {label: 'Laptop', value: 'LAPTOPS' },
+        //       {label: 'Tablet', value: 'TABLETS' },
+        //       {label: 'Smart Phone', value: 'PHONES' },
+        //       {label: 'All In One (PC)', value: 'ALLINONES' },
+        //       {label: 'Desktop', value: 'DESKTOPS' },
+        //       {label: 'Connectivity Device', value: 'COMMSDEVICES' }
+        //     ]
+        //   }
+        // },
+        // {
+        //   key: 'needs',
+        //   type: 'multicheckbox',
+        //   className: 'col-sm-4',
+        //   defaultValue: [],
+        //   templateOptions: {
+        //     label: 'Client needs',
+        //     type: 'array',
+        //     options: [
+        //       {value: 'internet', label: 'Has no home internet'},
+        //       {value: 'mobility' , label: 'Mobility issues'},
+        //       {value: 'training', label: 'Training needs'}
+        //     ]
+        //   }
+        // },
+        // {
+        //   key: 'archived',
+        //   type: 'multicheckbox',
+        //   className: 'col-sm-4',
+        //   defaultValue: [false],
+        //   templateOptions: {
+        //     type: 'array',
+        //     label: 'Filter by Archived?',
+        //     options: [
+        //       {label: 'Active Requests', value: false },
+        //       {label: 'Archived Requests', value: true },
+        //     ],
+        //     required: false,
+        //   }
+        // }
       ]
     }
   ];
@@ -568,43 +618,56 @@ export class DeviceRequestComponent {
   _where = {};
 
   applyFilter(data) {
-    const filter = {'OR': [], 'AND': []};
+    const filter = {};
     let count = 0;
+    const deviceTypeLookup: Record<string, string> = {
+      "LAPTOPS": "laptops",
+      "PHONES": "phones",
+      "TABLETS": "tablets" ,
+      "ALLINONES": "allInOnes" ,
+      "DESKTOPS": "desktops" ,
+      "COMMSDEVICES": "commsDevices" ,
+      "OTHER" : "other"
+    }
 
-    if (data.accepts && data.accepts.length) {
-      count = count + data.accepts.length;
-      const filt = {
-        attributes: {
-          filters: [
-            {
-              key: 'accepts',
-              _in: data.accepts
-            }
-          ]
+
+    // if (data.accepts && data.accepts.length) {
+    //   count = count + data.accepts.length;
+    //   filter['accepts'] = {'_in': data.accepts };
+    // }
+
+    if (data.status && data.status.length) {
+      count = count + data.status.length;
+      filter['status'] = {'_in': data.status };
+    }
+
+    if (data.is_sales && data.is_sales.length) {
+      count += data.is_sales.length;
+      filter['isSales'] = {_in: data.is_sales};
+    }
+
+    if (data.device_type && data.device_type.length) {
+      const deviceRequestItems = { };
+
+      data.device_type.forEach(devType => {
+        if(devType in deviceTypeLookup) {
+          count++;
+          deviceRequestItems[deviceTypeLookup[devType]] = { _gt: 0 };
         }
-      };
-      filter['AND'].push(filt);
+      })
+      filter['deviceRequestItems'] = deviceRequestItems;
     }
 
-    if (data.needs && data.needs.length) {
-      count = count + data.needs.length;
-      const filt = {
-        attributes: {
-          filters: [
-            {
-              key: 'needs',
-              _in: data.needs
-            }
-          ]
-        }
-      };
-      filter['AND'].push(filt);
-    }
 
-    if (data.archived && data.archived.length) {
-      count += data.archived.length;
-      filter['archived'] = {_in: data.archived};
-    }
+    // if (data.needs && data.needs.length) {
+    //   count = count + data.needs.length;
+    //   filter['needs'] = {'_in': data.needs };
+    // }
+
+    // if (data.archived && data.archived.length) {
+    //   count += data.archived.length;
+    //   filter['archived'] = {_in: data.archived};
+    // }
 
     localStorage.setItem(`orgFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;

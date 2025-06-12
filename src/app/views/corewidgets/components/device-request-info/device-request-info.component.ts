@@ -60,6 +60,7 @@ const QUERY_ENTITY = gql`
       isSales
       clientRef
       details
+      borough
       deviceRequestNeeds {
         hasInternet
         hasMobilityIssues
@@ -103,6 +104,7 @@ const UPDATE_ENTITY = gql`
       }
       clientRef
       details
+      borough
       deviceRequestNeeds {
         hasInternet
         hasMobilityIssues
@@ -249,35 +251,46 @@ export class DeviceRequestInfoComponent {
               }
             },
             {
-              key: 'deviceRequestNeeds.hasInternet',
-              type: 'checkbox',
+              key: 'borough',
+              type: 'input',
               className: '',
+              defaultValue: '',
               templateOptions: {
-                label: 'Has home internet',
-                placeholder: '',
-                required: false
+                label: 'Borough',
+                description: 'Borough associated with the request',
+                readonly: true
               }
             },
-            {
-              key: 'deviceRequestNeeds.hasMobilityIssues',
-              type: 'checkbox',
-              className: '',
-              templateOptions: {
-                label: 'Mobility issues',
-                placeholder: '',
-                required: false
-              }
-            },
-            {
-              key: 'deviceRequestNeeds.needQuickStart',
-              type: 'checkbox',
-              className: '',
-              templateOptions: {
-                label: 'Training needs',
-                placeholder: '',
-                required: false
-              }
-            },
+            // {
+            //   key: 'deviceRequestNeeds.hasInternet',
+            //   type: 'checkbox',
+            //   className: '',
+            //   templateOptions: {
+            //     label: 'Has home internet',
+            //     placeholder: '',
+            //     required: false
+            //   }
+            // },
+            // {
+            //   key: 'deviceRequestNeeds.hasMobilityIssues',
+            //   type: 'checkbox',
+            //   className: '',
+            //   templateOptions: {
+            //     label: 'Mobility issues',
+            //     placeholder: '',
+            //     required: false
+            //   }
+            // },
+            // {
+            //   key: 'deviceRequestNeeds.needQuickStart',
+            //   type: 'checkbox',
+            //   className: '',
+            //   templateOptions: {
+            //     label: 'Training needs',
+            //     placeholder: '',
+            //     required: false
+            //   }
+            // },
           ]
         },
         {

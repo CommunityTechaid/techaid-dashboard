@@ -28,6 +28,11 @@
             </a>
             <!-- Dropdown - User Information -->
             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                <a class="dropdown-item" href="#" routerLink="/dashboard/admin-panel" *ngIf="user?.authorities['app:admin']">
+                    <i class="fas fa-toolbox fa-sm fa-fw mr-2 text-gray-400"></i>
+                    Admin Panel
+                </a>
+                <div class="dropdown-divider" *ngIf="user?.authorities['app:admin']"></div>
                 <a class="dropdown-item" href="#" routerLink="/dashboard/users" *ngIf="user?.authorities['read:users']">
                     <i class="fas fa-user-lock fa-sm fa-fw mr-2 text-gray-400"></i>
                     Users

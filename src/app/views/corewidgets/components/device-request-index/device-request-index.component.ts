@@ -13,26 +13,22 @@ import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from '
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 
 const QUERY_ENTITY = gql`
-query findAllDeviceRequests($page: PaginationInput, $term: String, $filter: DeviceRequestWhereInput!) {
+query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
-    AND: {
-      clientRef: { _contains: $term }
-      AND: [ $filter ]
       OR: [
         {
-          id: { _contains: $term }
-          AND: [ $filter ]
+          AND: [ { clientRef: { _contains: $term } }, $filter ]
         }
         {
-          referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } }
-          AND: [ $filter ]
+          AND: [ { id: { _eq: $numericterm } }, $filter ]
         }
         {
-          referringOrganisationContact: { fullName: { _contains: $term } }
-          AND: [ $filter ]
+          AND: [ { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } }, $filter ]
+        }
+        {
+          AND: [ { referringOrganisationContact: { fullName: { _contains: $term } } }, $filter ]
         }
       ]
-    }
   }){
     totalElements
     content{
@@ -320,9 +316,10 @@ export class DeviceRequestIndexComponent {
             page: Math.round(params.start / params.length),
           },
           term: params['search']['value'],
+          numericterm: isNaN(Number(params['search']['value'])) ? -1 : Number(params['search']['value']),
           filter: this.filter
         };
-
+        console.log('vars', vars);
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res.data) {

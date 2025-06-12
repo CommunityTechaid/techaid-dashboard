@@ -43,11 +43,13 @@ import { DonorParentIndexComponent } from './components/donor-parent-index/donor
 import { DonorParentInfoComponent } from './components/donor-parent-info/donor-parent-info.component';
 import { DonorComponent } from './components/donor-component/donor-component.component';
 import { KitAuditComponent } from './components/kit-audit-component/kit-audit-component.component'
+import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
 
 const routes: Routes = [
   { path: '', component: DashboardIndexComponent, data: { title: '' } },
   { path: 'device-request-admin', component: OrgRequestComponent, data: { title: 'Device Request' }, canActivate: [AuthGuard] },
   { path: 'organisation-device-request', component: OrgRequestComponent, data: { title: 'Device Request' } },
+  { path: 'dashboard/admin-panel', component: AdminPanelComponent, data: { title: 'Admin Panel' }, canActivate: [AuthGuard] },
   { path: 'dashboard/devices', component: KitIndexComponent, data: { title: 'Devices' }, canActivate: [AuthGuard] },
   { path: 'dashboard/devices/:kitId', component: KitInfoComponent, canActivate: [AuthGuard] },
   { path: 'dashboard/donors', component: DonorIndexComponent, data: { title: 'Donors' }, canActivate: [AuthGuard] },
@@ -105,7 +107,8 @@ const routes: Routes = [
     DonorParentIndexComponent,
     DonorParentInfoComponent,
     DonorComponent,
-    KitAuditComponent
+    KitAuditComponent,
+    AdminPanelComponent
   ],
   imports: [
     LightboxModule,

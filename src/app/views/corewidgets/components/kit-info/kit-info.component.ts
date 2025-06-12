@@ -8,7 +8,6 @@ import { Apollo } from 'apollo-angular';
 import { FormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { Lightbox } from 'ngx-lightbox';
@@ -107,12 +106,9 @@ query findKit($id: Long) {
     attributes {
       credentials
       status
-      pickupAvailability
       notes
       network
-      consent
       state
-      pickup
       otherType
     }
     notes {
@@ -175,13 +171,10 @@ mutation updateKit($data: UpdateKitInput!) {
     }
     attributes {
       credentials
-      pickupAvailability
       status
       notes
       network
-      consent
       state
-      pickup
       otherType
     }
     notes {
@@ -227,12 +220,12 @@ query findAutocompleteDonors($term: String) {
 `;
 
 const AUTOCOMPLETE_DEVICE_REQUESTS = gql`
-query findAutocompleteDeviceRequests($term: String) {
+query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
   deviceRequestConnection(page: {
     size: 50
   }, where: {
     id: {
-      _contains: $term
+      _eq: $numericterm
     }
     OR: [
     { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } },
@@ -512,12 +505,24 @@ export class KitInfoComponent {
       fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
       fieldGroup: [
         {
-          key: 'model',
+          key: 'make',
           type: 'input',
-          className: 'col-md-4',
+          className: 'col-md-2',
           defaultValue: '',
           templateOptions: {
-            label: 'Make or model',
+            label: 'Make',
+            rows: 2,
+            placeholder: '',
+            required: false
+          }
+        },
+        {
+          key: 'model',
+          type: 'input',
+          className: 'col-md-2',
+          defaultValue: '',
+          templateOptions: {
+            label: 'Model',
             rows: 2,
             placeholder: '',
             required: true
@@ -900,6 +905,14 @@ export class KitInfoComponent {
     }
   }
 
+  private formatMakeAndModel(make: string, model: string) {
+    return `${make || ''}||${model || ''}`
+      .split('||')
+      .filter(f => f.trim().length)
+      .join(' ')
+      .trim();
+  }
+
   private fetchData() {
     if (!this.entityId) {
       return;
@@ -911,7 +924,7 @@ export class KitInfoComponent {
       if (res.data && res.data['kit']) {
         const data = res.data['kit'];
         this.model = this.normalizeData(data);
-        this.entityName = this.model['model'];
+        this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
         this.updateDisabledStatusFlag(data);
       } else {
         this.model = {};
@@ -981,8 +994,9 @@ export class KitInfoComponent {
         distinctUntilChanged(),
         tap(() => this.deviceRequestLoading = true),
         switchMap(term => from(deviceRequestRef.refetch({
-          term: term
-        })).pipe(
+          term: term,
+          numericterm: isNaN(Number(term)) ? -1 : Number(term)
+          })).pipe(
           catchError(() => of([])),
           tap(() => this.deviceRequestLoading = false),
           switchMap(res => {
@@ -1056,7 +1070,7 @@ export class KitInfoComponent {
       }
     }).subscribe(res => {
       this.model = this.normalizeData(res.data['updateKit']);
-      this.entityName = this.model['model'];
+      this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
       this.toastr.info(`
       <small>Successfully updated device ${this.entityName}</small>
       `, 'Updated Device', {

@@ -1,65 +1,72 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ToastrService } from 'ngx-toastr';
+import {
+  AfterViewChecked,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener,
+  NgZone,
+  Renderer2,
+  ViewChild
+} from '@angular/core';
+import {concat, from, Observable, of, Subject, Subscription} from 'rxjs';
+import {ToastrService} from 'ngx-toastr';
 import gql from 'graphql-tag';
-import { Apollo } from 'apollo-angular';
+import {Apollo} from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
-import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
-import { UpdateFormDirty } from '@ngxs/form-plugin';
-import { Select } from '@ngxs/store';
-import { UserState } from '@app/state/state.module';
-import { User } from '@app/state/user/user.state';
+import {catchError, debounceTime, distinctUntilChanged, switchMap, tap} from 'rxjs/operators';
+import {AbstractControl, FormGroup} from '@angular/forms';
+import {FormlyFieldConfig, FormlyFormOptions} from '@ngx-formly/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Select} from '@ngxs/store';
+import {UserState} from '@app/state/state.module';
+import {User} from '@app/state/user/user.state';
+
+declare var window: any;
 
 const CREATE_ENTITY = gql`
-mutation createOrganisation($data: CreateOrganisationInput!) {
-  createOrganisation(data: $data){
-     id
+  mutation createOrganisation($data: CreateOrganisationInput!) {
+    createOrganisation(data: $data){
+      id
+    }
   }
-}
 `;
 
 const CREATE_REFERRING_ORGANISATION = gql`
-mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
-  createReferringOrganisation(data: $data){
-     id
+  mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
+    createReferringOrganisation(data: $data){
+      id
+    }
   }
-}
 `;
 
 const QUERY_CONTENT = gql`
-query findContent {
-  post(where: {slug: {_eq: "/organisation-device-request"}}){
-    id
-    content
-  }
-}`;
+  query findContent {
+    post(where: {slug: {_eq: "/organisation-device-request"}}){
+      id
+      content
+    }
+  }`;
 
 
 const AUTOCOMPLETE_REFERRING_ORGANISATION = gql`
-query findAutocompleteReferringOrgs($term: String) {
-  referringOrganisationsPublic(where: {
+  query findAutocompleteReferringOrgs($term: String) {
+    referringOrganisationsPublic(where: {
       name: {
         _contains: $term
       },
       archived: {
         _eq: false
       }
-  }){
-     id
-     name
+    }){
+      id
+      name
+    }
   }
-}
 `;
 
 const FIND_ORGANISATION_CONTACT = gql`
-query findOrganisationContact($email: String, $refOrgId: Long) {
-  referringOrganisationContactsPublic( where: {
+  query findOrganisationContact($email: String, $refOrgId: Long) {
+    referringOrganisationContactsPublic( where: {
       email: { _ilike: $email }
       referringOrganisation: { id: { _eq: $refOrgId } }
       archived: { _eq: false }
@@ -67,23 +74,30 @@ query findOrganisationContact($email: String, $refOrgId: Long) {
       id
       fullName
     }
-}
+  }
 `;
 
 const CREATE_REFERRING_ORGANISATION_CONTACT = gql`
-mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
-  createReferringOrganisationContact(data: $data){
-     id
+  mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
+    createReferringOrganisationContact(data: $data){
+      id
+    }
   }
-}
 `;
 
 const CREATE_DEVICE_REQUEST = gql`
-mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
-  createDeviceRequest(data: $data){
-     id
+  mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
+    createDeviceRequest(data: $data){
+      id,
+      correlationId
+    }
   }
-}
+`;
+
+const DELETE_CORRELATION_ID = gql`
+  mutation deleteCorrelationId($id: ID!) {
+    deleteCorrelationId(id: $id)
+  }
 `;
 
 @Component({
@@ -92,7 +106,7 @@ mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
   templateUrl: './org-request.html'
 })
 
-export class OrgRequestComponent {
+export class OrgRequestComponent implements AfterViewChecked {
   sub: Subscription;
   form: FormGroup = new FormGroup({});
   options: FormlyFormOptions = {};
@@ -102,6 +116,8 @@ export class OrgRequestComponent {
     showErrorState: false,
   };
   submited = false;
+  wardSubmitted = false;
+  responseId = null;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
   isOrgAdmin = false;
@@ -115,6 +131,14 @@ export class OrgRequestComponent {
   isOrganisationExists = true;
   isContactExists = true;
   newOrganisationName = ""
+  showTypeform = false;
+  borough: string = "";
+  ward: string = "";
+  unsupported = false;
+  pendingCorrelationId: null;
+  deviceRequestId: any;
+
+  @ViewChild('tfForm') tfForm: ElementRef | undefined;
 
 
   //Review and remove
@@ -237,7 +261,7 @@ export class OrgRequestComponent {
       {
         type: 'button',
         templateOptions: {
-          text: 'Submit',
+          text: 'Next',
           onClick: () => {
             this.saveNewReferringOrganisation().then(success => {
               if (success) {
@@ -373,7 +397,7 @@ export class OrgRequestComponent {
       {
         type: 'button',
         templateOptions: {
-          text: 'Submit',
+          text: 'Next',
           onClick: () => {
             this.saveNewReferringOrganisationContact().then(success => {
               if (success) {
@@ -561,7 +585,7 @@ export class OrgRequestComponent {
   }
 
   refOrganisationPage: FormlyFieldConfig = {
-    hideExpression: true,
+    hideExpression: false,
     fieldGroup: [
       {
         className: 'col-md-12',
@@ -576,7 +600,7 @@ export class OrgRequestComponent {
   deviceRequestCreateButton: FormlyFieldConfig = {
     type: 'button',
     templateOptions: {
-      text: 'Submit',
+      text: 'Next',
       disabled: this.submitting,
       onClick: () => {
 
@@ -590,7 +614,7 @@ export class OrgRequestComponent {
           .then((success: boolean) => {
             if (success) {
               this.submitting = false;
-              this.showThankYouPage()
+              //this.showThankYouPage()
             }
           })
           .finally(() => {
@@ -603,9 +627,9 @@ export class OrgRequestComponent {
   }
 
   /**
-  * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
-  *
-  */
+   * COLLECTION OF ALL THE FIELDS OF DEVICE REQUESTS
+   *
+   */
   deviceTypesAdmin: FormlyFieldConfig = {
     key: 'deviceRequestItems',
     type: 'radio',
@@ -665,17 +689,16 @@ export class OrgRequestComponent {
         fieldGroup: [
           this.deviceTypesPublic,
           this.deviceTypesAdmin,
-          /*
+
           {
             className: 'col-md-12',
             template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
           },
-          */
+
           {
             key: 'isSimNeeded',
             type: 'checkbox',
             className: 'col-md-12',
-            hideExpression: true,
             templateOptions: {
               label: 'SIM Card',
               required: false,
@@ -709,48 +732,48 @@ export class OrgRequestComponent {
           required: true
         }
       },
-      {
-        key: 'deviceRequestNeeds.hasInternet',
-        type: 'radio',
-        className: '',
-        templateOptions: {
-          label: 'Does your client have access to the internet at home?',
-          options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
-          ],
-          required: false
-        }
-      },
-      {
-        key: 'deviceRequestNeeds.hasMobilityIssues',
-        type: 'radio',
-        className: '',
-        templateOptions: {
-          label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
-          options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
-          ],
-          required: false
-        }
-      },
-      {
-        key: 'deviceRequestNeeds.needQuickStart',
-        type: 'radio',
-        className: '',
-        templateOptions: {
-          label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
-          options: [
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-            { value: null, label: 'Don\'t know' }
-          ],
-          required: false
-        }
-      },
+      // {
+      //   key: 'deviceRequestNeeds.hasInternet',
+      //   type: 'radio',
+      //   className: '',
+      //   templateOptions: {
+      //     label: 'Does your client have access to the internet at home?',
+      //     options: [
+      //       { value: true, label: 'Yes' },
+      //       { value: false, label: 'No' },
+      //       { value: null, label: 'Don\'t know' }
+      //     ],
+      //     required: false
+      //   }
+      // },
+      // {
+      //   key: 'deviceRequestNeeds.hasMobilityIssues',
+      //   type: 'radio',
+      //   className: '',
+      //   templateOptions: {
+      //     label: 'Does your client have mobility issues, such as not being able to leave their home, or finding it difficult to do so?',
+      //     options: [
+      //       { value: true, label: 'Yes' },
+      //       { value: false, label: 'No' },
+      //       { value: null, label: 'Don\'t know' }
+      //     ],
+      //     required: false
+      //   }
+      // },
+      // {
+      //   key: 'deviceRequestNeeds.needQuickStart',
+      //   type: 'radio',
+      //   className: '',
+      //   templateOptions: {
+      //     label: 'Does your client need a Quickstart session or other training in basic use of a computer, phone, or tablet?',
+      //     options: [
+      //       { value: true, label: 'Yes' },
+      //       { value: false, label: 'No' },
+      //       { value: null, label: 'Don\'t know' }
+      //     ],
+      //     required: false
+      //   }
+      // },
       this.deviceRequestCreateButton,
       {
         className: 'col-md-12',
@@ -792,15 +815,49 @@ export class OrgRequestComponent {
   }
 
 
+  notSupportedPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'row',
+        template: '<h3 class="font-weight-bold text-primary">Oops! Unfortunately, we can only provide devices to individuals who live in Lambeth or Southwark.</h3>'
+      },
+      {
+        className: 'row',
+        template: '<p>If the person you’re requesting a device for lives outside these boroughs, we’re not able to support them through our service.</p>'
+      },
+      {
+        className: 'row',
+        template: '<p class="">Please check the postcode and ensure it falls within Lambeth or Southwark before continuing.</p>'
+      }
+    ]
+  }
+
+  timerUpPage: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'row my-4',
+        template: '<h3 class="font-weight-bold text-primary">Oops! Unfortunately, your request has been timed out.</h3>'
+      },
+      {
+        className: 'row',
+        template: '<p>If you wish to make a request, please start a new one.</p>'
+      }
+    ]
+  }
+
+
   fields: Array<FormlyFieldConfig> = [
     {
       fieldGroup: [
-        this.isLambethPage,
         this.refOrganisationPage,
         this.refContactPage,
         this.requestPage,
         this.thankYouPage,
-        this.moreThanThreeRequestsPage
+        this.moreThanThreeRequestsPage,
+        this.notSupportedPage,
+        this.timerUpPage
       ]
     },
     this.referringOrgIdField,
@@ -809,7 +866,13 @@ export class OrgRequestComponent {
 
   constructor(
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private elementRef: ElementRef,
+    private renderer: Renderer2,
+    private changeDetectorRef: ChangeDetectorRef,
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
 
   }
@@ -874,8 +937,7 @@ export class OrgRequestComponent {
     const orgRef = this.apollo
       .watchQuery({
         query: AUTOCOMPLETE_REFERRING_ORGANISATION,
-        variables: {
-        }
+        variables: {}
       });
 
     this.referringOrgs$ = concat(
@@ -913,7 +975,8 @@ export class OrgRequestComponent {
                 return of(data);
               })
             )
-          } return []
+          }
+          return []
         })
       )
     );
@@ -933,6 +996,90 @@ export class OrgRequestComponent {
       })
     );
 
+  }
+
+  @HostListener('window:message', ['$event'])
+  messageEvent(event: MessageEvent) {
+
+    if (event.origin !== 'https://communitytechaid.github.io') {
+      return;
+    }
+
+    if (
+      typeof event.data !== 'object' ||
+      event.data === null ||
+      !event.data.borough ||
+      !event.data.ward
+    ) {
+      alert("Unknown error. Please contact support.");
+      return;
+    }
+
+    if (event.data.ward === "unsupported" || event.data.borough === "unsupported") {
+      this.unsupported = true;
+      this.wardSubmitted = true;
+      this.showNotSupportedPage();
+      return
+    }
+
+    this.ward = event.data.ward;
+    this.borough = event.data.borough;
+    this.wardSubmitted = true;
+  }
+
+
+
+  ngAfterViewInit() {
+
+
+    // Submit function for TypeForm
+    (window as any).submit = ({ formId, responseId }) => {
+      console.log(`Form ${formId} submitted, response id: ${responseId}`);
+      return this.apollo.mutate({
+        mutation: DELETE_CORRELATION_ID,
+        variables: { id: this.deviceRequestId }
+      }).toPromise().then(res => {
+
+        const result = res?.data["deleteCorrelationId"];
+        if (result === true) {
+          this.toastr.success("Request created successfully.");
+          return true;
+        }
+
+        this.toastr.error("There was an error with the request. Please try again or contact support.");
+        return false;
+
+      }).catch(error => {
+        const message = error.message?.split(':')[1]?.trim() || "Unknown error";
+        this.toastr.error(message);
+        return false;
+      });
+    };
+
+    /*// Create the script element dynamically
+    const script = this.renderer.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://embed.typeform.com/next/embed.js'; // Correct URL
+    this.renderer.appendChild(this.elementRef.nativeElement, script);*/
+
+
+  }
+
+  startTimer() {
+    let duration = 15 * 60; // 15 minutes in seconds
+    const display = document.getElementById('timerDisplay');
+    const timerInterval = setInterval(() => {
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      if (display) {
+        display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        if (--duration < 0) {
+          clearInterval(timerInterval);
+          display.textContent = "Time's up!";
+          this.showTimerUpPage();
+        }
+      }
+    }, 1000);
   }
 
   async saveNewReferringOrganisation(): Promise<boolean> {
@@ -1079,6 +1226,24 @@ export class OrgRequestComponent {
     this.moreThanThreeRequestsPage.hideExpression = false;
   }
 
+  showNotSupportedPage() {
+    this.content = {}
+    this.refOrganisationPage.hideExpression = true;
+    this.refContactPage.hideExpression = true;
+    this.requestPage.hideExpression = true;
+    this.notSupportedPage.hideExpression = false;
+  }
+
+  showTimerUpPage() {
+    this.showTypeform = false;
+    this.content = {}
+    this.refOrganisationPage.hideExpression = true;
+    this.refContactPage.hideExpression = true;
+    this.requestPage.hideExpression = true;
+    this.timerUpPage.hideExpression = false;
+  }
+
+
   showRequestPage() {
     this.isLambethPage.hideExpression = true
     this.referringOrgField.hideExpression = true;
@@ -1126,7 +1291,7 @@ export class OrgRequestComponent {
     }
   }
 
-  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any = false) {
+  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any) {
 
 
     var payload: any = {};
@@ -1165,7 +1330,7 @@ export class OrgRequestComponent {
     }
 
 
-    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, false) //deviceRequest.isSimNeeded)
+    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded)
 
     if (Object.keys(requestItems).length === 0) {
       this.toastr.error("Please select the item your client needs");
@@ -1178,10 +1343,11 @@ export class OrgRequestComponent {
 
     const data: any = {
       clientRef: deviceRequest.clientRef,
-      deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
+      //deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
       details: deviceRequest.details,
       referringOrganisationContact: deviceRequest.referringOrganisationContactId,
-      deviceRequestItems: requestItems
+      deviceRequestItems: requestItems,
+      borough: this.borough
     };
 
 
@@ -1190,14 +1356,21 @@ export class OrgRequestComponent {
       variables: { data }
     }).toPromise().then(res => {
 
-      var data = res["data"]["createDeviceRequest"]["id"];
+      let data = res["data"]["createDeviceRequest"];
+      console.log(data);
+      console.log('res', res);
       if (data) {
-        this.toastr.info("Your request was made successfully.")
-        return true;
-      } else {
-        this.toastr.error("Could not create your request.");
-        return false;
+        if (data["id"]) {
+          this.deviceRequestId = data["id"];
+          this.displayTypeForm(data["correlationId"]);
+          this.toastr.info("Please fill in the equalities data ")
+          return true;
+        }
       }
+
+      this.toastr.error("Could not create your request.");
+      return false;
+
     }).catch(error => {
       var message = error.message.split(':')[1]
       if (message.trim().startsWith("Could not create new requests. This user already has")) {
@@ -1207,6 +1380,29 @@ export class OrgRequestComponent {
       this.toastr.error(message);
       return false;
     });
+  }
+
+  displayTypeForm(correlationId: any) {
+    this.showTypeform = true;
+    this.content = {}
+    this.pendingCorrelationId = correlationId;
+  }
+
+  ngAfterViewChecked() {
+    // Create typeform widget based on the condition
+    if (this.showTypeform && this.tfForm && this.pendingCorrelationId) {
+      window.tf.createWidget('f93D0s88', {
+        container: this.tfForm.nativeElement,
+        hidden: {
+          borough: this.borough,
+          ward: this.ward,
+          corr_id: this.pendingCorrelationId
+        }
+      });
+      this.pendingCorrelationId = null;
+      this.startTimer();
+    }
+
   }
 
   createEntity(data: any) {
