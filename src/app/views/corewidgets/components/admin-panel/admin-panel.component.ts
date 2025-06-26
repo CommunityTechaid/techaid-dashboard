@@ -20,6 +20,7 @@ const QUERY_CONFIG = gql`
       canPublicRequestLaptop
       canPublicRequestPhone
       canPublicRequestBroadbandHub
+      canPublicRequestTablet
       createdAt
       updatedAt
     }
