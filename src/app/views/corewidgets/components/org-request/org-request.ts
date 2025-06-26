@@ -100,6 +100,18 @@ const DELETE_CORRELATION_ID = gql`
   }
 `;
 
+const QUERY_ADMIN_CONFIG = gql`
+  query {
+    adminConfig {
+      canPublicRequestSIMCard
+      canPublicRequestLaptop
+      canPublicRequestPhone
+      canPublicRequestBroadbandHub
+      canPublicRequestTablet
+    }
+  }
+`;
+
 @Component({
   selector: 'org-request',
   styleUrls: ['./org-request.scss'],
@@ -657,16 +669,7 @@ export class OrgRequestComponent implements AfterViewChecked {
     className: 'col-md-6',
     templateOptions: {
       label: 'Please select the item your client needs. *',
-      //description: 'If your client needs a SIM card in addition to a device, select the main device above and check the below box. If they just need a SIM card, only select the box below.',
       options: [
-        // TODO: find some way to derive these from requestedItems so it's
-        // all defined in one place
-        { value: 'laptops', label: 'Laptop' },
-        // { value: 'desktops', label: 'Desktop computer' }, // Temp. disabling per Steph's request on Jan. 14, 2025
-
-        //{ value: 'phones', label: 'Smartphone' },
-        /* { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' } */,
-        // {value: 'tablets', label: 'Tablet' },
 
       ],
       required: false
@@ -996,7 +999,42 @@ export class OrgRequestComponent implements AfterViewChecked {
       })
     );
 
+    //Query for device request items
+    this.apollo.query({
+      query: QUERY_ADMIN_CONFIG
+    }).toPromise().then(res => {
+      if (res.data) {
+        const config = res.data['adminConfig'];
+        const options = [];
+
+        if (config.canPublicRequestLaptop) {
+          options.push({ value: 'laptops', label: 'Laptop' });
+        }
+        if (config.canPublicRequestTablet) {
+          options.push({ value: 'tablets', label: 'Tablet' });
+        }
+        if (config.canPublicRequestPhone) {
+          options.push({ value: 'phones', label: 'Smartphone' });
+        }
+        if (config.canPublicRequestSIMCard) {
+          options.push({
+            value: 'commsDevices',
+            label: 'SIM card (6 months, 20GB data, unlimited UK calls)'
+          });
+        }
+        if (config.canPublicRequestBroadbandHub) {
+          options.push({
+            value: 'broadband',
+            label: 'Broadband Hub'
+          });
+        }
+
+        this.deviceTypesPublic.templateOptions.options = options;
+      }
+    });
+
   }
+
 
   @HostListener('window:message', ['$event'])
   messageEvent(event: MessageEvent) {
