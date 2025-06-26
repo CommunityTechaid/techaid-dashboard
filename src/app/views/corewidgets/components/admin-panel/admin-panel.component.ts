@@ -84,9 +84,12 @@ export class AdminPanelComponent {
               type: 'checkbox',
               className: 'mb-3',
               templateOptions: {
-                label: 'SIM Card Requests - Enabled',
                 description: 'When enabled, the public can request SIM Cards',
                 required: false
+              },
+              expressionProperties: {
+                'templateOptions.label': model =>
+                  `SIM Card Requests - ${model.canPublicRequestSIMCard ? 'Enabled' : 'Disabled'}`
               }
             },
             {
@@ -94,9 +97,12 @@ export class AdminPanelComponent {
               type: 'checkbox',
               className: 'mb-3',
               templateOptions: {
-                label: 'SIM Card Requests - Enabled',
-                description: 'When enabled, the public can request SIM Cards',
+                description: 'When enabled, the public can request Laptops',
                 required: false
+              },
+              expressionProperties: {
+                'templateOptions.label': model =>
+                  `Laptop Requests - ${model.canPublicRequestLaptop ? 'Enabled' : 'Disabled'}`
               }
             },
             {
@@ -104,9 +110,12 @@ export class AdminPanelComponent {
               type: 'checkbox',
               className: 'mb-3',
               templateOptions: {
-                label: 'Phone Requests - Enabled',
                 description: 'When enabled, the public can request Phones',
                 required: false
+              },
+              expressionProperties: {
+                'templateOptions.label': model =>
+                  `Phone Requests - ${model.canPublicRequestPhone ? 'Enabled' : 'Disabled'}`
               }
             },
             {
@@ -114,9 +123,12 @@ export class AdminPanelComponent {
               type: 'checkbox',
               className: 'mb-3',
               templateOptions: {
-                label: 'Broadband Hub Requests - Enabled',
                 description: 'When enabled, the public can request Broadband Hubs',
                 required: false
+              },
+              expressionProperties: {
+                'templateOptions.label': model =>
+                  `Broadband Hub Requests - ${model.canPublicRequestBroadbandHub ? 'Enabled' : 'Disabled'}`
               }
             },
             {
@@ -124,9 +136,12 @@ export class AdminPanelComponent {
               type: 'checkbox',
               className: 'mb-3',
               templateOptions: {
-                label: 'Tablet Requests - Enabled',
                 description: 'When enabled, the public can request Tablets',
                 required: false
+              },
+              expressionProperties: {
+                'templateOptions.label': model =>
+                  `Tablet Requests - ${model.canPublicRequestTablet ? 'Enabled' : 'Disabled'}`
               }
             },
           ]
