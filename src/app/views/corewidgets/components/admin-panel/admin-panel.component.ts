@@ -21,6 +21,7 @@ const QUERY_CONFIG = gql`
       canPublicRequestPhone
       canPublicRequestBroadbandHub
       canPublicRequestTablet
+      canPublicRequestDesktop
       createdAt
       updatedAt
     }
@@ -36,6 +37,7 @@ const UPDATE_CONFIG = gql`
       canPublicRequestPhone
       canPublicRequestBroadbandHub
       canPublicRequestTablet
+      canPublicRequestDesktop
       createdAt
       updatedAt
     }
@@ -144,6 +146,19 @@ export class AdminPanelComponent {
                   `Tablet Requests - ${model.canPublicRequestTablet ? 'Enabled' : 'Disabled'}`
               }
             },
+            {
+              key: 'canPublicRequestDesktop',
+              type: 'checkbox',
+              className: 'mb-3',
+              templateOptions: {
+                description: 'When enabled, the public can request Desktops',
+                required: false
+              },
+              expressionProperties: {
+                'templateOptions.label': model =>
+                  `Desktop Requests - ${model.canPublicRequestDesktop ? 'Enabled' : 'Disabled'}`
+              }
+            }
           ]
         }
       ]

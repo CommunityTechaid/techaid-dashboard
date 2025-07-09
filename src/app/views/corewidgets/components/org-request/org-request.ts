@@ -108,6 +108,7 @@ const QUERY_ADMIN_CONFIG = gql`
       canPublicRequestPhone
       canPublicRequestBroadbandHub
       canPublicRequestTablet
+      canPublicRequestDesktop
     }
   }
 `;
@@ -1009,6 +1010,9 @@ export class OrgRequestComponent implements AfterViewChecked {
 
         if (config.canPublicRequestLaptop) {
           options.push({ value: 'laptops', label: 'Laptop' });
+        }
+        if (config.canPublicRequestDesktop) {
+          options.push({ value: 'desktops', label: 'Desktop' });
         }
         if (config.canPublicRequestTablet) {
           options.push({ value: 'tablets', label: 'Tablet' });
