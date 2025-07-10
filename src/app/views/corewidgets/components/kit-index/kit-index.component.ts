@@ -25,32 +25,28 @@ const QUERY_ENTITY = gql`
     kitsConnection(
       page: $page,
       where: {
-      AND: {
-        model: { _contains: $term }
-        AND: [ $where ]
-        OR: [
+        AND: [
+          $where,
           {
-            serialNo: { _contains: $term }
-            AND: [ $where ]
-          }
-          {
-            id: { _contains: $term }
-            AND: [ $where ]
-          }
-          {
-            attributes: {
-              filters: [
-                {
-                  key: "notes",
-                  _text: { _contains: $term }
+            OR: [
+              { model: { _contains: $term } },
+              { serialNo: { _contains: $term } },
+              { id: { _contains: $term } },
+              {
+                attributes: {
+                  filters: [
+                    {
+                      key: "notes",
+                      _text: { _contains: $term }
+                    }
+                  ]
                 }
-              ]
-            }
-            AND: [ $where ]
+              }
+            ]
           }
         ]
       }
-    }){
+    ){
       totalElements
       number
       content{
