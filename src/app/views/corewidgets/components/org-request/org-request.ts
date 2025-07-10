@@ -8,18 +8,18 @@ import {
   Renderer2,
   ViewChild
 } from '@angular/core';
-import {concat, from, Observable, of, Subject, Subscription} from 'rxjs';
-import {ToastrService} from 'ngx-toastr';
+import { concat, from, Observable, of, Subject, Subscription } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
-import {Apollo} from 'apollo-angular';
+import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
-import {catchError, debounceTime, distinctUntilChanged, switchMap, tap} from 'rxjs/operators';
-import {AbstractControl, FormGroup} from '@angular/forms';
-import {FormlyFieldConfig, FormlyFormOptions} from '@ngx-formly/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Select} from '@ngxs/store';
-import {UserState} from '@app/state/state.module';
-import {User} from '@app/state/user/user.state';
+import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { AbstractControl, FormGroup } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Select } from '@ngxs/store';
+import { UserState } from '@app/state/state.module';
+import { User } from '@app/state/user/user.state';
 
 declare var window: any;
 
@@ -677,6 +677,29 @@ export class OrgRequestComponent implements AfterViewChecked {
     }
   }
 
+  additionalSimRequestPublic: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'col-md-12',
+        template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
+      },
+
+      {
+        key: 'isSimNeeded',
+        type: 'checkbox',
+        className: 'col-md-12',
+        templateOptions: {
+          label: 'SIM Card',
+          required: false,
+          defaultValue: false,
+          indeterminate: false
+        }
+
+      }
+    ]
+  }
+
   requestPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
@@ -693,26 +716,9 @@ export class OrgRequestComponent implements AfterViewChecked {
         fieldGroup: [
           this.deviceTypesPublic,
           this.deviceTypesAdmin,
-
-          {
-            className: 'col-md-12',
-            template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
-          },
-
-          {
-            key: 'isSimNeeded',
-            type: 'checkbox',
-            className: 'col-md-12',
-            templateOptions: {
-              label: 'SIM Card',
-              required: false,
-              defaultValue: false,
-              indeterminate: false
-            }
-
-          },
         ]
       },
+      this.additionalSimRequestPublic,
       {
         key: 'details',
         type: 'textarea',
@@ -1025,6 +1031,7 @@ export class OrgRequestComponent implements AfterViewChecked {
             value: 'commsDevices',
             label: 'SIM card (6 months, 20GB data, unlimited UK calls)'
           });
+          this.additionalSimRequestPublic.hideExpression = false;
         }
         if (config.canPublicRequestBroadbandHub) {
           options.push({
