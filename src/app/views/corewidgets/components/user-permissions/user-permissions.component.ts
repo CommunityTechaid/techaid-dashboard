@@ -13,7 +13,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 
 const QUERY_PERMISSIONS = gql`
-query findPermissions($userId: ID!, $page: PaginationInput) {
+query findPermissions($userId: String!, $page: PaginationInput) {
   user(id: $userId) {
     id: userId
     permissions(page:$page){
@@ -90,7 +90,7 @@ query typeaheadFindApis($appId: String, $term: String) {
 `;
 
 const AUTOCOMPLETE_PERMISSIONS = gql`
-query findAutocompletePermissions($appId: ID!, $userId: Int) {
+query findAutocompletePermissions($appId: String!, $userId: Int) {
   permissions(appId: $appId, where: {
     NOT: {
       user: {

@@ -8,7 +8,7 @@ import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 const QUERY_USER = gql`
-query findUser($id: ID!) {
+query findUser($id: String!) {
   user(id: $id){
     id: userId
      userId

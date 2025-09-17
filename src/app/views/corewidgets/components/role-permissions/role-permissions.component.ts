@@ -13,7 +13,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 
 const QUERY_PERMISSIONS = gql`
-query findPermissions($page: PaginationInput, $roleId: ID!) {
+query findPermissions($page: PaginationInput, $roleId: String!) {
   role(id: $roleId) {
     id
     name
@@ -32,7 +32,7 @@ query findPermissions($page: PaginationInput, $roleId: ID!) {
 `;
 
 const AUTOCOMPLETE_PERMISSIONS = gql`
-query findAutocompletePermissions($appId: ID!, $roleId: Int) {
+query findAutocompletePermissions($appId: String!, $roleId: Int) {
   permissions(appId: $appId, where: {
     NOT: {
       role: {
