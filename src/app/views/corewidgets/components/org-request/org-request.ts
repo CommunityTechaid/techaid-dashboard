@@ -1035,7 +1035,7 @@ export class OrgRequestComponent implements AfterViewChecked {
         }
         if (config.canPublicRequestBroadbandHub) {
           options.push({
-            value: 'broadband',
+            value: 'other',
             label: 'Broadband Hub'
           });
         }
