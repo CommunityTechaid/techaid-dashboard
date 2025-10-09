@@ -98,7 +98,13 @@
                                                     <span class="badge badge-secondary">Comms Devices</span>
                                                     {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
                                                 </span>
-                                            </span>
+                                              </span>
+                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.broadbandHubs != 0">
+                                                <span class="badge badge-primary">
+                                                    <span class="badge badge-secondary">Comms Devices</span>
+                                                    {{dt.types['BROADBANDHUBS'] || 0}}  / {{dt.deviceRequestItems.broadbandHubs || 0}}
+                                                </span>
+                                              </span>
                                           </div>
                                         </div>
                                     </div>

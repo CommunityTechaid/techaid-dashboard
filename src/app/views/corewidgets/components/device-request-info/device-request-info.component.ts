@@ -48,6 +48,7 @@ const QUERY_ENTITY = gql`
         desktops
         commsDevices
         other
+        broadbandHubs
       }
       referringOrganisationContact {
         id
@@ -92,6 +93,7 @@ const UPDATE_ENTITY = gql`
         desktops
         commsDevices
         other
+        broadbandHubs
       }
       isSales
       referringOrganisationContact {
@@ -357,7 +359,7 @@ export class DeviceRequestInfoComponent {
                     defaultValue: 0,
                     templateOptions: {
                       min: 0,
-                      label: 'Connectivity Devices',
+                      label: 'SIM Cards',
                       description: '',
                       addonLeft: {
                         class: 'fas fa-microchip'
@@ -415,7 +417,7 @@ export class DeviceRequestInfoComponent {
                       required: true
                     }
                   },
-                {
+                  {
                     key: 'deviceRequestItems.other',
                     type: 'input',
                     className: '',
@@ -426,6 +428,23 @@ export class DeviceRequestInfoComponent {
                       description: '',
                       addonLeft: {
                         class: 'fas fa-laptop'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  },
+                  {
+                    key: 'deviceRequestItems.broadbandHubs',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      label: 'Broadband Hubs',
+                      description: '',
+                      addonLeft: {
+                        class: 'fas fa-microchip'
                       },
                       type: 'number',
                       placeholder: '',

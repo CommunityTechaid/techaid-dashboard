@@ -658,7 +658,8 @@ export class OrgRequestComponent implements AfterViewChecked {
         { value: 'phones', label: 'Smartphone' },
         { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
         { value: 'tablets', label: 'Tablet' },
-        { value: 'other', label: 'Other' }
+        { value: 'other', label: 'Other' },
+        { value: 'broadbandHubs', label: 'Broadband Hub' }
       ],
       required: false
     }
@@ -893,7 +894,8 @@ export class OrgRequestComponent implements AfterViewChecked {
       'phones': 0,
       'commsDevices': 0,
       'tablets': 0,
-      'desktops': 0
+      'desktops': 0,
+      'broadbandHubs': 0
     };
     data.items.forEach(i => {
       data.attributes.request[i] = data.attributes.request[i] + 1;
@@ -1035,7 +1037,7 @@ export class OrgRequestComponent implements AfterViewChecked {
         }
         if (config.canPublicRequestBroadbandHub) {
           options.push({
-            value: 'other',
+            value: 'broadbandHubs',
             label: 'Broadband Hub'
           });
         }

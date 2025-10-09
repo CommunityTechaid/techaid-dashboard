@@ -383,8 +383,9 @@ export class KitInfoComponent {
               {label: 'Smart Phone', value: 'SMARTPHONE' },
               {label: 'All In One (PC)', value: 'ALLINONE' },
               {label: 'Desktop', value: 'DESKTOP' },
-              {label: 'Connectivity Device', value: 'COMMSDEVICE' },
-              {label: 'Other', value: 'OTHER' }
+              {label: 'SIM Card', value: 'COMMSDEVICE' },
+              {label: 'Other', value: 'OTHER' },
+              {label: 'Broadband Hub', value: 'BROADBANDHUB' }
             ]
           }
         },
@@ -400,7 +401,7 @@ export class KitInfoComponent {
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
-            const unSupportedDevices = ['OTHER','COMMSDEVICE'];
+            const unSupportedDevices = ['OTHER','COMMSDEVICE','BROADBANDHUB'];
             return unSupportedDevices.includes(data['type']);
           },
         },
@@ -421,7 +422,7 @@ export class KitInfoComponent {
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
-            const unSupportedDevices = ['OTHER','COMMSDEVICE','PHONE','TABLET'];
+            const unSupportedDevices = ['OTHER','COMMSDEVICE','PHONE','TABLET','BROADBANDHUB'];
             return unSupportedDevices.includes(data['type']);
           }
         },
@@ -437,7 +438,7 @@ export class KitInfoComponent {
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
-            const unSupportedDevices = ['OTHER'];
+            const unSupportedDevices = ['OTHER','BROADBANDHUB'];
             return unSupportedDevices.includes(data['type']);
           }
         },
@@ -454,7 +455,7 @@ export class KitInfoComponent {
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
-            const unSupportedDevices = ['OTHER','COMMSDEVICE','PHONE','TABLET'];
+            const unSupportedDevices = ['OTHER','COMMSDEVICE','PHONE','TABLET','BROADBANDHUB'];
             return unSupportedDevices.includes(data['type']);
           }
         },
@@ -485,7 +486,7 @@ export class KitInfoComponent {
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
-            const unSupportedDevices = ['OTHER','COMMSDEVICE'];
+            const unSupportedDevices = ['OTHER','COMMSDEVICE','BROADBANDHUB'];
             return unSupportedDevices.includes(data['type']);
           }
         },
@@ -603,7 +604,7 @@ export class KitInfoComponent {
                 defaultValue: [],
                 hideExpression: (model, state, field) => {
                   const data = field.parent.formControl.value || {};
-                  const unSupportedDevices = ['OTHER','COMMSDEVICE'];
+                  const unSupportedDevices = ['OTHER','COMMSDEVICE','BROADBANDHUB'];
                   return unSupportedDevices.includes(data['type']);
                 },
                 expressionProperties: {
@@ -692,7 +693,7 @@ export class KitInfoComponent {
                   this.updateDisabledStatusFlag(data);
                 },
               },
-              hideExpression: 'model.type == \'COMMSDEVICE\'',
+              hideExpression: 'model.type == \'COMMSDEVICE\' || model.type == \'BROADBANDHUB\'',
               validation: {
                 show: false
               }

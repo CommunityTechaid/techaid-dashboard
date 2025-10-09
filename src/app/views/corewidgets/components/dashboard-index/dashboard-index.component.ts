@@ -40,6 +40,7 @@ query findAll {
     ALLINONE: allInOnes
     DESKTOP: desktops
     COMMSDEVICE: commsDevices
+    BROADBANDHUB: broadbandHubs
   }
 }
 `;
@@ -70,7 +71,8 @@ export class DashboardIndexComponent {
     'OTHER': {title: 'Other', style: 'danger', progress: 0},
     'SMARTPHONE': {title: 'Phones', style: 'warning', progress: 0},
     'ALLINONE': {title: 'All In One\'s', style: 'success', progress: 0},
-    'COMMSDEVICE': {title: 'Connectivity Devices', style: 'success', progress: 0}
+    'COMMSDEVICE': {title: 'SIM Cards', style: 'success', progress: 0},
+    'BROADBANDHUB': {title: 'Broadband Hubs', style: 'success', progress: 0}
   };
 
   dtOptions = {
