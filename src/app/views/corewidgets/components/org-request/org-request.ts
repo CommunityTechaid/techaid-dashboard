@@ -658,8 +658,8 @@ export class OrgRequestComponent implements AfterViewChecked {
         { value: 'phones', label: 'Smartphone' },
         { value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' },
         { value: 'tablets', label: 'Tablet' },
-        { value: 'other', label: 'Other' },
-        { value: 'broadbandHubs', label: 'Broadband Hub' }
+        { value: 'broadbandHubs', label: 'Broadband Hub' },
+        { value: 'other', label: 'Other' }
       ],
       required: false
     }

@@ -335,8 +335,8 @@ export class KitIndexComponent {
               { label: 'All In One (PC)', value: 'ALLINONE' },
               { label: 'Desktop', value: 'DESKTOP' },
               { label: 'SIM Card', value: 'COMMSDEVICE' },
-              { label: 'Other', value: 'OTHER' },
-              { label: 'Broadband Hub', value: 'BROADBANDHUB' }
+              { label: 'Broadband Hub', value: 'BROADBANDHUB' },
+              { label: 'Other', value: 'OTHER' }
             ],
           }
         },
@@ -488,8 +488,8 @@ export class KitIndexComponent {
           {label: 'All In One (PC)', value: 'ALLINONE' },
           {label: 'Desktop', value: 'DESKTOP' },
           {label: 'SIM Card', value: 'COMMSDEVICE' },
-          {label: 'Other', value: 'OTHER' },
-          {label: 'Broadband Hub', value: 'BROADBANDHUB' }
+          {label: 'Broadband Hub', value: 'BROADBANDHUB' },
+          {label: 'Other', value: 'OTHER' }
         ],
         required: true
       }

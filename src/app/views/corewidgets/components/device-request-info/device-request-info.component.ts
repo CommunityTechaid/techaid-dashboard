@@ -418,23 +418,6 @@ export class DeviceRequestInfoComponent {
                     }
                   },
                   {
-                    key: 'deviceRequestItems.other',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Other',
-                      description: '',
-                      addonLeft: {
-                        class: 'fas fa-laptop'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
                     key: 'deviceRequestItems.broadbandHubs',
                     type: 'input',
                     className: '',
@@ -445,6 +428,23 @@ export class DeviceRequestInfoComponent {
                       description: '',
                       addonLeft: {
                         class: 'fas fa-microchip'
+                      },
+                      type: 'number',
+                      placeholder: '',
+                      required: true
+                    }
+                  },
+                  {
+                    key: 'deviceRequestItems.other',
+                    type: 'input',
+                    className: '',
+                    defaultValue: 0,
+                    templateOptions: {
+                      min: 0,
+                      label: 'Other',
+                      description: '',
+                      addonLeft: {
+                        class: 'fas fa-laptop'
                       },
                       type: 'number',
                       placeholder: '',

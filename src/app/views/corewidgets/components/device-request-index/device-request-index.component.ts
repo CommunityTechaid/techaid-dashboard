@@ -158,8 +158,8 @@ export class DeviceRequestIndexComponent {
     {value: 'ALLINONES', label: 'All In Ones' },
     {value: 'DESKTOPS', label: 'Desktops' },
     {value: 'COMMSDEVICES', label: 'SIM Cards' },
-    {value: 'OTHER', label: 'Other' },
-    {value: 'BROADBANDHUBS', label: 'Broadband Hubs' }
+    {value: 'BROADBANDHUBS', label: 'Broadband Hubs' },
+    {value: 'OTHER', label: 'Other' }
   ];
   filterFields: Array<FormlyFieldConfig> = [
     {
