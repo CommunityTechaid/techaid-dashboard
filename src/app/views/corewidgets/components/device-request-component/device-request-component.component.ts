@@ -361,7 +361,7 @@ export class DeviceRequestComponent {
             min: 0,
             label: 'Broadband Hubs',
             addonLeft: {
-              class: 'fas fa-microchip'
+              class: 'fas fa-wifi'
             },
             type: 'number',
             placeholder: '',
@@ -533,7 +533,7 @@ export class DeviceRequestComponent {
             min: 0,
             label: 'Broadband Hubs',
             addonLeft: {
-              class: 'fas fa-microchip'
+              class: 'fas fa-wifi'
             },
             type: 'number',
             placeholder: '',

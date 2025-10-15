@@ -427,7 +427,7 @@ export class DeviceRequestInfoComponent {
                       label: 'Broadband Hubs',
                       description: '',
                       addonLeft: {
-                        class: 'fas fa-microchip'
+                        class: 'fas fa-wifi'
                       },
                       type: 'number',
                       placeholder: '',
