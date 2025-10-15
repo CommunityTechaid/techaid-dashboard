@@ -75,6 +75,7 @@ query findAllOrgs(
         desktops
         commsDevices
         other
+        broadbandHubs
       }
     }
   }
