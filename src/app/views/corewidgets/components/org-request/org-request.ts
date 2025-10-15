@@ -683,7 +683,10 @@ export class OrgRequestComponent implements AfterViewChecked {
     fieldGroup: [
       {
         className: 'col-md-12',
-        template: '<div class="text-secondary"><span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span><p>If they just need a SIM card, only select the box below.</p></div>'
+        template: `<div class="text-secondary">
+        <span>If your client needs a SIM card in addition to a device, select the main device above and check the below box.</span>
+        <p>If they just need a SIM card, only select the box below.</p>
+        </div>`
       },
 
       {
@@ -692,6 +695,32 @@ export class OrgRequestComponent implements AfterViewChecked {
         className: 'col-md-12',
         templateOptions: {
           label: 'SIM Card',
+          required: false,
+          defaultValue: false,
+          indeterminate: false
+        }
+
+      }
+    ]
+  }
+
+  additionalBroadbandHubRequestPublic: FormlyFieldConfig = {
+    hideExpression: true,
+    fieldGroup: [
+      {
+        className: 'col-md-12',
+        template: `<div class="text-secondary">
+        <span>If your client needs a Broadband Hub in addition to a device, select the main device above and check the below box.</span>
+        <p>If they just need a Broadband Hub card, only select the box below.</p>
+        </div>`
+      },
+
+      {
+        key: 'isBroadbandHubNeeded',
+        type: 'checkbox',
+        className: 'col-md-12',
+        templateOptions: {
+          label: 'Broadband Hub',
           required: false,
           defaultValue: false,
           indeterminate: false
@@ -720,6 +749,7 @@ export class OrgRequestComponent implements AfterViewChecked {
         ]
       },
       this.additionalSimRequestPublic,
+      this.additionalBroadbandHubRequestPublic,
       {
         key: 'details',
         type: 'textarea',
@@ -1040,6 +1070,7 @@ export class OrgRequestComponent implements AfterViewChecked {
             value: 'broadbandHubs',
             label: 'Broadband Hub'
           });
+          this.additionalBroadbandHubRequestPublic.hideExpression = false;
         }
 
         this.deviceTypesPublic.templateOptions.options = options;
@@ -1342,7 +1373,7 @@ export class OrgRequestComponent implements AfterViewChecked {
     }
   }
 
-  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any) {
+  setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any, isBroadbandHubNeeded: any) {
 
 
     var payload: any = {};
@@ -1352,14 +1383,15 @@ export class OrgRequestComponent implements AfterViewChecked {
       payload[deviceRequestItem] = 1;
     }
 
-
     if (isSimNeeded === true) {
       payload['commsDevices'] = 1
     }
 
-    return payload;
+     if (isBroadbandHubNeeded === true) {
+      payload['broadbandHubs'] = 1
+    }
 
-
+   return payload;
   }
 
   createNewDeviceRequest() {
@@ -1381,7 +1413,7 @@ export class OrgRequestComponent implements AfterViewChecked {
     }
 
 
-    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded)
+    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded, deviceRequest.isBroadbandHubNeeded)
 
     if (Object.keys(requestItems).length === 0) {
       this.toastr.error("Please select the item your client needs");
