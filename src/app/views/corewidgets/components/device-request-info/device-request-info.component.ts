@@ -753,33 +753,27 @@ export class DeviceRequestInfoComponent {
         updatedAt: new Date(this.model.updatedAt).toLocaleDateString(),
       };
 
-      // TODO: Replace with your actual Google Apps Script URL
       const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbwvsi92ddWWf_LDn6rJdY3b9eTU0UfqIWwZsSpUCy8xrtdW1R6HsKwFECqbMMZRH-J1/exec';
 
-      const response = await fetch(appsScriptUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(pdfData)
+      // Build URL with query parameters to avoid CORS preflight
+      const params = new URLSearchParams();
+      Object.keys(pdfData).forEach(key => {
+        params.append(key, String(pdfData[key as keyof typeof pdfData]));
       });
 
-      const result = await response.json();
+      const urlWithParams = `${appsScriptUrl}?${params.toString()}`;
 
-      if (result.success) {
-        // Open PDF in new tab
-        window.open(result.pdfUrl, '_blank');
+      // Open in new window - the script will handle the PDF generation and redirect
+      window.open(urlWithParams, '_blank');
 
-        this.toastr.success(
-          `<small>PDF generated successfully</small>`,
-          'PDF Generation',
-          {
-            enableHtml: true,
-          }
-        );
-      } else {
-        throw new Error(result.error || 'Failed to generate PDF');
-      }
+      this.toastr.info(
+        `<small>PDF generation started. The PDF will open in a new tab when ready.</small>`,
+        'PDF Generation',
+        {
+          enableHtml: true,
+          timeOut: 3000,
+        }
+      );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate PDF';
       this.toastr.error(
