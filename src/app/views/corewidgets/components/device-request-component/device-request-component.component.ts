@@ -75,6 +75,7 @@ query findAllOrgs(
         desktops
         commsDevices
         other
+        broadbandHubs
       }
     }
   }
@@ -226,7 +227,8 @@ export class DeviceRequestComponent {
           {value: 'TABLETS', label: 'Tablets' },
           {value: 'ALLINONES', label: 'All In Ones' },
           {value: 'DESKTOPS', label: 'Desktops' },
-          {value: 'COMMSDEVICES', label: 'Connectivity Devices' }
+          {value: 'COMMSDEVICES', label: 'Connectivity Devices' },
+          {value: 'BROADBANDHUBS', label: 'Broadband Hubs' }
         ],
         required: true
       },
@@ -340,7 +342,7 @@ export class DeviceRequestComponent {
           defaultValue: 0,
           templateOptions: {
             min: 0,
-            label: 'Connectivity Devices',
+            label: 'SIM Cards',
             addonLeft: {
               class: 'fas fa-microchip'
             },
@@ -349,6 +351,23 @@ export class DeviceRequestComponent {
             required: true
           }
         },
+        {
+          key: 'attributes.request.broadbandHubs',
+          type: 'input',
+          className: 'col-6',
+          hideExpression: 'model.attributes.accepts.toString().indexOf(\'BROADBANDHUB\') < 0',
+          defaultValue: 0,
+          templateOptions: {
+            min: 0,
+            label: 'Broadband Hubs',
+            addonLeft: {
+              class: 'fas fa-wifi'
+            },
+            type: 'number',
+            placeholder: '',
+            required: true
+          }
+        }
       ]
     },
     {
@@ -367,7 +386,8 @@ export class DeviceRequestComponent {
           {value: 'TABLETS', label: 'Tablets' },
           {value: 'ALLINONES', label: 'All In Ones' },
           {value: 'DESKTOPS', label: 'Desktops' },
-          {value: 'COMMSDEVICES', label: 'Connectivity Devices' }
+          {value: 'COMMSDEVICES', label: 'Connectivity Devices' },
+          {value: 'BROADBANDHUBS', label: 'Broadband Hubs' }
         ],
         required: false
       },
@@ -383,7 +403,8 @@ export class DeviceRequestComponent {
             {value: 'TABLETS', label: 'Tablets' },
             {value: 'ALLINONES', label: 'All In Ones' },
             {value: 'DESKTOPS', label: 'Desktops' },
-            {value: 'COMMSDEVICES', label: 'Connectivity Devices' }
+            {value: 'COMMSDEVICES', label: 'Connectivity Devices' },
+            {value: 'BROADBANDHUBS', label: 'Broadband Hubs' }
           ];
           const values = opts.filter(o => (model.attributes.accepts || []).indexOf(o.value) == -1);
           return values;
@@ -493,7 +514,7 @@ export class DeviceRequestComponent {
           defaultValue: 0,
           templateOptions: {
             min: 0,
-            label: 'Connectivity Devices',
+            label: 'SIM Cards',
             addonLeft: {
               class: 'fas fa-microchip'
             },
@@ -502,6 +523,23 @@ export class DeviceRequestComponent {
             required: true
           }
         },
+        {
+          key: 'attributes.alternateRequest.broadbandHubs',
+          type: 'input',
+          className: 'col-6',
+          hideExpression: 'model.attributes.accepts.toString().indexOf(\'BROADBANDHUB\') > -1 || model.attributes.alternateAccepts.toString().indexOf(\'BROADBANDHUB\') < 0',
+          defaultValue: 0,
+          templateOptions: {
+            min: 0,
+            label: 'Broadband Hubs',
+            addonLeft: {
+              class: 'fas fa-wifi'
+            },
+            type: 'number',
+            placeholder: '',
+            required: true
+          }
+        }
       ]
     },
   ];
@@ -517,6 +555,7 @@ export class DeviceRequestComponent {
     {value: 'ALLINONES', label: 'All In Ones' },
     {value: 'DESKTOPS', label: 'Desktops' },
     {value: 'COMMSDEVICES', label: 'SIM Cards' },
+    {value: 'BROADBANDHUBS', label: 'Broadband Hubs' },
     {value: 'OTHER', label: 'Other' }
   ];
   filterFields: Array<FormlyFieldConfig> = [
@@ -627,7 +666,8 @@ export class DeviceRequestComponent {
       "ALLINONES": "allInOnes" ,
       "DESKTOPS": "desktops" ,
       "COMMSDEVICES": "commsDevices" ,
-      "OTHER" : "other"
+      "OTHER" : "other",
+      "BROADBANDHUBS" : "broadbandHubs"
     }
 
 

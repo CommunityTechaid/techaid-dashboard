@@ -43,6 +43,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
       desktops
       commsDevices
       other
+      broadbandHubs
      }
      kits {
       type
@@ -157,6 +158,7 @@ export class DeviceRequestIndexComponent {
     {value: 'ALLINONES', label: 'All In Ones' },
     {value: 'DESKTOPS', label: 'Desktops' },
     {value: 'COMMSDEVICES', label: 'SIM Cards' },
+    {value: 'BROADBANDHUBS', label: 'Broadband Hubs' },
     {value: 'OTHER', label: 'Other' }
   ];
   filterFields: Array<FormlyFieldConfig> = [
@@ -217,7 +219,8 @@ export class DeviceRequestIndexComponent {
       "ALLINONES": "allInOnes" ,
       "DESKTOPS": "desktops" ,
       "COMMSDEVICES": "commsDevices" ,
-      "OTHER" : "other"
+      "OTHER" : "other",
+      "BROADBANDHUBS" : "broadbandHubs"
     }
 
     if (data.status && data.status.length) {

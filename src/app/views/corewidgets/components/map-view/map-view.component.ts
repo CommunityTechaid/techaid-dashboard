@@ -55,7 +55,7 @@ export class MapViewComponent {
           key: 'type',
           type: 'multicheckbox',
           className: 'col-md-6',
-          defaultValue: ['LAPTOP', 'TABLET', 'SMARTPHONE', 'ALLINONE', 'DESKTOP', 'OTHER', 'COMMSDEVICE'],
+          defaultValue: ['LAPTOP', 'TABLET', 'SMARTPHONE', 'ALLINONE', 'DESKTOP', 'OTHER', 'COMMSDEVICE','BROADBANDHUB'],
           templateOptions: {
             label: 'Type of device',
             type: 'array',
@@ -65,7 +65,8 @@ export class MapViewComponent {
               {label: 'Smart Phone', value: 'SMARTPHONE' },
               {label: 'All In One (PC)', value: 'ALLINONE' },
               {label: 'Desktop', value: 'DESKTOP' },
-              {label: 'Connectivity Device', value: 'COMMSDEVICE' },
+              {label: 'SIM Card', value: 'COMMSDEVICE' },
+              {label: 'Broadband Hub', value: 'BROADBANDHUB' },
               {label: 'Other', value: 'OTHER' }
             ],
           }
@@ -148,7 +149,8 @@ export class MapViewComponent {
         'SMARTPHONE': 'https://cdn.mapmarker.io/api/v1/font-awesome/v5/pin?icon=fa-mobile&size=50&hoffset=0&voffset=-1&background=DE7118',
         'ALLINONE': 'https://cdn.mapmarker.io/api/v1/font-awesome/v5/pin?icon=fa-tv&size=50&hoffset=0&voffset=-1&background=9C5517',
         'OTHER': 'https://cdn.mapmarker.io/api/v1/font-awesome/v5/pin?icon=fa-network-wired&size=50&hoffset=0&voffset=-1&background=EB4559',
-        'COMMSDEVICE': 'https://cdn.mapmarker.io/api/v1/font-awesome/v5/pin?icon=fa-wifi&size=50&hoffset=0&voffset=-1&background=EB4559'
+        'COMMSDEVICE': 'https://cdn.mapmarker.io/api/v1/font-awesome/v5/pin?icon=fa-wifi&size=50&hoffset=0&voffset=-1&background=EB4559',
+        'BROADBANDHUB': 'https://cdn.mapmarker.io/api/v1/font-awesome/v5/pin?icon=fa-wifi&size=50&hoffset=0&voffset=-1&background=EB4559'
       };
 
       res.data['kits'].forEach(k => {

@@ -13,7 +13,7 @@ import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 
 const QUERY_ROLE = gql`
-query findRole($id: ID!) {
+query findRole($id: String!) {
   role(id: $id){
      id
      name

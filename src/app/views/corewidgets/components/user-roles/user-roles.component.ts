@@ -13,7 +13,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 
 const QUERY_PERMISSIONS = gql`
-query findRoles($page: PaginationInput, $userId: ID!) {
+query findRoles($page: PaginationInput, $userId: String!) {
   user(id: $userId) {
     id: userId
     roles(page:$page){
@@ -30,7 +30,7 @@ query findRoles($page: PaginationInput, $userId: ID!) {
 `;
 
 const CREATE_ROLES = gql`
-mutation assignRoles($roleId: ID!, $userIds: [ID!]!) {
+mutation assignRoles($roleId: String!, $userIds: [String!]!) {
   assignRoles(roleId: $roleId, userIds: $userIds){
     id
   }
@@ -38,7 +38,7 @@ mutation assignRoles($roleId: ID!, $userIds: [ID!]!) {
 `;
 
 const DELETE_ROLES = gql`
-mutation removeRoles($userId: ID!, $roleIds: [ID!]!) {
+mutation removeRoles($userId: String!, $roleIds: [String!]!) {
   removeRoles(userId: $userId, roleIds: $roleIds){
      id: userId
   }
