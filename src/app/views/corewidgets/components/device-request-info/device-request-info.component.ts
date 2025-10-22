@@ -757,6 +757,7 @@ export class DeviceRequestInfoComponent {
       const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbwvsi92ddWWf_LDn6rJdY3b9eTU0UfqIWwZsSpUCy8xrtdW1R6HsKwFECqbMMZRH-J1/exec';
 
       const response = await fetch(appsScriptUrl, {
+        redirect: 'follow',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
