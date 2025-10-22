@@ -24,6 +24,14 @@
                               </h6>
                             </div>
                           <div>
+                              <button [disabled]="generatingPdf" (click)="generatePDF()"
+                                  type="button" class="btn btn-info btn-sm mr-2">
+                                  <small>
+                                    <i class="fas fa-file-pdf" *ngIf="!generatingPdf"></i>
+                                    <i class="fas fa-spinner fa-spin" *ngIf="generatingPdf"></i>
+                                    {{ generatingPdf ? 'Generating...' : 'Generate PDF' }}
+                                  </small>
+                              </button>
                               <button [disabled]="form.invalid" (click)="updateEntity(form.value)"
                                   type="submit" class="btn btn-primary btn-sm">
                                   <small>Save</small>

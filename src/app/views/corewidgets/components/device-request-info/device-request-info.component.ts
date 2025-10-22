@@ -710,4 +710,87 @@ export class DeviceRequestInfoComponent {
         }
       );
   }
+
+  generatingPdf = false;
+
+  async generatePDF() {
+    if (!this.model || !this.model.id) {
+      this.toastr.warning('Device request data not loaded', 'PDF Generation');
+      return;
+    }
+
+    this.generatingPdf = true;
+
+    try {
+      // Prepare the data for the PDF template
+      const pdfData = {
+        // Header fields
+        companyName: this.model.referringOrganisationContact?.referringOrganisation?.name || '',
+        documentTitle: `Device Request #${this.requestId}`,
+        date: new Date().toLocaleDateString(),
+
+        // Device Request details
+        requestId: this.requestId,
+        status: DEVICE_REQUEST_STATUS[this.model.status as keyof typeof DEVICE_REQUEST_STATUS] || this.model.status,
+        clientRef: this.model.clientRef || 'N/A',
+        borough: this.model.borough || 'N/A',
+        refereeName: this.model.referringOrganisationContact?.fullName || '',
+        details: this.model.details || '',
+
+        // Device counts
+        laptops: this.model.deviceRequestItems?.laptops || 0,
+        phones: this.model.deviceRequestItems?.phones || 0,
+        tablets: this.model.deviceRequestItems?.tablets || 0,
+        allInOnes: this.model.deviceRequestItems?.allInOnes || 0,
+        desktops: this.model.deviceRequestItems?.desktops || 0,
+        commsDevices: this.model.deviceRequestItems?.commsDevices || 0,
+        broadbandHubs: this.model.deviceRequestItems?.broadbandHubs || 0,
+        other: this.model.deviceRequestItems?.other || 0,
+
+        // Additional info
+        isSales: this.model.isSales ? 'Yes' : 'No',
+        createdAt: new Date(this.model.createdAt).toLocaleDateString(),
+        updatedAt: new Date(this.model.updatedAt).toLocaleDateString(),
+      };
+
+      // TODO: Replace with your actual Google Apps Script URL
+      const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbwvsi92ddWWf_LDn6rJdY3b9eTU0UfqIWwZsSpUCy8xrtdW1R6HsKwFECqbMMZRH-J1/exec';
+
+      const response = await fetch(appsScriptUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pdfData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Open PDF in new tab
+        window.open(result.pdfUrl, '_blank');
+
+        this.toastr.success(
+          `<small>PDF generated successfully</small>`,
+          'PDF Generation',
+          {
+            enableHtml: true,
+          }
+        );
+      } else {
+        throw new Error(result.error || 'Failed to generate PDF');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate PDF';
+      this.toastr.error(
+        `<small>${errorMessage}</small>`,
+        'PDF Generation Error',
+        {
+          enableHtml: true,
+        }
+      );
+    } finally {
+      this.generatingPdf = false;
+    }
+  }
 }
