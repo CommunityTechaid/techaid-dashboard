@@ -304,7 +304,7 @@ export class ReferringOrganisationContactComponent {
           },
           where: this._where,
           term: params['search']['value'],
-          filter: this._where || this.filter
+          filter: this.filter
         };
 
         queryRef.refetch(vars).then(res => {
