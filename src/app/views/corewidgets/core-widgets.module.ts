@@ -111,7 +111,8 @@ const routes: Routes = [
     DonorParentInfoComponent,
     DonorComponent,
     KitAuditComponent,
-    AdminPanelComponent
+    AdminPanelComponent,
+    DistributionsAndDeliveriesIndexComponent
   ],
   imports: [
     LightboxModule,
