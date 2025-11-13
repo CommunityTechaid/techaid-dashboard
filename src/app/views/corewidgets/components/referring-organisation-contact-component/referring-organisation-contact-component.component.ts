@@ -228,7 +228,7 @@ export class ReferringOrganisationContactComponent {
       filter['archived'] = {_in: data.archived};
     }
 
-    localStorage.setItem(`referringOrgContactFilters-${this.tableId}`, JSON.stringify(data));
+    localStorage.setItem(`referringOrgContactComponentFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
@@ -304,7 +304,7 @@ export class ReferringOrganisationContactComponent {
           },
           where: this._where,
           term: params['search']['value'],
-          filter: this._where || this.filter
+          filter: this.filter
         };
 
         queryRef.refetch(vars).then(res => {
@@ -366,7 +366,7 @@ export class ReferringOrganisationContactComponent {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
       try {
-        this.filterModel = JSON.parse(localStorage.getItem(`referringOrgContactFilters-${this.tableId}`)) || {archived: [false]};
+        this.filterModel = JSON.parse(localStorage.getItem(`referringOrgContactComponentFilters-${this.tableId}`)) || {archived: [false]};
       } catch (_) {
         this.filterModel = {archived: [false]};
       }
