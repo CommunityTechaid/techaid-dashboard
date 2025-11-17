@@ -86,6 +86,7 @@ query findKit($id: Long) {
     cpuCores
     tpmVersion
     batteryHealth
+    lotId
     donor {
       id
       name
@@ -153,6 +154,7 @@ mutation updateKit($data: UpdateKitInput!) {
     cpuCores
     tpmVersion
     batteryHealth
+    lotId
     donor {
       id
       name
@@ -497,6 +499,16 @@ export class KitInfoComponent {
           defaultValue: '',
           templateOptions: {
             label: "Serial Number"
+          }
+        },
+        {
+          key: 'lotId',
+          type: 'kit-info-input',
+          className: 'px-1',
+          defaultValue: '',
+          templateOptions: {
+            label: "Lot ID",
+            readonly: true
           }
         },
         this.donorField

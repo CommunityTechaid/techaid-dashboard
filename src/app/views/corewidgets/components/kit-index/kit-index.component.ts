@@ -59,6 +59,7 @@ const QUERY_ENTITY = gql`
         location
         updatedAt
         createdAt
+        lotId
         donor {
           id
           name
@@ -207,6 +208,23 @@ query findAutocompleteDonorParents($term: String, $id: Long) {
 }
 `;
 
+const AUTOCOMPLETE_LOTIDS = gql`
+query findAutocompleteLotIds($term: String, $ids: [String!]) {
+  kitsConnection(page: {
+    size: 50
+  }, where: {
+    lotId: { _contains: $term }
+    OR: [
+      { lotId: { _in: $ids } }
+    ]
+  }, distinct: [LOTID]){
+    content  {
+      lotId
+    }
+  }
+}
+`;
+
 @Component({
   selector: 'kit-index',
   styleUrls: ['kit-index.scss'],
@@ -309,6 +327,25 @@ export class KitIndexComponent {
       required: false,
     },
     hideExpression: true
+  };
+
+  lotIds$: Observable<any>;
+  lotIdInput$ = new Subject<string>();
+  lotIdLoading = false;
+  lotIdField: FormlyFieldConfig = {
+    key: 'lotIds',
+    type: 'choice',
+    className: 'col-md-12',
+    templateOptions: {
+      label: 'Lot ID',
+      description: 'Filter by Lot ID.',
+      loading: this.lotIdLoading,
+      typeahead: this.lotIdInput$,
+      multiple: true,
+      searchable: true,
+      items: [],
+      required: false
+    },
   };
 
   filter: any = {};
@@ -419,7 +456,8 @@ export class KitIndexComponent {
         },
         this.deviceRequestField,
         this.donorParentField,
-        this.donorParentTypeField
+        this.donorParentTypeField,
+        this.lotIdField
       ]
     },
     {
@@ -569,6 +607,11 @@ export class KitIndexComponent {
     if (data.deviceRequestIds && data.deviceRequestIds.length) {
       count += data.deviceRequestIds.length;
       filter['deviceRequest'] = {id: {_in: data.deviceRequestIds}};
+    }
+
+    if (data.lotIds && data.lotIds.length) {
+      count += data.lotIds.length;
+      filter['lotId'] = {_in: data.lotIds};
     }
 
     if (data.donorParentId && data.donorParentId.length) {
@@ -759,6 +802,45 @@ export class KitIndexComponent {
       this.donorParentField.templateOptions['items'] = data;
     }));
 
+    const lotIdRef = this.apollo
+    .watchQuery({
+      query: AUTOCOMPLETE_LOTIDS,
+      variables: {
+      }
+    });
+
+    this.lotIds$ = concat(
+      of([]),
+      this.lotIdInput$.pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        tap(() => this.lotIdLoading = true),
+        switchMap(term => from(lotIdRef.refetch({
+          term: term,
+          ids: this.filterModel.lotIds || [],
+        })).pipe(
+          catchError(() => of([])),
+          tap(() => this.lotIdLoading = false),
+          switchMap(res => {
+            const data = res['data']['kitsConnection']['content']
+              .map(v => v.lotId)
+              .filter(lotId => lotId && lotId.trim().length > 0)
+              .map(lotId => {
+                return {
+                  label: lotId,
+                  value: lotId
+                };
+              });
+            return of(data);
+          })
+        ))
+      )
+    );
+
+    this.sub.add(this.lotIds$.subscribe(data => {
+      this.lotIdField.templateOptions['items'] = data;
+    }));
+
     this.dtOptions = {
       pagingType: 'simple_numbers',
       dom:
@@ -902,6 +984,11 @@ export class KitIndexComponent {
                 });
               }
             }
+          });
+        }
+        if (this.filterModel && this.filterModel.lotIds && this.filterModel.lotIds.length) {
+          this.lotIdField.templateOptions['items'] = this.filterModel.lotIds.map(lotId => {
+            return {label: lotId, value: lotId};
           });
         }
       } catch (_) {
