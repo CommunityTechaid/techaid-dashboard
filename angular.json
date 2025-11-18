@@ -11,7 +11,6 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "aot": true,
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -25,9 +24,11 @@
               "jquery",
               "datatables.net",
               "ngx-lightbox",
-              "datatables.net-bs4",
+              "datatables.net-bs5",
               "lodash",
-              "zen-observable"
+              "zen-observable",
+              "@apollo/client",
+              "apollo-angular"
             ],
             "assets": [
               "src/assets",
@@ -40,7 +41,7 @@
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.css",
-              "node_modules/datatables.net-bs4/css/dataTables.bootstrap4.css",
+              "node_modules/datatables.net-bs5/css/dataTables.bootstrap5.css",
               "node_modules/prismjs/themes/prism.css",
               "node_modules/ngx-lightbox/lightbox.css",
               "src/styles.css",
@@ -49,10 +50,16 @@
             "scripts": [
               "node_modules/jquery/dist/jquery.js",
               "node_modules/datatables.net/js/jquery.dataTables.js",
-              "node_modules/datatables.net-bs4/js/dataTables.bootstrap4.js",
-              "node_modules/bootstrap/dist/js/bootstrap.js",
+              "node_modules/datatables.net-bs5/js/dataTables.bootstrap5.js",
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.js",
               "src/sb-admin-2.min.js"
-            ]
+            ],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -65,12 +72,9 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
-              "buildOptimizer": false,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -123,40 +127,40 @@
               ],
               "outputHashing": "all"
             }
-          }
+          },
+          "defaultConfiguration": ""
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "angular-template:build",
-            "proxyConfig": "src/proxy.conf.json"
+            "proxyConfig": "src/proxy.conf.json",
+            "buildTarget": "angular-template:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "angular-template:build:production"
+              "buildTarget": "angular-template:build:production"
             },
             "local": {
-              "browserTarget": "angular-template:build:local"
+              "buildTarget": "angular-template:build:local"
             },
             "uat": {
-              "browserTarget": "angular-template:build:uat"
+              "buildTarget": "angular-template:build:uat"
             },
             "dev": {
-              "browserTarget": "angular-template:build:dev",
-              "proxyConfig": "src/proxy.conf.json"
+              "proxyConfig": "src/proxy.conf.json",
+              "buildTarget": "angular-template:build:dev"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "angular-template:build"
+            "buildTarget": "angular-template:build"
           }
         }
       }
     }
   },
-  "defaultProject": "angular-template",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",
