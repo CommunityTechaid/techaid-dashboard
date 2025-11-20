@@ -40,6 +40,7 @@ const QUERY_ENTITY = gql`
       status
       createdAt
       updatedAt
+      collectionDate
       deviceRequestItems {
         phones
         tablets
@@ -85,6 +86,7 @@ const UPDATE_ENTITY = gql`
       status
       createdAt
       updatedAt
+      collectionDate
       deviceRequestItems {
         phones
         tablets
@@ -261,6 +263,17 @@ export class DeviceRequestInfoComponent {
                 label: 'Borough',
                 description: 'Borough associated with the request',
                 readonly: true
+              }
+            },
+            {
+              key: 'collectionDate',
+              type: 'input',
+              className: '',
+              templateOptions: {
+                type: 'date',
+                label: 'Collection Date',
+                description: 'Scheduled date for collection or delivery',
+                required: false
               }
             },
             // {

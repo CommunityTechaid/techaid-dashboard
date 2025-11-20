@@ -35,6 +35,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
      id
      status
      clientRef
+     collectionDate
      deviceRequestItems {
       phones
       tablets
@@ -367,12 +368,14 @@ export class DistributionsAndDeliveriesIndexComponent {
       },
       columns: [
         { data: 'id', width: '15px' },
-        { data: 'status' },
-        { data: 'clientRef' },
-        { data: 'referringOrganisationContact.referringOrganisation.name' },
+        { data: 'deviceRequestItems' },
         { data: 'referringOrganisationContact.fullName' },
+        { data: 'referringOrganisationContact.referringOrganisation.name' },
+        { data: 'clientRef' },
+        { data: 'collectionDate' },
         { data: 'createdAt'},
         { data: 'updatedAt' },
+        { data: 'status' },
       ]
     };
   }
