@@ -277,20 +277,15 @@ export class DeviceRequestInfoComponent {
 
   toggleDeviceTypes() {
     this.showAllDeviceTypes = !this.showAllDeviceTypes;
-    // Trigger field updates by updating the container's fieldGroup
-    this.updateDeviceTypeFields();
-    // Re-setup the button listener after DOM updates
-    setTimeout(() => {
-      this.setupToggleButton();
-    }, 100);
   }
 
   updateDeviceTypeFields() {
     // Find and update the device types fieldGroup
     const column2 = this.fields[0].fieldGroup[1]; // Second column
     if (column2 && column2.fieldGroup) {
-      const containerField = column2.fieldGroup.find((f: any) => f.key === 'deviceTypesContainer');
-      if (containerField) {
+      // The device types container is the second fieldGroup in column 2 (after 'details')
+      const containerField = column2.fieldGroup[1];
+      if (containerField && containerField.fieldGroup) {
         containerField.fieldGroup = this.getDeviceTypeFields();
       }
     }
@@ -442,8 +437,245 @@ export class DeviceRequestInfoComponent {
               }
             },
             {
-              key: 'deviceTypesContainer',
-              fieldGroup: []
+              fieldGroup: [
+                {
+                  key: 'deviceRequestItems.laptops',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.laptops === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.laptops > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Laptops',
+                    addonLeft: {
+                      class: 'fas fa-laptop'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.phones',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.phones === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.phones > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Phones',
+                    addonLeft: {
+                      class: 'fas fa-mobile-alt'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.tablets',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.tablets === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.tablets > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Tablets',
+                    addonLeft: {
+                      class: 'fas fa-tablet-alt'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.allInOnes',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.allInOnes === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.allInOnes > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'All In Ones',
+                    addonLeft: {
+                      class: 'fas fa-desktop'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.desktops',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.desktops === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.desktops > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Desktops',
+                    addonLeft: {
+                      class: 'fas fa-desktop'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.commsDevices',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.commsDevices === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.commsDevices > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'SIM Cards',
+                    addonLeft: {
+                      class: 'fas fa-microchip'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.broadbandHubs',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.broadbandHubs === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.broadbandHubs > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Broadband Hubs',
+                    addonLeft: {
+                      class: 'fas fa-wifi'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.other',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.other === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.other > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Other',
+                    addonLeft: {
+                      class: 'fas fa-laptop'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  template: `
+                    <div class="text-center my-2">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleDeviceTypes()">
+                        <i class="fas fa-chevron-${this.showAllDeviceTypes ? 'up' : 'down'}"></i>
+                        ${this.showAllDeviceTypes ? 'Show only requested types' : 'Show all device types'}
+                      </button>
+                    </div>
+                  `,
+                  hideExpression: (model: any) => {
+                    // Hide button if all device types have values
+                    if (!model.deviceRequestItems) return true;
+                    const items = model.deviceRequestItems;
+                    return items.laptops > 0 && items.phones > 0 && items.tablets > 0 &&
+                           items.allInOnes > 0 && items.desktops > 0 && items.commsDevices > 0 &&
+                           items.broadbandHubs > 0 && items.other > 0;
+                  },
+                  expressionProperties: {
+                    'className': () => 'order-99'
+                  }
+                }
+              ]
             }
           ]
         },
@@ -516,15 +748,6 @@ export class DeviceRequestInfoComponent {
       ];
       this.referringOrganisationContactField.templateOptions['label'] = data.referringOrganisationContact.referringOrganisation.name + ' Referee';
     }
-
-    // Initialize device type fields after model is set
-    setTimeout(() => {
-      this.updateDeviceTypeFields();
-      // Re-setup toggle button after fields update
-      setTimeout(() => {
-        this.setupToggleButton();
-      }, 100);
-    }, 0);
 
     return data;
   }
@@ -628,21 +851,6 @@ export class DeviceRequestInfoComponent {
     }));
   }
 
-  ngAfterViewInit() {
-    // Set up click handler for toggle button after a short delay to ensure DOM is ready
-    setTimeout(() => {
-      this.setupToggleButton();
-    }, 500);
-  }
-
-  setupToggleButton() {
-    const button = document.getElementById('toggleDeviceTypesBtn');
-    if (button) {
-      button.addEventListener('click', () => {
-        this.toggleDeviceTypes();
-      });
-    }
-  }
 
   referringOrganisationContactName(data) {
     return `${data.fullName || ''}||${data.id || ''}`
