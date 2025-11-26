@@ -186,6 +186,133 @@ export class DeviceRequestInfoComponent {
   referringOrganisationContactId: number;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
+  showAllDeviceTypes = false;
+
+  deviceTypes = [
+    { key: 'deviceRequestItems.laptops', label: 'Laptops', icon: 'fas fa-laptop' },
+    { key: 'deviceRequestItems.phones', label: 'Phones', icon: 'fas fa-mobile-alt' },
+    { key: 'deviceRequestItems.tablets', label: 'Tablets', icon: 'fas fa-tablet-alt' },
+    { key: 'deviceRequestItems.allInOnes', label: 'All In Ones', icon: 'fas fa-desktop' },
+    { key: 'deviceRequestItems.desktops', label: 'Desktops', icon: 'fas fa-desktop' },
+    { key: 'deviceRequestItems.commsDevices', label: 'SIM Cards', icon: 'fas fa-microchip' },
+    { key: 'deviceRequestItems.broadbandHubs', label: 'Broadband Hubs', icon: 'fas fa-wifi' },
+    { key: 'deviceRequestItems.other', label: 'Other', icon: 'fas fa-laptop' }
+  ];
+
+  createDeviceField(deviceType: any): FormlyFieldConfig {
+    return {
+      key: deviceType.key,
+      type: 'input',
+      className: '',
+      defaultValue: 0,
+      hideExpression: () => {
+        // Hide zero-value fields when showAllDeviceTypes is false
+        if (!this.showAllDeviceTypes && this.model && this.model.deviceRequestItems) {
+          const fieldKey = deviceType.key.split('.')[1];
+          const value = this.model.deviceRequestItems[fieldKey] || 0;
+          return value === 0;
+        }
+        return false;
+      },
+      templateOptions: {
+        min: 0,
+        label: deviceType.label,
+        addonLeft: {
+          class: deviceType.icon
+        },
+        type: 'number',
+        placeholder: '',
+        required: true
+      }
+    };
+  }
+
+  getDeviceTypeFields(): FormlyFieldConfig[] {
+    const fields: FormlyFieldConfig[] = [];
+
+    // Sort device types: non-zero first, then zero values
+    const sorted = [...this.deviceTypes].sort((a, b) => {
+      if (!this.model || !this.model.deviceRequestItems) return 0;
+
+      const aKey = a.key.split('.')[1];
+      const bKey = b.key.split('.')[1];
+      const aValue = this.model.deviceRequestItems[aKey] || 0;
+      const bValue = this.model.deviceRequestItems[bKey] || 0;
+
+      // Non-zero values come first
+      if (aValue > 0 && bValue === 0) return -1;
+      if (aValue === 0 && bValue > 0) return 1;
+      return 0;
+    });
+
+    // Add all device fields with hide expressions
+    sorted.forEach(dt => {
+      fields.push(this.createDeviceField(dt));
+    });
+
+    // Add toggle button
+    const toggleButton: FormlyFieldConfig = {
+      template: `
+        <div class="text-center my-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn">
+            <i class="fas ${this.showAllDeviceTypes ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>
+            ${this.showAllDeviceTypes ? 'Show only requested device types' : 'Show all device types'}
+          </button>
+        </div>
+      `,
+      hideExpression: () => {
+        // Only show button if there are zero-value items
+        if (!this.model || !this.model.deviceRequestItems) return true;
+        return this.deviceTypes.every(dt => {
+          const fieldKey = dt.key.split('.')[1];
+          return (this.model.deviceRequestItems[fieldKey] || 0) > 0;
+        });
+      }
+    };
+
+    fields.push(toggleButton);
+
+    return fields;
+  }
+
+  toggleDeviceTypes() {
+    this.showAllDeviceTypes = !this.showAllDeviceTypes;
+    // Trigger field updates by updating the container's fieldGroup
+    this.updateDeviceTypeFields();
+    // Re-setup the button listener after DOM updates
+    setTimeout(() => {
+      this.setupToggleButton();
+    }, 100);
+  }
+
+  updateDeviceTypeFields() {
+    // Find and update the device types fieldGroup
+    const column2 = this.fields[0].fieldGroup[1]; // Second column
+    if (column2 && column2.fieldGroup) {
+      const containerField = column2.fieldGroup.find((f: any) => f.key === 'deviceTypesContainer');
+      if (containerField) {
+        containerField.fieldGroup = this.getDeviceTypeFields();
+      }
+    }
+  }
+
+  get sortedDeviceTypes() {
+    if (!this.model || !this.model.deviceRequestItems) {
+      return this.deviceTypes;
+    }
+
+    const nonZero = this.deviceTypes.filter(dt => {
+      const fieldKey = dt.key.split('.')[1];
+      return (this.model.deviceRequestItems[fieldKey] || 0) > 0;
+    });
+
+    const zero = this.deviceTypes.filter(dt => {
+      const fieldKey = dt.key.split('.')[1];
+      return (this.model.deviceRequestItems[fieldKey] || 0) === 0;
+    });
+
+    return { nonZero, zero };
+  }
 
   newNoteField: FormlyFieldConfig = {
     key: 'deviceRequestNote.content',
@@ -315,145 +442,8 @@ export class DeviceRequestInfoComponent {
               }
             },
             {
-              fieldGroup: [
-                //       {
-                //         className: '',
-                //         template: `
-                //   <p>How many of the following items can you currently take</p>
-                // `
-                //       },
-                {
-                  key: 'deviceRequestItems.laptops',
-                  type: 'input',
-                  className: '',
-                  defaultValue: 0,
-                  templateOptions: {
-                    min: 0,
-                    label: 'Laptops',
-                    addonLeft: {
-                      class: 'fas fa-laptop'
-                    },
-                    type: 'number',
-                    placeholder: '',
-                    required: true
-                  }
-                },
-                  {
-                    key: 'deviceRequestItems.phones',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Phones',
-                      addonLeft: {
-                        class: 'fas fa-mobile-alt'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.commsDevices',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'SIM Cards',
-                      description: '',
-                      addonLeft: {
-                        class: 'fas fa-microchip'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.tablets',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Tablets',
-                      addonLeft: {
-                        class: 'fas fa-tablet-alt'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.allInOnes',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'All In Ones',
-                      addonLeft: {
-                        class: 'fas fa-desktop'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.desktops',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Desktops',
-                      addonLeft: {
-                        class: 'fas fa-desktop'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.broadbandHubs',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Broadband Hubs',
-                      description: '',
-                      addonLeft: {
-                        class: 'fas fa-wifi'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.other',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Other',
-                      description: '',
-                      addonLeft: {
-                        class: 'fas fa-laptop'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  }
-              ]
+              key: 'deviceTypesContainer',
+              fieldGroup: []
             }
           ]
         },
@@ -526,6 +516,15 @@ export class DeviceRequestInfoComponent {
       ];
       this.referringOrganisationContactField.templateOptions['label'] = data.referringOrganisationContact.referringOrganisation.name + ' Referee';
     }
+
+    // Initialize device type fields after model is set
+    setTimeout(() => {
+      this.updateDeviceTypeFields();
+      // Re-setup toggle button after fields update
+      setTimeout(() => {
+        this.setupToggleButton();
+      }, 100);
+    }, 0);
 
     return data;
   }
@@ -627,6 +626,22 @@ export class DeviceRequestInfoComponent {
     this.sub.add(this.referringOrganisationContacts$.subscribe(data => {
       this.referringOrganisationContactField.templateOptions['items'] = data;
     }));
+  }
+
+  ngAfterViewInit() {
+    // Set up click handler for toggle button after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      this.setupToggleButton();
+    }, 500);
+  }
+
+  setupToggleButton() {
+    const button = document.getElementById('toggleDeviceTypesBtn');
+    if (button) {
+      button.addEventListener('click', () => {
+        this.toggleDeviceTypes();
+      });
+    }
   }
 
   referringOrganisationContactName(data) {
