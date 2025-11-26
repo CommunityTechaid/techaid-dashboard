@@ -265,17 +265,6 @@ export class DeviceRequestInfoComponent {
                 readonly: true
               }
             },
-            {
-              key: 'collectionDate',
-              type: 'input',
-              className: '',
-              templateOptions: {
-                type: 'date',
-                label: 'Collection Date',
-                description: 'Scheduled date for collection or delivery',
-                required: false
-              }
-            },
             // {
             //   key: 'deviceRequestNeeds.hasInternet',
             //   type: 'checkbox',
@@ -486,6 +475,19 @@ export class DeviceRequestInfoComponent {
             // },
             this.referringOrganisationContactField,
             {
+              key: 'collectionDate',
+              type: 'input',
+              className: '',
+              templateOptions: {
+                type: 'date',
+                label: 'Collection Date',
+                description: 'Scheduled date for collection or delivery',
+                required: false
+              }
+            },
+            this.newNoteField,
+            this.notesField,
+            {
               key: 'isSales',
               type: 'checkbox',
               className: 'px-1',
@@ -495,9 +497,7 @@ export class DeviceRequestInfoComponent {
                 required: false,
                 description: 'Optional flag to track commercial sales'
               }
-            },
-            this.newNoteField,
-            this.notesField
+            }
           ]
         }
       ]
