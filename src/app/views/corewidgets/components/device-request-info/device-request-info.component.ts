@@ -277,6 +277,23 @@ export class DeviceRequestInfoComponent {
 
   toggleDeviceTypes() {
     this.showAllDeviceTypes = !this.showAllDeviceTypes;
+
+    // Update button text and icon
+    const button = document.querySelector('[data-toggle-device-types]');
+    if (button) {
+      const icon = button.querySelector('i');
+      const span = button.querySelector('span');
+
+      if (icon && span) {
+        if (this.showAllDeviceTypes) {
+          icon.className = 'fas fa-chevron-up';
+          span.textContent = 'Show only requested types';
+        } else {
+          icon.className = 'fas fa-chevron-down';
+          span.textContent = 'Show all device types';
+        }
+      }
+    }
   }
 
   updateDeviceTypeFields() {
@@ -657,9 +674,9 @@ export class DeviceRequestInfoComponent {
                 {
                   template: `
                     <div class="text-center my-2">
-                      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleDeviceTypes()">
-                        <i class="fas fa-chevron-${this.showAllDeviceTypes ? 'up' : 'down'}"></i>
-                        ${this.showAllDeviceTypes ? 'Show only requested types' : 'Show all device types'}
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle-device-types>
+                        <i class="fas fa-chevron-down"></i>
+                        <span>Show all device types</span>
                       </button>
                     </div>
                   `,
@@ -849,6 +866,28 @@ export class DeviceRequestInfoComponent {
     this.sub.add(this.referringOrganisationContacts$.subscribe(data => {
       this.referringOrganisationContactField.templateOptions['items'] = data;
     }));
+
+    // Set up the toggle button click handler after a delay to ensure DOM is ready
+    setTimeout(() => {
+      this.attachToggleButtonListener();
+    }, 1000);
+  }
+
+  ngAfterViewInit() {
+    // Reattach listener after view initialization
+    setTimeout(() => {
+      this.attachToggleButtonListener();
+    }, 500);
+  }
+
+  attachToggleButtonListener() {
+    const button = document.querySelector('[data-toggle-device-types]');
+    if (button && !button.hasAttribute('data-listener-attached')) {
+      button.setAttribute('data-listener-attached', 'true');
+      button.addEventListener('click', () => {
+        this.toggleDeviceTypes();
+      });
+    }
   }
 
 
