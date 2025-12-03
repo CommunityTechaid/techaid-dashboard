@@ -171,9 +171,6 @@ export class DeviceRequestInfoComponent {
     private titleService: Title
   ) {
     titleService.setTitle("TaDa - Device Request");
-    // Store component reference globally for access from template
-    (window as any)['deviceRequestComponent'] = this;
-    console.log('DeviceRequestComponent constructor - window.deviceRequestComponent set:', (window as any)['deviceRequestComponent']);
   }
 
   sub: Subscription;
@@ -204,24 +201,16 @@ export class DeviceRequestInfoComponent {
 
 
   toggleDeviceTypes() {
-    console.log('toggleDeviceTypes called! Current state:', this.showAllDeviceTypes);
     this.showAllDeviceTypes = !this.showAllDeviceTypes;
-    console.log('New state:', this.showAllDeviceTypes);
 
-    // Update button text and icon
+    // Update button icon (text stays the same)
     const icon = document.getElementById('toggleIcon');
-    const text = document.getElementById('toggleText');
 
-    console.log('Icon element:', icon);
-    console.log('Text element:', text);
-
-    if (icon && text) {
+    if (icon) {
       if (this.showAllDeviceTypes) {
         icon.className = 'fas fa-chevron-up';
-        text.textContent = 'Show only requested types';
       } else {
         icon.className = 'fas fa-chevron-down';
-        text.textContent = 'Show all device types';
       }
     }
 
@@ -578,7 +567,7 @@ export class DeviceRequestInfoComponent {
                   template: `
                     <div class="text-center my-2 btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn" style="cursor: pointer;">
                       <i class="fas fa-chevron-down" id="toggleIcon"></i>
-                      <span id="toggleText">Show all device types</span>
+                      <span id="toggleText">Show/hide unused device types</span>
                     </div>
                   `,
                   hideExpression: (model: any) => {
@@ -771,12 +760,10 @@ export class DeviceRequestInfoComponent {
     // Set up global click handler for toggle button using event delegation
     document.addEventListener('click', (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      console.log('Click detected on:', target.tagName, target.id, target.className, target.textContent?.substring(0, 30));
 
       // Check if clicked element's text matches our toggle button text
       const text = target.textContent?.trim();
-      if (text === 'Show all device types' || text === 'Show only requested types') {
-        console.log('Toggle button text matched! Triggering toggle...');
+      if (text === 'Show/hide unused device types') {
         e.preventDefault();
         this.toggleDeviceTypes();
         return;
@@ -784,7 +771,6 @@ export class DeviceRequestInfoComponent {
 
       // Check if clicked element is the icon (has fa-chevron class)
       if (target.className && (target.className.includes('fa-chevron-down') || target.className.includes('fa-chevron-up'))) {
-        console.log('Toggle icon clicked! Triggering toggle...');
         e.preventDefault();
         this.toggleDeviceTypes();
         return;
@@ -792,7 +778,6 @@ export class DeviceRequestInfoComponent {
 
       // Check if clicked element is the icon or text span by ID
       if (target.id === 'toggleIcon' || target.id === 'toggleText' || target.id === 'toggleDeviceTypesBtn') {
-        console.log('Toggle element clicked by ID!');
         e.preventDefault();
         this.toggleDeviceTypes();
         return;
@@ -800,10 +785,7 @@ export class DeviceRequestInfoComponent {
 
       // Also check if clicked element or its parent is the toggle button
       const button = target.closest('#toggleDeviceTypesBtn');
-      console.log('Closest button:', button);
-
       if (button) {
-        console.log('Toggle button clicked via event delegation!');
         e.preventDefault();
         this.toggleDeviceTypes();
       }
