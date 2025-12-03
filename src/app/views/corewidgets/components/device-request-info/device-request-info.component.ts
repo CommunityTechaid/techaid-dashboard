@@ -577,8 +577,7 @@ export class DeviceRequestInfoComponent {
                 {
                   template: `
                     <div class="text-center my-2">
-                      <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn"
-                        onclick="window.deviceRequestComponent?.toggleDeviceTypes()">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn">
                         <i class="fas fa-chevron-down" id="toggleIcon"></i>
                         <span id="toggleText">Show all device types</span>
                       </button>
@@ -594,6 +593,29 @@ export class DeviceRequestInfoComponent {
                   },
                   expressionProperties: {
                     'className': () => 'order-99'
+                  },
+                  hooks: {
+                    afterViewInit: () => {
+                      console.log('afterViewInit hook called');
+                      // Use native DOM manipulation to attach event
+                      setTimeout(() => {
+                        const btn = document.getElementById('toggleDeviceTypesBtn');
+                        console.log('Button found:', btn);
+                        if (btn) {
+                          // Remove any existing handler first
+                          const newBtn = btn.cloneNode(true) as HTMLElement;
+                          btn.parentNode?.replaceChild(newBtn, btn);
+
+                          // Add new handler
+                          newBtn.addEventListener('click', (e) => {
+                            console.log('Button clicked via addEventListener!');
+                            e.preventDefault();
+                            (window as any)['deviceRequestComponent']?.toggleDeviceTypes();
+                          });
+                          console.log('Event listener attached');
+                        }
+                      }, 100);
+                    }
                   }
                 }
               ]
