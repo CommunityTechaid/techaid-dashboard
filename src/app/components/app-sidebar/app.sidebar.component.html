@@ -61,6 +61,13 @@
       </a>
     </li>
 
+    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations'] && user?.authorities['app:admin']">
+      <a class="nav-link" href="#" routerLink="/dashboard/distributions-and-deliveries">
+          <i class="fas fa-gift"></i>
+          <span>Distributions & Deliveries</span>
+      </a>
+    </li>
+
     <!-- Divider -->
     <hr class="sidebar-divider my-0">
 

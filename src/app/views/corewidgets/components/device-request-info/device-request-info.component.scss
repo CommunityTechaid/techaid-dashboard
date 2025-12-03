@@ -34,3 +34,21 @@ form {
       font-size: 0.9em;
   }
 }
+
+// Device types ordering
+formly-group:has(> formly-field[ng-reflect-field*="deviceRequestItems"]) {
+  display: flex;
+  flex-direction: column;
+
+  > formly-field {
+    &.order-1 {
+      order: 1;
+    }
+    &.order-10 {
+      order: 10;
+    }
+    &.order-99 {
+      order: 99;
+    }
+  }
+}

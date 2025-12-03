@@ -40,6 +40,7 @@ const QUERY_ENTITY = gql`
       status
       createdAt
       updatedAt
+      collectionDate
       deviceRequestItems {
         phones
         tablets
@@ -85,6 +86,7 @@ const UPDATE_ENTITY = gql`
       status
       createdAt
       updatedAt
+      collectionDate
       deviceRequestItems {
         phones
         tablets
@@ -184,6 +186,37 @@ export class DeviceRequestInfoComponent {
   referringOrganisationContactId: number;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
+  showAllDeviceTypes = false;
+
+  deviceTypes = [
+    { key: 'deviceRequestItems.laptops', label: 'Laptops', icon: 'fas fa-laptop' },
+    { key: 'deviceRequestItems.phones', label: 'Phones', icon: 'fas fa-mobile-alt' },
+    { key: 'deviceRequestItems.tablets', label: 'Tablets', icon: 'fas fa-tablet-alt' },
+    { key: 'deviceRequestItems.allInOnes', label: 'All In Ones', icon: 'fas fa-desktop' },
+    { key: 'deviceRequestItems.desktops', label: 'Desktops', icon: 'fas fa-desktop' },
+    { key: 'deviceRequestItems.commsDevices', label: 'SIM Cards', icon: 'fas fa-microchip' },
+    { key: 'deviceRequestItems.broadbandHubs', label: 'Broadband Hubs', icon: 'fas fa-wifi' },
+    { key: 'deviceRequestItems.other', label: 'Other', icon: 'fas fa-laptop' }
+  ];
+
+
+  toggleDeviceTypes() {
+    this.showAllDeviceTypes = !this.showAllDeviceTypes;
+
+    // Update button icon (text stays the same)
+    const icon = document.getElementById('toggleIcon');
+
+    if (icon) {
+      if (this.showAllDeviceTypes) {
+        icon.className = 'fas fa-chevron-up';
+      } else {
+        icon.className = 'fas fa-chevron-down';
+      }
+    }
+
+    // Trigger change detection by updating the form options
+    this.options = { ...this.options };
+  }
 
   newNoteField: FormlyFieldConfig = {
     key: 'deviceRequestNote.content',
@@ -314,17 +347,22 @@ export class DeviceRequestInfoComponent {
             },
             {
               fieldGroup: [
-                //       {
-                //         className: '',
-                //         template: `
-                //   <p>How many of the following items can you currently take</p>
-                // `
-                //       },
                 {
                   key: 'deviceRequestItems.laptops',
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.laptops === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.laptops > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
                   templateOptions: {
                     min: 0,
                     label: 'Laptops',
@@ -336,121 +374,214 @@ export class DeviceRequestInfoComponent {
                     required: true
                   }
                 },
-                  {
-                    key: 'deviceRequestItems.phones',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Phones',
-                      addonLeft: {
-                        class: 'fas fa-mobile-alt'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
+                {
+                  key: 'deviceRequestItems.phones',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.phones === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.phones > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
                     }
                   },
-                  {
-                    key: 'deviceRequestItems.commsDevices',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'SIM Cards',
-                      description: '',
-                      addonLeft: {
-                        class: 'fas fa-microchip'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.tablets',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Tablets',
-                      addonLeft: {
-                        class: 'fas fa-tablet-alt'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.allInOnes',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'All In Ones',
-                      addonLeft: {
-                        class: 'fas fa-desktop'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.desktops',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Desktops',
-                      addonLeft: {
-                        class: 'fas fa-desktop'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.broadbandHubs',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Broadband Hubs',
-                      description: '',
-                      addonLeft: {
-                        class: 'fas fa-wifi'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
-                  },
-                  {
-                    key: 'deviceRequestItems.other',
-                    type: 'input',
-                    className: '',
-                    defaultValue: 0,
-                    templateOptions: {
-                      min: 0,
-                      label: 'Other',
-                      description: '',
-                      addonLeft: {
-                        class: 'fas fa-laptop'
-                      },
-                      type: 'number',
-                      placeholder: '',
-                      required: true
-                    }
+                  templateOptions: {
+                    min: 0,
+                    label: 'Phones',
+                    addonLeft: {
+                      class: 'fas fa-mobile-alt'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
                   }
+                },
+                {
+                  key: 'deviceRequestItems.tablets',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.tablets === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.tablets > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Tablets',
+                    addonLeft: {
+                      class: 'fas fa-tablet-alt'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.allInOnes',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.allInOnes === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.allInOnes > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'All In Ones',
+                    addonLeft: {
+                      class: 'fas fa-desktop'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.desktops',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.desktops === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.desktops > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Desktops',
+                    addonLeft: {
+                      class: 'fas fa-desktop'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.commsDevices',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.commsDevices === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.commsDevices > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'SIM Cards',
+                    addonLeft: {
+                      class: 'fas fa-microchip'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.broadbandHubs',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.broadbandHubs === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.broadbandHubs > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Broadband Hubs',
+                    addonLeft: {
+                      class: 'fas fa-wifi'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  key: 'deviceRequestItems.other',
+                  type: 'input',
+                  className: '',
+                  defaultValue: 0,
+                  hideExpression: (model: any) => {
+                    return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.other === 0);
+                  },
+                  expressionProperties: {
+                    'className': (model: any) => {
+                      if (model.deviceRequestItems && model.deviceRequestItems.other > 0) {
+                        return 'order-1';
+                      }
+                      return 'order-10';
+                    }
+                  },
+                  templateOptions: {
+                    min: 0,
+                    label: 'Other',
+                    addonLeft: {
+                      class: 'fas fa-laptop'
+                    },
+                    type: 'number',
+                    placeholder: '',
+                    required: true
+                  }
+                },
+                {
+                  template: `
+                    <div class="text-center my-2 btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn" style="cursor: pointer;">
+                      <i class="fas fa-chevron-down" id="toggleIcon"></i>
+                      <span id="toggleText">Show/hide unused device types</span>
+                    </div>
+                  `,
+                  hideExpression: (model: any) => {
+                    // Hide button if all device types have values
+                    if (!model.deviceRequestItems) return true;
+                    const items = model.deviceRequestItems;
+                    return items.laptops > 0 && items.phones > 0 && items.tablets > 0 &&
+                           items.allInOnes > 0 && items.desktops > 0 && items.commsDevices > 0 &&
+                           items.broadbandHubs > 0 && items.other > 0;
+                  },
+                  expressionProperties: {
+                    'className': () => 'order-99'
+                  }
+                }
               ]
             }
           ]
@@ -473,6 +604,19 @@ export class DeviceRequestInfoComponent {
             // },
             this.referringOrganisationContactField,
             {
+              key: 'collectionDate',
+              type: 'input',
+              className: '',
+              templateOptions: {
+                type: 'datetime-local',
+                label: 'Collection Date & Time',
+                description: 'Scheduled date and time for collection or delivery',
+                required: false
+              }
+            },
+            this.newNoteField,
+            this.notesField,
+            {
               key: 'isSales',
               type: 'checkbox',
               className: 'px-1',
@@ -482,9 +626,7 @@ export class DeviceRequestInfoComponent {
                 required: false,
                 description: 'Optional flag to track commercial sales'
               }
-            },
-            this.newNoteField,
-            this.notesField
+            }
           ]
         }
       ]
@@ -614,7 +756,42 @@ export class DeviceRequestInfoComponent {
     this.sub.add(this.referringOrganisationContacts$.subscribe(data => {
       this.referringOrganisationContactField.templateOptions['items'] = data;
     }));
+
+    // Set up global click handler for toggle button using event delegation
+    document.addEventListener('click', (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Check if clicked element's text matches our toggle button text
+      const text = target.textContent?.trim();
+      if (text === 'Show/hide unused device types') {
+        e.preventDefault();
+        this.toggleDeviceTypes();
+        return;
+      }
+
+      // Check if clicked element is the icon (has fa-chevron class)
+      if (target.className && (target.className.includes('fa-chevron-down') || target.className.includes('fa-chevron-up'))) {
+        e.preventDefault();
+        this.toggleDeviceTypes();
+        return;
+      }
+
+      // Check if clicked element is the icon or text span by ID
+      if (target.id === 'toggleIcon' || target.id === 'toggleText' || target.id === 'toggleDeviceTypesBtn') {
+        e.preventDefault();
+        this.toggleDeviceTypes();
+        return;
+      }
+
+      // Also check if clicked element or its parent is the toggle button
+      const button = target.closest('#toggleDeviceTypesBtn');
+      if (button) {
+        e.preventDefault();
+        this.toggleDeviceTypes();
+      }
+    });
   }
+
 
   referringOrganisationContactName(data) {
     return `${data.fullName || ''}||${data.id || ''}`
@@ -652,6 +829,10 @@ export class DeviceRequestInfoComponent {
         (res) => {
           this.model = this.normalizeData(res.data['updateDeviceRequest']);
           this.requestId = this.model['id'];
+
+          // Trigger form field update to reflect new visibility state
+          this.options = { ...this.options };
+
           this.toastr.info(
             `
       <small>Successfully updated device request ${this.requestId}</small>
