@@ -294,6 +294,9 @@ export class DeviceRequestInfoComponent {
         }
       }
     }
+
+    // Trigger change detection by updating the form options
+    this.options = { ...this.options };
   }
 
   updateDeviceTypeFields() {
@@ -766,6 +769,11 @@ export class DeviceRequestInfoComponent {
       this.referringOrganisationContactField.templateOptions['label'] = data.referringOrganisationContact.referringOrganisation.name + ' Referee';
     }
 
+    // Reattach toggle button listener after data loads
+    setTimeout(() => {
+      this.attachToggleButtonListener();
+    }, 100);
+
     return data;
   }
 
@@ -880,11 +888,24 @@ export class DeviceRequestInfoComponent {
     }, 500);
   }
 
+  ngAfterViewChecked() {
+    // Continuously check and reattach listener if needed
+    const button = document.querySelector('[data-toggle-device-types]');
+    if (button && !button.hasAttribute('data-listener-attached')) {
+      button.setAttribute('data-listener-attached', 'true');
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.toggleDeviceTypes();
+      });
+    }
+  }
+
   attachToggleButtonListener() {
     const button = document.querySelector('[data-toggle-device-types]');
     if (button && !button.hasAttribute('data-listener-attached')) {
       button.setAttribute('data-listener-attached', 'true');
-      button.addEventListener('click', () => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
         this.toggleDeviceTypes();
       });
     }
@@ -927,6 +948,10 @@ export class DeviceRequestInfoComponent {
         (res) => {
           this.model = this.normalizeData(res.data['updateDeviceRequest']);
           this.requestId = this.model['id'];
+
+          // Trigger form field update to reflect new visibility state
+          this.options = { ...this.options };
+
           this.toastr.info(
             `
       <small>Successfully updated device request ${this.requestId}</small>
@@ -936,6 +961,11 @@ export class DeviceRequestInfoComponent {
               enableHtml: true,
             }
           );
+
+          // Reattach toggle button listener after update
+          setTimeout(() => {
+            this.attachToggleButtonListener();
+          }, 100);
         },
         (err) => {
           this.toastr.error(
