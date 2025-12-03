@@ -603,6 +603,15 @@ export class DeviceRequestInfoComponent {
                         const btn = document.getElementById('toggleDeviceTypesBtn');
                         console.log(`Attempt ${attempt}: Button found:`, btn);
 
+                        // Also check for all buttons on the page
+                        if (!btn && attempt === 1) {
+                          const allButtons = document.querySelectorAll('button');
+                          console.log('All buttons on page:', allButtons.length);
+                          allButtons.forEach((b, i) => {
+                            console.log(`Button ${i}:`, b.textContent?.trim().substring(0, 50), 'ID:', b.id);
+                          });
+                        }
+
                         if (btn) {
                           // Remove any existing handler first
                           const newBtn = btn.cloneNode(true) as HTMLElement;
@@ -615,11 +624,12 @@ export class DeviceRequestInfoComponent {
                             (window as any)['deviceRequestComponent']?.toggleDeviceTypes();
                           });
                           console.log('Event listener attached successfully');
-                        } else if (attempt < 10) {
-                          // Try again with exponential backoff
-                          setTimeout(() => tryAttach(attempt + 1), 100 * attempt);
+                        } else if (attempt < 20) {
+                          // Try again with exponential backoff (increased to 20 attempts)
+                          setTimeout(() => tryAttach(attempt + 1), 200 * attempt);
                         } else {
-                          console.error('Failed to find toggle button after 10 attempts');
+                          console.error('Failed to find toggle button after 20 attempts');
+                          console.log('Dumping page HTML:', document.body.innerHTML.substring(0, 5000));
                         }
                       };
 
