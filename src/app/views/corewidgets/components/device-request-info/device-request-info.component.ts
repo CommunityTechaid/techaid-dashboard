@@ -597,10 +597,12 @@ export class DeviceRequestInfoComponent {
                   hooks: {
                     afterViewInit: () => {
                       console.log('afterViewInit hook called');
-                      // Use native DOM manipulation to attach event
-                      setTimeout(() => {
+
+                      // Try multiple times with increasing delays
+                      const tryAttach = (attempt: number) => {
                         const btn = document.getElementById('toggleDeviceTypesBtn');
-                        console.log('Button found:', btn);
+                        console.log(`Attempt ${attempt}: Button found:`, btn);
+
                         if (btn) {
                           // Remove any existing handler first
                           const newBtn = btn.cloneNode(true) as HTMLElement;
@@ -612,9 +614,16 @@ export class DeviceRequestInfoComponent {
                             e.preventDefault();
                             (window as any)['deviceRequestComponent']?.toggleDeviceTypes();
                           });
-                          console.log('Event listener attached');
+                          console.log('Event listener attached successfully');
+                        } else if (attempt < 10) {
+                          // Try again with exponential backoff
+                          setTimeout(() => tryAttach(attempt + 1), 100 * attempt);
+                        } else {
+                          console.error('Failed to find toggle button after 10 attempts');
                         }
-                      }, 100);
+                      };
+
+                      tryAttach(1);
                     }
                   }
                 }
