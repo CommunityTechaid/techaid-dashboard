@@ -608,9 +608,9 @@ export class DeviceRequestInfoComponent {
               type: 'input',
               className: '',
               templateOptions: {
-                type: 'date',
-                label: 'Collection Date',
-                description: 'Scheduled date for collection or delivery',
+                type: 'datetime-local',
+                label: 'Collection Date & Time',
+                description: 'Scheduled date and time for collection or delivery',
                 required: false
               }
             },
