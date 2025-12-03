@@ -25,6 +25,28 @@
                       </a> -->
                   </div>
               </div>
+              <!-- Quick Filter Buttons -->
+              <div class="mt-3 d-flex flex-wrap align-items-center">
+                  <button *ngFor="let btn of weekButtons"
+                          (click)="applyWeekFilter(btn)"
+                          [class.btn-primary]="activeFilter === btn.label"
+                          [class.btn-outline-primary]="activeFilter !== btn.label"
+                          class="btn btn-sm mr-2 mb-2">
+                      {{btn.label}}
+                  </button>
+                  <button *ngFor="let btn of statusButtons"
+                          (click)="applyStatusFilter(btn)"
+                          [class.btn-success]="activeFilter === btn.label"
+                          [class.btn-outline-success]="activeFilter !== btn.label"
+                          class="btn btn-sm mr-2 mb-2">
+                      {{btn.label}}
+                  </button>
+                  <button *ngIf="activeFilter"
+                          (click)="clearQuickFilters()"
+                          class="btn btn-sm btn-outline-secondary mr-2 mb-2">
+                      <i class="fas fa-times"></i> Clear
+                  </button>
+              </div>
           </div>
           <div class="card-body">
               <div class="w-100">

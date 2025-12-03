@@ -208,6 +208,119 @@ export class DistributionsAndDeliveriesIndexComponent {
   @Input()
   tableId = 'distributions-and-deliveries-index';
 
+  weekButtons: Array<{label: string, startDate: Date, endDate: Date, type: 'week'}> = [];
+  statusButtons: Array<{label: string, statuses: string[], type: 'status'}> = [];
+  activeFilter: string | null = null;
+
+  generateWeekButtons() {
+    const buttons = [];
+    const today = new Date();
+
+    // Find Monday of current week
+    const currentDay = today.getDay();
+    const diff = currentDay === 0 ? -6 : 1 - currentDay; // Adjust for Sunday (0) or other days
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+
+    // Generate 4 week buttons
+    for (let i = 0; i < 4; i++) {
+      const weekStart = new Date(monday);
+      weekStart.setDate(monday.getDate() + (i * 7));
+
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+
+      const label = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+      buttons.push({
+        label,
+        startDate: weekStart,
+        endDate: weekEnd,
+        type: 'week' as const
+      });
+    }
+
+    return buttons;
+  }
+
+  generateStatusButtons() {
+    return [
+      {
+        label: 'Awaiting Completion',
+        statuses: ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_ON_HOLD'],
+        type: 'status' as const
+      },
+      {
+        label: 'Completed',
+        statuses: ['REQUEST_COMPLETED'],
+        type: 'status' as const
+      }
+    ];
+  }
+
+  applyWeekFilter(button: {label: string, startDate: Date, endDate: Date}) {
+    this.activeFilter = button.label;
+    const filterData = {
+      ...this.filterModel,
+      collectionDateStart: button.startDate.toISOString(),
+      collectionDateEnd: button.endDate.toISOString()
+    };
+
+    const filter = {};
+    filter['collectionDate'] = {
+      _gte: button.startDate.toISOString(),
+      _lte: button.endDate.toISOString()
+    };
+
+    // Preserve existing filters
+    if (this.filterModel.is_sales && this.filterModel.is_sales.length) {
+      filter['isSales'] = {_in: this.filterModel.is_sales};
+    }
+    if (this.filterModel.device_type && this.filterModel.device_type.length) {
+      const deviceRequestItems = {};
+      const deviceTypeLookup: Record<string, string> = {
+        "LAPTOPS": "laptops",
+        "PHONES": "phones",
+        "TABLETS": "tablets",
+        "ALLINONES": "allInOnes",
+        "DESKTOPS": "desktops",
+        "COMMSDEVICES": "commsDevices",
+        "OTHER": "other"
+      };
+      this.filterModel.device_type.forEach(devType => {
+        if (devType in deviceTypeLookup) {
+          deviceRequestItems[deviceTypeLookup[devType]] = { _gt: 0 };
+        }
+      });
+      filter['deviceRequestItems'] = deviceRequestItems;
+    }
+
+    this.filter = filter;
+    this.filterModel = filterData;
+    this.table.ajax.reload(null, false);
+  }
+
+  applyStatusFilter(button: {label: string, statuses: string[]}) {
+    this.activeFilter = button.label;
+    const filterData = {
+      ...this.filterModel,
+      status: button.statuses
+    };
+
+    this.applyFilter(filterData);
+  }
+
+  clearQuickFilters() {
+    this.activeFilter = null;
+    const filterData = { ...this.filterModel };
+    delete filterData['collectionDateStart'];
+    delete filterData['collectionDateEnd'];
+    delete filterData['status'];
+    this.applyFilter(filterData);
+  }
+
   applyFilter(data) {
     const filter = {};
     let count = 0;
@@ -276,6 +389,10 @@ export class DistributionsAndDeliveriesIndexComponent {
   }
 
   ngOnInit() {
+    // Generate filter buttons
+    this.weekButtons = this.generateWeekButtons();
+    this.statusButtons = this.generateStatusButtons();
+
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_ENTITY,
