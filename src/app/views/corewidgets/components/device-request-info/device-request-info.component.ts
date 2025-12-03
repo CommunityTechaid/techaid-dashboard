@@ -173,6 +173,7 @@ export class DeviceRequestInfoComponent {
     titleService.setTitle("TaDa - Device Request");
     // Store component reference globally for access from template
     (window as any)['deviceRequestComponent'] = this;
+    console.log('DeviceRequestComponent constructor - window.deviceRequestComponent set:', (window as any)['deviceRequestComponent']);
   }
 
   sub: Subscription;
@@ -203,11 +204,16 @@ export class DeviceRequestInfoComponent {
 
 
   toggleDeviceTypes() {
+    console.log('toggleDeviceTypes called! Current state:', this.showAllDeviceTypes);
     this.showAllDeviceTypes = !this.showAllDeviceTypes;
+    console.log('New state:', this.showAllDeviceTypes);
 
     // Update button text and icon
     const icon = document.getElementById('toggleIcon');
     const text = document.getElementById('toggleText');
+
+    console.log('Icon element:', icon);
+    console.log('Text element:', text);
 
     if (icon && text) {
       if (this.showAllDeviceTypes) {
