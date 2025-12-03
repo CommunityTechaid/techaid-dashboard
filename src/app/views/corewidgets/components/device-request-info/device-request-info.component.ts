@@ -773,9 +773,26 @@ export class DeviceRequestInfoComponent {
       const target = e.target as HTMLElement;
       console.log('Click detected on:', target.tagName, target.id, target.className, target.textContent?.substring(0, 30));
 
-      // Check if clicked element is the icon or text span
+      // Check if clicked element's text matches our toggle button text
+      const text = target.textContent?.trim();
+      if (text === 'Show all device types' || text === 'Show only requested types') {
+        console.log('Toggle button text matched! Triggering toggle...');
+        e.preventDefault();
+        this.toggleDeviceTypes();
+        return;
+      }
+
+      // Check if clicked element is the icon (has fa-chevron class)
+      if (target.className && (target.className.includes('fa-chevron-down') || target.className.includes('fa-chevron-up'))) {
+        console.log('Toggle icon clicked! Triggering toggle...');
+        e.preventDefault();
+        this.toggleDeviceTypes();
+        return;
+      }
+
+      // Check if clicked element is the icon or text span by ID
       if (target.id === 'toggleIcon' || target.id === 'toggleText' || target.id === 'toggleDeviceTypesBtn') {
-        console.log('Toggle element clicked!');
+        console.log('Toggle element clicked by ID!');
         e.preventDefault();
         this.toggleDeviceTypes();
         return;
