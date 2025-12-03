@@ -171,6 +171,8 @@ export class DeviceRequestInfoComponent {
     private titleService: Title
   ) {
     titleService.setTitle("TaDa - Device Request");
+    // Store component reference globally for access from template
+    (window as any)['deviceRequestComponent'] = this;
   }
 
   sub: Subscription;
@@ -569,7 +571,8 @@ export class DeviceRequestInfoComponent {
                 {
                   template: `
                     <div class="text-center my-2">
-                      <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn"
+                        onclick="window.deviceRequestComponent?.toggleDeviceTypes()">
                         <i class="fas fa-chevron-down" id="toggleIcon"></i>
                         <span id="toggleText">Show all device types</span>
                       </button>
@@ -585,17 +588,6 @@ export class DeviceRequestInfoComponent {
                   },
                   expressionProperties: {
                     'className': () => 'order-99'
-                  },
-                  hooks: {
-                    onInit: () => {
-                      // Attach click handler when field is initialized
-                      setTimeout(() => {
-                        const btn = document.getElementById('toggleDeviceTypesBtn');
-                        if (btn) {
-                          btn.onclick = () => this.toggleDeviceTypes();
-                        }
-                      }, 0);
-                    }
                   }
                 }
               ]
@@ -772,28 +764,6 @@ export class DeviceRequestInfoComponent {
     this.sub.add(this.referringOrganisationContacts$.subscribe(data => {
       this.referringOrganisationContactField.templateOptions['items'] = data;
     }));
-
-    // Set up the toggle button click handler after a delay to ensure DOM is ready
-    setTimeout(() => {
-      this.attachToggleButtonListener();
-    }, 1000);
-  }
-
-  ngAfterViewInit() {
-    // Reattach listener after view initialization
-    setTimeout(() => {
-      this.attachToggleButtonListener();
-    }, 500);
-  }
-
-  attachToggleButtonListener() {
-    // Attach click handler to the toggle button
-    setTimeout(() => {
-      const btn = document.getElementById('toggleDeviceTypesBtn');
-      if (btn && !btn.onclick) {
-        btn.onclick = () => this.toggleDeviceTypes();
-      }
-    }, 100);
   }
 
 
@@ -846,9 +816,6 @@ export class DeviceRequestInfoComponent {
               enableHtml: true,
             }
           );
-
-          // Reattach toggle button listener after update
-          this.attachToggleButtonListener();
         },
         (err) => {
           this.toastr.error(
