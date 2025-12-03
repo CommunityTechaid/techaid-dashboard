@@ -593,48 +593,6 @@ export class DeviceRequestInfoComponent {
                   },
                   expressionProperties: {
                     'className': () => 'order-99'
-                  },
-                  hooks: {
-                    afterViewInit: () => {
-                      console.log('afterViewInit hook called');
-
-                      // Try multiple times with increasing delays
-                      const tryAttach = (attempt: number) => {
-                        const btn = document.getElementById('toggleDeviceTypesBtn');
-                        console.log(`Attempt ${attempt}: Button found:`, btn);
-
-                        // Also check for all buttons on the page
-                        if (!btn && attempt === 1) {
-                          const allButtons = document.querySelectorAll('button');
-                          console.log('All buttons on page:', allButtons.length);
-                          allButtons.forEach((b, i) => {
-                            console.log(`Button ${i}:`, b.textContent?.trim().substring(0, 50), 'ID:', b.id);
-                          });
-                        }
-
-                        if (btn) {
-                          // Remove any existing handler first
-                          const newBtn = btn.cloneNode(true) as HTMLElement;
-                          btn.parentNode?.replaceChild(newBtn, btn);
-
-                          // Add new handler
-                          newBtn.addEventListener('click', (e) => {
-                            console.log('Button clicked via addEventListener!');
-                            e.preventDefault();
-                            (window as any)['deviceRequestComponent']?.toggleDeviceTypes();
-                          });
-                          console.log('Event listener attached successfully');
-                        } else if (attempt < 20) {
-                          // Try again with exponential backoff (increased to 20 attempts)
-                          setTimeout(() => tryAttach(attempt + 1), 200 * attempt);
-                        } else {
-                          console.error('Failed to find toggle button after 20 attempts');
-                          console.log('Dumping page HTML:', document.body.innerHTML.substring(0, 5000));
-                        }
-                      };
-
-                      tryAttach(1);
-                    }
                   }
                 }
               ]
@@ -811,6 +769,18 @@ export class DeviceRequestInfoComponent {
     this.sub.add(this.referringOrganisationContacts$.subscribe(data => {
       this.referringOrganisationContactField.templateOptions['items'] = data;
     }));
+
+    // Set up global click handler for toggle button using event delegation
+    document.addEventListener('click', (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Check if clicked element or its parent is the toggle button
+      const button = target.closest('#toggleDeviceTypesBtn');
+      if (button) {
+        console.log('Toggle button clicked via event delegation!');
+        e.preventDefault();
+        this.toggleDeviceTypes();
+      }
+    });
   }
 
 
