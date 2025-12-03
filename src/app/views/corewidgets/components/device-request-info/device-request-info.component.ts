@@ -577,10 +577,10 @@ export class DeviceRequestInfoComponent {
                 {
                   template: `
                     <div class="text-center my-2">
-                      <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn">
+                      <div class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn" style="cursor: pointer; display: inline-block;">
                         <i class="fas fa-chevron-down" id="toggleIcon"></i>
                         <span id="toggleText">Show all device types</span>
-                      </button>
+                      </div>
                     </div>
                   `,
                   hideExpression: (model: any) => {
@@ -773,8 +773,12 @@ export class DeviceRequestInfoComponent {
     // Set up global click handler for toggle button using event delegation
     document.addEventListener('click', (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      console.log('Click detected on:', target.tagName, target.id, target.className, target.textContent?.substring(0, 30));
+
       // Check if clicked element or its parent is the toggle button
       const button = target.closest('#toggleDeviceTypesBtn');
+      console.log('Closest button:', button);
+
       if (button) {
         console.log('Toggle button clicked via event delegation!');
         e.preventDefault();
