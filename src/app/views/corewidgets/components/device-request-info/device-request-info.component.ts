@@ -199,134 +199,26 @@ export class DeviceRequestInfoComponent {
     { key: 'deviceRequestItems.other', label: 'Other', icon: 'fas fa-laptop' }
   ];
 
-  createDeviceField(deviceType: any): FormlyFieldConfig {
-    return {
-      key: deviceType.key,
-      type: 'input',
-      className: '',
-      defaultValue: 0,
-      hideExpression: () => {
-        // Hide zero-value fields when showAllDeviceTypes is false
-        if (!this.showAllDeviceTypes && this.model && this.model.deviceRequestItems) {
-          const fieldKey = deviceType.key.split('.')[1];
-          const value = this.model.deviceRequestItems[fieldKey] || 0;
-          return value === 0;
-        }
-        return false;
-      },
-      templateOptions: {
-        min: 0,
-        label: deviceType.label,
-        addonLeft: {
-          class: deviceType.icon
-        },
-        type: 'number',
-        placeholder: '',
-        required: true
-      }
-    };
-  }
-
-  getDeviceTypeFields(): FormlyFieldConfig[] {
-    const fields: FormlyFieldConfig[] = [];
-
-    // Sort device types: non-zero first, then zero values
-    const sorted = [...this.deviceTypes].sort((a, b) => {
-      if (!this.model || !this.model.deviceRequestItems) return 0;
-
-      const aKey = a.key.split('.')[1];
-      const bKey = b.key.split('.')[1];
-      const aValue = this.model.deviceRequestItems[aKey] || 0;
-      const bValue = this.model.deviceRequestItems[bKey] || 0;
-
-      // Non-zero values come first
-      if (aValue > 0 && bValue === 0) return -1;
-      if (aValue === 0 && bValue > 0) return 1;
-      return 0;
-    });
-
-    // Add all device fields with hide expressions
-    sorted.forEach(dt => {
-      fields.push(this.createDeviceField(dt));
-    });
-
-    // Add toggle button
-    const toggleButton: FormlyFieldConfig = {
-      template: `
-        <div class="text-center my-2">
-          <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn">
-            <i class="fas ${this.showAllDeviceTypes ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>
-            ${this.showAllDeviceTypes ? 'Show only requested device types' : 'Show all device types'}
-          </button>
-        </div>
-      `,
-      hideExpression: () => {
-        // Only show button if there are zero-value items
-        if (!this.model || !this.model.deviceRequestItems) return true;
-        return this.deviceTypes.every(dt => {
-          const fieldKey = dt.key.split('.')[1];
-          return (this.model.deviceRequestItems[fieldKey] || 0) > 0;
-        });
-      }
-    };
-
-    fields.push(toggleButton);
-
-    return fields;
-  }
 
   toggleDeviceTypes() {
     this.showAllDeviceTypes = !this.showAllDeviceTypes;
 
     // Update button text and icon
-    const button = document.querySelector('[data-toggle-device-types]');
-    if (button) {
-      const icon = button.querySelector('i');
-      const span = button.querySelector('span');
+    const icon = document.getElementById('toggleIcon');
+    const text = document.getElementById('toggleText');
 
-      if (icon && span) {
-        if (this.showAllDeviceTypes) {
-          icon.className = 'fas fa-chevron-up';
-          span.textContent = 'Show only requested types';
-        } else {
-          icon.className = 'fas fa-chevron-down';
-          span.textContent = 'Show all device types';
-        }
+    if (icon && text) {
+      if (this.showAllDeviceTypes) {
+        icon.className = 'fas fa-chevron-up';
+        text.textContent = 'Show only requested types';
+      } else {
+        icon.className = 'fas fa-chevron-down';
+        text.textContent = 'Show all device types';
       }
     }
 
     // Trigger change detection by updating the form options
     this.options = { ...this.options };
-  }
-
-  updateDeviceTypeFields() {
-    // Find and update the device types fieldGroup
-    const column2 = this.fields[0].fieldGroup[1]; // Second column
-    if (column2 && column2.fieldGroup) {
-      // The device types container is the second fieldGroup in column 2 (after 'details')
-      const containerField = column2.fieldGroup[1];
-      if (containerField && containerField.fieldGroup) {
-        containerField.fieldGroup = this.getDeviceTypeFields();
-      }
-    }
-  }
-
-  get sortedDeviceTypes() {
-    if (!this.model || !this.model.deviceRequestItems) {
-      return this.deviceTypes;
-    }
-
-    const nonZero = this.deviceTypes.filter(dt => {
-      const fieldKey = dt.key.split('.')[1];
-      return (this.model.deviceRequestItems[fieldKey] || 0) > 0;
-    });
-
-    const zero = this.deviceTypes.filter(dt => {
-      const fieldKey = dt.key.split('.')[1];
-      return (this.model.deviceRequestItems[fieldKey] || 0) === 0;
-    });
-
-    return { nonZero, zero };
   }
 
   newNoteField: FormlyFieldConfig = {
@@ -677,9 +569,9 @@ export class DeviceRequestInfoComponent {
                 {
                   template: `
                     <div class="text-center my-2">
-                      <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle-device-types>
-                        <i class="fas fa-chevron-down"></i>
-                        <span>Show all device types</span>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleDeviceTypesBtn">
+                        <i class="fas fa-chevron-down" id="toggleIcon"></i>
+                        <span id="toggleText">Show all device types</span>
                       </button>
                     </div>
                   `,
@@ -693,6 +585,17 @@ export class DeviceRequestInfoComponent {
                   },
                   expressionProperties: {
                     'className': () => 'order-99'
+                  },
+                  hooks: {
+                    onInit: () => {
+                      // Attach click handler when field is initialized
+                      setTimeout(() => {
+                        const btn = document.getElementById('toggleDeviceTypesBtn');
+                        if (btn) {
+                          btn.onclick = () => this.toggleDeviceTypes();
+                        }
+                      }, 0);
+                    }
                   }
                 }
               ]
@@ -768,11 +671,6 @@ export class DeviceRequestInfoComponent {
       ];
       this.referringOrganisationContactField.templateOptions['label'] = data.referringOrganisationContact.referringOrganisation.name + ' Referee';
     }
-
-    // Reattach toggle button listener after data loads
-    setTimeout(() => {
-      this.attachToggleButtonListener();
-    }, 100);
 
     return data;
   }
@@ -888,27 +786,14 @@ export class DeviceRequestInfoComponent {
     }, 500);
   }
 
-  ngAfterViewChecked() {
-    // Continuously check and reattach listener if needed
-    const button = document.querySelector('[data-toggle-device-types]');
-    if (button && !button.hasAttribute('data-listener-attached')) {
-      button.setAttribute('data-listener-attached', 'true');
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.toggleDeviceTypes();
-      });
-    }
-  }
-
   attachToggleButtonListener() {
-    const button = document.querySelector('[data-toggle-device-types]');
-    if (button && !button.hasAttribute('data-listener-attached')) {
-      button.setAttribute('data-listener-attached', 'true');
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.toggleDeviceTypes();
-      });
-    }
+    // Attach click handler to the toggle button
+    setTimeout(() => {
+      const btn = document.getElementById('toggleDeviceTypesBtn');
+      if (btn && !btn.onclick) {
+        btn.onclick = () => this.toggleDeviceTypes();
+      }
+    }, 100);
   }
 
 
@@ -963,9 +848,7 @@ export class DeviceRequestInfoComponent {
           );
 
           // Reattach toggle button listener after update
-          setTimeout(() => {
-            this.attachToggleButtonListener();
-          }, 100);
+          this.attachToggleButtonListener();
         },
         (err) => {
           this.toastr.error(
