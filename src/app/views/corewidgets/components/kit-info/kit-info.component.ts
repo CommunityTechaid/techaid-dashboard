@@ -501,17 +501,24 @@ export class KitInfoComponent {
             label: "Serial Number"
           }
         },
-        {
+        
+        this.donorField
+      ]
+    },
+    {
+      fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
+      fieldGroup: [
+      {
           key: 'lotId',
           type: 'input',
           className: 'px-2 ml-auto justify-content-end text-right',
           defaultValue: '',
+          hideExpression: '!model.lotId',
           templateOptions: {
             label: "Lot ID",
             readonly: true
           }
-        },
-        this.donorField
+        }
       ]
     },
     {
