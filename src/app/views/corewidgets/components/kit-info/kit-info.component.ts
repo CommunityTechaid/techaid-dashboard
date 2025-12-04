@@ -519,7 +519,8 @@ export class KitInfoComponent {
             readonly: true
           }
         }
-      ]
+      ],
+      hideExpression: '!model.lotId'
     },
     {
       fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
