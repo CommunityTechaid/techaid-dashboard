@@ -503,8 +503,8 @@ export class KitInfoComponent {
         },
         {
           key: 'lotId',
-          type: 'kit-info-input',
-          className: 'px-1',
+          type: 'input',
+          className: 'px-2 ml-auto justify-content-end text-right',
           defaultValue: '',
           templateOptions: {
             label: "Lot ID",
