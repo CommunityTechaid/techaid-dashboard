@@ -513,7 +513,7 @@ export class KitInfoComponent {
         {
           key: 'locationCode',
           type: 'input',
-          className: 'px-2 ml-auto text-right',
+          className: 'px-2 text-right',
           defaultValue: '',
           hideExpression: '!model.locationCode',
           templateOptions: {
@@ -524,7 +524,7 @@ export class KitInfoComponent {
         {
           key: 'lotId',
           type: 'input',
-          className: 'px-2 ml-auto text-right',
+          className: 'px-2 text-right',
           defaultValue: '',
           hideExpression: '!model.lotId',
           templateOptions: {
