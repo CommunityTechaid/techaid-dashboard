@@ -44,6 +44,7 @@ import { DonorParentInfoComponent } from './components/donor-parent-info/donor-p
 import { DonorComponent } from './components/donor-component/donor-component.component';
 import { KitAuditComponent } from './components/kit-audit-component/kit-audit-component.component'
 import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
+import { DistributionsAndDeliveriesIndexComponent } from './components/distributions-and-deliveries-index/distributions-and-deliveries-index.component'
 
 const routes: Routes = [
   { path: '', component: DashboardIndexComponent, data: { title: '' } },
@@ -64,6 +65,8 @@ const routes: Routes = [
   { path: 'dashboard/posts/:postId', component: PostInfoComponent, data: { title: 'Post' },  canActivate: [AuthGuard] },
   { path: 'dashboard/device-requests', component: DeviceRequestIndexComponent, data: { title: 'Device Requests' }, canActivate: [AuthGuard] },
   { path: 'dashboard/device-requests/:requestId', component: DeviceRequestInfoComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard/distributions-and-deliveries', component: DistributionsAndDeliveriesIndexComponent, data: { title: 'Distributions and Deliveries' }, canActivate: [AuthGuard] },
+  { path: 'dashboard/distributions-and-deliveries/:requestId', component: DeviceRequestInfoComponent, canActivate: [AuthGuard] },
   { path: 'dashboard/referring-organisations', component: ReferringOrganisationIndexComponent, data: { title: 'Organisations' }, canActivate: [AuthGuard] },
   { path: 'dashboard/referring-organisations/:orgId', component: ReferringOrganisationInfoComponent, data: { title: 'Organisation' }, canActivate: [AuthGuard] },
   { path: 'dashboard/referring-organisation-contacts', component: ReferringOrganisationContactIndexComponent, data: { title: 'Referees' }, canActivate: [AuthGuard] },
@@ -108,7 +111,8 @@ const routes: Routes = [
     DonorParentInfoComponent,
     DonorComponent,
     KitAuditComponent,
-    AdminPanelComponent
+    AdminPanelComponent,
+    DistributionsAndDeliveriesIndexComponent
   ],
   imports: [
     LightboxModule,
