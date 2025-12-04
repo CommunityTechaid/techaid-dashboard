@@ -508,12 +508,12 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
+      fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3 justify-content-end gap-2',
       fieldGroup: [
         {
           key: 'locationCode',
           type: 'input',
-          className: 'px-2 ml-auto justify-content-end text-right',
+          className: 'px-2 ml-auto text-right',
           defaultValue: '',
           hideExpression: '!model.locationCode',
           templateOptions: {
@@ -524,7 +524,7 @@ export class KitInfoComponent {
         {
           key: 'lotId',
           type: 'input',
-          className: 'px-2 ml-auto justify-content-end text-right',
+          className: 'px-2 ml-auto text-right',
           defaultValue: '',
           hideExpression: '!model.lotId',
           templateOptions: {
