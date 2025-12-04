@@ -520,7 +520,7 @@ export class KitInfoComponent {
             label: "Location Code",
             readonly: true
           }
-        }
+        },
         {
           key: 'lotId',
           type: 'input',
