@@ -87,6 +87,7 @@ query findKit($id: Long) {
     tpmVersion
     batteryHealth
     lotId
+    locationCode
     donor {
       id
       name
@@ -155,6 +156,7 @@ mutation updateKit($data: UpdateKitInput!) {
     tpmVersion
     batteryHealth
     lotId
+    locationCode
     donor {
       id
       name
@@ -508,7 +510,18 @@ export class KitInfoComponent {
     {
       fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
       fieldGroup: [
-      {
+        {
+          key: 'locationCode',
+          type: 'input',
+          className: 'px-2 ml-auto justify-content-end text-right',
+          defaultValue: '',
+          hideExpression: '!model.locationCode',
+          templateOptions: {
+            label: "Location Code",
+            readonly: true
+          }
+        }
+        {
           key: 'lotId',
           type: 'input',
           className: 'px-2 ml-auto justify-content-end text-right',
@@ -520,7 +533,7 @@ export class KitInfoComponent {
           }
         }
       ],
-      hideExpression: '!model.lotId'
+      hideExpression: '!model.lotId && !model.locationCode'
     },
     {
       fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
