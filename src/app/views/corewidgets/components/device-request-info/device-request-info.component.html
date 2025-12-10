@@ -78,7 +78,7 @@
                   <email-threads [email]="model.email"></email-threads>
               </ng-template>
            </ngb-tab> -->
-          <ngb-tab title="Devices">
+          <ngb-tab [title]="deviceCount === 0 ? 'No Devices Assigned' : deviceCount + ' Device' + (deviceCount === 1 ? '' : 's') + ' Assigned'">
             <ng-template ngbTabContent>
                 <div class="mt-2">
                   <kit-component *ngIf="model?.id" [where]="{deviceRequest: {id: {_eq: model.id}}}" [tableId]="'device-request-index-' + model.id">
