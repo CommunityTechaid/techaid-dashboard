@@ -356,6 +356,15 @@ export class DistributionsAndDeliveriesIndexComponent {
       filter['deviceRequestItems'] = deviceRequestItems;
     }
 
+    // Handle collection date filters
+    if (data.collectionDateStart && data.collectionDateEnd) {
+      count += 1;
+      filter['collectionDate'] = {
+        _gte: data.collectionDateStart,
+        _lte: data.collectionDateEnd
+      };
+    }
+
     localStorage.setItem(`distributionsAndDeliveriesFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
     this.filterCount = count;
