@@ -533,7 +533,7 @@ export class KitInfoComponent {
           }
         }
       ],
-      hideExpression: '!model.lotId && !model.locationCode'
+      hideExpression: true //Hiding for now //'!model.lotId && !model.locationCode'
     },
     {
       fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
