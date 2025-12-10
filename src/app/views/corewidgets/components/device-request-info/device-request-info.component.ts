@@ -41,6 +41,8 @@ const QUERY_ENTITY = gql`
       createdAt
       updatedAt
       collectionDate
+      collectionMethod
+      collectionContactName
       deviceRequestItems {
         phones
         tablets
@@ -87,6 +89,8 @@ const UPDATE_ENTITY = gql`
       createdAt
       updatedAt
       collectionDate
+      collectionMethod
+      collectionContactName
       deviceRequestItems {
         phones
         tablets
@@ -609,9 +613,36 @@ export class DeviceRequestInfoComponent {
               className: '',
               templateOptions: {
                 type: 'datetime-local',
-                label: 'Collection Date & Time',
+                label: 'Collection/Delivery Date & Time',
                 description: 'Scheduled date and time for collection or delivery',
                 required: false
+              }
+            },
+            {
+              key: 'collectionMethod',
+              type: 'radio',
+              className: '',
+              templateOptions: {
+                label: 'Collection Arranged?',
+                description: 'Select the method of collection or delivery',
+                options: [
+                  { label: 'Collection', value: 'COLLECTION' },
+                  { label: 'Delivery', value: 'DELIVERY' }
+                ],
+                required: false
+              }
+            },
+            {
+              key: 'collectionContactName',
+              type: 'input',
+              className: '',
+              templateOptions: {
+                label: 'Name of Person Collecting',
+                description: 'Name of the person who will collect the device',
+                required: false
+              },
+              hideExpression: (model: any) => {
+                return model.collectionMethod !== 'COLLECTION';
               }
             },
             this.newNoteField,
