@@ -131,6 +131,14 @@ const DELETE_ENTITY = gql`
   }
 `;
 
+const QUERY_DEVICE_COUNT = gql`
+  query countDevicesForRequest($deviceRequestId: Long) {
+    kitsConnection(where: { deviceRequest: { id: { _eq: $deviceRequestId } } }) {
+      totalElements
+    }
+  }
+`;
+
 const AUTOCOMPLETE_REFERRING_ORGANISATION_CONTACTS = gql`
 query findAutocompleteReferringOrganisationContacts($term: String, $referringOrganisationId: Long) {
   referringOrganisationContactsConnection(page: {
@@ -187,6 +195,7 @@ export class DeviceRequestInfoComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
   showAllDeviceTypes = false;
+  deviceCount: number = 0;
 
   deviceTypes = [
     { key: 'deviceRequestItems.laptops', label: 'Laptops', icon: 'fas fa-laptop' },
@@ -701,6 +710,7 @@ export class DeviceRequestInfoComponent {
             this.requestId = this.model['id'];
             this.referringOrganisationId = this.model['referringOrganisationContact']['referringOrganisation']['id'];
             this.referringOrganisationContactId = this.model['referringOrganisationContact']['id'];
+            this.fetchDeviceCount();
           } else {
             this.model = {};
             this.requestId = -1;
@@ -718,6 +728,30 @@ export class DeviceRequestInfoComponent {
               disableTimeOut: true,
             }
           );
+        }
+      );
+  }
+
+  private fetchDeviceCount() {
+    if (!this.requestId) {
+      return;
+    }
+
+    this.apollo
+      .query({
+        query: QUERY_DEVICE_COUNT,
+        variables: {
+          deviceRequestId: this.requestId,
+        },
+      })
+      .subscribe(
+        (res) => {
+          if (res.data && res.data['kitsConnection']) {
+            this.deviceCount = res.data['kitsConnection']['totalElements'];
+          }
+        },
+        (err) => {
+          console.error('Error fetching device count:', err);
         }
       );
   }
