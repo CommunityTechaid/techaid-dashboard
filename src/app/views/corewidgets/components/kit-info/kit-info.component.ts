@@ -371,7 +371,7 @@ export class KitInfoComponent {
    */
   fields: Array<FormlyFieldConfig> = [
     {
-      fieldGroupClassName: 'row border-top-info d-flex p-2 mb-2',
+      fieldGroupClassName: 'row border-top-info d-flex p-2',
       fieldGroup: [
         {
           key: 'type',
@@ -508,7 +508,7 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'row d-flex p-2 mb-3',
+      fieldGroupClassName: 'row d-flex',
       fieldGroup: [
         {
           key: 'make',
@@ -548,7 +548,7 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'row d-flex p-2 mb-3',
+      fieldGroupClassName: 'row d-flex',
       fieldGroup: [
         {
           key: 'locationCode',
