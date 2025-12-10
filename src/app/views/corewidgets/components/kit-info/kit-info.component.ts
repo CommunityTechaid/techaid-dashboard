@@ -294,7 +294,7 @@ export class KitInfoComponent {
     className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Donor',
-      description: 'The donor this device is currently assigned to.',
+      //description: 'The donor this device is currently assigned to.',
       loading: this.donorLoading,
       typeahead: this.donorInput$,
       placeholder: 'Assign device to a Donor',
@@ -314,7 +314,7 @@ export class KitInfoComponent {
     className: 'px-2 ml-auto justify-content-end text-right',
     templateOptions: {
       label: 'Device Request',
-      description: 'The device request this device is currently assigned to.',
+      //description: 'The device request this device is currently assigned to.',
       loading: this.deviceRequestLoading,
       typeahead: this.deviceRequestInput$,
       placeholder: 'Assign device to a Device Request',
@@ -508,35 +508,7 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3 justify-content-end gap-2',
-      fieldGroup: [
-        {
-          key: 'locationCode',
-          type: 'input',
-          className: 'px-2 text-right',
-          defaultValue: '',
-          hideExpression: '!model.locationCode',
-          templateOptions: {
-            label: "Location Code",
-            readonly: true
-          }
-        },
-        {
-          key: 'lotId',
-          type: 'input',
-          className: 'px-2 text-right',
-          defaultValue: '',
-          hideExpression: '!model.lotId',
-          templateOptions: {
-            label: "Lot ID",
-            readonly: true
-          }
-        }
-      ],
-      hideExpression: true //Hiding for now //'!model.lotId && !model.locationCode'
-    },
-    {
-      fieldGroupClassName: 'row border-bottom border-top d-flex p-2 mb-3',
+      fieldGroupClassName: 'row d-flex p-2 mb-3',
       fieldGroup: [
         {
           key: 'make',
@@ -560,6 +532,32 @@ export class KitInfoComponent {
             rows: 2,
             placeholder: '',
             required: true
+          }
+        },
+        {
+          key: 'lotId',
+          type: 'input',
+          className: 'px-2 text-right',
+          defaultValue: '',
+          templateOptions: {
+            label: "Lot ID",
+            readonly: true
+          }
+        }
+        
+      ]
+    },
+    {
+      fieldGroupClassName: 'row d-flex p-2 mb-3',
+      fieldGroup: [
+        {
+          key: 'locationCode',
+          type: 'input',
+          className: 'col-md-2',
+          defaultValue: '',
+          templateOptions: {
+            label: "Location Code",
+            readonly: true
           }
         },
         this.deviceRequestField
