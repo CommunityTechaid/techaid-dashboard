@@ -86,6 +86,13 @@
                 </div>
             </ng-template>
         </ngb-tab>
+        <ngb-tab title="Audit Table" *ngIf="model?.id && user?.authorities['admin:organisations']">
+          <ng-template ngbTabContent>
+              <div class="mt-2">
+                  <device-request-audit-component [deviceRequestId]="model.id" [tableId]="'device-request-audit-' + model.id"></device-request-audit-component>
+              </div>
+          </ng-template>
+        </ngb-tab>
     </ngb-tabset>
   </div>
 </div>

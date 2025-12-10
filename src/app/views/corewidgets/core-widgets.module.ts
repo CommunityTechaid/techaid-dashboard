@@ -43,6 +43,7 @@ import { DonorParentIndexComponent } from './components/donor-parent-index/donor
 import { DonorParentInfoComponent } from './components/donor-parent-info/donor-parent-info.component';
 import { DonorComponent } from './components/donor-component/donor-component.component';
 import { KitAuditComponent } from './components/kit-audit-component/kit-audit-component.component'
+import { DeviceRequestAuditComponent } from './components/device-request-audit-component/device-request-audit-component.component'
 import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
 import { DistributionsAndDeliveriesIndexComponent } from './components/distributions-and-deliveries-index/distributions-and-deliveries-index.component'
 
@@ -111,6 +112,7 @@ const routes: Routes = [
     DonorParentInfoComponent,
     DonorComponent,
     KitAuditComponent,
+    DeviceRequestAuditComponent,
     AdminPanelComponent,
     DistributionsAndDeliveriesIndexComponent
   ],
