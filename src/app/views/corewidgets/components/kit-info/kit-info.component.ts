@@ -537,7 +537,7 @@ export class KitInfoComponent {
         {
           key: 'lotId',
           type: 'input',
-          className: 'px-2 text-right',
+          className: 'px-2 ml-auto justify-content-end text-right',
           defaultValue: '',
           templateOptions: {
             label: "Lot ID",
