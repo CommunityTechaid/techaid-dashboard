@@ -348,7 +348,8 @@ export class KitInfoComponent {
     templateOptions: {
       label: 'Status of the device',
       options: KIT_STATUS_LABELS,
-      required: true
+      required: true,
+      disabled: false
     },
     validation: {
       show: true,
@@ -360,6 +361,9 @@ export class KitInfoComponent {
         } else {
           return KIT_STATUS_LABELS;
         }
+      },
+      'templateOptions.disabled': (model, state, field) => {
+        return this.disabledStatuses;
       },
       'validation.show': 'model.showErrorState'
     }
@@ -566,7 +570,23 @@ export class KitInfoComponent {
     {
       fieldGroupClassName: 'row border-bottom-warning bordered p-2 mb-3',
       fieldGroup: [
-        this.statusField,
+        {
+          fieldGroupClassName: 'd-flex flex-column',
+          className: 'col-md-4',
+          fieldGroup: [
+            this.statusField,
+            {
+              template: `
+                <div class="alert alert-warning mt-2 p-2" role="alert">
+                  <small><strong>Status locked:</strong> Status changes are disabled while one or more flags are enabled (Device wipe failed, OS Installation failed, Needs further investigation, or Needs spare part).</small>
+                </div>
+              `,
+              hideExpression: (model, state, field) => {
+                return !this.disabledStatuses;
+              }
+            }
+          ]
+        },
         {
           fieldGroupClassName: 'd-flex flex-column justify-content-between text-right',
           className: 'col-md-4',
@@ -705,7 +725,8 @@ export class KitInfoComponent {
               hideExpression: (model, state, field) => {
                 const data = field.parent.formControl.value || {};
                 const supportedDevices = ['DESKTOP','LAPTOP','ALLINONE','OTHER'];
-                return !(supportedDevices.includes(data['type']));
+                // Only show if device type is supported AND status is PROCESSING_START
+                return !(supportedDevices.includes(data['type']) && data['status'] === 'PROCESSING_START');
               },
               validation: {
                 show: false
@@ -724,7 +745,11 @@ export class KitInfoComponent {
                   this.updateDisabledStatusFlag(data);
                 },
               },
-              hideExpression: 'model.type == \'COMMSDEVICE\' || model.type == \'BROADBANDHUB\'',
+              hideExpression: (model, state, field) => {
+                const data = field.parent.formControl.value || {};
+                // Hide if device is COMMSDEVICE/BROADBANDHUB OR if status is not PROCESSING_WIPED
+                return (data['type'] === 'COMMSDEVICE' || data['type'] === 'BROADBANDHUB') || data['status'] !== 'PROCESSING_WIPED';
+              },
               validation: {
                 show: false
               }
@@ -741,6 +766,11 @@ export class KitInfoComponent {
                   const data = field.parent.formControl.value || {};
                   this.updateDisabledStatusFlag(data);
                 },
+              },
+              hideExpression: (model, state, field) => {
+                const data = field.parent.formControl.value || {};
+                // Only show if status is PROCESSING_OS_INSTALLED
+                return data['status'] !== 'PROCESSING_OS_INSTALLED';
               },
               validation: {
                 show: false
@@ -759,6 +789,11 @@ export class KitInfoComponent {
                   this.updateDisabledStatusFlag(data);
                 },
 
+              },
+              hideExpression: (model, state, field) => {
+                const data = field.parent.formControl.value || {};
+                // Only show if status is PROCESSING_OS_INSTALLED
+                return data['status'] !== 'PROCESSING_OS_INSTALLED';
               },
               validation: {
                 show: false
