@@ -123,6 +123,52 @@
                                                 </span>
                                             </span>
                                           </div>
+                                          <div *ngIf="dt.types && (dt.types['OTHER'] > 0 || dt.types['LAPTOPS'] > 0 || dt.types['TABLETS'] > 0 || dt.types['ALLINONES'] > 0 || dt.types['DESKTOPS'] > 0 || dt.types['PHONES'] > 0 || dt.types['COMMSDEVICES'] > 0)" class="mt-2">
+                                            <small>
+                                              <span *ngIf="dt.kitIds['OTHER'] && dt.kitIds['OTHER'].length" class="mr-2">
+                                                <strong>Other:</strong>
+                                                <span *ngFor="let kitId of dt.kitIds['OTHER']; let last = last">
+                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
+                                                </span>
+                                              </span>
+                                              <span *ngIf="dt.kitIds['LAPTOPS'] && dt.kitIds['LAPTOPS'].length" class="mr-2">
+                                                <strong>Laptops:</strong>
+                                                <span *ngFor="let kitId of dt.kitIds['LAPTOPS']; let last = last">
+                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
+                                                </span>
+                                              </span>
+                                              <span *ngIf="dt.kitIds['TABLETS'] && dt.kitIds['TABLETS'].length" class="mr-2">
+                                                <strong>Tablets:</strong>
+                                                <span *ngFor="let kitId of dt.kitIds['TABLETS']; let last = last">
+                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
+                                                </span>
+                                              </span>
+                                              <span *ngIf="dt.kitIds['ALLINONES'] && dt.kitIds['ALLINONES'].length" class="mr-2">
+                                                <strong>All-in-ones:</strong>
+                                                <span *ngFor="let kitId of dt.kitIds['ALLINONES']; let last = last">
+                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
+                                                </span>
+                                              </span>
+                                              <span *ngIf="dt.kitIds['DESKTOPS'] && dt.kitIds['DESKTOPS'].length" class="mr-2">
+                                                <strong>Desktops:</strong>
+                                                <span *ngFor="let kitId of dt.kitIds['DESKTOPS']; let last = last">
+                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
+                                                </span>
+                                              </span>
+                                              <span *ngIf="dt.kitIds['PHONES'] && dt.kitIds['PHONES'].length" class="mr-2">
+                                                <strong>Phones:</strong>
+                                                <span *ngFor="let kitId of dt.kitIds['PHONES']; let last = last">
+                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
+                                                </span>
+                                              </span>
+                                              <span *ngIf="dt.kitIds['COMMSDEVICES'] && dt.kitIds['COMMSDEVICES'].length" class="mr-2">
+                                                <strong>Comms Devices:</strong>
+                                                <span *ngFor="let kitId of dt.kitIds['COMMSDEVICES']; let last = last">
+                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
+                                                </span>
+                                              </span>
+                                            </small>
+                                          </div>
                                         </div>
                                     </div>
                                   </td>
