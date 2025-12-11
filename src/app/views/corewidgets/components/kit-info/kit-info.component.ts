@@ -903,6 +903,10 @@ export class KitInfoComponent {
     }
   }
 
+  getFormData() {
+    return this.form.getRawValue();
+  }
+
   private queryRef = this.apollo
     .watchQuery({
       query: QUERY_ENTITY,
