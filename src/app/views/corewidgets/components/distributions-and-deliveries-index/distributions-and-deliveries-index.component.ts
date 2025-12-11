@@ -202,6 +202,32 @@ export class DistributionsAndDeliveriesIndexComponent {
           }
         },
       ]
+    },
+    {
+      validators: {
+        validation: [{ name: 'dateRange', options: { errorPath: 'after' } }],
+      },
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        {
+          key: 'after',
+          type: 'date',
+          className: 'col-md-6',
+          templateOptions: {
+            label: 'Requests created on or after?',
+            required: false
+          }
+        },
+        {
+          key: 'before',
+          type: 'date',
+          className: 'col-md-6',
+          templateOptions: {
+            label: 'Requests created on or before?',
+            required: false
+          }
+        },
+      ]
     }
   ];
 
@@ -268,38 +294,7 @@ export class DistributionsAndDeliveriesIndexComponent {
       collectionDateEnd: button.endDate.toISOString()
     };
 
-    const filter = {};
-    filter['collectionDate'] = {
-      _gte: button.startDate.toISOString(),
-      _lte: button.endDate.toISOString()
-    };
-
-    // Preserve existing filters
-    if (this.filterModel.is_sales && this.filterModel.is_sales.length) {
-      filter['isSales'] = {_in: this.filterModel.is_sales};
-    }
-    if (this.filterModel.device_type && this.filterModel.device_type.length) {
-      const deviceRequestItems = {};
-      const deviceTypeLookup: Record<string, string> = {
-        "LAPTOPS": "laptops",
-        "PHONES": "phones",
-        "TABLETS": "tablets",
-        "ALLINONES": "allInOnes",
-        "DESKTOPS": "desktops",
-        "COMMSDEVICES": "commsDevices",
-        "OTHER": "other"
-      };
-      this.filterModel.device_type.forEach(devType => {
-        if (devType in deviceTypeLookup) {
-          deviceRequestItems[deviceTypeLookup[devType]] = { _gt: 0 };
-        }
-      });
-      filter['deviceRequestItems'] = deviceRequestItems;
-    }
-
-    this.filter = filter;
-    this.filterModel = filterData;
-    this.table.ajax.reload(null, false);
+    this.applyFilter(filterData);
   }
 
   applyStatusFilter(button: {label: string, statuses: string[]}) {
@@ -322,7 +317,7 @@ export class DistributionsAndDeliveriesIndexComponent {
   }
 
   applyFilter(data) {
-    const filter = {};
+    const filter = {AND: []};
     let count = 0;
     const deviceTypeLookup: Record<string, string> = {
       "LAPTOPS": "laptops",
@@ -363,6 +358,20 @@ export class DistributionsAndDeliveriesIndexComponent {
         _gte: data.collectionDateStart,
         _lte: data.collectionDateEnd
       };
+    }
+
+    // Handle createdAt date filters
+    if(data.after){
+      count += 1;
+      filter['AND'].push({createdAt: {_gt: data.after }});
+    }
+
+    if(data.before){
+      const endDate : Date = data.before;
+      endDate.setDate(endDate.getDate() + 1);
+
+      count += 1;
+      filter['AND'].push({createdAt: {_lt: endDate }});
     }
 
     localStorage.setItem(`distributionsAndDeliveriesFilters-${this.tableId}`, JSON.stringify(data));
