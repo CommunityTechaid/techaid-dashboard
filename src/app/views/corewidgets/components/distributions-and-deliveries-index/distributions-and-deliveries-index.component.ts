@@ -46,6 +46,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
       other
      }
      kits {
+      id
       type
      }
      referringOrganisationContact {
@@ -427,11 +428,14 @@ export class DistributionsAndDeliveriesIndexComponent {
             }
             data.content.forEach(d => {
               d.types = {};
+              d.kitIds = {};
               if (d.kits && d.kits.length) {
                 d.kits.forEach(k => {
                   const t = `${k.type}S`;
                   d.types[t] = d.types[t] || 0;
                   d.types[t]++;
+                  d.kitIds[t] = d.kitIds[t] || [];
+                  d.kitIds[t].push(k.id);
                 });
               }
             });
