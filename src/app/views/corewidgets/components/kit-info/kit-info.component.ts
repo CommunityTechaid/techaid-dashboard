@@ -654,12 +654,12 @@ export class KitInfoComponent {
                 label: 'Locked to user?',
                 required: false,
                 change: (field, $event) => {
-                  const data = field.parent.formControl.value || {};
+                  const data = field.parent.formControl.getRawValue() || {};
                   this.updateDisabledStatusFlag(data);
                 },
               },
               hideExpression: (model, state, field) => {
-                const data = field.parent.formControl.value || {};
+                const data = field.parent.formControl.getRawValue() || {};
                 const supportedDevices = ['SMARTPHONE','TABLET','OTHER'];
                 return !(supportedDevices.includes(data['type']));
               },
@@ -676,12 +676,12 @@ export class KitInfoComponent {
                 label: 'Device wipe failed?',
                 required: false,
                 change: (field, $event) => {
-                  const data = field.parent.formControl.value || {};
+                  const data = field.parent.formControl.getRawValue() || {};
                   this.updateDisabledStatusFlag(data);
                 },
               },
               hideExpression: (model, state, field) => {
-                const data = field.parent.formControl.value || {};
+                const data = field.parent.formControl.getRawValue() || {};
                 const supportedDevices = ['DESKTOP','LAPTOP','ALLINONE','OTHER'];
                 // Only show if device type is supported AND status is PROCESSING_START
                 return !(supportedDevices.includes(data['type']) && data['status'] === 'PROCESSING_START');
@@ -699,12 +699,12 @@ export class KitInfoComponent {
                 label: 'OS Installation failed?',
                 required: false,
                 change: (field, $event) => {
-                  const data = field.parent.formControl.value || {};
+                  const data = field.parent.formControl.getRawValue() || {};
                   this.updateDisabledStatusFlag(data);
                 },
               },
               hideExpression: (model, state, field) => {
-                const data = field.parent.formControl.value || {};
+                const data = field.parent.formControl.getRawValue() || {};
                 // Hide if device is COMMSDEVICE/BROADBANDHUB OR if status is not PROCESSING_WIPED
                 return (data['type'] === 'COMMSDEVICE' || data['type'] === 'BROADBANDHUB') || data['status'] !== 'PROCESSING_WIPED';
               },
@@ -721,12 +721,12 @@ export class KitInfoComponent {
                 label: 'Needs further investigation?',
                 required: false,
                 change: (field, $event) => {
-                  const data = field.parent.formControl.value || {};
+                  const data = field.parent.formControl.getRawValue() || {};
                   this.updateDisabledStatusFlag(data);
                 },
               },
               hideExpression: (model, state, field) => {
-                const data = field.parent.formControl.value || {};
+                const data = field.parent.formControl.getRawValue() || {};
                 // Only show if status is PROCESSING_OS_INSTALLED
                 return data['status'] !== 'PROCESSING_OS_INSTALLED';
               },
@@ -743,13 +743,13 @@ export class KitInfoComponent {
                 label: 'Needs spare part?',
                 required: false,
                 change: (field, $event) => {
-                  const data = field.parent.formControl.value || {};
+                  const data = field.parent.formControl.getRawValue() || {};
                   this.updateDisabledStatusFlag(data);
                 },
 
               },
               hideExpression: (model, state, field) => {
-                const data = field.parent.formControl.value || {};
+                const data = field.parent.formControl.getRawValue() || {};
                 // Only show if status is PROCESSING_OS_INSTALLED
                 return data['status'] !== 'PROCESSING_OS_INSTALLED';
               },
