@@ -322,7 +322,8 @@ export class DistributionsAndDeliveriesIndexComponent {
   }
 
   applyFilter(data) {
-    const filter = {};
+    const filter = {AND: []};
+    
     let count = 0;
     const deviceTypeLookup: Record<string, string> = {
       "LAPTOPS": "laptops",
@@ -359,10 +360,8 @@ export class DistributionsAndDeliveriesIndexComponent {
     // Handle collection date filters
     if (data.collectionDateStart && data.collectionDateEnd) {
       count += 1;
-      filter['collectionDate'] = {
-        _gte: data.collectionDateStart,
-        _lte: data.collectionDateEnd
-      };
+      filter['AND'].push({collectionDate: {_gte: data.collectionDateStart }});
+      filter['AND'].push({collectionDate: {_lte: data.collectionDateEnd }});
     }
 
     localStorage.setItem(`distributionsAndDeliveriesFilters-${this.tableId}`, JSON.stringify(data));
