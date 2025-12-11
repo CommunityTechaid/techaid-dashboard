@@ -354,18 +354,6 @@ export class KitInfoComponent {
       show: true,
     },
     expressionProperties: {
-      'templateOptions.options': (model, state, field) => {
-        if(this.disabledStatuses) {
-          // When flags are set, disable all statuses except the current one
-          const currentStatus = model['status'];
-          return KIT_STATUS_LABELS.map(status => ({
-            ...status,
-            disabled: status.value !== currentStatus ? 'true' : undefined
-          }));
-        } else {
-          return KIT_STATUS_LABELS;
-        }
-      },
       'validation.show': 'model.showErrorState'
     }
   }
@@ -916,6 +904,16 @@ export class KitInfoComponent {
     const disabledStatusGroup = ['ALLOCATION_DELIVERY_ARRANGED','ALLOCATION_QC_COMPLETED','ALLOCATION_READY','DISTRIBUTION_DELIVERED'];
     var currentStatus = data['status'];
 
+    // Disable or enable the status field based on flags
+    const statusControl = this.form.get('status');
+    if (statusControl) {
+      if (this.disabledStatuses) {
+        statusControl.disable({emitEvent: false});
+      } else {
+        statusControl.enable({emitEvent: false});
+      }
+    }
+
     if(this.disabledStatuses && disabledStatusGroup.includes(currentStatus)) {
       console.log('Invalidating');
       setTimeout(() => this.statusField.formControl.setErrors({incorrect: true, serverError: { message: "Error"}}));
@@ -927,7 +925,9 @@ export class KitInfoComponent {
           disableTimeOut: true
         });
     } else {
-      this.form.get('status').setErrors(null);
+      if (statusControl) {
+        statusControl.setErrors(null);
+      }
       if(this.toastr.currentlyActive > 0) {
         this.toastr.remove(this.toastr.toasts[0].toastId);
       }
