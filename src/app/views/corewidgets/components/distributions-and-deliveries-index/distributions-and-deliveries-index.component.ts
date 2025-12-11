@@ -268,38 +268,7 @@ export class DistributionsAndDeliveriesIndexComponent {
       collectionDateEnd: button.endDate.toISOString()
     };
 
-    const filter = {};
-    filter['collectionDate'] = {
-      _gte: button.startDate.toISOString(),
-      _lte: button.endDate.toISOString()
-    };
-
-    // Preserve existing filters
-    if (this.filterModel.is_sales && this.filterModel.is_sales.length) {
-      filter['isSales'] = {_in: this.filterModel.is_sales};
-    }
-    if (this.filterModel.device_type && this.filterModel.device_type.length) {
-      const deviceRequestItems = {};
-      const deviceTypeLookup: Record<string, string> = {
-        "LAPTOPS": "laptops",
-        "PHONES": "phones",
-        "TABLETS": "tablets",
-        "ALLINONES": "allInOnes",
-        "DESKTOPS": "desktops",
-        "COMMSDEVICES": "commsDevices",
-        "OTHER": "other"
-      };
-      this.filterModel.device_type.forEach(devType => {
-        if (devType in deviceTypeLookup) {
-          deviceRequestItems[deviceTypeLookup[devType]] = { _gt: 0 };
-        }
-      });
-      filter['deviceRequestItems'] = deviceRequestItems;
-    }
-
-    this.filter = filter;
-    this.filterModel = filterData;
-    this.table.ajax.reload(null, false);
+    this.applyFilter(filterData);
   }
 
   applyStatusFilter(button: {label: string, statuses: string[]}) {
@@ -323,7 +292,6 @@ export class DistributionsAndDeliveriesIndexComponent {
 
   applyFilter(data) {
     const filter = {AND: []};
-    
     let count = 0;
     const deviceTypeLookup: Record<string, string> = {
       "LAPTOPS": "laptops",
@@ -357,10 +325,14 @@ export class DistributionsAndDeliveriesIndexComponent {
       filter['deviceRequestItems'] = deviceRequestItems;
     }
 
-    // Handle collection date filters
-    if (data.collectionDateStart && data.collectionDateEnd) {
+    // Handle collection date filters using AND logic (like kit-index does for createdAt)
+    if(data.collectionDateStart){
       count += 1;
       filter['AND'].push({collectionDate: {_gte: data.collectionDateStart }});
+    }
+
+    if(data.collectionDateEnd){
+      count += 1;
       filter['AND'].push({collectionDate: {_lte: data.collectionDateEnd }});
     }
 
