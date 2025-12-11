@@ -659,7 +659,7 @@ export class DeviceRequestInfoComponent {
             {
               key: 'isSales',
               type: 'checkbox',
-              className: 'px-1',
+              className: 'px-1 mt-4',
               templateOptions: {
                 label: 'Is this a commercial sale?',
                 placeholder: '',
