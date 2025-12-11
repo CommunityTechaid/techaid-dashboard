@@ -572,7 +572,7 @@ export class KitInfoComponent {
       fieldGroup: [
         {
           fieldGroupClassName: 'd-flex flex-column',
-          className: 'col-md-4',
+          className: 'col-md',
           fieldGroup: [
             this.statusField,
             {
