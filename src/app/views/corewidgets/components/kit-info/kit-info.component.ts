@@ -348,8 +348,7 @@ export class KitInfoComponent {
     templateOptions: {
       label: 'Status of the device',
       options: KIT_STATUS_LABELS,
-      required: true,
-      disabled: false
+      required: true
     },
     validation: {
       show: true,
@@ -357,13 +356,15 @@ export class KitInfoComponent {
     expressionProperties: {
       'templateOptions.options': (model, state, field) => {
         if(this.disabledStatuses) {
-          return KIT_STATUS_LABELS_WITH_DISABLED;
+          // When flags are set, disable all statuses except the current one
+          const currentStatus = model['status'];
+          return KIT_STATUS_LABELS.map(status => ({
+            ...status,
+            disabled: status.value !== currentStatus ? 'true' : undefined
+          }));
         } else {
           return KIT_STATUS_LABELS;
         }
-      },
-      'templateOptions.disabled': (model, state, field) => {
-        return this.disabledStatuses;
       },
       'validation.show': 'model.showErrorState'
     }
