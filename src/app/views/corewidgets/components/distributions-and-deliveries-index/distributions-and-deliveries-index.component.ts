@@ -202,32 +202,6 @@ export class DistributionsAndDeliveriesIndexComponent {
           }
         },
       ]
-    },
-    {
-      validators: {
-        validation: [{ name: 'dateRange', options: { errorPath: 'after' } }],
-      },
-      fieldGroupClassName: 'row',
-      fieldGroup: [
-        {
-          key: 'after',
-          type: 'date',
-          className: 'col-md-6',
-          templateOptions: {
-            label: 'Requests created on or after?',
-            required: false
-          }
-        },
-        {
-          key: 'before',
-          type: 'date',
-          className: 'col-md-6',
-          templateOptions: {
-            label: 'Requests created on or before?',
-            required: false
-          }
-        },
-      ]
     }
   ];
 
@@ -351,27 +325,15 @@ export class DistributionsAndDeliveriesIndexComponent {
       filter['deviceRequestItems'] = deviceRequestItems;
     }
 
-    // Handle collection date filters
-    if (data.collectionDateStart && data.collectionDateEnd) {
+    // Handle collection date filters using AND logic (like kit-index does for createdAt)
+    if(data.collectionDateStart){
       count += 1;
-      filter['collectionDate'] = {
-        _gte: data.collectionDateStart,
-        _lte: data.collectionDateEnd
-      };
+      filter['AND'].push({collectionDate: {_gte: data.collectionDateStart }});
     }
 
-    // Handle createdAt date filters
-    if(data.after){
+    if(data.collectionDateEnd){
       count += 1;
-      filter['AND'].push({createdAt: {_gt: data.after }});
-    }
-
-    if(data.before){
-      const endDate : Date = data.before;
-      endDate.setDate(endDate.getDate() + 1);
-
-      count += 1;
-      filter['AND'].push({createdAt: {_lt: endDate }});
+      filter['AND'].push({collectionDate: {_lte: data.collectionDateEnd }});
     }
 
     localStorage.setItem(`distributionsAndDeliveriesFilters-${this.tableId}`, JSON.stringify(data));
