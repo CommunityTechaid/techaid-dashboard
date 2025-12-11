@@ -343,7 +343,7 @@ export class KitInfoComponent {
   statusField: FormlyFieldConfig = {
     key: 'status',
     type: 'radio',
-    className: 'col-md-4 kit-status',
+    className: 'col-md kit-status',
     defaultValue: 'DONATION_NEW',
     templateOptions: {
       label: 'Status of the device',
