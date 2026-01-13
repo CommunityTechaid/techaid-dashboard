@@ -19,6 +19,7 @@ export const DEVICE_REQUEST_STATUS = {
     'PROCESSING_COLLECTION_DELIVERY_ARRANGED':'Collection/Delivery arranged',
     'PROCESSING_ON_HOLD':'On hold',
     'REQUEST_COMPLETED':'Completed',
+    'REQUEST_COLLECTION_DELIVERY_FAILED':'Collection/Delivery Failed',
     'REQUEST_DECLINED':'Declined',
     'REQUEST_CANCELLED':'Cancelled',
 }
@@ -29,6 +30,7 @@ export const DEVICE_REQUEST_STATUS_LABELS = [
   {label: 'Collection/Delivery arranged', value: 'PROCESSING_COLLECTION_DELIVERY_ARRANGED'},
   {label: 'On hold', value: 'PROCESSING_ON_HOLD'},
   {label: 'Completed', value: 'REQUEST_COMPLETED'},
+  {label: 'Collection/Delivery Failed', value: 'REQUEST_COLLECTION_DELIVERY_FAILED'},
   {label: 'Declined', value: 'REQUEST_DECLINED'},
   {label: 'Cancelled', value: 'REQUEST_CANCELLED'}
 ];

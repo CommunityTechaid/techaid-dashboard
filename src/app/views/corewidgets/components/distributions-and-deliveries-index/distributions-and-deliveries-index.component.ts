@@ -265,7 +265,7 @@ export class DistributionsAndDeliveriesIndexComponent {
     return [
       {
         label: 'Awaiting Completion',
-        statuses: ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_ON_HOLD'],
+        statuses: ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_ON_HOLD','REQUEST_COLLECTION_DELIVERY_FAILED'],
         type: 'status' as const
       },
       {

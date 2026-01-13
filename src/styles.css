@@ -504,10 +504,11 @@ i.input-group-text {
 .device-request-status .custom-control:nth-child(5){
   background-color: #BFCEF9;
 }
-.device-request-status .custom-control:nth-child(6){
+.device-request-status .custom-control:nth-child(6),
+.device-request-status .custom-control:nth-child(7){
   background-color: #FBCBC0;
 }
-.device-request-status .custom-control:nth-child(7){
+.device-request-status .custom-control:nth-child(8){
   background-color: #FBCBC0;
   border-radius: 0px 0px 5px 5px;
 }
