@@ -57,6 +57,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
         name
       }
      }
+     isPrepped
      createdAt
      updatedAt
     }
@@ -203,6 +204,20 @@ export class DeviceRequestIndexComponent {
             required: false,
           }
         },
+        {
+          key: 'is_prepped',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Prepped Status?',
+            options: [
+              {label: 'Not Prepped', value: false },
+              {label: 'Prepped', value: true },
+            ],
+            required: false,
+          }
+        },
       ]
     }
   ];
@@ -244,6 +259,11 @@ export class DeviceRequestIndexComponent {
         }
       })
       filter['deviceRequestItems'] = deviceRequestItems;
+    }
+
+    if (data.is_prepped && data.is_prepped.length) {
+      count += data.is_prepped.length;
+      filter['isPrepped'] = {_in: data.is_prepped};
     }
 
     localStorage.setItem(`deviceRequestFilters-${this.tableId}`, JSON.stringify(data));

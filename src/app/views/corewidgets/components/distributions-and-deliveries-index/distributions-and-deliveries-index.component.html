@@ -64,7 +64,7 @@
                                   <th>Created</th>
                                   <th>Updated</th>
                                   <th>Status</th>
-
+                                  <th>Is Prepped</th>
                               </tr>
                           </thead>
                           <tbody *ngIf="entities?.length != 0;">
@@ -185,6 +185,7 @@
                                       {{ dt.updatedAt | date:'medium' }}
                                   </td>
                                   <td><a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a></td>
+                                  <td><input type="checkbox" [checked]="dt.isPrepped" onclick="return false;"></td>
                               </tr>
                           </tbody>
                       </table>

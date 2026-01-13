@@ -57,6 +57,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
         name
       }
      }
+     isPrepped
      createdAt
      updatedAt
     }
@@ -202,6 +203,20 @@ export class DistributionsAndDeliveriesIndexComponent {
             required: false,
           }
         },
+        {
+          key: 'is_prepped',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Prepped Status?',
+            options: [
+              {label: 'Not Prepped', value: false },
+              {label: 'Prepped', value: true },
+            ],
+            required: false,
+          }
+        },
       ]
     }
   ];
@@ -292,7 +307,7 @@ export class DistributionsAndDeliveriesIndexComponent {
   }
 
   applyFilter(data) {
-    const filter = {AND: []};
+    const filter: any = {AND: []};
     let count = 0;
     const deviceTypeLookup: Record<string, string> = {
       "LAPTOPS": "laptops",
@@ -324,6 +339,11 @@ export class DistributionsAndDeliveriesIndexComponent {
         }
       })
       filter['deviceRequestItems'] = deviceRequestItems;
+    }
+
+    if (data.is_prepped && data.is_prepped.length) {
+      count += data.is_prepped.length;
+      filter['isPrepped'] = {_in: data.is_prepped};
     }
 
     // Handle collection date filters using AND logic (like kit-index does for createdAt)
