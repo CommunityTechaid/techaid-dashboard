@@ -834,13 +834,13 @@ export class DeviceRequestComponent {
       },
       columns: [
         { data: 'id', width: '15px' },
-        { data: 'status' },
         { data: 'kitCount'},
-        { data: 'clientRef' },
-        { data: 'referringOrganisationContact.referringOrganisation.name' },
         { data: 'referringOrganisationContact.fullName' },
+        { data: 'referringOrganisationContact.referringOrganisation.name' },
+        { data: 'clientRef' },
         { data: 'createdAt'},
         { data: 'updatedAt' },
+        { data: 'status' },
       ]
     };
   }
