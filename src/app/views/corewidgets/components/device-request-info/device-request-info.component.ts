@@ -62,6 +62,7 @@ const QUERY_ENTITY = gql`
         }
       }
       isSales
+      isPrepped
       clientRef
       details
       borough
@@ -102,6 +103,7 @@ const UPDATE_ENTITY = gql`
         broadbandHubs
       }
       isSales
+      isPrepped
       referringOrganisationContact {
         id
         fullName
@@ -284,6 +286,20 @@ export class DeviceRequestInfoComponent {
                 label: 'Status of the request',
                 options: DEVICE_REQUEST_STATUS_LABELS,
                 required: true
+              }
+            },
+            {
+              key: 'isPrepped',
+              type: 'checkbox',
+              className: 'px-1 mt-4',
+              hideExpression: (model: any) => {
+                return model.status === 'NEW' || model.status === 'PROCESSING_EQUALITIES_DATA_COMPLETE';
+              },
+              templateOptions: {
+                label: 'Is request fully prepped?',
+                placeholder: '',
+                required: false,
+                description: 'Optional flag to track if request is fully prepped'
               }
             },
             {
