@@ -58,6 +58,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
       }
      }
      isPrepped
+     collectionMethod
      createdAt
      updatedAt
     }
@@ -217,6 +218,20 @@ export class DistributionsAndDeliveriesIndexComponent {
             required: false,
           }
         },
+        {
+          key: 'collection_method',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Collection/Delivery?',
+            options: [
+              {label: 'Collection', value: 'COLLECTION' },
+              {label: 'Delivery', value: 'DELIVERY' },
+            ],
+            required: false,
+          }
+        },
       ]
     }
   ];
@@ -263,11 +278,11 @@ export class DistributionsAndDeliveriesIndexComponent {
 
   generateStatusButtons() {
     return [
-      {
-        label: 'Collection/Delivery Arranged',
-        statuses: ['PROCESSING_COLLECTION_DELIVERY_ARRANGED'],
-        type: 'status' as const
-      },
+      // {
+      //   label: 'Collection/Delivery Arranged',
+      //   statuses: ['PROCESSING_COLLECTION_DELIVERY_ARRANGED'],
+      //   type: 'status' as const
+      // },
       {
         label: 'Collection/Delivery Failed',
         statuses: ['REQUEST_COLLECTION_DELIVERY_FAILED'],
@@ -345,6 +360,11 @@ export class DistributionsAndDeliveriesIndexComponent {
     if (data.is_prepped && data.is_prepped.length) {
       count += data.is_prepped.length;
       filter['isPrepped'] = {_in: data.is_prepped};
+    }
+
+    if (data.collection_method && data.collection_method.length) {
+      count += data.collection_method.length;
+      filter['collectionMethod'] = {_in: data.collection_method};
     }
 
     // Handle collection date filters using AND logic (like kit-index does for createdAt)
@@ -494,6 +514,7 @@ export class DistributionsAndDeliveriesIndexComponent {
         { data: 'referringOrganisationContact.fullName' },
         { data: 'referringOrganisationContact.referringOrganisation.name' },
         { data: 'clientRef' },
+        { data: 'collectionMethod' },
         { data: 'collectionDate' },
         { data: 'createdAt'},
         { data: 'updatedAt' },

@@ -60,6 +60,7 @@
                                   <th>Referee</th>
                                   <th>Organisation</th>
                                   <th>Client Ref</th>
+                                  <th>Collection/Delivery</th>
                                   <th>Collection/Delivery Date</th>
                                   <th>Created</th>
                                   <th>Updated</th>
@@ -175,6 +176,7 @@
                                   <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
                                   <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
                                   <td>{{dt.clientRef}}</td>
+                                  <td>{{ dt.collectionMethod === 'COLLECTION' ? 'Collection' : (dt.collectionMethod === 'DELIVERY' ? 'Delivery' : '') }}</td>
                                   <td [title]="dt.collectionDate" class="cursor-hand" placement="left" ngbTooltip="{{dt.collectionDate | date:'full'}}" triggers="click:blur">
                                       {{ dt.collectionDate ? (dt.collectionDate | date:'mediumDate') : '-' }}
                                   </td>
