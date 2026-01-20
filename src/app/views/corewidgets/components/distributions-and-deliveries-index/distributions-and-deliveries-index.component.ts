@@ -264,13 +264,13 @@ export class DistributionsAndDeliveriesIndexComponent {
   generateStatusButtons() {
     return [
       {
-        label: 'Awaiting Completion',
-        statuses: ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_ON_HOLD','REQUEST_COLLECTION_DELIVERY_FAILED'],
+        label: 'Collection/Delivery Arranged',
+        statuses: ['PROCESSING_COLLECTION_DELIVERY_ARRANGED'],
         type: 'status' as const
       },
       {
-        label: 'Completed',
-        statuses: ['REQUEST_COMPLETED'],
+        label: 'Collection/Delivery Failed',
+        statuses: ['REQUEST_COLLECTION_DELIVERY_FAILED'],
         type: 'status' as const
       }
     ];
@@ -281,7 +281,8 @@ export class DistributionsAndDeliveriesIndexComponent {
     const filterData = {
       ...this.filterModel,
       collectionDateStart: button.startDate.toISOString(),
-      collectionDateEnd: button.endDate.toISOString()
+      collectionDateEnd: button.endDate.toISOString(),
+      status: ['REQUEST_COMPLETED', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED']
     };
 
     this.applyFilter(filterData);
