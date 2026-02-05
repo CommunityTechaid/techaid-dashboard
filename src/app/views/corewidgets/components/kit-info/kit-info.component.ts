@@ -447,8 +447,7 @@ export class KitInfoComponent {
           templateOptions: {
             label: "TPM Version",
             type: "number",
-            descriptor: "",
-            readonly: true
+            descriptor: ""
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
@@ -533,8 +532,7 @@ export class KitInfoComponent {
           className: 'px-2 ml-auto justify-content-end text-right',
           defaultValue: '',
           templateOptions: {
-            label: "Lot ID",
-            readonly: true
+            label: "Lot ID"
           }
         }
         
@@ -549,8 +547,7 @@ export class KitInfoComponent {
           className: 'col-md-2',
           defaultValue: '',
           templateOptions: {
-            label: "Location Code",
-            readonly: true
+            label: "Location Code"
           }
         },
         this.deviceRequestField
