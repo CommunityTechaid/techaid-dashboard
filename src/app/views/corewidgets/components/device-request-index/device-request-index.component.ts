@@ -356,7 +356,8 @@ export class DeviceRequestIndexComponent {
               d.kitIds = {};
               if (d.kits && d.kits.length) {
                 d.kits.forEach(k => {
-                  const t = `${k.type}S`;
+                  const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
+                  const t = typeMap[k.type] || `${k.type}S`;
                   d.types[t] = d.types[t] || 0;
                   d.types[t]++;
                   d.kitIds[t] = d.kitIds[t] || [];

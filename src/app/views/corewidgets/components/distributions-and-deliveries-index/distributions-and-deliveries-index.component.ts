@@ -382,7 +382,7 @@ export class DistributionsAndDeliveriesIndexComponent {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
-    this.table.ajax.reload(null, false);
+    this.table.ajax.reload(null, true);
   }
 
   modal(content) {
