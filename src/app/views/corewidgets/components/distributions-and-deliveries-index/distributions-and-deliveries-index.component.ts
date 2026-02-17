@@ -84,7 +84,6 @@ export class DistributionsAndDeliveriesIndexComponent {
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
   table: any;
-  total: number;
   selections = {};
   selected = [];
   entities = [];
@@ -464,9 +463,6 @@ export class DistributionsAndDeliveriesIndexComponent {
           let data: any = {};
           if (res.data) {
             data = res['data']['deviceRequestConnection'];
-            if (!this.total) {
-              this.total = data['totalElements'];
-            }
             data.content.forEach(d => {
               d.types = {};
               d.kitIds = {};
@@ -485,7 +481,7 @@ export class DistributionsAndDeliveriesIndexComponent {
 
           callback({
             draw: params.draw,
-            recordsTotal: this.total,
+            recordsTotal: data['totalElements'],
             recordsFiltered: data['totalElements'],
             error: '',
             data: []
@@ -493,7 +489,7 @@ export class DistributionsAndDeliveriesIndexComponent {
         }, err => {
           callback({
             draw: params.draw,
-            recordsTotal: this.total || 0,
+            recordsTotal: 0,
             recordsFiltered: 0,
             error: err.message,
             data: []
