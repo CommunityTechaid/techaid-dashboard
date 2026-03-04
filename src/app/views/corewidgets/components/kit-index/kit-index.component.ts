@@ -211,13 +211,13 @@ query findAutocompleteDonorParents($term: String, $id: Long) {
 const AUTOCOMPLETE_LOTIDS = gql`
 query findAutocompleteLotIds($term: String, $ids: [String!]) {
   kitsConnection(page: {
-    size: 50
+    size: 100
   }, where: {
     lotId: { _contains: $term }
     OR: [
       { lotId: { _in: $ids } }
     ]
-  }, distinct: [LOTID]){
+  }){
     content  {
       lotId
     }
@@ -822,15 +822,14 @@ export class KitIndexComponent {
           catchError(() => of([])),
           tap(() => this.lotIdLoading = false),
           switchMap(res => {
-            const data = res['data']['kitsConnection']['content']
-              .map(v => v.lotId)
-              .filter(lotId => lotId && lotId.trim().length > 0)
-              .map(lotId => {
-                return {
-                  label: lotId,
-                  value: lotId
-                };
-              });
+            const data = [...new Set(
+              res['data']['kitsConnection']['content']
+                .map((v: any) => v.lotId as string)
+                .filter((lotId: string) => lotId && lotId.trim().length > 0)
+            )].map(lotId => ({
+              label: lotId,
+              value: lotId
+            }));
             return of(data);
           })
         ))
