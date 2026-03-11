@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { APP_VERSION } from '@env/version';
 import { Title } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
+import { AppInsightsService } from '@app/shared/services/app-insights.service';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +23,8 @@ export class AppComponent {
     private actions: Actions,
     private titleService: Title,
     private router: Router,
-    private activatedRoute: ActivatedRoute
+    private activatedRoute: ActivatedRoute,
+    private appInsights: AppInsightsService
   ) {
     titleService.setTitle("TaDa");
 
