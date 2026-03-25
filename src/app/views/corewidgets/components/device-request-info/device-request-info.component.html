@@ -97,6 +97,20 @@
   </div>
 </div>
 
+<ng-template #kitWarning let-c="close">
+  <div class="modal-header bg-warning">
+    <h4 class="modal-title font-weight-bold">⚠ Too Many Devices</h4>
+  </div>
+  <div class="modal-body text-center py-4">
+    <h3 class="font-weight-bold text-danger">
+      Please contact staff as this request has more devices than will be shown on the delivery receipt.
+    </h3>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary btn-sm" (click)="c('Close click')">Close</button>
+  </div>
+</ng-template>
+
 <ng-template #confirmDelete let-c="close" let-d="dismiss">
   <div class="modal-header">
       <h4 class="modal-title">Are you absolutely sure?</h4>
