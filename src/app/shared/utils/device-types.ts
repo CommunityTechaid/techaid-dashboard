@@ -29,3 +29,19 @@ export function getDeviceTypeLabel(value: string): string {
   const type = DEVICE_TYPES.find(t => t.value === value);
   return type ? type.label : value;
 }
+
+export const KIT_TYPES: DeviceType[] = [
+  { value: 'LAPTOP', label: 'Laptop' },
+  { value: 'TABLET', label: 'Tablet' },
+  { value: 'SMARTPHONE', label: 'Smart Phone' },
+  { value: 'ALLINONE', label: 'All In One (PC)' },
+  { value: 'DESKTOP', label: 'Desktop' },
+  { value: 'COMMSDEVICE', label: 'SIM Card' },
+  { value: 'BROADBANDHUB', label: 'Broadband Hub' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+export function getKitTypeLabel(value: string): string {
+  const type = KIT_TYPES.find(t => t.value === value);
+  return type ? type.label : value;
+}

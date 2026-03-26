@@ -12,7 +12,7 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
-import { getDeviceTypeLabel } from '@app/shared/utils';
+import { getKitTypeLabel } from '@app/shared/utils';
 
 export const DEVICE_REQUEST_STATUS = {
     'NEW':'New request',
@@ -1025,10 +1025,10 @@ export class DeviceRequestInfoComponent {
         
         // Device details
         dev1ID: this.model.kits[0]?.id || '',
-        dev1Type: getDeviceTypeLabel(this.model.kits[0]?.type) || '',
+        dev1Type: getKitTypeLabel(this.model.kits[0]?.type) || '',
         dev1Description: [this.model.kits[0]?.make, this.model.kits[0]?.model].filter(Boolean).join('/'),
         dev2ID: this.model.kits[1]?.id || '',
-        dev2Type: getDeviceTypeLabel(this.model.kits[1]?.type) || '',
+        dev2Type: getKitTypeLabel(this.model.kits[1]?.type) || '',
         dev2Description: [this.model.kits[1]?.make, this.model.kits[1]?.model].filter(Boolean).join('/'),
       
         isCollection: this.model.collectionMethod === 'COLLECTION' ? 'X' : '',

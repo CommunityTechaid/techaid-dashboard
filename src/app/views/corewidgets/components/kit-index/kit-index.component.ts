@@ -13,6 +13,7 @@ import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
+import { KIT_TYPES } from '@app/shared/utils';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 
@@ -365,16 +366,7 @@ export class KitIndexComponent {
           templateOptions: {
             label: 'Type of device',
             type: 'array',
-            options: [
-              { label: 'Laptop', value: 'LAPTOP' },
-              { label: 'Tablet', value: 'TABLET' },
-              { label: 'Smart Phone', value: 'SMARTPHONE' },
-              { label: 'All In One (PC)', value: 'ALLINONE' },
-              { label: 'Desktop', value: 'DESKTOP' },
-              { label: 'SIM Card', value: 'COMMSDEVICE' },
-              { label: 'Broadband Hub', value: 'BROADBANDHUB' },
-              { label: 'Other', value: 'OTHER' }
-            ],
+            options: KIT_TYPES,
           }
         },
         {
@@ -519,16 +511,7 @@ export class KitIndexComponent {
       defaultValue: 'LAPTOP',
       templateOptions: {
         label: 'Type of device',
-        options: [
-          {label: 'Laptop', value: 'LAPTOP' },
-          {label: 'Tablet', value: 'TABLET' },
-          {label: 'Smart Phone', value: 'SMARTPHONE' },
-          {label: 'All In One (PC)', value: 'ALLINONE' },
-          {label: 'Desktop', value: 'DESKTOP' },
-          {label: 'SIM Card', value: 'COMMSDEVICE' },
-          {label: 'Broadband Hub', value: 'BROADBANDHUB' },
-          {label: 'Other', value: 'OTHER' }
-        ],
+        options: KIT_TYPES,
         required: true
       }
     },

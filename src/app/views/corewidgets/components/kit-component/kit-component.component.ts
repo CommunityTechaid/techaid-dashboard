@@ -8,6 +8,7 @@ import {
   from,
 } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
+import { KIT_TYPES } from '@app/shared/utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -247,16 +248,7 @@ export class KitComponent {
           templateOptions: {
             label: 'Type of device',
             type: 'array',
-            options: [
-              { label: 'Laptop', value: 'LAPTOP' },
-              { label: 'Tablet', value: 'TABLET' },
-              { label: 'Smart Phone', value: 'SMARTPHONE' },
-              { label: 'All In One (PC)', value: 'ALLINONE' },
-              { label: 'Desktop', value: 'DESKTOP' },
-              { label: 'SIM Card', value: 'COMMSDEVICE' },
-              { label: 'Broadband Hub', value: 'BROADBANDHUB' },
-              { label: 'Other', value: 'OTHER' }
-            ],
+            options: KIT_TYPES,
           },
         },
         {
