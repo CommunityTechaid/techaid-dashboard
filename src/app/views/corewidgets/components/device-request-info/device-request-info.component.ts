@@ -1021,7 +1021,7 @@ export class DeviceRequestInfoComponent {
         // Device Request details
         requestId: this.requestId,
         clientRef: this.model.clientRef || 'N/A',
-        collectionContactName: this.model.collectionContactName || 'N/A',
+        collectionContactName: this.model.collectionContactName || (this.model.referringOrganisationContact?.fullName ? `Referee: ${this.model.referringOrganisationContact.fullName}` : 'N/A'),
         
         // Device details
         dev1ID: this.model.kits[0]?.id || '',
