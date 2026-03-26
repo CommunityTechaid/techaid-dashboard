@@ -11,6 +11,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -153,16 +154,7 @@ export class DeviceRequestIndexComponent {
   filterCount = 0;
   filterModel: any = {is_sales: [false]};
   filterForm: FormGroup = new FormGroup({});
-  filterDeviceTypes: any =[
-    {value: 'LAPTOPS', label: 'Laptops'},
-    {value: 'PHONES', label: 'Phones'},
-    {value: 'TABLETS', label: 'Tablets' },
-    {value: 'ALLINONES', label: 'All In Ones' },
-    {value: 'DESKTOPS', label: 'Desktops' },
-    {value: 'COMMSDEVICES', label: 'SIM Cards' },
-    {value: 'BROADBANDHUBS', label: 'Broadband Hubs' },
-    {value: 'OTHER', label: 'Other' }
-  ];
+  filterDeviceTypes = DEVICE_TYPES;
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
@@ -228,16 +220,7 @@ export class DeviceRequestIndexComponent {
   applyFilter(data) {
     const filter = {};
     let count = 0;
-    const deviceTypeLookup: Record<string, string> = {
-      "LAPTOPS": "laptops",
-      "PHONES": "phones",
-      "TABLETS": "tablets" ,
-      "ALLINONES": "allInOnes" ,
-      "DESKTOPS": "desktops" ,
-      "COMMSDEVICES": "commsDevices" ,
-      "OTHER" : "other",
-      "BROADBANDHUBS" : "broadbandHubs"
-    }
+    const deviceTypeLookup = DEVICE_TYPE_LOOKUP;
 
     if (data.status && data.status.length) {
       count = count + data.status.length;
