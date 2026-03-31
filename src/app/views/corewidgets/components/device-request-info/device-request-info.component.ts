@@ -672,12 +672,9 @@ export class DeviceRequestInfoComponent {
               type: 'input',
               className: '',
               templateOptions: {
-                label: 'Name of Person Collecting',
+                label: 'Contact Name',
                 description: 'Name of the person who will collect the device',
                 required: false
-              },
-              hideExpression: (model: any) => {
-                return model.collectionMethod !== 'COLLECTION';
               }
             },
             this.newNoteField,
