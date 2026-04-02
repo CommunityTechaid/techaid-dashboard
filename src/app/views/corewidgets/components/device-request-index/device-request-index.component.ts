@@ -88,67 +88,10 @@ export class DeviceRequestIndexComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
-  model = {};
-
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
   statusTypes: any = DEVICE_REQUEST_STATUS;
 
-  fields: Array<FormlyFieldConfig> = [
-    {
-      key: 'name',
-      type: 'input',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Name',
-        placeholder: '',
-        required: true
-      },
-      validation: {
-        show: false
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-      }
-    },
-    {
-      fieldGroupClassName: 'row',
-      fieldGroup: [
-        {
-          key: 'phoneNumber',
-          type: 'input',
-          className: 'col-md-6',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Organisation Phone Number',
-            pattern: /\+?[0-9]+/,
-            required: true
-          },
-          expressionProperties: {
-            'templateOptions.required': '!model.phoneNumber.length'
-          }
-        },
-        {
-          key: 'address',
-          type: 'place',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Address',
-            description: 'The address of the organisation',
-            placeholder: '',
-            postCode: false,
-            required: true
-          },
-          expressionProperties: {
-            'templateOptions.required': '!model.address.length'
-          }
-        }
-      ]
-    },
-  ];
 
   filter: any = {};
   filterCount = 0;
