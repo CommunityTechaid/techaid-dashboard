@@ -1,8 +1,16 @@
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
 const appVersion = require('../package.json').version;
 const today = new Date();
 const versionFilePath = path.join(__dirname + '/../src/environments/version.ts');
+
+let gitCommit = 'unknown';
+try {
+  gitCommit = execSync('git rev-parse --short HEAD').toString().trim();
+} catch (e) {
+  console.log('Warning: could not determine git commit hash');
+}
 
 function dateFormat (date, fstr, utc) {
     utc = utc ? 'getUTC' : 'get';
@@ -23,7 +31,7 @@ function dateFormat (date, fstr, utc) {
 }
 
 const build = dateFormat(today, '%y.%m.%d-%H%M');
-const src = `export const APP_VERSION = {version: '${appVersion}', build: '${build}', date: '${today.toISOString()}'};`;
+const src = `export const APP_VERSION = {version: '${appVersion}', build: '${build}', date: '${today.toISOString()}', commit: '${gitCommit}'};`;
 fs.writeFile(versionFilePath, src, { flat: 'w' }, function (err) {
     if (err) {
         return console.log(err);
