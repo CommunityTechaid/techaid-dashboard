@@ -61,7 +61,9 @@ export class AppComponent {
   }
 
   private fetchBuildInfo() {
-    const endpoint = this.config.environment.graphql_endpoint;
+    const env = (window as any).__env || {};
+    const apiHost = env.apiHost || '';
+    const endpoint = apiHost ? apiHost.replace(/\/$/, '') + '/graphql' : this.config.environment.graphql_endpoint;
     console.log('[buildInfo] fetching from:', endpoint);
     fetch(endpoint, {
       method: 'POST',
