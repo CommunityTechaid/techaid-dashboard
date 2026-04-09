@@ -61,10 +61,7 @@ export class AppComponent {
   }
 
   private fetchBuildInfo() {
-    const env = (window as any).__env || {};
-    const apiHost = env.apiHost || '';
-    const endpoint = apiHost ? apiHost.replace(/\/$/, '') + '/graphql' : this.config.environment.graphql_endpoint;
-    console.log('[buildInfo] fetching from:', endpoint);
+    const endpoint = this.config.environment.graphql_endpoint;
     fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -72,7 +69,6 @@ export class AppComponent {
     })
       .then(res => res.json())
       .then(res => {
-        console.log('[buildInfo] response:', res);
         this.zone.run(() => {
           if (res && res.data && res.data.buildInfo) {
             const info = res.data.buildInfo;
@@ -84,7 +80,7 @@ export class AppComponent {
         });
       })
       .catch(err => {
-        console.warn('[buildInfo] fetch failed:', err);
+        console.warn('Failed to fetch buildInfo:', err);
         this.zone.run(() => {
           this.apiVersion = 'unavailable';
         });
