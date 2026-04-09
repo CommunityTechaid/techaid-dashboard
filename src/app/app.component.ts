@@ -16,6 +16,7 @@ const BUILD_INFO_QUERY = gql`
     buildInfo {
       version
       commit
+      time
     }
   }
 `;
@@ -69,10 +70,16 @@ export class AppComponent {
       ({ data }) => {
         if (data && data.buildInfo) {
           const info = data.buildInfo;
-          this.apiVersion = `${info.version} (${info.commit})`;
+          const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
+          this.apiVersion = `${info.version} (${info.commit})${time}`;
+        } else {
+          this.apiVersion = 'unavailable';
         }
       },
-      () => {}
+      (err) => {
+        console.warn('Failed to fetch buildInfo', err);
+        this.apiVersion = 'unavailable';
+      }
     );
   }
 
