@@ -11,6 +11,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -87,82 +88,16 @@ export class DeviceRequestIndexComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
-  model = {};
-
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
   statusTypes: any = DEVICE_REQUEST_STATUS;
 
-  fields: Array<FormlyFieldConfig> = [
-    {
-      key: 'name',
-      type: 'input',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Name',
-        placeholder: '',
-        required: true
-      },
-      validation: {
-        show: false
-      },
-      expressionProperties: {
-        'validation.show': 'model.showErrorState',
-      }
-    },
-    {
-      fieldGroupClassName: 'row',
-      fieldGroup: [
-        {
-          key: 'phoneNumber',
-          type: 'input',
-          className: 'col-md-6',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Organisation Phone Number',
-            pattern: /\+?[0-9]+/,
-            required: true
-          },
-          expressionProperties: {
-            'templateOptions.required': '!model.phoneNumber.length'
-          }
-        },
-        {
-          key: 'address',
-          type: 'place',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Address',
-            description: 'The address of the organisation',
-            placeholder: '',
-            postCode: false,
-            required: true
-          },
-          expressionProperties: {
-            'templateOptions.required': '!model.address.length'
-          }
-        }
-      ]
-    },
-  ];
 
   filter: any = {};
   filterCount = 0;
   filterModel: any = {is_sales: [false]};
   filterForm: FormGroup = new FormGroup({});
-  filterDeviceTypes: any =[
-    {value: 'LAPTOPS', label: 'Laptops'},
-    {value: 'PHONES', label: 'Phones'},
-    {value: 'TABLETS', label: 'Tablets' },
-    {value: 'ALLINONES', label: 'All In Ones' },
-    {value: 'DESKTOPS', label: 'Desktops' },
-    {value: 'COMMSDEVICES', label: 'SIM Cards' },
-    {value: 'BROADBANDHUBS', label: 'Broadband Hubs' },
-    {value: 'OTHER', label: 'Other' }
-  ];
+  filterDeviceTypes = DEVICE_TYPES;
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
@@ -228,16 +163,7 @@ export class DeviceRequestIndexComponent {
   applyFilter(data) {
     const filter = {};
     let count = 0;
-    const deviceTypeLookup: Record<string, string> = {
-      "LAPTOPS": "laptops",
-      "PHONES": "phones",
-      "TABLETS": "tablets" ,
-      "ALLINONES": "allInOnes" ,
-      "DESKTOPS": "desktops" ,
-      "COMMSDEVICES": "commsDevices" ,
-      "OTHER" : "other",
-      "BROADBANDHUBS" : "broadbandHubs"
-    }
+    const deviceTypeLookup = DEVICE_TYPE_LOOKUP;
 
     if (data.status && data.status.length) {
       count = count + data.status.length;
@@ -356,7 +282,8 @@ export class DeviceRequestIndexComponent {
               d.kitIds = {};
               if (d.kits && d.kits.length) {
                 d.kits.forEach(k => {
-                  const t = `${k.type}S`;
+                  const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
+                  const t = typeMap[k.type] || `${k.type}S`;
                   d.types[t] = d.types[t] || 0;
                   d.types[t]++;
                   d.kitIds[t] = d.kitIds[t] || [];

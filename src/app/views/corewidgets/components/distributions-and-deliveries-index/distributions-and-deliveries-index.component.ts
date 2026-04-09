@@ -11,6 +11,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -84,7 +85,6 @@ export class DistributionsAndDeliveriesIndexComponent {
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
   table: any;
-  total: number;
   selections = {};
   selected = [];
   entities = [];
@@ -154,15 +154,7 @@ export class DistributionsAndDeliveriesIndexComponent {
   filterCount = 0;
   filterModel: any = {is_sales: [false]};
   filterForm: FormGroup = new FormGroup({});
-  filterDeviceTypes: any =[
-    {value: 'LAPTOPS', label: 'Laptops'},
-    {value: 'PHONES', label: 'Phones'},
-    {value: 'TABLETS', label: 'Tablets' },
-    {value: 'ALLINONES', label: 'All In Ones' },
-    {value: 'DESKTOPS', label: 'Desktops' },
-    {value: 'COMMSDEVICES', label: 'SIM Cards' },
-    {value: 'OTHER', label: 'Other' }
-  ];
+  filterDeviceTypes = DEVICE_TYPES.filter(t => t.value !== 'BROADBANDHUBS');
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
@@ -325,15 +317,7 @@ export class DistributionsAndDeliveriesIndexComponent {
   applyFilter(data) {
     const filter: any = {AND: []};
     let count = 0;
-    const deviceTypeLookup: Record<string, string> = {
-      "LAPTOPS": "laptops",
-      "PHONES": "phones",
-      "TABLETS": "tablets" ,
-      "ALLINONES": "allInOnes" ,
-      "DESKTOPS": "desktops" ,
-      "COMMSDEVICES": "commsDevices" ,
-      "OTHER" : "other"
-    }
+    const deviceTypeLookup = DEVICE_TYPE_LOOKUP;
 
     if (data.status && data.status.length) {
       count = count + data.status.length;
@@ -382,7 +366,7 @@ export class DistributionsAndDeliveriesIndexComponent {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
-    this.table.ajax.reload(null, false);
+    this.table.ajax.reload(null, true);
   }
 
   modal(content) {
@@ -464,15 +448,13 @@ export class DistributionsAndDeliveriesIndexComponent {
           let data: any = {};
           if (res.data) {
             data = res['data']['deviceRequestConnection'];
-            if (!this.total) {
-              this.total = data['totalElements'];
-            }
             data.content.forEach(d => {
               d.types = {};
               d.kitIds = {};
               if (d.kits && d.kits.length) {
                 d.kits.forEach(k => {
-                  const t = `${k.type}S`;
+                  const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
+                  const t = typeMap[k.type] || `${k.type}S`;
                   d.types[t] = d.types[t] || 0;
                   d.types[t]++;
                   d.kitIds[t] = d.kitIds[t] || [];
@@ -485,7 +467,7 @@ export class DistributionsAndDeliveriesIndexComponent {
 
           callback({
             draw: params.draw,
-            recordsTotal: this.total,
+            recordsTotal: data['totalElements'],
             recordsFiltered: data['totalElements'],
             error: '',
             data: []
@@ -493,7 +475,7 @@ export class DistributionsAndDeliveriesIndexComponent {
         }, err => {
           callback({
             draw: params.draw,
-            recordsTotal: this.total || 0,
+            recordsTotal: 0,
             recordsFiltered: 0,
             error: err.message,
             data: []

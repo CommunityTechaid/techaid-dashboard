@@ -35,6 +35,11 @@ export class ConfigService {
 
 
     private update(data) {
-        Object.assign(this.environment, environment, data);
+        const runtimeEnv = (window as any).__env || {};
+        const overrides = {};
+        if (runtimeEnv.graphql_endpoint) {
+            overrides['graphql_endpoint'] = runtimeEnv.graphql_endpoint;
+        }
+        Object.assign(this.environment, environment, data, overrides);
     }
 }

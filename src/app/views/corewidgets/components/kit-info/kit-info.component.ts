@@ -1,6 +1,7 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
+import { KIT_TYPES } from '@app/shared/utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -374,16 +375,7 @@ export class KitInfoComponent {
           templateOptions: {
            label: "Device",
            type: "select",
-            options: [
-              {label: 'Laptop', value: 'LAPTOP' },
-              {label: 'Tablet', value: 'TABLET' },
-              {label: 'Smart Phone', value: 'SMARTPHONE' },
-              {label: 'All In One (PC)', value: 'ALLINONE' },
-              {label: 'Desktop', value: 'DESKTOP' },
-              {label: 'SIM Card', value: 'COMMSDEVICE' },
-              {label: 'Broadband Hub', value: 'BROADBANDHUB' },
-              {label: 'Other', value: 'OTHER' }
-            ]
+            options: KIT_TYPES
           }
         },
         {
@@ -447,8 +439,7 @@ export class KitInfoComponent {
           templateOptions: {
             label: "TPM Version",
             type: "number",
-            descriptor: "",
-            readonly: true
+            descriptor: ""
           },
           hideExpression: (model, state, field) => {
             const data = field.parent.formControl.value || {};
@@ -533,8 +524,7 @@ export class KitInfoComponent {
           className: 'px-2 ml-auto justify-content-end text-right',
           defaultValue: '',
           templateOptions: {
-            label: "Lot ID",
-            readonly: true
+            label: "Lot ID"
           }
         }
         
@@ -549,8 +539,7 @@ export class KitInfoComponent {
           className: 'col-md-2',
           defaultValue: '',
           templateOptions: {
-            label: "Location Code",
-            readonly: true
+            label: "Location Code"
           }
         },
         this.deviceRequestField

@@ -65,6 +65,7 @@
     "pusher-js": "^6.0.3",
     "request": "^2.88.2",
     "resumablejs": "^1.1.0",
+    "@microsoft/applicationinsights-web": "^2.8.18",
     "rxjs": "^6.6.0",
     "tablesaw": "^3.1.2",
     "tslib": "^2.0.0",

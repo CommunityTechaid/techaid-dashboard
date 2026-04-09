@@ -12,6 +12,7 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
+import { getKitTypeLabel } from '@app/shared/utils';
 
 export const DEVICE_REQUEST_STATUS = {
     'NEW':'New request',
@@ -68,6 +69,12 @@ const QUERY_ENTITY = gql`
       clientRef
       details
       borough
+      kits {
+        id
+        type
+        make
+        model
+      }
       deviceRequestNeeds {
         hasInternet
         hasMobilityIssues
@@ -177,6 +184,7 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
   styleUrls: ['./device-request-info.component.scss']
 })
 export class DeviceRequestInfoComponent {
+  @ViewChild('kitWarning') kitWarningModal: any;
 
   constructor(
     private modalService: NgbModal,
@@ -664,12 +672,9 @@ export class DeviceRequestInfoComponent {
               type: 'input',
               className: '',
               templateOptions: {
-                label: 'Name of Person Collecting',
+                label: 'Contact Name',
                 description: 'Name of the person who will collect the device',
                 required: false
-              },
-              hideExpression: (model: any) => {
-                return model.collectionMethod !== 'COLLECTION';
               }
             },
             this.newNoteField,
@@ -996,38 +1001,35 @@ export class DeviceRequestInfoComponent {
       return;
     }
 
+    if (this.model.kits?.length >= 3) {
+      this.modalService.open(this.kitWarningModal, { centered: true });
+      return;
+    }
+
     this.generatingPdf = true;
 
     try {
       // Prepare the data for the PDF template
       const pdfData = {
         // Header fields
-        companyName: this.model.referringOrganisationContact?.referringOrganisation?.name || '',
-        documentTitle: `Device Request #${this.requestId}`,
-        date: new Date().toLocaleDateString(),
+        organisationName: this.model.referringOrganisationContact?.referringOrganisation?.name || 'N/A',
+        date: this.model.collectionDate ? new Date(this.model.collectionDate).toLocaleDateString() : 'N/A',
 
         // Device Request details
         requestId: this.requestId,
-        status: DEVICE_REQUEST_STATUS[this.model.status as keyof typeof DEVICE_REQUEST_STATUS] || this.model.status,
         clientRef: this.model.clientRef || 'N/A',
-        borough: this.model.borough || 'N/A',
-        refereeName: this.model.referringOrganisationContact?.fullName || '',
-        details: this.model.details || '',
-
-        // Device counts
-        laptops: this.model.deviceRequestItems?.laptops || 0,
-        phones: this.model.deviceRequestItems?.phones || 0,
-        tablets: this.model.deviceRequestItems?.tablets || 0,
-        allInOnes: this.model.deviceRequestItems?.allInOnes || 0,
-        desktops: this.model.deviceRequestItems?.desktops || 0,
-        commsDevices: this.model.deviceRequestItems?.commsDevices || 0,
-        broadbandHubs: this.model.deviceRequestItems?.broadbandHubs || 0,
-        other: this.model.deviceRequestItems?.other || 0,
-
-        // Additional info
-        isSales: this.model.isSales ? 'Yes' : 'No',
-        createdAt: new Date(this.model.createdAt).toLocaleDateString(),
-        updatedAt: new Date(this.model.updatedAt).toLocaleDateString(),
+        collectionContactName: this.model.collectionContactName || (this.model.referringOrganisationContact?.fullName ? `Referee: ${this.model.referringOrganisationContact.fullName}` : 'N/A'),
+        
+        // Device details
+        dev1ID: this.model.kits[0]?.id || '',
+        dev1Type: getKitTypeLabel(this.model.kits[0]?.type) || '',
+        dev1Description: [this.model.kits[0]?.make, this.model.kits[0]?.model].filter(Boolean).join('/'),
+        dev2ID: this.model.kits[1]?.id || '',
+        dev2Type: getKitTypeLabel(this.model.kits[1]?.type) || '',
+        dev2Description: [this.model.kits[1]?.make, this.model.kits[1]?.model].filter(Boolean).join('/'),
+      
+        isCollection: this.model.collectionMethod === 'COLLECTION' ? 'X' : '',
+        isDelivery: this.model.collectionMethod === 'DELIVERY' ? 'X' : '',
       };
 
       // TODO: Replace with your actual Google Apps Script URL

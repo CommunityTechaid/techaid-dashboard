@@ -12,3 +12,5 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 WORKDIR /usr/share/nginx/html
 EXPOSE 80
 COPY ./nginx.conf /etc/nginx/templates/default.conf.template
+COPY ./docker/20-generate-env-js.sh /docker-entrypoint.d/20-generate-env-js.sh
+RUN chmod +x /docker-entrypoint.d/20-generate-env-js.sh

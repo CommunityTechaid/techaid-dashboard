@@ -13,6 +13,7 @@ import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
+import { KIT_TYPES } from '@app/shared/utils';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 
@@ -211,13 +212,13 @@ query findAutocompleteDonorParents($term: String, $id: Long) {
 const AUTOCOMPLETE_LOTIDS = gql`
 query findAutocompleteLotIds($term: String, $ids: [String!]) {
   kitsConnection(page: {
-    size: 50
+    size: 100
   }, where: {
     lotId: { _contains: $term }
     OR: [
       { lotId: { _in: $ids } }
     ]
-  }, distinct: [LOTID]){
+  }){
     content  {
       lotId
     }
@@ -365,16 +366,7 @@ export class KitIndexComponent {
           templateOptions: {
             label: 'Type of device',
             type: 'array',
-            options: [
-              { label: 'Laptop', value: 'LAPTOP' },
-              { label: 'Tablet', value: 'TABLET' },
-              { label: 'Smart Phone', value: 'SMARTPHONE' },
-              { label: 'All In One (PC)', value: 'ALLINONE' },
-              { label: 'Desktop', value: 'DESKTOP' },
-              { label: 'SIM Card', value: 'COMMSDEVICE' },
-              { label: 'Broadband Hub', value: 'BROADBANDHUB' },
-              { label: 'Other', value: 'OTHER' }
-            ],
+            options: KIT_TYPES,
           }
         },
         {
@@ -519,16 +511,7 @@ export class KitIndexComponent {
       defaultValue: 'LAPTOP',
       templateOptions: {
         label: 'Type of device',
-        options: [
-          {label: 'Laptop', value: 'LAPTOP' },
-          {label: 'Tablet', value: 'TABLET' },
-          {label: 'Smart Phone', value: 'SMARTPHONE' },
-          {label: 'All In One (PC)', value: 'ALLINONE' },
-          {label: 'Desktop', value: 'DESKTOP' },
-          {label: 'SIM Card', value: 'COMMSDEVICE' },
-          {label: 'Broadband Hub', value: 'BROADBANDHUB' },
-          {label: 'Other', value: 'OTHER' }
-        ],
+        options: KIT_TYPES,
         required: true
       }
     },
@@ -822,15 +805,14 @@ export class KitIndexComponent {
           catchError(() => of([])),
           tap(() => this.lotIdLoading = false),
           switchMap(res => {
-            const data = res['data']['kitsConnection']['content']
-              .map(v => v.lotId)
-              .filter(lotId => lotId && lotId.trim().length > 0)
-              .map(lotId => {
-                return {
-                  label: lotId,
-                  value: lotId
-                };
-              });
+            const data = [...new Set(
+              res['data']['kitsConnection']['content']
+                .map((v: any) => v.lotId as string)
+                .filter((lotId: string) => lotId && lotId.trim().length > 0)
+            )].map(lotId => ({
+              label: lotId,
+              value: lotId
+            }));
             return of(data);
           })
         ))
