@@ -8,7 +8,6 @@ import { APP_VERSION } from '@env/version';
 import { Title } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
 import { AppInsightsService } from '@app/shared/services/app-insights.service';
-import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '@app/shared/services/config.service';
 
 @Component({
@@ -28,7 +27,6 @@ export class AppComponent {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private appInsights: AppInsightsService,
-    private http: HttpClient,
     private config: ConfigService
   ) {
     titleService.setTitle("TaDa");
@@ -57,9 +55,18 @@ export class AppComponent {
 
   ngOnInit() {
     this.actionSub = this.actions.pipe(ofAction(RouterNavigation)).subscribe(({ event }) => this.handleAction(event));
-    const query = '{ buildInfo { version commit time } }';
-    this.http.post<any>(this.config.environment.graphql_endpoint, { query }).subscribe(
-      (res) => {
+    this.fetchBuildInfo();
+  }
+
+  private fetchBuildInfo() {
+    const endpoint = this.config.environment.graphql_endpoint;
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '{ buildInfo { version commit time } }' })
+    })
+      .then(res => res.json())
+      .then(res => {
         if (res && res.data && res.data.buildInfo) {
           const info = res.data.buildInfo;
           const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
@@ -67,12 +74,11 @@ export class AppComponent {
         } else {
           this.apiVersion = 'unavailable';
         }
-      },
-      (err) => {
-        console.warn('Failed to fetch buildInfo', err);
+      })
+      .catch(err => {
+        console.warn('Failed to fetch buildInfo:', err);
         this.apiVersion = 'unavailable';
-      }
-    );
+      });
   }
 
   handleAction(action) {
