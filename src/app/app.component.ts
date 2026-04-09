@@ -8,18 +8,8 @@ import { APP_VERSION } from '@env/version';
 import { Title } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
 import { AppInsightsService } from '@app/shared/services/app-insights.service';
-import { Apollo } from 'apollo-angular';
-import gql from 'graphql-tag';
-
-const BUILD_INFO_QUERY = gql`
-  query {
-    buildInfo {
-      version
-      commit
-      time
-    }
-  }
-`;
+import { HttpClient } from '@angular/common/http';
+import { ConfigService } from '@app/shared/services/config.service';
 
 @Component({
   selector: 'app-root',
@@ -38,7 +28,8 @@ export class AppComponent {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private appInsights: AppInsightsService,
-    private apollo: Apollo
+    private http: HttpClient,
+    private config: ConfigService
   ) {
     titleService.setTitle("TaDa");
 
@@ -66,10 +57,11 @@ export class AppComponent {
 
   ngOnInit() {
     this.actionSub = this.actions.pipe(ofAction(RouterNavigation)).subscribe(({ event }) => this.handleAction(event));
-    this.apollo.query<any>({ query: BUILD_INFO_QUERY }).subscribe(
-      ({ data }) => {
-        if (data && data.buildInfo) {
-          const info = data.buildInfo;
+    const query = '{ buildInfo { version commit time } }';
+    this.http.post<any>(this.config.environment.graphql_endpoint, { query }).subscribe(
+      (res) => {
+        if (res && res.data && res.data.buildInfo) {
+          const info = res.data.buildInfo;
           const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
           this.apiVersion = `${info.version} (${info.commit})${time}`;
         } else {
