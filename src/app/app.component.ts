@@ -8,6 +8,17 @@ import { APP_VERSION } from '@env/version';
 import { Title } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
 import { AppInsightsService } from '@app/shared/services/app-insights.service';
+import { Apollo } from 'apollo-angular';
+import gql from 'graphql-tag';
+
+const BUILD_INFO_QUERY = gql`
+  query {
+    buildInfo {
+      version
+      commit
+    }
+  }
+`;
 
 @Component({
   selector: 'app-root',
@@ -17,6 +28,7 @@ import { AppInsightsService } from '@app/shared/services/app-insights.service';
 export class AppComponent {
   private actionSub: Subscription;
   version = APP_VERSION;
+  apiVersion = '';
   constructor(
     private toastr: ToastrService,
     private store: Store,
@@ -24,7 +36,8 @@ export class AppComponent {
     private titleService: Title,
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private appInsights: AppInsightsService
+    private appInsights: AppInsightsService,
+    private apollo: Apollo
   ) {
     titleService.setTitle("TaDa");
 
@@ -52,6 +65,15 @@ export class AppComponent {
 
   ngOnInit() {
     this.actionSub = this.actions.pipe(ofAction(RouterNavigation)).subscribe(({ event }) => this.handleAction(event));
+    this.apollo.query<any>({ query: BUILD_INFO_QUERY }).subscribe(
+      ({ data }) => {
+        if (data && data.buildInfo) {
+          const info = data.buildInfo;
+          this.apiVersion = `${info.version} (${info.commit})`;
+        }
+      },
+      () => {}
+    );
   }
 
   handleAction(action) {
