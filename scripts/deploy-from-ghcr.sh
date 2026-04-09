@@ -26,5 +26,5 @@ NEW_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE" 2>/dev/
 # Only redeploy if the image actually changed
 if [ "$OLD_DIGEST" != "$NEW_DIGEST" ]; then
     echo "$(date): New image detected ($NEW_DIGEST), deploying to dokku app: $APP"
-    dokku git:from-image "$APP" "$IMAGE"
+    dokku git:from-image "$APP" "$NEW_DIGEST"
 fi
