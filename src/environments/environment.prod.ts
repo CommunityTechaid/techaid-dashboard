@@ -10,7 +10,7 @@ import { ConfigParams } from '@app/state/config-params';
 export const environment: ConfigParams = {
   production: true,
   environment: 'production',
-  graphql_endpoint: '/api/graphql',
+  graphql_endpoint: 'https://api.communitytechaid.org.uk/graphql',
   version: APP_VERSION,
   auth_endpoint: 'https://api.communitytechaid.org.uk/auth/user',
   auth_audience: 'https://api.communitytechaid.org.uk',
