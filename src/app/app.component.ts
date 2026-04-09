@@ -9,6 +9,7 @@ import { Title } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
 import { AppInsightsService } from '@app/shared/services/app-insights.service';
 import { ConfigService } from '@app/shared/services/config.service';
+import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -27,7 +28,8 @@ export class AppComponent {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private appInsights: AppInsightsService,
-    private config: ConfigService
+    private config: ConfigService,
+    private zone: NgZone
   ) {
     titleService.setTitle("TaDa");
 
@@ -60,6 +62,7 @@ export class AppComponent {
 
   private fetchBuildInfo() {
     const endpoint = this.config.environment.graphql_endpoint;
+    console.log('[buildInfo] fetching from:', endpoint);
     fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -67,17 +70,22 @@ export class AppComponent {
     })
       .then(res => res.json())
       .then(res => {
-        if (res && res.data && res.data.buildInfo) {
-          const info = res.data.buildInfo;
-          const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
-          this.apiVersion = `${info.version} (${info.commit})${time}`;
-        } else {
-          this.apiVersion = 'unavailable';
-        }
+        console.log('[buildInfo] response:', res);
+        this.zone.run(() => {
+          if (res && res.data && res.data.buildInfo) {
+            const info = res.data.buildInfo;
+            const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
+            this.apiVersion = `${info.version} (${info.commit})${time}`;
+          } else {
+            this.apiVersion = 'unavailable';
+          }
+        });
       })
       .catch(err => {
-        console.warn('Failed to fetch buildInfo:', err);
-        this.apiVersion = 'unavailable';
+        console.warn('[buildInfo] fetch failed:', err);
+        this.zone.run(() => {
+          this.apiVersion = 'unavailable';
+        });
       });
   }
 
