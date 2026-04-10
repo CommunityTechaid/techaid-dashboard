@@ -10,7 +10,25 @@
                     <div>
                         <h6 class="m-0 font-weight-bold text-primary pr-1">Devices</h6>
                     </div>
-                    <div>
+                    <div class="d-flex align-items-center flex-wrap">
+                        <ng-container *ngIf="isAdmin">
+                            <div class="custom-control custom-switch mr-2 mb-1">
+                                <input type="checkbox" class="custom-control-input" id="bulkToggle"
+                                    [checked]="bulkMode" (change)="toggleBulkMode()">
+                                <label class="custom-control-label" for="bulkToggle">Bulk Select</label>
+                            </div>
+                            <a *ngIf="bulkMode" href="#"
+                                (click)="bulkUpdateModel={}; bulkUpdateForm.reset(); modal(bulkUpdateModal); false;"
+                                class="btn btn-warning btn-icon-split btn-sm mr-1 mb-1"
+                                [class.disabled]="selected.length === 0">
+                                <span class="icon text-white-50">
+                                    <i class="fas fa-edit"></i>
+                                </span>
+                                <span class="text">Bulk Update
+                                    <span *ngIf="selected.length > 0" class="badge badge-light">{{selected.length}}</span>
+                                </span>
+                            </a>
+                        </ng-container>
                         <a href="#" class="btn btn-secondary btn-sm mr-1 mb-1" routerLink="/dashboard/map">
                             <i class="fas fa-map-marked-alt"></i> View Map
                         </a>
@@ -31,12 +49,22 @@
             </div>
             <div class="card-body">
                 <div class="w-100">
+                    <div *ngIf="bulkMode && allPageSelected && total > entities.length" class="alert alert-warning py-2 mb-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        <strong>{{selected.length}}</strong> of <strong>{{total}}</strong> devices selected (current page only).
+                        Repeat bulk actions for each page to update all results.
+                    </div>
                     <div class="table-responsive">
                         <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable
                             [dtOptions]="dtOptions" style="width:100%;">
                             <thead>
                                 <tr>
-                                    <th></th>
+                                    <th>
+                                        <input *ngIf="bulkMode" type="checkbox"
+                                            [checked]="allPageSelected"
+                                            (change)="toggleSelectAll()"
+                                            title="Select all on this page">
+                                    </th>
                                     <th>Make</th>
                                     <th>Model</th>
                                     <th>Donor</th>
@@ -48,13 +76,19 @@
                                 </tr>
                             </thead>
                             <tbody *ngIf="entities?.length > 0;">
-                                <tr *ngFor="let dt of entities" [class.selected]="selections[dt.id]" (click)="select(dt)">
+                                <tr *ngFor="let dt of entities" [class.selected]="bulkMode && selections[dt.id]" (click)="onRowClick(dt)">
                                     <td>
+                                        <ng-container *ngIf="bulkMode; else idBadge">
+                                            <input type="checkbox" [checked]="selections[dt.id]"
+                                                (click)="$event.stopPropagation(); select(dt)">
+                                        </ng-container>
+                                        <ng-template #idBadge>
                                             <a href="#" [routerLink]="['/dashboard/devices', dt.id]">
                                                 <span class="badge badge-secondary">
                                                     {{dt.id}}
                                                 </span>
                                             </a>
+                                        </ng-template>
                                     </td>
                                     <td>{{ dt.make }}</td>
                                     <td>
@@ -133,6 +167,28 @@
         <button [disabled]="form.invalid" type="button" class="btn btn-primary btn-sm"
             (click)="applyFilter(filterForm.value); c('Close click')">
             Filter
+        </button>
+    </div>
+</ng-template>
+
+<ng-template #bulkUpdateModal let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title">Bulk Update Devices</h4>
+    </div>
+    <div class="modal-body">
+        <p class="mb-3">
+            Updating <strong>{{selected.length}}</strong> selected device(s).
+        </p>
+        <form [formGroup]="bulkUpdateForm">
+            <formly-form [form]="bulkUpdateForm" [model]="bulkUpdateModel" [fields]="bulkUpdateFields">
+            </formly-form>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+        <button [disabled]="bulkUpdateForm.invalid" type="button" class="btn btn-warning btn-sm"
+            (click)="bulkUpdate(bulkUpdateForm.value, c)">
+            UPDATE
         </button>
     </div>
 </ng-template>
