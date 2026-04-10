@@ -250,6 +250,7 @@ export class KitIndexComponent {
 
   }
   @ViewChild(AppGridDirective) grid: AppGridDirective;
+  @ViewChild('bulkUpdateModal') bulkUpdateModalTpl: any;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
   table: any;
@@ -896,6 +897,7 @@ export class KitIndexComponent {
               }
             });
             this.entities = data.content;
+            this.allPageSelected = this.entities.length > 0 && this.entities.every(e => !!this.selections[e.id]);
           }
 
           callback({
@@ -1059,6 +1061,17 @@ export class KitIndexComponent {
     }
   }
 
+  onBulkLabelClick() {
+    if (!this.bulkMode) return;
+    if (this.selected.length > 0) {
+      this.bulkUpdateModel = {};
+      this.bulkUpdateForm.reset();
+      this.modalService.open(this.bulkUpdateModalTpl, { centered: true, size: 'lg' });
+    } else {
+      this.toggleBulkMode();
+    }
+  }
+
   toggleBulkMode() {
     this.bulkMode = !this.bulkMode;
     if (!this.bulkMode) {
@@ -1076,6 +1089,15 @@ export class KitIndexComponent {
       this.entities.forEach(e => { this.selections[e.id] = e; });
       this.selected = [...this.entities];
       this.allPageSelected = true;
+      if (this.total > this.entities.length) {
+        this.toastr.warning(
+          `<small>Only the <strong>${this.entities.length}</strong> devices on this page are selected.
+          The full result set contains <strong>${this.total}</strong> devices.
+          Navigate to each page and repeat to include all results.</small>`,
+          'Partial Selection',
+          { enableHtml: true, timeOut: 8000 }
+        );
+      }
     }
   }
 
