@@ -98,7 +98,7 @@ mutation createKits($data: CreateKitInput!) {
 `;
 
 const BULK_UPDATE_KITS = gql`
-mutation updateKits($ids: [Long!]!, $status: String) {
+mutation updateKits($ids: [ID!]!, $status: KitStatus) {
   updateKits(data: { ids: $ids, status: $status }) {
     id
     status
