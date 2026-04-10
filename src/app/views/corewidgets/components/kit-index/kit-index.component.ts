@@ -1063,13 +1063,15 @@ export class KitIndexComponent {
 
   onBulkLabelClick() {
     if (!this.bulkMode) return;
-    if (this.selected.length > 0) {
-      this.bulkUpdateModel = {};
-      this.bulkUpdateForm.reset();
-      this.modalService.open(this.bulkUpdateModalTpl, { centered: true, size: 'lg' });
-    } else {
-      this.toggleBulkMode();
-    }
+    this.toggleBulkMode();
+  }
+
+  onBulkButtonClick(event: MouseEvent) {
+    if (this.selected.length === 0) return; // bubble to label → toggles off
+    event.stopPropagation();
+    this.bulkUpdateModel = {};
+    this.bulkUpdateForm.reset();
+    this.modalService.open(this.bulkUpdateModalTpl, { centered: true, size: 'lg' });
   }
 
   toggleBulkMode() {

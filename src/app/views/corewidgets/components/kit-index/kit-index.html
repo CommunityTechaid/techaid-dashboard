@@ -20,7 +20,8 @@
                                     (click)="onBulkLabelClick()">
                                     <ng-container *ngIf="!bulkMode">Bulk Update</ng-container>
                                     <span *ngIf="bulkMode" class="btn btn-warning btn-icon-split btn-sm"
-                                        [class.disabled]="selected.length === 0">
+                                        [class.disabled]="selected.length === 0"
+                                        (click)="onBulkButtonClick($event)">
                                         <span class="icon text-white-50"><i class="fas fa-edit"></i></span>
                                         <span class="text">Bulk Update
                                             <span *ngIf="selected.length > 0" class="badge badge-light">{{selected.length}}</span>
