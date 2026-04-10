@@ -98,8 +98,8 @@ mutation createKits($data: CreateKitInput!) {
 `;
 
 const BULK_UPDATE_KITS = gql`
-mutation updateKits($data: UpdateKitsInput!) {
-  updateKits(data: $data) {
+mutation updateKits($ids: [Long!]!, $status: String) {
+  updateKits(data: { ids: $ids, status: $status }) {
     id
     status
   }
@@ -1109,7 +1109,7 @@ export class KitIndexComponent {
     }
     this.apollo.mutate({
       mutation: BULK_UPDATE_KITS,
-      variables: { data: { ids, status: data.status } }
+      variables: { ids, status: data.status }
     }).subscribe(() => {
       this.toastr.info(`<small>Successfully updated ${ids.length} device(s)</small>`, 'Bulk Update', { enableHtml: true });
       this.clearSelection();
