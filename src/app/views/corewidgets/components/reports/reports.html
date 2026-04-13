@@ -1,7 +1,8 @@
 <div class="">
-    <ngb-tabset type="pills">
-        <ngb-tab *ngFor="let d of dashboards" [title]="d.header">
-            <ng-template ngbTabContent>
+    <ul ngbNav #nav="ngbNav" class="nav-pills">
+        <li ngbNavItem *ngFor="let d of dashboards">
+        <a ngbNavLink>{{d.header}}</a>
+            <ng-template ngbNavContent>
                 <iframe *ngIf="d.payload" class="mt-1"
                     onload="iFrameResize({checkOrigin: false}, this)"
                     [src]="d.payload.url"
@@ -10,6 +11,7 @@
                     allowtransparency
                 ></iframe>
             </ng-template>
-        </ngb-tab>
-    </ngb-tabset>
+        </li>
+    </ul>
+<div [ngbNavOutlet]="nav"></div>
 </div>

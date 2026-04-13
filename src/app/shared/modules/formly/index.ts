@@ -5,7 +5,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { FormlyModule, ConfigOption } from '@ngx-formly/core';
-import { FormlyBootstrapModule, FormlyFieldInput } from '@ngx-formly/bootstrap';
+import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { AppFormlyWrapperFormField } from './wrapper/form-field.wrapper';
 import { ChoiceInput } from './components/choice.component';
@@ -14,7 +14,6 @@ import { DateInput } from './components/date.component';
 import { DateTimeInput, DateTimeInputWidget } from './components/datetime.component';
 import { MaskedInput } from './components/input-mask.component';
 import { AppSharedModule } from '@app/shared';
-import { GooglePlaceModule } from 'ngx-google-places-autocomplete';
 import { GalleryInput } from './components/gallery.component';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { RichTextComponent } from './components/richtext.component';
@@ -252,7 +251,6 @@ export const FORMLYCONFIG: ConfigOption = {
         FormlyModule.forChild(FORMLYCONFIG),
         FormlyBootstrapModule,
         AppSharedModule,
-        GooglePlaceModule,
         NgbModule,
         CKEditorModule,
     ],

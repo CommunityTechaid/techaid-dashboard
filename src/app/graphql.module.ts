@@ -1,35 +1,29 @@
 import { NgModule } from '@angular/core';
 import { ApolloModule, APOLLO_OPTIONS } from 'apollo-angular';
-import { HttpLinkModule, HttpLink } from 'apollo-angular-link-http';
-import { ApolloLink, Observable } from 'apollo-link';
-import { InMemoryCache } from 'apollo-cache-inmemory';
+import { HttpLink } from 'apollo-angular/http';
+import { ApolloClientOptions, ApolloLink, InMemoryCache } from '@apollo/client/core';
+import { setContext } from '@apollo/client/link/context';
+import { onError } from '@apollo/client/link/error';
 import { ConfigService } from '@app/shared/services/config.service';
-import { onError } from 'apollo-link-error';
 import { AuthenticationService } from './shared/services/authentication.service';
-import { mergeMap, catchError, map, flatMap, switchMap, tap } from 'rxjs/operators';
-import { throwError } from 'rxjs';
-import { setContext } from 'apollo-link-context';
 
 
-export function createApollo(httpLink: HttpLink, config: ConfigService, authService: AuthenticationService) {
+export function createApollo(httpLink: HttpLink, config: ConfigService, authService: AuthenticationService): ApolloClientOptions<any> {
   const http = httpLink.create({
     uri: config.environment.graphql_endpoint
   });
 
-
-  const asyncAuthLink = setContext((request, previous) =>  new Promise((success, fail) => {
-      authService.getTokenSilently$({audience: config.environment.auth_audience}).subscribe(
+  const asyncAuthLink = setContext((request, previous) => new Promise((success) => {
+    authService.getTokenSilently$({ audience: config.environment.auth_audience }).subscribe(
       token => {
-        success({headers: {  'Authorization': `Bearer ${token}`}});
+        success({ headers: { 'Authorization': `Bearer ${token}` } });
       },
-      err => success({})
+      () => success({})
     );
   }));
 
-  const errorHandler = onError(({ graphQLErrors, networkError, operation, forward }) => {
-    if (networkError) {
-
-    }
+  const errorHandler = onError(({ graphQLErrors, networkError }) => {
+    // network errors are handled silently — lists will be empty without the API
   });
 
   return {
@@ -39,7 +33,7 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
 }
 
 @NgModule({
-  exports: [ApolloModule, HttpLinkModule],
+  exports: [ApolloModule],
   providers: [
     {
       provide: APOLLO_OPTIONS,

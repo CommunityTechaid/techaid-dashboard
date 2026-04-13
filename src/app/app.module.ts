@@ -12,7 +12,7 @@ import { App404 } from '@app/shared/components/app-404/app-404.component';
 import { AppAuthModule } from './shared/modules/auth';
 import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app.routing.module';
-import { NgProgressModule } from '@ngx-progressbar/core';
+import { NgProgressModule } from 'ngx-progressbar';
 import { AppNgProgressHttpModule } from '@app/shared/utils/app-ngx-progress-http';
 import { ToastrModule } from 'ngx-toastr';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';

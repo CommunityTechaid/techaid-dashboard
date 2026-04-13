@@ -12,9 +12,10 @@
           </ol>
       </nav>
 
-      <ngb-tabset [destroyOnHide]="false">
-          <ngb-tab title="Details">
-              <ng-template ngbTabContent>
+      <ul ngbNav #nav="ngbNav" [destroyOnHide]="false" class="nav-tabs">
+          <li ngbNavItem>
+        <a ngbNavLink>Details</a>
+              <ng-template ngbNavContent>
                   <div class="card shadow mb-4 mt-1">
                       <div class="card-header py-3">
                           <div class="d-flex justify-content-between">
@@ -54,22 +55,25 @@
                       </div>
                   </div>
               </ng-template>
-          </ngb-tab>
-          <ngb-tab title="Individual Donors">
-            <ng-template ngbTabContent>
+          </li>
+          <li ngbNavItem>
+        <a ngbNavLink>Individual Donors</a>
+            <ng-template ngbNavContent>
                 <div class="mt-2">
                     <donor-component *ngIf="model?.id" [where]="{donorParent: {id: {_eq: model.id}}}" [tableId]="'donor-parent-info-donors-' + model.id" [donorParentId]="model.id"></donor-component>
                 </div>
             </ng-template>
-        </ngb-tab>
-          <ngb-tab title="Devices">
-            <ng-template ngbTabContent>
+        </li>
+          <li ngbNavItem>
+        <a ngbNavLink>Devices</a>
+            <ng-template ngbNavContent>
                 <div class="mt-2">
                     <kit-component *ngIf="model?.id" [where]="{donor: {donorParent: {id: {_eq: model.id}}}}" [tableId]="'donor-parent-info-devices-' + model.id" [donorParentId]="model.id"></kit-component>
                 </div>
             </ng-template>
-        </ngb-tab>
-      </ngb-tabset>
+        </li>
+      </ul>
+<div [ngbNavOutlet]="nav"></div>
   </div>
 </div>
 

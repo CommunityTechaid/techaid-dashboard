@@ -12,15 +12,17 @@
             </ol>
         </nav>
 
-        <ngb-tabset [destroyOnHide]="false">
+        <ul ngbNav #nav="ngbNav" [destroyOnHide]="false" class="nav-tabs">
 
-<!--             <ngb-tab title="Emails" *ngIf="user?.authorities['read:emails'] && model?.email?.length > 0">
-                <ng-template ngbTabContent>
+<!--             <li ngbNavItem *ngIf="user?.authorities['read:emails'] && model?.email?.length > 0">
+        <a ngbNavLink>Emails</a>
+                <ng-template ngbNavContent>
                     <email-threads [email]="model.email"></email-threads>
                 </ng-template>
-            </ngb-tab> -->
-            <ngb-tab title="Details">
-                <ng-template ngbTabContent>
+            </li> -->
+            <li ngbNavItem>
+        <a ngbNavLink>Details</a>
+                <ng-template ngbNavContent>
                     <div class="card shadow mb-4 mt-1">
                         <div class="card-header py-3">
                             <div class="d-flex justify-content-between">
@@ -61,15 +63,17 @@
                         </div>
                     </div>
                 </ng-template>
-            </ngb-tab>
-            <ngb-tab title="Devices">
-              <ng-template ngbTabContent>
+            </li>
+            <li ngbNavItem>
+        <a ngbNavLink>Devices</a>
+              <ng-template ngbNavContent>
                   <div class="mt-2">
                       <kit-component *ngIf="model?.id" [where]="{donor: {id: {_eq: model.id}}}" [tableId]="'donor-info-' + model.id"></kit-component>
                   </div>
               </ng-template>
-          </ngb-tab>
-        </ngb-tabset>
+          </li>
+        </ul>
+<div [ngbNavOutlet]="nav"></div>
     </div>
 </div>
 
