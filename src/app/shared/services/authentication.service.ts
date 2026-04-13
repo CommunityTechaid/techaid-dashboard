@@ -17,7 +17,8 @@ export class AuthenticationService {
       domain: 'techaid-auth.eu.auth0.com',
       client_id: 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX',
       audience: 'https://api.communitytechaid.org.uk',
-      redirect_uri: `${window.location.origin}`
+      redirect_uri: `${window.location.origin}`,
+      cacheLocation: 'localstorage'
     })
   ) as Observable<Auth0Client>).pipe(
     shareReplay(1), // Every subscription receives the same shared value
