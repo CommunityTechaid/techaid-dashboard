@@ -134,29 +134,29 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "angular-template:build",
-            "proxyConfig": "src/proxy.conf.json"
+            "proxyConfig": "src/proxy.conf.json",
+            "buildTarget": "angular-template:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "angular-template:build:production"
+              "buildTarget": "angular-template:build:production"
             },
             "local": {
-              "browserTarget": "angular-template:build:local"
+              "buildTarget": "angular-template:build:local"
             },
             "uat": {
-              "browserTarget": "angular-template:build:uat"
+              "buildTarget": "angular-template:build:uat"
             },
             "dev": {
-              "browserTarget": "angular-template:build:dev",
-              "proxyConfig": "src/proxy.conf.json"
+              "proxyConfig": "src/proxy.conf.json",
+              "buildTarget": "angular-template:build:dev"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "angular-template:build"
+            "buildTarget": "angular-template:build"
           }
         }
       }
