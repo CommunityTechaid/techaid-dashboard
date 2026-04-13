@@ -1,6 +1,6 @@
 import { Component, Injectable,  Input, forwardRef, ViewChild } from '@angular/core';
 import { NgbDateAdapter, NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl  } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl  } from '@angular/forms';
 import { FieldType } from '@ngx-formly/core';
 import * as moment from 'moment';
 export interface NgbDateTimeStruct extends NgbDateStruct, NgbTimeStruct {}
@@ -85,8 +85,8 @@ export class DateTimeInput extends FieldType {
 })
 export class DateTimeInputWidget implements ControlValueAccessor {
   @ViewChild('dp') dp;
-  date = new FormControl();
-  time = new FormControl();
+  date = new UntypedFormControl();
+  time = new UntypedFormControl();
   model: any;
   minDate: NgbDateStruct;
   maxDate: NgbDateStruct;

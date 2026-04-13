@@ -14,7 +14,7 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { AbstractControl, FormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select } from '@ngxs/store';
@@ -121,7 +121,7 @@ const QUERY_ADMIN_CONFIG = gql`
 
 export class OrgRequestComponent implements AfterViewChecked {
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   submitting = false;
   content: any = {};
