@@ -13,13 +13,13 @@ import { AppAuthModule } from './shared/modules/auth';
 import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app.routing.module';
 import { NgProgressModule } from '@ngx-progressbar/core';
-import { AppNgProgressHttpModule } from '@app/shared/utils/app-ngx-progress-http.ts';
+import { AppNgProgressHttpModule } from '@app/shared/utils/app-ngx-progress-http';
 import { ToastrModule } from 'ngx-toastr';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ConfigService } from '@app/shared/services/config.service';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { AppStateModule } from '@app/state/state.module';
-import { FormsModule, AbstractControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { GraphQLModule } from './graphql.module';
 import { FormlyCustomNote } from './views/corewidgets/components/kit-info/custom-notes';
 import { FormlyCustomCreateNote } from './views/corewidgets/components/kit-info/custom-create-note';
@@ -44,6 +44,7 @@ import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/compone
   ],
   imports: [
     FormsModule,
+    ReactiveFormsModule,
     BrowserAnimationsModule,
     AppSharedModule.forRoot(),
     FormlyModule.forRoot({

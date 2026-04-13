@@ -4,7 +4,9 @@
       "Bash(npm run build:*)",
       "Bash(npx ng build:*)",
       "Bash(test:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm --version)",
+      "Bash(npx ng:*)"
     ],
     "deny": [],
     "ask": []
