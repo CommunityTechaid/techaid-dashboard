@@ -254,9 +254,10 @@ query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
 `;
 
 @Component({
-  selector: 'kit-info',
-  styleUrls: ['kit-info.scss'],
-  templateUrl: './kit-info.html'
+    selector: 'kit-info',
+    styleUrls: ['kit-info.scss'],
+    templateUrl: './kit-info.html',
+    standalone: false
 })
 export class KitInfoComponent {
 

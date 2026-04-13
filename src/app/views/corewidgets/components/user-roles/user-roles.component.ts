@@ -60,10 +60,10 @@ query findAutocompleteRoles($term: String, $term: String) {
 `;
 
 @Component({
-  selector: 'user-roles',
-  styleUrls: ['user-roles.scss'],
-
-  templateUrl: './user-roles.html'
+    selector: 'user-roles',
+    styleUrls: ['user-roles.scss'],
+    templateUrl: './user-roles.html',
+    standalone: false
 })
 export class UserRolesComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

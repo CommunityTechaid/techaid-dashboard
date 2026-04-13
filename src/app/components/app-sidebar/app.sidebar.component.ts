@@ -13,7 +13,8 @@ import { Observable, Subscription } from 'rxjs';
           width: 75px;
           padding-top: 5px;
         }
-    `]
+    `],
+    standalone: false
 })
 
 export class AppSidebar {

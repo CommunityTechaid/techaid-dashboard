@@ -32,10 +32,10 @@ query findAllUsers($page: PaginationInput!, $term: String) {
 `;
 
 @Component({
-  selector: 'user-index',
-  styleUrls: ['user-index.scss'],
-
-  templateUrl: './user-index.html'
+    selector: 'user-index',
+    styleUrls: ['user-index.scss'],
+    templateUrl: './user-index.html',
+    standalone: false
 })
 export class UserIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

@@ -76,9 +76,10 @@ mutation createDonor($data: CreateDonorInput!) {
 `;
 
 @Component({
-  selector: 'donor-component',
-  styleUrls: ['donor-component.scss'],
-  templateUrl: './donor-component.html'
+    selector: 'donor-component',
+    styleUrls: ['donor-component.scss'],
+    templateUrl: './donor-component.html',
+    standalone: false
 })
 export class DonorComponent {
   constructor(

@@ -68,9 +68,10 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
 `;
 
 @Component({
-  selector: 'distributions-and-deliveries-index',
-  templateUrl: './distributions-and-deliveries-index.component.html',
-  styleUrls: ['./distributions-and-deliveries-index.component.scss']
+    selector: 'distributions-and-deliveries-index',
+    templateUrl: './distributions-and-deliveries-index.component.html',
+    styleUrls: ['./distributions-and-deliveries-index.component.scss'],
+    standalone: false
 })
 export class DistributionsAndDeliveriesIndexComponent {
 

@@ -67,9 +67,10 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
 `;
 
 @Component({
-  selector: 'app-device-request-index',
-  templateUrl: './device-request-index.component.html',
-  styleUrls: ['./device-request-index.component.scss']
+    selector: 'app-device-request-index',
+    templateUrl: './device-request-index.component.html',
+    styleUrls: ['./device-request-index.component.scss'],
+    standalone: false
 })
 export class DeviceRequestIndexComponent {
 

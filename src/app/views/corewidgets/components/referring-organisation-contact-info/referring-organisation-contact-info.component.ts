@@ -73,9 +73,10 @@ query findAutocompleteReferringOrganisations($term: String) {
 `;
 
 @Component({
-  selector: 'app-referring-organisation-contact-info',
-  templateUrl: './referring-organisation-contact-info.component.html',
-  styleUrls: ['./referring-organisation-contact-info.component.scss']
+    selector: 'app-referring-organisation-contact-info',
+    templateUrl: './referring-organisation-contact-info.component.html',
+    styleUrls: ['./referring-organisation-contact-info.component.scss'],
+    standalone: false
 })
 export class ReferringOrganisationContactInfoComponent {
 

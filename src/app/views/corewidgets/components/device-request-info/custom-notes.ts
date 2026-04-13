@@ -32,6 +32,7 @@ mutation deleteDeviceRequestNote($id: ID!) {
     </div>
 </div>
  `,
+    standalone: false
 })
 export class FormlyCustomDeviceRequestNote extends FieldType {
 

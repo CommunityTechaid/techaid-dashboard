@@ -146,9 +146,10 @@ const FIND_USERS = gql`
 `;
 
 @Component({
-  selector: 'kit-component',
-  styleUrls: ['kit-component.scss'],
-  templateUrl: './kit-component.html',
+    selector: 'kit-component',
+    styleUrls: ['kit-component.scss'],
+    templateUrl: './kit-component.html',
+    standalone: false
 })
 export class KitComponent {
 

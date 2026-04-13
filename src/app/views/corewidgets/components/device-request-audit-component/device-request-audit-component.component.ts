@@ -60,9 +60,10 @@ const QUERY_ENTITY = gql`
 `;
 
 @Component({
-  selector: 'device-request-audit-component',
-  styleUrls: ['device-request-audit-component.scss'],
-  templateUrl: './device-request-audit-component.html',
+    selector: 'device-request-audit-component',
+    styleUrls: ['device-request-audit-component.scss'],
+    templateUrl: './device-request-audit-component.html',
+    standalone: false
 })
 export class DeviceRequestAuditComponent {
 

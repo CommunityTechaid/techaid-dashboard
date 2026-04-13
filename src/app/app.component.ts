@@ -12,9 +12,10 @@ import { ConfigService } from '@app/shared/services/config.service';
 import { NgZone } from '@angular/core';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css'],
+    standalone: false
 })
 export class AppComponent {
   private actionSub: Subscription;

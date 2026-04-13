@@ -117,10 +117,10 @@ query findAutocompletePermissions($appId: String!, $userId: Int) {
 `;
 
 @Component({
-  selector: 'user-permissions',
-  styleUrls: ['user-permissions.scss'],
-
-  templateUrl: './user-permissions.html'
+    selector: 'user-permissions',
+    styleUrls: ['user-permissions.scss'],
+    templateUrl: './user-permissions.html',
+    standalone: false
 })
 export class UserPermissionsComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

@@ -45,9 +45,10 @@ const UPDATE_CONFIG = gql`
 `;
 
 @Component({
-  selector: 'admin-panel',
-  styleUrls: ['admin-panel.component.scss'],
-  templateUrl: './admin-panel.component.html'
+    selector: 'admin-panel',
+    styleUrls: ['admin-panel.component.scss'],
+    templateUrl: './admin-panel.component.html',
+    standalone: false
 })
 export class AdminPanelComponent {
 

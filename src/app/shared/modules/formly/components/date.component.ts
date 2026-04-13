@@ -113,11 +113,11 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
 }
 
 @Component({
-  selector: 'form-date',
-  providers: [
-    { provide: NgbDateAdapter, useFactory: getDateAdapter, deps: [DateInput] }
-  ],
-  template: `
+    selector: 'form-date',
+    providers: [
+        { provide: NgbDateAdapter, useFactory: getDateAdapter, deps: [DateInput] }
+    ],
+    template: `
 <div>
   <div class="input-group"  *ngIf="to.inline; else nonInline">
     <input (click)="to.openOnClick && dp.open()" class="form-control"
@@ -158,7 +158,8 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
     </div>
   </ng-template>
 </div>
-  `
+  `,
+    standalone: false
 })
 export class DateInput extends FieldType implements OnInit {
   @ViewChild('dp') dp;

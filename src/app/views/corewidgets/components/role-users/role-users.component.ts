@@ -65,10 +65,10 @@ query typeaheadFindAllUsers($page: PaginationInput!, $term: String) {
 `;
 
 @Component({
-  selector: 'role-users',
-  styleUrls: ['role-users.scss'],
-
-  templateUrl: './role-users.html'
+    selector: 'role-users',
+    styleUrls: ['role-users.scss'],
+    templateUrl: './role-users.html',
+    standalone: false
 })
 export class RoleUsersComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

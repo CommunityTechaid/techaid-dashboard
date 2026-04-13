@@ -31,9 +31,10 @@ kits(where: $kitFilter){
 `;
 
 @Component({
-  selector: 'map-view',
-  styleUrls: ['map-view.scss'],
-  templateUrl: './map-view.html'
+    selector: 'map-view',
+    styleUrls: ['map-view.scss'],
+    templateUrl: './map-view.html',
+    standalone: false
 })
 export class MapViewComponent {
   constructor(

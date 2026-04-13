@@ -179,9 +179,10 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
 `;
 
 @Component({
-  selector: 'app-device-request-info',
-  templateUrl: './device-request-info.component.html',
-  styleUrls: ['./device-request-info.component.scss']
+    selector: 'app-device-request-info',
+    templateUrl: './device-request-info.component.html',
+    styleUrls: ['./device-request-info.component.scss'],
+    standalone: false
 })
 export class DeviceRequestInfoComponent {
   @ViewChild('kitWarning') kitWarningModal: any;

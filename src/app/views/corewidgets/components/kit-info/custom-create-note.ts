@@ -24,6 +24,7 @@ mutation createNote($data: CreateNoteInput!) {
     <textarea class="form-control" #newNoteContent rows="4" [name]=key [formControl]="formControl" [placeholder]=to.placeholder (keyup.enter)="$event.stopPropagation()"></textarea>
   </div>
  `,
+    standalone: false
 })
 export class FormlyCustomCreateNote extends FieldType  {
 

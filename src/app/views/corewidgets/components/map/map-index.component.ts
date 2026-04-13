@@ -6,9 +6,10 @@ function _window(): any {
 }
 
 @Component({
-  selector: 'map-index',
-  styleUrls: ['map-index.scss'],
-  templateUrl: './map-index.html'
+    selector: 'map-index',
+    styleUrls: ['map-index.scss'],
+    templateUrl: './map-index.html',
+    standalone: false
 })
 export class MapComponent {
   lat = 51.678418;

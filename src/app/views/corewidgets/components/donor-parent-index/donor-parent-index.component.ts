@@ -66,9 +66,10 @@ mutation createDonorParent($data: CreateDonorParentInput!) {
 `;
 
 @Component({
-  selector: 'donor-parent-index',
-  styleUrls: ['donor-parent-index.scss'],
-  templateUrl: './donor-parent-index.html'
+    selector: 'donor-parent-index',
+    styleUrls: ['donor-parent-index.scss'],
+    templateUrl: './donor-parent-index.html',
+    standalone: false
 })
 export class DonorParentIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

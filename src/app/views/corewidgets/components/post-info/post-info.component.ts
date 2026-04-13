@@ -50,10 +50,10 @@ mutation deletePost($id: ID!) {
 `;
 
 @Component({
-  selector: 'post-info',
-  styleUrls: ['post-info.scss'],
-
-  templateUrl: './post-info.html'
+    selector: 'post-info',
+    styleUrls: ['post-info.scss'],
+    templateUrl: './post-info.html',
+    standalone: false
 })
 export class PostInfoComponent {
 

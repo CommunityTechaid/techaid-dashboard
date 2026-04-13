@@ -32,7 +32,8 @@ import { FieldArrayType } from '@ngx-formly/core';
       </div>
       <hr />
     `,
-  })
+    standalone: false
+})
   export class RepeatTypeComponent extends FieldArrayType {
 
 

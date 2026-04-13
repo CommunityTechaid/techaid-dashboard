@@ -17,7 +17,8 @@ import * as $ from 'jquery';
         .nav-border {
             border-bottom: 1px solid #f8f9fa;
         }
-    `]
+    `],
+    standalone: false
 })
 export class AppHeader {
     private sub: Subscription;

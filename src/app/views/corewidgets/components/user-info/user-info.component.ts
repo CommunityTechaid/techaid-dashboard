@@ -23,10 +23,10 @@ query findUser($id: String!) {
 
 
 @Component({
-  selector: 'user-info',
-  styleUrls: ['user-info.scss'],
-
-  templateUrl: './user-info.html'
+    selector: 'user-info',
+    styleUrls: ['user-info.scss'],
+    templateUrl: './user-info.html',
+    standalone: false
 })
 export class UserInfoComponent {
 

@@ -37,10 +37,10 @@ query findPost($slug: String) {
 
 
 @Component({
-  selector: 'post-data',
-  styleUrls: ['post-data.scss'],
-
-  templateUrl: './post-data.html'
+    selector: 'post-data',
+    styleUrls: ['post-data.scss'],
+    templateUrl: './post-data.html',
+    standalone: false
 })
 export class PostDataComponent {
   sub: Subscription;

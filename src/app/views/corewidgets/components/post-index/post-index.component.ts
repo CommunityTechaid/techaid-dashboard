@@ -65,10 +65,10 @@ mutation createPost($data: CreatePostInput!) {
 `;
 
 @Component({
-  selector: 'post-index',
-  styleUrls: ['post-index.scss'],
-
-  templateUrl: './post-index.html'
+    selector: 'post-index',
+    styleUrls: ['post-index.scss'],
+    templateUrl: './post-index.html',
+    standalone: false
 })
 export class PostIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

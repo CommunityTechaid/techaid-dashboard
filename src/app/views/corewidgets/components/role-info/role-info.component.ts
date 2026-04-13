@@ -23,10 +23,10 @@ query findRole($id: String!) {
 `;
 
 @Component({
-  selector: 'role-info',
-  styleUrls: ['role-info.scss'],
-
-  templateUrl: './role-info.html'
+    selector: 'role-info',
+    styleUrls: ['role-info.scss'],
+    templateUrl: './role-info.html',
+    standalone: false
 })
 export class RoleInfoComponent {
 

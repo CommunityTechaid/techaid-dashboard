@@ -3,8 +3,8 @@ import { FieldType } from '@ngx-formly/core';
 import { NgSelectComponent } from '@ng-select/ng-select';
 
 @Component({
-  selector: 'form-choice',
-  template: `
+    selector: 'form-choice',
+    template: `
     <ng-select
         [formControl]="formControl"
         [class.is-invalid]="showError"
@@ -17,7 +17,8 @@ import { NgSelectComponent } from '@ng-select/ng-select';
         [typeahead]="to.typeahead"
         placeholder="{{this.to.placeholder}}">
     </ng-select>
-  `
+  `,
+    standalone: false
 })
 export class ChoiceInput extends FieldType {
   @ViewChild(NgSelectComponent)

@@ -64,9 +64,10 @@ mutation deleteDonorParent($id: ID!) {
 `;
 
 @Component({
-  selector: 'donor-parent-info',
-  styleUrls: ['donor-parent-info.scss'],
-  templateUrl: './donor-parent-info.html'
+    selector: 'donor-parent-info',
+    styleUrls: ['donor-parent-info.scss'],
+    templateUrl: './donor-parent-info.html',
+    standalone: false
 })
 export class DonorParentInfoComponent {
 

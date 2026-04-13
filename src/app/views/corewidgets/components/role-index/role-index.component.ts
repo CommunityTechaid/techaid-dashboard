@@ -27,10 +27,10 @@ query findAllRoles($page: PaginationInput!, $term: String) {
 `;
 
 @Component({
-  selector: 'role-index',
-  styleUrls: ['role-index.scss'],
-
-  templateUrl: './role-index.html'
+    selector: 'role-index',
+    styleUrls: ['role-index.scss'],
+    templateUrl: './role-index.html',
+    standalone: false
 })
 export class RoleIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

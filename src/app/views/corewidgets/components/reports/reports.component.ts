@@ -20,8 +20,9 @@ const DASHBOARDS = [
 @Component({
     selector: 'app-reports',
     templateUrl: './reports.html',
-    styles: []
-  })
+    styles: [],
+    standalone: false
+})
   export class ReportsComponent {
       dashboards = [];
 

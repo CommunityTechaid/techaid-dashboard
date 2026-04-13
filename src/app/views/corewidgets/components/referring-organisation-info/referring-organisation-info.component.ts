@@ -44,9 +44,10 @@ const DELETE_ENTITY = gql`
 `;
 
 @Component({
-  selector: 'app-referring-organisation-info',
-  templateUrl: './referring-organisation-info.component.html',
-  styleUrls: ['./referring-organisation-info.component.scss']
+    selector: 'app-referring-organisation-info',
+    templateUrl: './referring-organisation-info.component.html',
+    styleUrls: ['./referring-organisation-info.component.scss'],
+    standalone: false
 })
 export class ReferringOrganisationInfoComponent {
 

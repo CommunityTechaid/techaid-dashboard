@@ -89,9 +89,10 @@ query findAutocompleteDonorParents($term: String) {
 
 
 @Component({
-  selector: 'donor-index',
-  styleUrls: ['donor-index.scss'],
-  templateUrl: './donor-index.html'
+    selector: 'donor-index',
+    styleUrls: ['donor-index.scss'],
+    templateUrl: './donor-index.html',
+    standalone: false
 })
 export class DonorIndexComponent {
 

@@ -45,6 +45,7 @@ mutation deleteNote($id: ID!) {
     </div>
 </div>
  `,
+    standalone: false
 })
 export class FormlyCustomNote extends FieldType {
 

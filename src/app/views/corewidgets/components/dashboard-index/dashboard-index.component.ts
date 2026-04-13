@@ -47,10 +47,10 @@ query findAll {
 
 
 @Component({
-  selector: 'dashboard-index',
-  styleUrls: ['dashboard-index.scss'],
-
-  templateUrl: './dashboard-index.html'
+    selector: 'dashboard-index',
+    styleUrls: ['dashboard-index.scss'],
+    templateUrl: './dashboard-index.html',
+    standalone: false
 })
 export class DashboardIndexComponent {
   sub: Subscription;

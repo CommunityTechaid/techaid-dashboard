@@ -227,9 +227,10 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
 `;
 
 @Component({
-  selector: 'kit-index',
-  styleUrls: ['kit-index.scss'],
-  templateUrl: './kit-index.html'
+    selector: 'kit-index',
+    styleUrls: ['kit-index.scss'],
+    templateUrl: './kit-index.html',
+    standalone: false
 })
 export class KitIndexComponent {
 

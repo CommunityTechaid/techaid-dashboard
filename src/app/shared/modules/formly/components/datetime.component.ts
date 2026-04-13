@@ -6,27 +6,28 @@ import * as moment from 'moment';
 export interface NgbDateTimeStruct extends NgbDateStruct, NgbTimeStruct {}
 
 @Component({
-  selector: 'form-datetime',
-  template: `
+    selector: 'form-datetime',
+    template: `
   <div [class.is-invalid]="showError">
     <form-datetime-widget [to]="to" [formlyAttributes]="field" [formControl]="formControl"></form-datetime-widget>
   </div>
-  `
+  `,
+    standalone: false
 })
 export class DateTimeInput extends FieldType {
 
 }
 
 @Component({
-  selector: 'form-datetime-widget',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DateTimeInputWidget),
-      multi: true
-    }
-  ],
-  template: `
+    selector: 'form-datetime-widget',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DateTimeInputWidget),
+            multi: true
+        }
+    ],
+    template: `
 <div>
     <div class="input-group" *ngIf="to.inline; else nonInline">
       <input class="form-control"
@@ -81,7 +82,8 @@ export class DateTimeInput extends FieldType {
       </ngb-timepicker>
     </div>
 </div>
-  `
+  `,
+    standalone: false
 })
 export class DateTimeInputWidget implements ControlValueAccessor {
   @ViewChild('dp') dp;

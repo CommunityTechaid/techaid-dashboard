@@ -114,9 +114,10 @@ const QUERY_ADMIN_CONFIG = gql`
 `;
 
 @Component({
-  selector: 'org-request',
-  styleUrls: ['./org-request.scss'],
-  templateUrl: './org-request.html'
+    selector: 'org-request',
+    styleUrls: ['./org-request.scss'],
+    templateUrl: './org-request.html',
+    standalone: false
 })
 
 export class OrgRequestComponent implements AfterViewChecked {

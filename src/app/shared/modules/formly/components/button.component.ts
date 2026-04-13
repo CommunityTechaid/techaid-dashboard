@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 
 @Component({
-  selector: 'formly-field-button',
-  template: `
+    selector: 'formly-field-button',
+    template: `
     <div>
       <button 
         style="width: 150px" [class]="to.className"
@@ -15,6 +15,7 @@ import { FieldType } from '@ngx-formly/core';
       </button>
     </div>
   `,
+    standalone: false
 })
 export class FormlyFieldButton extends FieldType implements OnInit  {
 

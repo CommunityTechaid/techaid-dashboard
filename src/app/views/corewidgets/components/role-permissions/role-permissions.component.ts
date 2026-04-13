@@ -50,10 +50,10 @@ query findAutocompletePermissions($appId: String!, $roleId: Int) {
 `;
 
 @Component({
-  selector: 'role-permissions',
-  styleUrls: ['role-permissions.scss'],
-
-  templateUrl: './role-permissions.html'
+    selector: 'role-permissions',
+    styleUrls: ['role-permissions.scss'],
+    templateUrl: './role-permissions.html',
+    standalone: false
 })
 export class RolePermissionsComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

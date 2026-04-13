@@ -39,6 +39,7 @@ export interface MaskOptions {
     host: {
         '(input)': '_handleInput($event.target.value)'
     },
+    standalone: false
 })
 export class InputMaskComponent implements ControlValueAccessor {
     @Input()
@@ -168,7 +169,7 @@ export class InputMaskComponent implements ControlValueAccessor {
             return;
         }
 
-        const safeRawValue = getSafeRawValue(newValue);
+        const safeRawValue = getSafeRawValue(newValue) as string;
         this.config.currentCaretPosition = this.instance.nativeElement.selectionEnd;
         this.config.previousConformedValue = this.state.previousConformedValue;
 

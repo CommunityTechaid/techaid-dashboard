@@ -66,9 +66,10 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
 `;
 
 @Component({
-  selector: 'app-referring-organisation-contact-index',
-  templateUrl: './referring-organisation-contact-index.component.html',
-  styleUrls: ['./referring-organisation-contact-index.component.scss']
+    selector: 'app-referring-organisation-contact-index',
+    templateUrl: './referring-organisation-contact-index.component.html',
+    styleUrls: ['./referring-organisation-contact-index.component.scss'],
+    standalone: false
 })
 export class ReferringOrganisationContactIndexComponent {
 

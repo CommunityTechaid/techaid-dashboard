@@ -84,9 +84,10 @@ query findAllOrgs(
 `;
 
 @Component({
-  selector: 'device-request-component',
-  styleUrls: ['device-request-component.component.scss'],
-  templateUrl: './device-request-component.component.html'
+    selector: 'device-request-component',
+    styleUrls: ['device-request-component.component.scss'],
+    templateUrl: './device-request-component.component.html',
+    standalone: false
 })
 export class DeviceRequestComponent {
 

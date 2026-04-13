@@ -57,9 +57,10 @@ const QUERY_ENTITY = gql`
 `;
 
 @Component({
-  selector: 'kit-audit-component',
-  styleUrls: ['kit-audit-component.scss'],
-  templateUrl: './kit-audit-component.html',
+    selector: 'kit-audit-component',
+    styleUrls: ['kit-audit-component.scss'],
+    templateUrl: './kit-audit-component.html',
+    standalone: false
 })
 export class KitAuditComponent {
 

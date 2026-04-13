@@ -7,7 +7,8 @@ import 'datatables.net-rowreorder';
 import 'datatables.net-responsive';
 
 @Directive({
-  selector: '[datatable]'
+    selector: '[datatable]',
+    standalone: false
 })
 export class AppGridDirective implements OnDestroy, OnInit {
   /**

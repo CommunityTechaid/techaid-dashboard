@@ -3,8 +3,8 @@ import { FieldWrapper } from '@ngx-formly/core';
 
 
 @Component({
-  selector: 'form-formly-wrapper-form-field',
-  template: `
+    selector: 'form-formly-wrapper-form-field',
+    template: `
     <div class="form-group" [class.has-error]="showError">
       <label *ngIf="to.label && to.hideLabel !== true" [attr.for]="id">
         {{ to.label }} <ng-container *ngIf="to.required && to.hideRequiredMarker !== true">*</ng-container>
@@ -25,6 +25,7 @@ import { FieldWrapper } from '@ngx-formly/core';
       <small *ngIf="to.description" class="form-text text-muted">{{ to.description }}</small>
     </div>
   `,
+    standalone: false
 })
 export class AppFormlyWrapperFormField extends FieldWrapper {
   @ViewChild('fieldComponent', { read: ViewContainerRef }) fieldComponent: ViewContainerRef;
