@@ -70,7 +70,7 @@ git commit
 
 ### Current Checkpoint
 
-[UPDATE THIS AS YOU PROGRESS — e.g. "Completed checkpoint 1, on Angular 14"]
+**All checkpoints complete — now on Angular 20.3.18**
 
 ### Known Hard Problems
 

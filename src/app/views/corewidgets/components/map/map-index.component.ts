@@ -1,5 +1,5 @@
-import { Component, ViewChild, Inject, Renderer2, Input } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Component, ViewChild, Inject, Renderer2, Input, DOCUMENT } from '@angular/core';
+
 
 function _window(): any {
   return window;
