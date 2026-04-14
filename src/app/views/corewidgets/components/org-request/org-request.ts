@@ -14,12 +14,14 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { AbstractControl, UntypedFormGroup } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { AbstractControl, UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+import { NgIf } from '@angular/common';
+import { AppLocalCSS } from './app-local-css.component';
 
 declare var window: any;
 
@@ -117,7 +119,7 @@ const QUERY_ADMIN_CONFIG = gql`
     selector: 'org-request',
     styleUrls: ['./org-request.scss'],
     templateUrl: './org-request.html',
-    standalone: false
+    imports: [NgIf, AppLocalCSS, ReactiveFormsModule, FormlyModule]
 })
 
 export class OrgRequestComponent implements AfterViewChecked {

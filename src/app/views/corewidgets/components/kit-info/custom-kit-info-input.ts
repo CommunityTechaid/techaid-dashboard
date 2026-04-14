@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
+import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
+import { NgIf, NgFor } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 
 /*
 This component is a custom made formly type. This is probably not the cleanest way to do things but I could not figure out quite a bit of things needed to make it work 
@@ -53,7 +55,7 @@ Ideally, the input field should be dynamically rendered using custom selector bu
       
     </div>
   `,
-    standalone: false
+    imports: [NgIf, ReactiveFormsModule, FormlyModule, NgFor]
 })
 export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> {
 //

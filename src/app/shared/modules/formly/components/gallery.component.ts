@@ -1,6 +1,7 @@
 import { Component, ViewChild, ElementRef, Output, EventEmitter, OnInit } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { Subscription } from 'rxjs';
+import { NgFor } from '@angular/common';
 
 @Component({
     selector: 'formly-field-file',
@@ -58,7 +59,7 @@ import { Subscription } from 'rxjs';
      </div>
   </div>
   `,
-    standalone: false
+    imports: [NgFor]
 })
 export class GalleryInput extends FieldType implements OnInit {
   @ViewChild('fileInput') fileInput: ElementRef;

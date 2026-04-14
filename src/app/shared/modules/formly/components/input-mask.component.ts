@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
-import { FieldType } from '@ngx-formly/core';
+import { FieldType, FormlyModule } from '@ngx-formly/core';
+import { InputMaskComponent } from '../../../components/input-mask/input-mask.component';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     selector: 'formly-masked-input',
@@ -12,7 +14,7 @@ import { FieldType } from '@ngx-formly/core';
         '[class.d-inline-flex]': 'to.addonLeft || to.addonRight',
         '[class.custom-file]': 'to.addonLeft || to.addonRight',
     },
-    standalone: false
+    imports: [InputMaskComponent, ReactiveFormsModule, FormlyModule]
 })
 export class MaskedInput extends FieldType {
 

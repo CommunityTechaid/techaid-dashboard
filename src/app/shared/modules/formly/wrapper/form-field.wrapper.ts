@@ -1,5 +1,7 @@
 import { Component, ViewChild, ViewContainerRef } from '@angular/core';
-import { FieldWrapper } from '@ngx-formly/core';
+import { FieldWrapper, FormlyModule } from '@ngx-formly/core';
+import { NgIf } from '@angular/common';
+import { NgbTooltip, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 
 @Component({
@@ -25,7 +27,7 @@ import { FieldWrapper } from '@ngx-formly/core';
       <small *ngIf="to.description" class="form-text text-muted">{{ to.description }}</small>
     </div>
   `,
-    standalone: false
+    imports: [NgIf, NgbTooltip, NgbPopover, FormlyModule]
 })
 export class AppFormlyWrapperFormField extends FieldWrapper {
   @ViewChild('fieldComponent', { read: ViewContainerRef }) fieldComponent: ViewContainerRef;

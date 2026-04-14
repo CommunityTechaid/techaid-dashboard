@@ -1,11 +1,13 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { UntypedFormGroup } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { UserRolesComponent } from '../user-roles/user-roles.component';
+import { UserPermissionsComponent } from '../user-permissions/user-permissions.component';
 
 const QUERY_USER = gql`
 query findUser($id: String!) {
@@ -26,7 +28,7 @@ query findUser($id: String!) {
     selector: 'user-info',
     styleUrls: ['user-info.scss'],
     templateUrl: './user-info.html',
-    standalone: false
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, UserRolesComponent, UserPermissionsComponent, NgbNavOutlet]
 })
 export class UserInfoComponent {
 

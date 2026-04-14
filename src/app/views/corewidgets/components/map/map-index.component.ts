@@ -8,8 +8,7 @@ function _window(): any {
 @Component({
     selector: 'map-index',
     styleUrls: ['map-index.scss'],
-    templateUrl: './map-index.html',
-    standalone: false
+    templateUrl: './map-index.html'
 })
 export class MapComponent {
   lat = 51.678418;

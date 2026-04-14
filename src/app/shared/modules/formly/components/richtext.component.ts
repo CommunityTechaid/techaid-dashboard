@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
+import { QuillEditorComponent } from 'ngx-quill';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     selector: 'formly-richtext',
@@ -13,6 +15,6 @@ import { FieldType } from '@ngx-formly/core';
         </quill-editor>
       </div>
       `,
-    standalone: false
+    imports: [QuillEditorComponent, ReactiveFormsModule]
 })
 export class RichTextComponent extends FieldType {}

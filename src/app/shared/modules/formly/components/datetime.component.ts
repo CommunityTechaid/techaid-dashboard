@@ -1,8 +1,9 @@
 import { Component, Injectable,  Input, forwardRef, ViewChild } from '@angular/core';
-import { NgbDateAdapter, NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl  } from '@angular/forms';
-import { FieldType } from '@ngx-formly/core';
+import { NgbDateAdapter, NgbDateStruct, NgbTimeStruct, NgbInputDatepicker, NgbDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ReactiveFormsModule } from '@angular/forms';
+import { FieldType, FormlyModule } from '@ngx-formly/core';
 import { isValid, parse, format as fnsFormat, subYears, formatISO } from 'date-fns';
+import { NgIf, NgStyle } from '@angular/common';
 export interface NgbDateTimeStruct extends NgbDateStruct, NgbTimeStruct {}
 
 @Component({
@@ -12,7 +13,7 @@ export interface NgbDateTimeStruct extends NgbDateStruct, NgbTimeStruct {}
     <form-datetime-widget [to]="to" [formlyAttributes]="field" [formControl]="formControl"></form-datetime-widget>
   </div>
   `,
-    standalone: false
+    imports: [forwardRef(() => DateTimeInputWidget), FormlyModule, ReactiveFormsModule]
 })
 export class DateTimeInput extends FieldType {
 
@@ -83,7 +84,7 @@ export class DateTimeInput extends FieldType {
     </div>
 </div>
   `,
-    standalone: false
+    imports: [NgIf, NgbInputDatepicker, ReactiveFormsModule, NgbDatepicker, NgbTimepicker, NgStyle]
 })
 export class DateTimeInputWidget implements ControlValueAccessor {
   @ViewChild('dp') dp;

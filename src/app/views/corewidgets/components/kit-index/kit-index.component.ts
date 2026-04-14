@@ -5,8 +5,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { UntypedFormGroup } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import 'datatables.net-responsive';
@@ -16,6 +16,9 @@ import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { KIT_TYPES } from '@app/shared/utils';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+import { RouterLink } from '@angular/router';
+import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -230,7 +233,7 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
     selector: 'kit-index',
     styleUrls: ['kit-index.scss'],
     templateUrl: './kit-index.html',
-    standalone: false
+    imports: [RouterLink, NgIf, AppGridDirective_1, NgFor, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class KitIndexComponent {
 

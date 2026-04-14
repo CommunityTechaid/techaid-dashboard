@@ -3,6 +3,7 @@ import { FieldType } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
+import { NgFor, DatePipe } from '@angular/common';
 
 
 const UPDATE_NOTE = gql`
@@ -45,7 +46,7 @@ mutation deleteNote($id: ID!) {
     </div>
 </div>
  `,
-    standalone: false
+    imports: [NgFor, DatePipe]
 })
 export class FormlyCustomNote extends FieldType {
 

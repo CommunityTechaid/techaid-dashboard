@@ -1,8 +1,10 @@
 import { Component, Injectable, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
-import { NgbDateAdapter, NgbDateStruct, NgbDate } from '@ng-bootstrap/ng-bootstrap';
-import { FieldType } from '@ngx-formly/core';
+import { NgbDateAdapter, NgbDateStruct, NgbDate, NgbInputDatepicker, NgbDatepicker } from '@ng-bootstrap/ng-bootstrap';
+import { FieldType, FormlyModule } from '@ngx-formly/core';
 import { isValid, parse, format as fnsFormat, subYears } from 'date-fns';
 import { DateUtils } from '@app/shared/utils/date_utils';
+import { NgIf } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 
 
 class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
@@ -136,7 +138,7 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
   </ng-template>
 </div>
   `,
-    standalone: false
+    imports: [NgIf, NgbInputDatepicker, ReactiveFormsModule, FormlyModule, NgbDatepicker]
 })
 export class DateInput extends FieldType implements OnInit {
   @ViewChild('dp') dp;

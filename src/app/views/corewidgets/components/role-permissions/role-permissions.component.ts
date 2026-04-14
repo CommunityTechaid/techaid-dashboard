@@ -11,6 +11,8 @@ import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NgIf, NgFor } from '@angular/common';
 
 const QUERY_PERMISSIONS = gql`
 query findPermissions($page: PaginationInput, $roleId: String!) {
@@ -53,7 +55,7 @@ query findAutocompletePermissions($appId: String!, $roleId: Int) {
     selector: 'role-permissions',
     styleUrls: ['role-permissions.scss'],
     templateUrl: './role-permissions.html',
-    standalone: false
+    imports: [AppGridDirective_1, NgIf, NgFor]
 })
 export class RolePermissionsComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

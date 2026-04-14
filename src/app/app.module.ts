@@ -30,67 +30,7 @@ import { FormlyCustomDeviceRequestNote } from './views/corewidgets/components/de
 import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/components/device-request-info/custom-create-notes';
 
 
-@NgModule({ declarations: [
-        AppComponent,
-        AppHeader,
-        AppSidebar,
-        App404,
-        FormlyCustomNote,
-        FormlyCustomCreateNote,
-        FormlyCustomDeviceRequestNote,
-        FormlyCustomCreateDeviceRequestNote,
-        FormlyCustomKitCheckboxType,
-        FormlyCustomKitInfoType
-    ],
-    bootstrap: [AppComponent], imports: [FormsModule,
-        ReactiveFormsModule,
-        BrowserAnimationsModule,
-        AppSharedModule.forRoot(),
-        FormlyModule.forRoot({
-            validators: [{ name: 'dateRange', validation: dateRangeValidator }]
-        }),
-        FormlyBootstrapModule,
-        NgbModule,
-        AppFormModule.forRoot(),
-        ToastrModule.forRoot({
-            positionClass: 'toast-top-right',
-            preventDuplicates: true
-        }),
-        AppAuthModule,
-        AuthModule.forRoot({
-            domain: 'techaid-auth.eu.auth0.com',
-            clientId: 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX',
-            authorizationParams: {
-                redirect_uri: window.location.origin,
-                audience: 'https://api.communitytechaid.org.uk',
-            },
-            cacheLocation: 'localstorage',
-        }),
-        BrowserModule,
-        NgProgressModule,
-        AppNgProgressHttpModule.forRoot(),
-        AppRoutingModule,
-        AppStateModule,
-        GraphQLModule,
-        FormlyModule.forRoot({
-            types: [
-                { name: 'notes', component: FormlyCustomNote },
-                { name: 'new-note', component: FormlyCustomCreateNote },
-                { name: 'device-request-notes', component: FormlyCustomDeviceRequestNote },
-                { name: 'device-request-new-note', component: FormlyCustomCreateDeviceRequestNote },
-                { name: 'kit-checkbox', component: FormlyCustomKitCheckboxType },
-                { name: 'kit-info-input', component: FormlyCustomKitInfoType }
-            ]
-        })], providers: [
-        {
-            provide: APP_INITIALIZER,
-            useFactory: configServiceFactory,
-            deps: [ConfigService],
-            multi: true
-        },
-        provideHttpClient(withInterceptorsFromDi()),
-    ] })
-export class AppModule { }
+
 
 export function dateRangeValidator(control: AbstractControl) {
   const { after, before } = control.value;

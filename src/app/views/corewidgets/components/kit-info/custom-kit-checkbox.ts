@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
+import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
+import { NgIf } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     selector: 'formly-field-kit-checkbox',
@@ -10,7 +12,7 @@ import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
     <input type="checkbox" class="kit-checkbox-input" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="value">
   </div>
   `,
-    standalone: false
+    imports: [NgIf, ReactiveFormsModule, FormlyModule]
 })
 export class FormlyCustomKitCheckboxType extends FieldType<FieldTypeConfig> {
     value: boolean;

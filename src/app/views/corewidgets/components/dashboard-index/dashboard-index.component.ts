@@ -1,7 +1,7 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
@@ -12,6 +12,9 @@ import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
+import { NgIf, NgFor } from '@angular/common';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { PostIndexComponent } from '../post-index/post-index.component';
 
 const QUERY_ENTITY = gql`
 query findAll {
@@ -49,7 +52,7 @@ query findAll {
     selector: 'dashboard-index',
     styleUrls: ['dashboard-index.scss'],
     templateUrl: './dashboard-index.html',
-    standalone: false
+    imports: [NgIf, NgFor, NgbProgressbar, AppGridDirective_1, PostIndexComponent]
 })
 export class DashboardIndexComponent {
   sub: Subscription;

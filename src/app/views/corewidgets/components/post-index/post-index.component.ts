@@ -6,14 +6,17 @@ import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
-import { FormControl, UntypedFormGroup, FormBuilder, Validators } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { FormControl, UntypedFormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import * as Tablesaw from 'tablesaw';
 import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 const QUERY_ENTITY = gql`
 query findAllPosts($page: PaginationInput,, $term: String) {
@@ -68,7 +71,7 @@ mutation createPost($data: CreatePostInput!) {
     selector: 'post-index',
     styleUrls: ['post-index.scss'],
     templateUrl: './post-index.html',
-    standalone: false
+    imports: [AppGridDirective_1, NgIf, NgFor, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class PostIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

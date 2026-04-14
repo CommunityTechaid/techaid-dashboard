@@ -9,16 +9,14 @@ import { AuthenticationService } from './services/authentication.service';
 
 @NgModule({
     imports: [
+        InputMaskComponent,
+        YesNoPipe,
+        AppInitialComponent
     ],
     exports: [
         InputMaskComponent,
         YesNoPipe,
         AppInitialComponent
-    ],
-    declarations: [
-        InputMaskComponent,
-        YesNoPipe,
-        AppInitialComponent,
     ]
 })
 export class AppSharedModule {

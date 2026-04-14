@@ -6,10 +6,7 @@ import 'datatables.net-bs5';
 import 'datatables.net-rowreorder';
 import 'datatables.net-responsive';
 
-@Directive({
-    selector: '[datatable]',
-    standalone: false
-})
+@Directive({ selector: '[datatable]' })
 export class AppGridDirective implements OnDestroy, OnInit {
   /**
    * The DataTable option you pass to configure your table.

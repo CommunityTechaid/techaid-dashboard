@@ -11,7 +11,7 @@ import { RolePermissionsComponent } from './components/role-permissions/role-per
 import { RoleUsersComponent } from './components/role-users/role-users.component';
 import { UserRolesComponent } from './components/user-roles/user-roles.component';
 import { AppSharedModule } from '@app/shared';
-import { AppGridModule } from '@app/shared/modules/grid';
+
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxsModule } from '@ngxs/store';
 import { KitInfoComponent } from './components/kit-info/kit-info.component';
@@ -77,7 +77,14 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  declarations: [
+    imports: [
+    LightboxModule,
+    NgxsModule.forFeature([CoreWidgetState]),
+    CommonModule,
+    AppSharedModule,
+    AppFormModule,
+    NgbModule,
+    RouterModule.forChild(routes),
     UserPermissionsComponent,
     RoleIndexComponent,
     RoleInfoComponent,
@@ -114,19 +121,8 @@ const routes: Routes = [
     KitAuditComponent,
     DeviceRequestAuditComponent,
     AdminPanelComponent,
-    DistributionsAndDeliveriesIndexComponent
-  ],
-  imports: [
-    LightboxModule,
-    NgxsModule.forFeature([CoreWidgetState]),
-    AppGridModule,
-    CommonModule,
-    AppSharedModule,
-    AppFormModule,
-    NgbModule,
-    RouterModule.forChild(routes),
-  ],
-  providers: [
-  ],
+    DistributionsAndDeliveriesIndexComponent,
+],
+    providers: [],
 })
 export class CoreWidgetsModule { }

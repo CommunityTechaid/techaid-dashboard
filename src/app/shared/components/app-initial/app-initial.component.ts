@@ -20,8 +20,7 @@ import { Component, Input } from '@angular/core';
             {{initial}}
         </text>
     </svg>
-`,
-    standalone: false
+`
 })
 export class AppInitialComponent {
     constructor() { }

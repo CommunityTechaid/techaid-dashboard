@@ -1,17 +1,20 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { UntypedFormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
+import { NgIf } from '@angular/common';
+import { DonorComponent } from '../donor-component/donor-component.component';
+import { KitComponent } from '../kit-component/kit-component.component';
 
 const QUERY_ENTITY = gql`
 query findDonorParent($id: Long) {
@@ -66,7 +69,7 @@ mutation deleteDonorParent($id: ID!) {
     selector: 'donor-parent-info',
     styleUrls: ['donor-parent-info.scss'],
     templateUrl: './donor-parent-info.html',
-    standalone: false
+    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DonorComponent, KitComponent, NgbNavOutlet]
 })
 export class DonorParentInfoComponent {
 

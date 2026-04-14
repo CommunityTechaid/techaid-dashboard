@@ -8,6 +8,9 @@ import { ToastrService } from 'ngx-toastr';
 import { Apollo } from 'apollo-angular';
 import { SearchQuery } from '@views/corewidgets/state/actions';
 import * as $ from 'jquery';
+import { NgIf } from '@angular/common';
+import { AppInitialComponent } from '../../shared/components/app-initial/app-initial.component';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 
 @Component({
@@ -18,7 +21,7 @@ import * as $ from 'jquery';
             border-bottom: 1px solid #f8f9fa;
         }
     `],
-    standalone: false
+    imports: [NgIf, AppInitialComponent, RouterLink, RouterLinkActive]
 })
 export class AppHeader {
     private sub: Subscription;

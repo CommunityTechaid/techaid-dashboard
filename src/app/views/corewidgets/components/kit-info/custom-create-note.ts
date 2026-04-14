@@ -3,6 +3,7 @@ import { FieldType } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
+import { ReactiveFormsModule } from '@angular/forms';
 
 const CREATE_NOTE = gql`
 mutation createNote($data: CreateNoteInput!) {
@@ -24,7 +25,7 @@ mutation createNote($data: CreateNoteInput!) {
     <textarea class="form-control" #newNoteContent rows="4" [name]=key [formControl]="formControl" [placeholder]=to.placeholder (keyup.enter)="$event.stopPropagation()"></textarea>
   </div>
  `,
-    standalone: false
+    imports: [ReactiveFormsModule]
 })
 export class FormlyCustomCreateNote extends FieldType  {
 

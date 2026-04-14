@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { NgSelectComponent } from '@ng-select/ng-select';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     selector: 'form-choice',
@@ -18,7 +19,7 @@ import { NgSelectComponent } from '@ng-select/ng-select';
         placeholder="{{this.to.placeholder}}">
     </ng-select>
   `,
-    standalone: false
+    imports: [NgSelectComponent, ReactiveFormsModule]
 })
 export class ChoiceInput extends FieldType {
   @ViewChild(NgSelectComponent)

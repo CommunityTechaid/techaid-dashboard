@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd, RouterOutlet, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
 import { Store, Actions, ofAction } from '@ngxs/store';
@@ -10,12 +10,15 @@ import { filter, map } from "rxjs/operators";
 import { AppInsightsService } from '@app/shared/services/app-insights.service';
 import { ConfigService } from '@app/shared/services/config.service';
 import { NgZone } from '@angular/core';
+import { NgProgressComponent } from 'ngx-progressbar';
+import { AppSidebar } from './components/app-sidebar/app.sidebar.component';
+import { AppHeader } from './components/app-header/app.header.component';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    standalone: false
+    imports: [NgProgressComponent, AppSidebar, AppHeader, RouterOutlet, RouterLink]
 })
 export class AppComponent {
   private actionSub: Subscription;

@@ -1,15 +1,18 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { UntypedFormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+import { NgIf } from '@angular/common';
+import { ReferringOrganisationContactComponent } from '../referring-organisation-contact-component/referring-organisation-contact-component.component';
+import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 
 const QUERY_ENTITY = gql`
   query findReferringOrganisation($id: Long) {
@@ -47,7 +50,7 @@ const DELETE_ENTITY = gql`
     selector: 'app-referring-organisation-info',
     templateUrl: './referring-organisation-info.component.html',
     styleUrls: ['./referring-organisation-info.component.scss'],
-    standalone: false
+    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet]
 })
 export class ReferringOrganisationInfoComponent {
 

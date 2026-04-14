@@ -243,8 +243,6 @@ export const FORMLYCONFIG: ConfigOption = {
         AppSharedModule,
         NgbModule,
         QuillModule.forRoot(),
-    ],
-    declarations: [
         AppFormlyWrapperFormField,
         ChoiceInput,
         DateInput,
@@ -255,7 +253,7 @@ export const FORMLYCONFIG: ConfigOption = {
         GalleryInput,
         RichTextComponent,
         RepeatTypeComponent,
-        FormlyFieldButton
+        FormlyFieldButton,
     ],
     exports: [
         AppFormlyWrapperFormField,

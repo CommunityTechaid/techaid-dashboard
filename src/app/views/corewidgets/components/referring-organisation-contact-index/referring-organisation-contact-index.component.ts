@@ -1,15 +1,18 @@
 import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { UntypedFormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
+import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { RouterLink } from '@angular/router';
 
 const QUERY_ENTITY = gql`
 query findAllReferringOrgContacts(
@@ -69,7 +72,7 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
     selector: 'app-referring-organisation-contact-index',
     templateUrl: './referring-organisation-contact-index.component.html',
     styleUrls: ['./referring-organisation-contact-index.component.scss'],
-    standalone: false
+    imports: [NgIf, AppGridDirective_1, NgFor, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class ReferringOrganisationContactIndexComponent {
 

@@ -1,18 +1,21 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { UntypedFormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
 import { getKitTypeLabel } from '@app/shared/utils';
+import { NgIf } from '@angular/common';
+import { KitComponent } from '../kit-component/kit-component.component';
+import { DeviceRequestAuditComponent } from '../device-request-audit-component/device-request-audit-component.component';
 
 export const DEVICE_REQUEST_STATUS = {
     'NEW':'New request',
@@ -182,7 +185,7 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
     selector: 'app-device-request-info',
     templateUrl: './device-request-info.component.html',
     styleUrls: ['./device-request-info.component.scss'],
-    standalone: false
+    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, DeviceRequestAuditComponent, NgbNavOutlet]
 })
 export class DeviceRequestInfoComponent {
   @ViewChild('kitWarning') kitWarningModal: any;

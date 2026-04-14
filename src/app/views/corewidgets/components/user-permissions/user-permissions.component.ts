@@ -1,16 +1,18 @@
 import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
-import { FormControl, UntypedFormGroup, FormBuilder, Validators } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { FormControl, UntypedFormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NgIf, NgFor } from '@angular/common';
 
 const QUERY_PERMISSIONS = gql`
 query findPermissions($userId: String!, $page: PaginationInput) {
@@ -120,7 +122,7 @@ query findAutocompletePermissions($appId: String!, $userId: Int) {
     selector: 'user-permissions',
     styleUrls: ['user-permissions.scss'],
     templateUrl: './user-permissions.html',
-    standalone: false
+    imports: [AppGridDirective_1, NgIf, NgFor, NgbPopover, ReactiveFormsModule, FormlyModule]
 })
 export class UserPermissionsComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

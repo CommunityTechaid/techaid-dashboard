@@ -4,13 +4,14 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { UntypedFormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { Router } from '@angular/router';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { Router, RouterLink } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
+import { NgIf, DatePipe } from '@angular/common';
 
 const QUERY_CONFIG = gql`
   query adminConfig {
@@ -48,7 +49,7 @@ const UPDATE_CONFIG = gql`
     selector: 'admin-panel',
     styleUrls: ['admin-panel.component.scss'],
     templateUrl: './admin-panel.component.html',
-    standalone: false
+    imports: [NgIf, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class AdminPanelComponent {
 

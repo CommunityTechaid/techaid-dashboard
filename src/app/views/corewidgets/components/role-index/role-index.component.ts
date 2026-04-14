@@ -1,7 +1,7 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
@@ -11,6 +11,9 @@ import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
+import { RouterLink } from '@angular/router';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NgIf, NgFor } from '@angular/common';
 
 const QUERY_ROLES = gql`
 query findAllRoles($page: PaginationInput!, $term: String) {
@@ -30,7 +33,7 @@ query findAllRoles($page: PaginationInput!, $term: String) {
     selector: 'role-index',
     styleUrls: ['role-index.scss'],
     templateUrl: './role-index.html',
-    standalone: false
+    imports: [RouterLink, AppGridDirective_1, NgIf, NgFor, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu]
 })
 export class RoleIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
