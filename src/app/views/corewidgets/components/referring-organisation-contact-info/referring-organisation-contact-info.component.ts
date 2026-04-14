@@ -243,7 +243,7 @@ export class ReferringOrganisationContactInfoComponent {
   }
 
   private normalizeData(data: any) {
-    // Not currently doing any normalization
+    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
 
     if (data.referringOrganisation && data.referringOrganisation.id) {
       data.referringOrganisationId = data.referringOrganisation.id;

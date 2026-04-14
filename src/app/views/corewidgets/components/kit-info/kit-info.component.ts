@@ -934,6 +934,7 @@ export class KitInfoComponent {
     });
 
   private normalizeData(data: any) {
+    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
     if (data.donor && data.donor.id) {
       data.donorId = data.donor.id;
       this.donorField.templateOptions['items'] = [

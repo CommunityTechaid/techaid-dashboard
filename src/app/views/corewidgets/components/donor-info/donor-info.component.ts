@@ -9,7 +9,6 @@ import { Apollo } from 'apollo-angular';
 import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
@@ -305,7 +304,7 @@ export class DonorInfoComponent {
   }
 
   private normalizeData(data: any) {
-    // Not currently doing any normalization
+    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
 
     if (data.donorParent && data.donorParent.id) {
       data.donorParentId = data.donorParent.id;

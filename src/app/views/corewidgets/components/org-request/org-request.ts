@@ -920,6 +920,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   private normalizeData(data: any) {
+    data = { ...data, attributes: { ...data.attributes } }; // Apollo v3 freezes query results in dev mode; copy before mutating
     data.attributes.request = {
       'laptops': 0,
       'phones': 0,

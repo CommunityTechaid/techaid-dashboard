@@ -127,6 +127,20 @@
                 }
               ],
               "outputHashing": "all"
+            },
+            "uat-local": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.uat-local.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": ""
@@ -146,6 +160,10 @@
             },
             "uat": {
               "buildTarget": "angular-template:build:uat"
+            },
+            "uat-local": {
+              "proxyConfig": "src/proxy.conf.uat.json",
+              "buildTarget": "angular-template:build:uat-local"
             },
             "dev": {
               "proxyConfig": "src/proxy.conf.json",

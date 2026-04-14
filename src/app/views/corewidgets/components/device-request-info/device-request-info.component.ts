@@ -707,6 +707,7 @@ export class DeviceRequestInfoComponent {
   }
 
   private normalizeData(data: any) {
+    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
 
     this.newNoteField.templateOptions['requestId'] = this.requestId
 
