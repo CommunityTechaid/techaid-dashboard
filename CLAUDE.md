@@ -26,10 +26,10 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 
 | Concern | Implementation | Key files |
 |---|---|---|
-| GraphQL client | Apollo Angular v1 (`apollo-client@2`) | `src/app/graphql.module.ts` |
+| GraphQL client | Apollo Angular v3 (`@apollo/client@3`) | `src/app/graphql.module.ts` |
 | State management | NGXS 3.x | `src/app/state/` |
-| UI components | ng-bootstrap v7 + Bootstrap 4 | throughout |
-| Dynamic forms | ngx-formly v5 (8 custom field types) | `src/app/shared/modules/formly/` |
+| UI components | ng-bootstrap v19 + Bootstrap 4 | throughout |
+| Dynamic forms | ngx-formly v6 (8 custom field types) | `src/app/shared/modules/formly/` |
 | Auth | Auth0 SPA SDK | `src/app/shared/services/authentication.service.ts` |
 | Feature components | 36 components | `src/app/views/corewidgets/components/` |
 | Shared services | 3 services | `src/app/shared/services/` |
@@ -38,74 +38,95 @@ Environment configs live in `src/environments/` (dev, prod, uat, local).
 
 ## Testing
 
-There is no test suite. `ng build --configuration production` is the primary signal for regressions — if it compiles cleanly, the code is structurally sound.
+Run the full e2e suite against the UAT backend (requires a valid token in `e2e/.auth/user.json`):
+
+```bash
+# Save a fresh token first (obtain bearer token from DevTools → Application → localStorage)
+E2E_BEARER_TOKEN=<token> node e2e/save-token.mjs
+
+# Run all tests
+npx playwright test
+
+# Run a specific suite
+npx playwright test tabs
+```
+
+The dev server is started automatically (`ng serve --configuration uat-local`). The `uat-local`
+config uses a local proxy to forward `/graphql` to `api-testing.communitytechaid.org.uk`, which
+avoids CORS issues. The Playwright tests additionally inject an `Authorization` header via
+`page.route()` to guarantee every request is authenticated even before the Auth0 SDK initialises.
+
+`ng build --configuration production` remains the primary structural signal — if it compiles
+cleanly, the code is sound.
 
 ---
 
 <!-- UPGRADE IN PROGRESS — DELETE EVERYTHING BELOW THIS LINE BEFORE MERGING TO MAIN -->
 
-## Angular Upgrade: v11 → v20
+## Angular Upgrade: v11 → v20 ✓ Complete
 
-### Context
+Angular is now on **v20.3.18**. All four Angular upgrade checkpoints are done.
 
-Starting version: **Angular 11.2.14** (released Nov 2020, EOL May 2022 — unsupported).
-Target: **Angular 20** (oldest currently supported version as of April 2026).
+---
 
-Angular enforces sequential major-version upgrades — you cannot skip versions. At each step:
+## Library Upgrade: Post-Angular-20
 
-```bash
-ng update @angular/core@X @angular/cli@X
-ng build --configuration production   # must pass before continuing
-git commit
+With Angular at v20 the bundled third-party libraries need to catch up.
+Work through the checkpoints below in order — each checkpoint must pass
+`ng build --configuration production` and `npx playwright test` before proceeding.
+
+### Checkpoint Status
+
+| # | Libraries | Status |
+|---|---|---|
+| L1 | Playwright e2e test suite (smoke, navigation, tab-regression) | ✓ Complete |
+| L2 | `ng-bootstrap` v15 → v19 · `@ng-select/ng-select` v11 → v20 | ✓ Complete |
+| L3 | `@ngxs/store` + plugins v3 → v20 | **Next** |
+| L4 | `bootstrap` v4 → v5 · `@ngx-formly` v6 → v7 | After L3 |
+| L5 | All remaining secondary libraries (moment, ngx-toastr, etc.) | After L4 |
+
+### L3 — NGXS v3 → v20
+
+NGXS adopted Angular's version numbering from v18 onward (v3 was the last "classic" release).
+Target: `@ngxs/store@20.1.0` plus matching versions of all four plugins.
+
+Packages to upgrade together:
+```
+@ngxs/store  @ngxs/form-plugin  @ngxs/router-plugin
+@ngxs/devtools-plugin  @ngxs/logger-plugin
 ```
 
-### Checkpoint Strategy
+Key breaking changes to look for:
+- `@State` decorator options changed — `children` array moved inside the decorator
+- `NgxsModule.forRoot()` options signature updated (`developmentMode`, `selectorOptions`)
+- `StateContext` generic type constraints tightened
+- Action handler return types — `void` now allowed; `Observable` still preferred
+- `@ngxs/form-plugin`: `UpdateFormDirty` / `UpdateFormValue` action shapes may have changed
+- Key files: `src/app/state/`, `src/app/state/state.module.ts`
 
-| Checkpoint | Range | Primary goal |
-|---|---|---|
-| 1 | v11 → v14 | Land on RxJS 7, TypeScript 4.x mid-range |
-| 2 | v14 → v16 | TypeScript 5 prep, Signals introduced |
-| 3 | v16 → v18 | **Migrate Apollo** to `@apollo/client` v3 |
-| 4 | v18 → v20 | Finalise; optional standalone components / new control flow |
+### L4 — Bootstrap v4 → v5 + @ngx-formly v6 → v7
 
-### Current Checkpoint
+Must be done together — `@ngx-formly/bootstrap@7` requires `bootstrap@^5`.
 
-**All checkpoints complete — now on Angular 20.3.18**
+Bootstrap 5 breaking changes affecting this codebase:
+- `data-*` attributes renamed to `data-bs-*` (dropdowns, modals, tooltips)
+- `.form-group` wrapper removed — use spacing utilities instead
+- `.custom-select`, `.custom-checkbox` etc. renamed to `.form-select`, `.form-check`
+- `float-*` utilities renamed to `float-start` / `float-end`
+- jQuery no longer required or included
 
-### Known Hard Problems
+formly v7 breaking changes:
+- `FormlyModule.forRoot()` replaced by standalone `provideFormly()` (or keep NgModule pattern with updated import)
+- `templateOptions` object renamed to `props`
+- Custom field types: `FieldType` base class import path changed
 
-Work through these in order — earlier checkpoints are mostly mechanical, Checkpoint 3 is where the real effort is.
+### L5 — Secondary libraries
 
-**1. Apollo GraphQL (Checkpoint 3 — biggest effort)**
-- Currently: `apollo-angular@1` + `apollo-client@2` (old split-package model with `apollo-link-*`)
-- Target: `apollo-angular@3+` + `@apollo/client@3` (unified package, completely different API)
-- Affects: `src/app/graphql.module.ts` and all 36 components in `src/app/views/corewidgets/components/`
-- The `apollo-link-context` JWT injection pattern needs rewriting using `@apollo/client` links
-
-**2. RxJS 6 → 7 (Checkpoint 1, Angular 14 forces this)**
-- `toPromise()` deprecated → use `firstValueFrom()` / `lastValueFrom()`
-- Some operator renames and import path changes
-- Start with `rxjs-tslint` migration tool, then review manually
-
-**3. ng-bootstrap v7 → v17+ (tracks Angular major version)**
-- Modal, datepicker, and dropdown APIs have evolved across 10 major versions
-- Review all components using `NgbModal`, `NgbDatepicker`, `NgbDropdown`
-
-**4. NGXS 3.7 → 4.x**
-- Breaking changes to state decorators and action patterns
-- Key files: `src/app/state/user/`, `src/app/state/state.module.ts`
-
-**5. @ngx-formly 5 → 6+**
-- `FormlyModule` import API and field configuration changed
-- Key files: `src/app/shared/modules/formly/` (8 custom field components)
-
-**6. TypeScript 4.1 → 5.x**
-- Stricter template type checking will surface latent type errors — fix as you go
-- Update `tsconfig.json` targets accordingly at each checkpoint
-
-**7. Node.js version**
-- Angular 20 requires Node 18.19+
-- Verify with `node --version` before starting — upgrade Node if needed
+Check and update after L4 passes:
+- `moment` → consider replacing with date-fns or Angular's built-in date pipe
+- `ngx-toastr` — verify compatible version for Angular 20
+- `ngx-filesaver` — verify peer deps
+- `datatables.net` + `angular-datatables` — check Angular 20 compatibility
 
 ### Before Merging to Main
 
