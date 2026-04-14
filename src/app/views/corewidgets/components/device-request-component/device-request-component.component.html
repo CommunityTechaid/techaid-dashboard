@@ -11,7 +11,7 @@
                       <h6 class="m-0 font-weight-bold text-primary">Device Requests</h6>
                   </div>
                   <div>
-                      <a href="#" (click)="modal(filters); false;" class="btn btn-info btn-icon-split btn-sm mr-1 mb-1">
+                      <a href="#" (click)="modal(filters); false;" class="btn btn-info btn-icon-split btn-sm me-1 mb-1">
                           <span class="icon text-white-50">
                               <i class="fas fa-filter"></i>
                           </span>
@@ -51,49 +51,49 @@
                                     <div class="d-flex">
                                         <div class="d-flex flex-column">
                                             <div>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.other != 0">
+                                              <span class="me-1 mb-1" *ngIf="dt.deviceRequestItems.other != 0">
                                                   <span class="badge badge-primary">
                                                       <span class="badge badge-secondary">Other</span>
                                                       {{dt.types['OTHER'] || 0}}  / {{dt.deviceRequestItems.other || 0}}
                                                   </span>
                                               </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.laptops != 0">
+                                              <span class="me-1 mb-1" *ngIf="dt.deviceRequestItems.laptops != 0">
                                                   <span class="badge badge-primary">
                                                       <span class="badge badge-secondary">Laptops</span>
                                                       {{dt.types['LAPTOPS'] || 0}}  / {{dt.deviceRequestItems.laptops || 0}}
                                                   </span>
                                               </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.tablets != 0">
+                                              <span class="me-1 mb-1" *ngIf="dt.deviceRequestItems.tablets != 0">
                                                 <span class="badge badge-primary">
                                                     <span class="badge badge-secondary">Tablets</span>
                                                     {{dt.types['TABLETS'] || 0}}  / {{dt.deviceRequestItems.tablets || 0}}
                                                 </span>
                                               </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.allInOnes != 0">
+                                              <span class="me-1 mb-1" *ngIf="dt.deviceRequestItems.allInOnes != 0">
                                                 <span class="badge badge-primary">
                                                     <span class="badge badge-secondary">All-in-ones</span>
                                                     {{dt.types['ALLINONES'] || 0}}  / {{dt.deviceRequestItems.allInOnes || 0}}
                                                 </span>
                                               </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.desktops != 0">
+                                              <span class="me-1 mb-1" *ngIf="dt.deviceRequestItems.desktops != 0">
                                                 <span class="badge badge-primary">
                                                     <span class="badge badge-secondary">Desktops</span>
                                                     {{dt.types['DESKTOPS'] || 0}}  / {{dt.deviceRequestItems.desktops || 0}}
                                                 </span>
                                               </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.phones != 0">
+                                              <span class="me-1 mb-1" *ngIf="dt.deviceRequestItems.phones != 0">
                                                 <span class="badge badge-primary">
                                                     <span class="badge badge-secondary">Phones</span>
                                                     {{dt.types['PHONES'] || 0}}  / {{dt.deviceRequestItems.phones || 0}}
                                                 </span>
                                               </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.commsDevices != 0">
+                                              <span class="me-1 mb-1" *ngIf="dt.deviceRequestItems.commsDevices != 0">
                                                 <span class="badge badge-primary">
                                                     <span class="badge badge-secondary">SIM Cards</span>
                                                     {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
                                                 </span>
                                               </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.broadbandHubs != 0">
+                                              <span class="me-1 mb-1" *ngIf="dt.deviceRequestItems.broadbandHubs != 0">
                                                 <span class="badge badge-primary">
                                                     <span class="badge badge-secondary">Broadband Hubs</span>
                                                     {{dt.types['BROADBANDHUBS'] || 0}}  / {{dt.deviceRequestItems.broadbandHubs || 0}}

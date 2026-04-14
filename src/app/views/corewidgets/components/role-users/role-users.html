@@ -38,8 +38,8 @@
                         <tr *ngFor="let dt of entities" [class.selected]="selections[dt.id]" (click)="select(dt)">
                             <td>
                                 <div class="d-flex">
-                                    <img *ngIf="dt.picture?.length" class="mr-2 mt-2 avatar" [src]="dt.picture" />
-                                    <app-initial *ngIf="!dt.picture?.length" class="mr-2 mt-2" [name]="dt.name"></app-initial>
+                                    <img *ngIf="dt.picture?.length" class="me-2 mt-2 avatar" [src]="dt.picture" />
+                                    <app-initial *ngIf="!dt.picture?.length" class="me-2 mt-2" [name]="dt.name"></app-initial>
                                     <div class="d-flex flex-column">
                                         <div>
                                             <a href="#" [routerLink]="['/dashboard/users', dt.id]">{{ dt.name }}</a>
@@ -101,7 +101,7 @@
     <div class="modal-body">
         <small>
             <p>Are you really sure you want to remove "<strong>{{selectedUser.name}}
-                    <span *ngIf="selectedUser.email?.length && selectedUser.name != selectedUser.email" class="ml-1">/ {{selectedUser.email}}</span></strong>" from
+                    <span *ngIf="selectedUser.email?.length && selectedUser.name != selectedUser.email" class="ms-1">/ {{selectedUser.email}}</span></strong>" from
                 this role?
             </p>
         </small>

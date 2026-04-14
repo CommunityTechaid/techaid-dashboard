@@ -8,19 +8,19 @@
             <div class="card-header py-3">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="m-0 font-weight-bold text-primary pr-1">Devices</h6>
+                        <h6 class="m-0 font-weight-bold text-primary pe-1">Devices</h6>
                     </div>
                     <div>
-                        <a href="#" class="btn btn-secondary btn-sm mr-1 mb-1" routerLink="/dashboard/map">
+                        <a href="#" class="btn btn-secondary btn-sm me-1 mb-1" routerLink="/dashboard/map">
                             <i class="fas fa-map-marked-alt"></i> View Map
                         </a>
-                        <a href="#" (click)="modal(filters); false;" class="btn btn-info btn-icon-split btn-sm mr-1 mb-1">
+                        <a href="#" (click)="modal(filters); false;" class="btn btn-info btn-icon-split btn-sm me-1 mb-1">
                             <span class="icon text-white-50">
                                 <i class="fas fa-filter"></i>
                             </span>
                             <span class="text">Filter <span *ngIf="filterCount > 0" class="badge badge-danger">{{filterCount}}</span></span>
                         </a>
-                        <a href="#" (click)="model={}; modal(quickCreateApi); false;" class="btn btn-primary btn-icon-split btn-sm mr-1 mb-1">
+                        <a href="#" (click)="model={}; modal(quickCreateApi); false;" class="btn btn-primary btn-icon-split btn-sm me-1 mb-1">
                             <span class="icon text-white-50">
                                 <i class="fas fa-laptop"></i>
                             </span>
@@ -66,7 +66,7 @@
                                                 <div *ngIf="dt.model.length"><small>{{ dt.location }}</small></div>
                                                 <div *ngIf="dt.deviceRequest?.id">
                                                     <span class="badge badge-secondary">
-                                                        <i class="fas fa-sitemap mr-1"></i>
+                                                        <i class="fas fa-sitemap me-1"></i>
                                                         <a href="#" class="btn-secondary" [routerLink]="['/dashboard/device-requests', dt.deviceRequest.id]">{{dt.deviceRequest?.referringOrganisationContact.referringOrganisation.name}}</a>
                                                     </span>
                                                 </div>

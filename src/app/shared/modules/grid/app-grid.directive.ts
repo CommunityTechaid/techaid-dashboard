@@ -2,7 +2,7 @@ import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as $ from 'jquery';
 import 'datatables.net';
-import 'datatables.net-bs4';
+import 'datatables.net-bs5';
 import 'datatables.net-rowreorder';
 import 'datatables.net-responsive';
 

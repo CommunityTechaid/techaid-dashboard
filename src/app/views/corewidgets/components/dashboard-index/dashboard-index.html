@@ -8,7 +8,7 @@
       <div class="card border-left-primary shadow h-100 py-2">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
+            <div class="col me-2">
               <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Devices</div>
               <div class="h5 mb-0 font-weight-bold text-gray-800">{{model.kits.totalElements}}</div>
             </div>
@@ -24,7 +24,7 @@
       <div class="card border-left-success shadow h-100 py-2">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
+            <div class="col me-2">
               <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Donors</div>
               <div class="h5 mb-0 font-weight-bold text-gray-800">{{model.donors.totalElements}}</div>
             </div>
@@ -47,7 +47,7 @@
             <span class="text-muted"><small>Requested / Available</small></span>
           </div>
           <div *ngFor="let s of model.typeCount">
-            <h4 class="small font-weight-bold">{{styles[s.type].title}}<span class="float-right">{{model.requestCount[s.type]}} / {{s.count}}</span></h4>
+            <h4 class="small font-weight-bold">{{styles[s.type].title}}<span class="float-end">{{model.requestCount[s.type]}} / {{s.count}}</span></h4>
             <div class="mb-2">
               <ngb-progressbar [type]="styles[s.type].style" [value]="styles[s.type].progress"></ngb-progressbar>
             </div>

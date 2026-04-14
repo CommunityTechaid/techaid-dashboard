@@ -28,8 +28,8 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 |---|---|---|
 | GraphQL client | Apollo Angular v3 (`@apollo/client@3`) | `src/app/graphql.module.ts` |
 | State management | NGXS 3.x | `src/app/state/` |
-| UI components | ng-bootstrap v19 + Bootstrap 4 | throughout |
-| Dynamic forms | ngx-formly v6 (8 custom field types) | `src/app/shared/modules/formly/` |
+| UI components | ng-bootstrap v19 + Bootstrap 5 | throughout |
+| Dynamic forms | ngx-formly v7 (8 custom field types) | `src/app/shared/modules/formly/` |
 | Auth | Auth0 SPA SDK | `src/app/shared/services/authentication.service.ts` |
 | Feature components | 36 components | `src/app/views/corewidgets/components/` |
 | Shared services | 3 services | `src/app/shared/services/` |
@@ -82,8 +82,8 @@ Work through the checkpoints below in order — each checkpoint must pass
 | L1 | Playwright e2e test suite (smoke, navigation, tab-regression) | ✓ Complete |
 | L2 | `ng-bootstrap` v15 → v19 · `@ng-select/ng-select` v11 → v20 | ✓ Complete |
 | L3 | `@ngxs/store` + plugins v3 → v20 | ✓ Complete |
-| L4 | `bootstrap` v4 → v5 · `@ngx-formly` v6 → v7 | **Next** |
-| L5 | All remaining secondary libraries (moment, ngx-toastr, etc.) | After L4 |
+| L4 | `bootstrap` v4 → v5 · `@ngx-formly` v6 → v7 · `datatables.net-bs4` → `datatables.net-bs5` | ✓ Complete |
+| L5 | All remaining secondary libraries (moment, ngx-toastr, etc.) | **Next** |
 
 ### L3 — NGXS v3 → v20
 

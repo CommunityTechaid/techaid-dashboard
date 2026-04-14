@@ -28,7 +28,7 @@
                             </td>
                             <td>{{dt.description}}</td>
                             <td>
-                                <span *ngIf="dt.direct" class="badge badge-secondary mr-1">Direct</span>
+                                <span *ngIf="dt.direct" class="badge badge-secondary me-1">Direct</span>
                                 <span *ngIf="dt.byRole" [ngbPopover]="dt.mappedRoles" triggers="mouseenter:mouseleave"
                                     class="badge badge-primary">{{dt.roles?.length}} Role(s)</span>
                             </td>
