@@ -1,7 +1,7 @@
 import { Component, Injectable, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { NgbDateAdapter, NgbDateStruct, NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import { FieldType } from '@ngx-formly/core';
-import * as moment from 'moment';
+import { isValid, parse, format as fnsFormat, subYears } from 'date-fns';
 import { DateUtils } from '@app/shared/utils/date_utils';
 
 
@@ -24,55 +24,32 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
     }
 
     if (dt && dt.year && dt.month && dt.day) {
-      const date = new Date(dt.year, dt.month - 1, dt.day);
-      if (moment(date).isValid()) {
-        return date;
-      }
-
-      return date;
+      return new Date(dt.year, dt.month - 1, dt.day);
     }
 
     if ((dt instanceof Date) || (dt && dt.getFullYear)) {
-      if (moment(dt).isValid()) {
-        return dt;
-      }
-
-      return null;
+      return isValid(dt) ? dt : null;
     }
 
     if (this.input_formats && this.input_formats.length > 0 && typeof dt == 'string') {
       for (const format of this.input_formats) {
-        let m = moment(dt.substring(0, format.length), format, true);
-        if (m.isValid()) {
-          return m.toDate();
-        } else {
-          m = moment(dt.substring(0, format.length), format, true);
-          if (m.isValid()) {
-            return m.toDate();
-          } else {
-            m = moment(dt, format.substring(0, dt.length), true);
-            if (m.isValid()) {
-              return m.toDate();
-            }
+        const candidate = dt.substring(0, format.length);
+        try {
+          const parsed = parse(candidate, format, new Date());
+          if (isValid(parsed) && fnsFormat(parsed, format) === candidate) {
+            return parsed;
           }
-        }
+        } catch { /* ignore */ }
       }
 
-      if (this.output_format == 'default') {
-        const m = moment(dt);
-        if (m.isValid()) {
-          return m.toDate();
-        }
-      } else if (typeof dt == 'string') {
-        const m = moment(dt);
-        if (m.isValid()) {
-          return m.toDate();
-        }
+      const d = new Date(dt);
+      if (isValid(d)) {
+        return d;
       }
     } else {
-      const m = moment(dt);
-      if (m.isValid()) {
-        return m.toDate();
+      const d = new Date(dt);
+      if (isValid(d)) {
+        return d;
       }
     }
 
@@ -95,14 +72,14 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
     let dt: any = '';
     if (date) {
       dt = new Date(date.year, date.month - 1, date.day);
-      if (moment(dt).isValid()) {
+      if (isValid(dt)) {
         if (this.output_format) {
           if (this.output_format == 'struct') {
             return date;
           } else if (this.output_format == 'default') {
-            return moment(dt).toDate();
+            return dt;
           }
-          return moment(dt).format(this.output_format);
+          return fnsFormat(dt, this.output_format);
         }
       }
     }
@@ -186,8 +163,8 @@ export class DateInput extends FieldType implements OnInit {
       };
     }
 
-    const dt = adapter.parseDate(from) || moment().toDate();
-    this.minDate = adapter.fromModel(this.to.minDate) || adapter.fromModel(moment(dt).subtract(10, 'years'));
+    const dt = adapter.parseDate(from) || new Date();
+    this.minDate = adapter.fromModel(this.to.minDate) || adapter.fromModel(subYears(dt, 10));
     this.maxDate = adapter.fromModel(this.to.maxDate);
 
     const that = this;

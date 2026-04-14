@@ -2,7 +2,7 @@ import { Component, Injectable,  Input, forwardRef, ViewChild } from '@angular/c
 import { NgbDateAdapter, NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl  } from '@angular/forms';
 import { FieldType } from '@ngx-formly/core';
-import * as moment from 'moment';
+import { isValid, parse, format as fnsFormat, subYears, formatISO } from 'date-fns';
 export interface NgbDateTimeStruct extends NgbDateStruct, NgbTimeStruct {}
 
 @Component({
@@ -169,8 +169,8 @@ export class DateTimeInputWidget implements ControlValueAccessor {
       };
     }
 
-    const dt = this.parseTime(this.model) || moment().toDate();
-    this.minDate = this.fetchDate(this.to.minDate) || this.fetchDate(moment(dt).subtract(10, 'years'));
+    const dt = this.parseTime(this.model) || new Date();
+    this.minDate = this.fetchDate(this.to.minDate) || this.fetchDate(subYears(dt, 10));
     this.maxDate = this.fetchDate(this.to.maxDate);
   }
 
@@ -202,37 +202,24 @@ export class DateTimeInputWidget implements ControlValueAccessor {
 
     if (this.to.input_formats && this.to.input_formats.length > 0  && typeof dt == 'string') {
       for (const format of this.to.input_formats) {
-          let m = moment(dt, format, true);
-          if (m.isValid()) {
-            return m.toDate();
-          } else {
-            m = moment(dt.substring(0, format.length), format, true);
-            if (m.isValid()) {
-              return m.toDate();
-            } else {
-              m = moment(dt, format.substring(0, dt.length), true);
-              if (m.isValid()) {
-                return m.toDate();
-              }
+        for (const candidate of [dt, dt.substring(0, format.length)]) {
+          try {
+            const parsed = parse(candidate, format, new Date());
+            if (isValid(parsed) && fnsFormat(parsed, format) === candidate) {
+              return parsed;
             }
-          }
+          } catch { /* ignore */ }
+        }
       }
 
-      if (this.to.output_format == 'default') {
-        const m = moment(dt);
-        if (m.isValid()) {
-          return m.toDate();
-        }
-      } else if (typeof dt == 'string') {
-        const m = moment(dt);
-        if (m.isValid()) {
-          return m.toDate();
-        }
+      const d = new Date(dt);
+      if (isValid(d)) {
+        return d;
       }
     } else {
-      const m = moment(dt);
-      if (m.isValid()) {
-        return m.toDate();
+      const d = new Date(dt);
+      if (isValid(d)) {
+        return d;
       }
     }
 
@@ -286,9 +273,9 @@ export class DateTimeInputWidget implements ControlValueAccessor {
       if (this.to.output_format == 'struct') {
           dt = {...model, time: dt};
       } else if (this.to.output_format == 'default') {
-        dt = moment(dt).format();
+        dt = formatISO(dt);
       } else {
-        dt = moment(dt).format(this.to.output_format);
+        dt = fnsFormat(dt, this.to.output_format);
       }
     }
 
@@ -300,4 +287,3 @@ export class DateTimeInputWidget implements ControlValueAccessor {
       this.onChange(this.value);
   }
 }
-

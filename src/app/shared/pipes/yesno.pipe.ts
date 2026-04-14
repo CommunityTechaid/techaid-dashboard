@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform, NgZone, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import * as moment from 'moment';
 
 @Pipe({
     name: 'yesNo',

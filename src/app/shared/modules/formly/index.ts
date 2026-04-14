@@ -173,10 +173,10 @@ export const FORMLYCONFIG: ConfigOption = {
                     inline: true,
                     showWeekNumbers: false,
                     input_formats: [
-                        'YYYY-MM-DD', 'YYYY/MM/DD', 'YYYY.MM.DD', 'YYYY MM DD',
-                        'DD-MM-YYYY', 'DD/MM/YYYY', 'DD.MM.YYYY', 'DD MM YYYY',
-                        'DD MMM YYYY', 'DD MMMM YYYY', 'MMM YYYY', 'MMMM YYYY',
-                        'YYYYMMDD', 'DDMMYYYY'
+                        'yyyy-MM-dd', 'yyyy/MM/dd', 'yyyy.MM.dd', 'yyyy MM dd',
+                        'dd-MM-yyyy', 'dd/MM/yyyy', 'dd.MM.yyyy', 'dd MM yyyy',
+                        'dd MMM yyyy', 'dd MMMM yyyy', 'MMM yyyy', 'MMMM yyyy',
+                        'yyyyMMdd', 'ddMMyyyy'
                     ],
                     output_format: 'default'
                 }
@@ -203,10 +203,10 @@ export const FORMLYCONFIG: ConfigOption = {
                     },
                     showWeekNumbers: false,
                     input_formats: [
-                        'YYYY-MM-DD', 'YYYY/MM/DD', 'YYYY.MM.DD', 'YYYY MM DD',
-                        'DD-MM-YYYY', 'DD/MM/YYYY', 'DD.MM.YYYY', 'DD MM YYYY',
-                        'DD MMM YYYY', 'DD MMMM YYYY', 'MMM YYYY', 'MMMM YYYY',
-                        'YYYYMMDD', 'DDMMYYYY'
+                        'yyyy-MM-dd', 'yyyy/MM/dd', 'yyyy.MM.dd', 'yyyy MM dd',
+                        'dd-MM-yyyy', 'dd/MM/yyyy', 'dd.MM.yyyy', 'dd MM yyyy',
+                        'dd MMM yyyy', 'dd MMMM yyyy', 'MMM yyyy', 'MMMM yyyy',
+                        'yyyyMMdd', 'ddMMyyyy'
                     ],
                     output_format: 'default'
                 }

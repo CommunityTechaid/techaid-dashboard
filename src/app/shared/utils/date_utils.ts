@@ -1,118 +1,135 @@
-import * as moment from 'moment';
+import {
+  isValid, getISODay, addDays, addWeeks, addYears, addMonths,
+  subDays, subWeeks, subYears,
+  isSameDay, getYear,
+  startOfDay, startOfMonth, startOfYear, startOfISOWeek,
+  endOfDay, endOfMonth, endOfYear,
+  parse, format as fnsFormat, parseISO,
+} from 'date-fns';
+
+type DateInput = Date | string | number;
+
+function toDate(input: DateInput): Date {
+  if (input instanceof Date) return input;
+  if (typeof input === 'number') return new Date(input);
+  // ISO string or other string formats
+  const d = new Date(input as string);
+  return isValid(d) ? d : new Date(NaN);
+}
+
+// Convert moment-style format tokens to date-fns tokens.
+// Differences: YYYY→yyyy, DD→dd (MM, MMM, MMMM, HH, mm, ss are identical).
+function toFnsFormat(fmt: string): string {
+  return fmt
+    .replace(/YYYY/g, 'yyyy')
+    .replace(/YY/g, 'yy')
+    .replace(/DD/g, 'dd')
+    .replace(/\bD\b/g, 'd');
+}
 
 export class DateUtils {
 
     public static options: any = {
         cache: {},
         countries: ['england'],
+        // date-fns format tokens (yyyy = 4-digit year, dd = 2-digit day)
         formats: [
-            'YYYY-MM-DD', 'YYYY/MM/DD', 'YYYY.MM.DD', 'YYYY MM DD',
-            'DD-MM-YYYY', 'DD/MM/YYYY', 'DD.MM.YYYY', 'DD MM YYYY',
-            'DD MMM YYYY', 'DD MMMM YYYY', 'MMM YYYY', 'MMMM YYYY',
-            'YYYYMMDD', 'DDMMYYYY'
+            'yyyy-MM-dd', 'yyyy/MM/dd', 'yyyy.MM.dd', 'yyyy MM dd',
+            'dd-MM-yyyy', 'dd/MM/yyyy', 'dd.MM.yyyy', 'dd MM yyyy',
+            'dd MMM yyyy', 'dd MMMM yyyy', 'MMM yyyy', 'MMMM yyyy',
+            'yyyyMMdd', 'ddMMyyyy'
         ]
     };
 
     static easterSunday(year: number): Date {
         const f = Math.floor,
-            // Golden Number - 1
             G = year % 19,
             C = f(year / 100),
-            // related to Epact
             H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
-            // number of days from 21 March to the Paschal full moon
             I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)),
-            // weekday for the Paschal full moon
             J = (year + f(year / 4) + I + 2 - C + f(C / 4)) % 7,
-            // number of days from 21 March to the Sunday on or before the Paschal full moon
             L = I - J,
             month = 3 + f((L + 40) / 44),
             day = L + 28 - 31 * f(month / 4);
         return new Date(Date.UTC(year, (month - 1), day));
     }
 
-    static isWeekDay(date: moment.MomentInput): boolean {
-        return moment(date).isoWeekday() < 6;
+    static isWeekDay(date: DateInput): boolean {
+        return getISODay(toDate(date)) < 6;
     }
 
-    static isBusinessDay(date: moment.MomentInput, ...countries): boolean {
+    static isBusinessDay(date: DateInput, ...countries): boolean {
         return DateUtils.isWeekDay(date) && !DateUtils.isBankHoliday(date, ...countries);
     }
 
-    static isBankHoliday(date: moment.MomentInput, ...countries): boolean {
-        const dt = moment(date);
-        const holidays = DateUtils.bankHolidays(dt.year(), ...countries);
+    static isBankHoliday(date: DateInput, ...countries): boolean {
+        const dt = toDate(date);
+        const holidays = DateUtils.bankHolidays(getYear(dt), ...countries);
         for (const key in holidays) {
-            if (dt.isSame(holidays[key], 'day')) {
+            if (isSameDay(dt, toDate(holidays[key]))) {
                 return true;
             }
         }
-
         return false;
     }
 
-    static skipWeekends(date: moment.MomentInput, inc: number): moment.Moment {
-        const dt = moment(date).add(inc, 'days');
+    static skipWeekends(date: DateInput, inc: number): Date {
+        let dt = addDays(toDate(date), inc);
         if (Math.abs(inc) > 0) {
             while (!DateUtils.isWeekDay(dt)) {
-                dt.add(inc, 'days');
+                dt = addDays(dt, inc);
             }
         }
-
         return dt;
     }
 
-    static nextDay(date: moment.MomentInput, isoWeekday: number): moment.Moment {
-        const dt = moment(date);
-        if (dt.isoWeekday() <= isoWeekday) {
-            return dt.isoWeekday(isoWeekday);
+    static nextDay(date: DateInput, isoWeekday: number): Date {
+        const dt = toDate(date);
+        if (getISODay(dt) <= isoWeekday) {
+            return addDays(startOfISOWeek(dt), isoWeekday - 1);
         } else {
-            return dt.add(1, 'weeks').isoWeekday(isoWeekday);
+            return addDays(startOfISOWeek(addWeeks(dt, 1)), isoWeekday - 1);
         }
     }
 
-    static previousDay(date: moment.MomentInput, isoWeekday: number): moment.Moment {
-        const dt = moment(date);
-        if (dt.isoWeekday() >= isoWeekday) {
-            return dt.isoWeekday(isoWeekday);
+    static previousDay(date: DateInput, isoWeekday: number): Date {
+        const dt = toDate(date);
+        if (getISODay(dt) >= isoWeekday) {
+            return addDays(startOfISOWeek(dt), isoWeekday - 1);
         } else {
-            return dt.subtract(1, 'weeks').isoWeekday(isoWeekday);
+            return addDays(startOfISOWeek(subWeeks(dt, 1)), isoWeekday - 1);
         }
     }
 
-    static nextWeekDay(date: moment.MomentInput): moment.Moment {
-        let dt = moment(date);
+    static nextWeekDay(date: DateInput): Date {
+        let dt = toDate(date);
         if (!DateUtils.isWeekDay(dt)) {
             dt = DateUtils.skipWeekends(dt, 1);
         }
-
         return dt;
     }
 
-    static previousWeekDay(date: moment.MomentInput): moment.Moment {
-        let dt = moment(date);
+    static previousWeekDay(date: DateInput): Date {
+        let dt = toDate(date);
         if (!DateUtils.isWeekDay(dt)) {
             dt = DateUtils.skipWeekends(dt, -1);
         }
-
         return dt;
     }
 
-    static nextBusinessDay(date: moment.MomentInput): moment.Moment {
+    static nextBusinessDay(date: DateInput): Date {
         let dt = DateUtils.nextWeekDay(date);
         while (DateUtils.isBankHoliday(dt)) {
-            dt = DateUtils.nextWeekDay(dt.add(1, 'days'));
+            dt = DateUtils.nextWeekDay(addDays(dt, 1));
         }
-
         return dt;
     }
 
-    static previousBusinessDay(date: moment.MomentInput): moment.Moment {
+    static previousBusinessDay(date: DateInput): Date {
         let dt = DateUtils.previousWeekDay(date);
         while (DateUtils.isBankHoliday(dt)) {
-            dt = DateUtils.previousWeekDay(dt.subtract(1, 'days'));
+            dt = DateUtils.previousWeekDay(subDays(dt, 1));
         }
-
         return dt;
     }
 
@@ -125,11 +142,11 @@ export class DateUtils {
         const key = `${year}_${countries.join('_')}`;
         if (DateUtils.options.cache[key]) { return DateUtils.options.cache[key]; }
 
-        const holidays = {};
+        const holidays: Record<string, Date> = {};
         const easterSunday = DateUtils.easterSunday(year);
         holidays['New Year'] = DateUtils.nextWeekDay(new Date(year, 0, 1));
-        holidays['Good Friday'] = moment(easterSunday).subtract(2, 'days');
-        holidays['Easter Monday'] = moment(easterSunday).add(1, 'days');
+        holidays['Good Friday'] = subDays(easterSunday, 2);
+        holidays['Easter Monday'] = addDays(easterSunday, 1);
         holidays['Early May bank holiday'] = DateUtils.nextDay(new Date(year, 4, 1), 1);
         holidays['Spring bank holiday'] = DateUtils.previousDay(new Date(year, 4, 31), 1);
 
@@ -144,71 +161,74 @@ export class DateUtils {
             holidays['Summer bank holiday'] = DateUtils.previousDay(new Date(year, 7, 31), 1);
         }
 
-        const date = moment(new Date(year, 11, 25));
-        if (date.isoWeekday() == 6) {
-            holidays['Christmas Day (substitute day)'] = moment(date).add(3, 'days');
-            holidays['Boxing Day (substitute day)'] = moment(date).add(2, 'days');
-        } else if (date.isoWeekday() == 7) {
-            holidays['Christmas Day (substitute day)'] = moment(date).add(2, 'days');
-            holidays['Boxing Day'] = moment(date).add(1, 'days');
+        const christmas = new Date(year, 11, 25);
+        const christmasIsoDay = getISODay(christmas);
+        if (christmasIsoDay === 6) {
+            holidays['Christmas Day (substitute day)'] = addDays(christmas, 3);
+            holidays['Boxing Day (substitute day)'] = addDays(christmas, 2);
+        } else if (christmasIsoDay === 7) {
+            holidays['Christmas Day (substitute day)'] = addDays(christmas, 2);
+            holidays['Boxing Day'] = addDays(christmas, 1);
         } else {
-            holidays['Christmas Day'] = date;
-            holidays['Boxing Day'] = DateUtils.nextWeekDay(moment(date).add(1, 'days'));
+            holidays['Christmas Day'] = christmas;
+            holidays['Boxing Day'] = DateUtils.nextWeekDay(addDays(christmas, 1));
         }
 
         DateUtils.options.cache[key] = holidays;
         return holidays;
     }
 
-    static math(expr: string, options: any = {}): moment.Moment | string {
+    static math(expr: string, options: any = {}): Date | string {
         const defaultOptions = {
-            now: moment(),
+            now: new Date(),
             formats: DateUtils.options.formats
         };
 
-        const now = moment(options.now);
-        options = { ...defaultOptions, options };
+        const now = toDate(options.now || defaultOptions.now);
+        options = { ...defaultOptions, ...options };
 
-
-        const [__, dateFormat] = expr.match(/\|\|?\s*(.*)\s*$/) || [null, null];
-        let date = null;
+        const [, dateFormat] = expr.match(/\|\|?\s*(.*)\s*$/) || [null, null];
+        let date: Date = null;
         let tokens = expr.replace(/\|\|?\s*(.*)\s*$/, '').split(/([\+-]\s*[0-9]+\s*[yMwdhHms])|(\/\^?[yMwdhHmsb<>]+)/).filter(t => t && t.trim());
         expr = tokens.shift();
 
         switch (expr.trim().toLowerCase()) {
             case 'now':
-                date = moment();
+                date = new Date();
                 break;
 
             case 'today':
             case '$today':
             case 'date':
             case '$date':
-                date = moment().startOf('day');
+                date = startOfDay(new Date());
                 break;
 
             case 'tomorrow':
-                date = moment().add(1, 'day');
+                date = addDays(new Date(), 1);
                 break;
 
             case 'yesterday':
-                date = moment().add(-1, 'day');
+                date = subDays(new Date(), 1);
                 break;
             default:
                 if (options.formats.length) {
                     for (const fmt of options.formats) {
-                        const m = moment(expr.substring(0, fmt.length), fmt, true);
-                        if (m.isValid()) {
-                            date = m;
-                            break;
-                        }
+                        const candidate = expr.substring(0, fmt.length);
+                        try {
+                            const parsed = parse(candidate, fmt, now);
+                            if (isValid(parsed) && fnsFormat(parsed, fmt) === candidate) {
+                                date = parsed;
+                                break;
+                            }
+                        } catch { /* ignore */ }
                     }
                 }
 
                 if (!date) {
-                    const m = moment(expr);
-                    if (m.isValid()) {
-                        date = m;
+                    const d = new Date(expr);
+                    if (isValid(d)) {
+                        date = d;
                     }
                 }
                 break;
@@ -218,7 +238,7 @@ export class DateUtils {
             return null;
         }
 
-        const types = {
+        const types: Record<string, string> = {
             y: 'year', M: 'month', w: 'week', d: 'day', h: 'hour', H: 'hour', 'm': 'month', s: 'second'
         };
 
@@ -228,11 +248,11 @@ export class DateUtils {
                 token.split(/\/(\^?[yMwdhHmsb<>])/).filter(t => t && t.trim()).forEach(modifier => {
                     switch (modifier) {
                         case 'b':
-                            date = DateUtils.nextWeekDay(moment(date).startOf('month'));
+                            date = DateUtils.nextWeekDay(startOfMonth(date));
                             break;
 
                         case '^b':
-                            date = DateUtils.previousWeekDay(moment(date).endOf('month'));
+                            date = DateUtils.previousWeekDay(endOfMonth(date));
                             break;
 
                         case '>':
@@ -243,36 +263,55 @@ export class DateUtils {
                             date = DateUtils.previousBusinessDay(date);
                             break;
 
-                        default:
+                        default: {
                             const mod = modifier.replace('^', '');
                             if (!types[mod]) {
                                 throw new Error(`Unknown date modifier ${mod}`);
                             }
 
+                            const unit = types[mod];
                             if (modifier.startsWith('^')) {
-                                date = moment(date).endOf(types[mod]);
+                                // endOf
+                                date = unit === 'day' ? endOfDay(date)
+                                     : unit === 'month' ? endOfMonth(date)
+                                     : unit === 'year' ? endOfYear(date)
+                                     : unit === 'week' ? endOfISOWeek(date)
+                                     : date;
                             } else {
-                                date = moment(date).startOf(types[mod]);
+                                // startOf
+                                date = unit === 'day' ? startOfDay(date)
+                                     : unit === 'month' ? startOfMonth(date)
+                                     : unit === 'year' ? startOfYear(date)
+                                     : unit === 'week' ? startOfISOWeek(date)
+                                     : date;
                             }
                             break;
+                        }
                     }
                 });
             } else if (token.match(/^([+-])([0-9]+)([yMwdhHms])$/)) {
-                const [__, method, value, duration] = token.match(/^([+-])([0-9]+)([yMwdhHms])$/);
-                if (method == '+') {
-                    date = date.add(+value, types[duration]);
+                const [, method, value, duration] = token.match(/^([+-])([0-9]+)([yMwdhHms])$/);
+                const n = +value;
+                const unit = types[duration];
+                if (method === '+') {
+                    date = unit === 'year' ? addYears(date, n)
+                         : unit === 'month' ? addMonths(date, n)
+                         : unit === 'week' ? addWeeks(date, n)
+                         : addDays(date, n);
                 } else {
-                    date = date.subtract(+value, types[duration]);
+                    date = unit === 'year' ? subYears(date, n)
+                         : unit === 'month' ? subMonths(date, n)
+                         : unit === 'week' ? subWeeks(date, n)
+                         : subDays(date, n);
                 }
             }
         });
 
         if (dateFormat) {
-            return date.format(dateFormat);
+            return fnsFormat(date, dateFormat);
         }
 
-
-        return date.toDate();
+        return date;
     }
 
     static dateIs(types: string[] | string, date: Date) {
@@ -280,17 +319,15 @@ export class DateUtils {
             return true;
         }
 
-        if (!moment(date).isValid()) {
+        if (!isValid(date)) {
             return false;
         }
 
         let validity = 0;
-        let ref = '';
-        let check = [];
 
         for (let i = 0; i < types.length; i++) {
             let count = 0;
-            types[i].split('|').forEach(type => {
+            (types as string[])[i].split('|').forEach(type => {
                 const value = !(type.replace(/^(!).*/, '$1') === '!');
                 switch (type.replace(/^!(.*)/, '$1')) {
                     case 'weekday':
@@ -313,20 +350,22 @@ export class DateUtils {
                             count++;
                         }
                         break;
-                    case 'monthend':
-                        ref = DateUtils.format(date, 'DD/MM/YYYY');
-                        check = [DateUtils.math(`${ref}/^b|DD/MM/YYYY`), DateUtils.math(`${ref}/^M|DD/MM/YYYY`), DateUtils.math(`${ref}/^b<|DD/MM/YYYY`)];
+                    case 'monthend': {
+                        const ref = DateUtils.format(date, 'dd/MM/yyyy');
+                        const check = [DateUtils.math(`${ref}/^b|dd/MM/yyyy`), DateUtils.math(`${ref}/^M|dd/MM/yyyy`), DateUtils.math(`${ref}/^b<|dd/MM/yyyy`)];
                         if ((check.indexOf(ref) !== -1) === value) {
                             count++;
                         }
                         break;
-                    case 'monthstart':
-                        ref = DateUtils.format(date, 'DD/MM/YYYY');
-                        check = [DateUtils.math(`${ref}/b|DD/MM/YYYY`), DateUtils.math(`${ref}/b<|DD/MM/YYYY`), DateUtils.math(`${ref}/M|DD/MM/YYYY`)];
+                    }
+                    case 'monthstart': {
+                        const ref = DateUtils.format(date, 'dd/MM/yyyy');
+                        const check = [DateUtils.math(`${ref}/b|dd/MM/yyyy`), DateUtils.math(`${ref}/b<|dd/MM/yyyy`), DateUtils.math(`${ref}/M|dd/MM/yyyy`)];
                         if ((check.indexOf(ref) !== -1) === value) {
                             count++;
                         }
                         break;
+                    }
                 }
             });
 
@@ -338,8 +377,21 @@ export class DateUtils {
         return validity == types.length;
     }
 
-    static format(date: moment.MomentInput, format: string) {
-        return moment(date).format(format);
+    static format(date: DateInput, fmt: string): string {
+        return fnsFormat(toDate(date), fmt);
     }
 
+}
+
+// Re-export toFnsFormat for use in components migrating from moment format strings
+export { toFnsFormat };
+
+function endOfISOWeek(date: Date): Date {
+  return addDays(startOfISOWeek(date), 6);
+}
+
+function subMonths(date: Date, n: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() - n);
+  return d;
 }

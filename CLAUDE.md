@@ -26,7 +26,7 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 
 | Concern | Implementation | Key files |
 |---|---|---|
-| GraphQL client | Apollo Angular v3 (`@apollo/client@3`) | `src/app/graphql.module.ts` |
+| GraphQL client | Apollo Angular v13 (`@apollo/client@4`) | `src/app/graphql.module.ts` |
 | State management | NGXS 3.x | `src/app/state/` |
 | UI components | ng-bootstrap v19 + Bootstrap 5 | throughout |
 | Dynamic forms | ngx-formly v7 (8 custom field types) | `src/app/shared/modules/formly/` |
@@ -104,7 +104,7 @@ before proceeding to the next.
 | P2 | Bump safe minor versions (`core-js`, `@types/node`, `prismjs`, `ts-node`, `applicationinsights`, etc.) | ✓ Complete |
 | P3 | Auth0: migrate `@auth0/auth0-spa-js` v1 → `@auth0/auth0-angular` v2 | ✓ Complete |
 | P4 | Apollo: `apollo-angular` v5 → v13 · `@apollo/client` v3 → v4 | ✓ Complete |
-| P5 | Replace `moment` with `date-fns` (moment is in maintenance mode) | **Next** |
+| P5 | Replace `moment` with `date-fns` (moment is in maintenance mode) | ✓ Complete |
 | P6 | CKEditor 4 → `ngx-quill` — replaced the single `richtext` formly field; CK4 removed | ✓ Complete |
 | P7 | Standalone component migration (`ng generate @angular/core:standalone`) | After P6 |
 | P8 | Angular v20 → v21 (unlocks ngx-toastr v20, NGXS v21, ng-bootstrap v20) | After P7 |
