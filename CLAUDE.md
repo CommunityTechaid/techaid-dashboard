@@ -105,7 +105,7 @@ before proceeding to the next.
 | P3 | Auth0: migrate `@auth0/auth0-spa-js` v1 → `@auth0/auth0-angular` v2 | After P2 |
 | P4 | Apollo: `apollo-angular` v5 → v13 · `@apollo/client` v3 → v4 | After P3 |
 | P5 | Replace `moment` with `date-fns` (moment is in maintenance mode) | After P4 |
-| P6 | CKEditor 4 removal — replace the single `richtext` formly field (post-info) with `textarea` or `ngx-quill` — CK4 EOL June 2026 | After P5 |
+| P6 | CKEditor 4 → `ngx-quill` — replaced the single `richtext` formly field; CK4 removed | ✓ Complete |
 | P7 | Standalone component migration (`ng generate @angular/core:standalone`) | After P6 |
 | P8 | Angular v20 → v21 (unlocks ngx-toastr v20, NGXS v21, ng-bootstrap v20) | After P7 |
 

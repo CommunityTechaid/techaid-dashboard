@@ -15,7 +15,7 @@ import { DateTimeInput, DateTimeInputWidget } from './components/datetime.compon
 import { MaskedInput } from './components/input-mask.component';
 import { AppSharedModule } from '@app/shared';
 import { GalleryInput } from './components/gallery.component';
-import { CKEditorModule } from 'ckeditor4-angular';
+import { QuillModule } from 'ngx-quill';
 import { RichTextComponent } from './components/richtext.component';
 import { RepeatTypeComponent } from './components/repeat.component';
 import { FormlyFieldButton } from './components/button.component';
@@ -133,16 +133,6 @@ export const FORMLYCONFIG: ConfigOption = {
             defaultOptions: {
                 templateOptions: {
                     placeholder: '',
-                    height: '100%',
-                    htmlEdit: true,
-                    editorConfig: {
-                        height: 500,
-                        allowedContent: true,
-                        contentsCss: 'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css',
-                        versionCheck: false
-                    },
-                    type: 'divarea', // classic | divarea | inline
-                    html: false,
                 }
             }
         },
@@ -252,7 +242,7 @@ export const FORMLYCONFIG: ConfigOption = {
         FormlyBootstrapModule,
         AppSharedModule,
         NgbModule,
-        CKEditorModule,
+        QuillModule.forRoot(),
     ],
     declarations: [
         AppFormlyWrapperFormField,
