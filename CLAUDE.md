@@ -100,8 +100,8 @@ before proceeding to the next.
 
 | # | Task | Status |
 |---|---|---|
-| P1 | Remove zombie dependencies (`popper.js`, `request`, `resumablejs`, `pusher-js`, `xterm`) | **Next** |
-| P2 | Bump safe minor versions (`core-js`, `@types/node`, `prismjs`, `ts-node`, `applicationinsights`, etc.) | After P1 |
+| P1 | Remove zombie dependencies (`popper.js`, `request`, `resumablejs`, `pusher-js`, `xterm`) | ✓ Complete |
+| P2 | Bump safe minor versions (`core-js`, `@types/node`, `prismjs`, `ts-node`, `applicationinsights`, etc.) | **Next** |
 | P3 | Auth0: migrate `@auth0/auth0-spa-js` v1 → `@auth0/auth0-angular` v2 | After P2 |
 | P4 | Apollo: `apollo-angular` v5 → v13 · `@apollo/client` v3 → v4 | After P3 |
 | P5 | Replace `moment` with `date-fns` (moment is in maintenance mode) | After P4 |
