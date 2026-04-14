@@ -1,5 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { AuthModule } from '@auth0/auth0-angular';
 
 import { AppSharedModule } from '@app/shared';
 import { AppComponent } from './app.component';
@@ -56,6 +57,15 @@ import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/compone
             preventDuplicates: true
         }),
         AppAuthModule,
+        AuthModule.forRoot({
+            domain: 'techaid-auth.eu.auth0.com',
+            clientId: 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX',
+            authorizationParams: {
+                redirect_uri: window.location.origin,
+                audience: 'https://api.communitytechaid.org.uk',
+            },
+            cacheLocation: 'localstorage',
+        }),
         BrowserModule,
         NgProgressModule,
         AppNgProgressHttpModule.forRoot(),

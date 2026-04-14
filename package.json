@@ -30,7 +30,7 @@
     "@angular/router": "20.3.18",
     "@apollo/client": "^3.11.8",
     "@auth0/angular-jwt": "^5.2.0",
-    "@auth0/auth0-spa-js": "^1.11.0",
+    "@auth0/auth0-angular": "^2.8.0",
     "@fortawesome/fontawesome-free": "^5.14.0",
     "@microsoft/applicationinsights-web": "^3.4.1",
     "@ng-bootstrap/ng-bootstrap": "^19.0.1",

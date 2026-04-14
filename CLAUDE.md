@@ -30,7 +30,7 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 | State management | NGXS 3.x | `src/app/state/` |
 | UI components | ng-bootstrap v19 + Bootstrap 5 | throughout |
 | Dynamic forms | ngx-formly v7 (8 custom field types) | `src/app/shared/modules/formly/` |
-| Auth | Auth0 SPA SDK | `src/app/shared/services/authentication.service.ts` |
+| Auth | `@auth0/auth0-angular` v2 (`AuthModule.forRoot`) | `src/app/shared/services/authentication.service.ts`, `src/app/app.module.ts` |
 | Feature components | 36 components | `src/app/views/corewidgets/components/` |
 | Shared services | 3 services | `src/app/shared/services/` |
 
@@ -102,8 +102,8 @@ before proceeding to the next.
 |---|---|---|
 | P1 | Remove zombie dependencies (`popper.js`, `request`, `resumablejs`, `pusher-js`, `xterm`) | ✓ Complete |
 | P2 | Bump safe minor versions (`core-js`, `@types/node`, `prismjs`, `ts-node`, `applicationinsights`, etc.) | ✓ Complete |
-| P3 | Auth0: migrate `@auth0/auth0-spa-js` v1 → `@auth0/auth0-angular` v2 | **Next** |
-| P4 | Apollo: `apollo-angular` v5 → v13 · `@apollo/client` v3 → v4 | After P3 |
+| P3 | Auth0: migrate `@auth0/auth0-spa-js` v1 → `@auth0/auth0-angular` v2 | ✓ Complete |
+| P4 | Apollo: `apollo-angular` v5 → v13 · `@apollo/client` v3 → v4 | **Next** |
 | P5 | Replace `moment` with `date-fns` (moment is in maintenance mode) | After P4 |
 | P6 | CKEditor 4 → `ngx-quill` — replaced the single `richtext` formly field; CK4 removed | ✓ Complete |
 | P7 | Standalone component migration (`ng generate @angular/core:standalone`) | After P6 |
