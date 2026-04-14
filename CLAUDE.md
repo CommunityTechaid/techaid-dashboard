@@ -106,7 +106,7 @@ before proceeding to the next.
 | P4 | Apollo: `apollo-angular` v5 → v13 · `@apollo/client` v3 → v4 | ✓ Complete |
 | P5 | Replace `moment` with `date-fns` (moment is in maintenance mode) | ✓ Complete |
 | P6 | CKEditor 4 → `ngx-quill` — replaced the single `richtext` formly field; CK4 removed | ✓ Complete |
-| P7 | Standalone component migration (`ng generate @angular/core:standalone`) | After P6 |
+| P7 | Standalone component migration (`ng generate @angular/core:standalone`) | ✓ Complete |
 | P8 | Angular v20 → v21 (unlocks ngx-toastr v20, NGXS v21, ng-bootstrap v20) | After P7 |
 
 ### P1 — Remove zombie dependencies
