@@ -81,8 +81,8 @@ Work through the checkpoints below in order — each checkpoint must pass
 |---|---|---|
 | L1 | Playwright e2e test suite (smoke, navigation, tab-regression) | ✓ Complete |
 | L2 | `ng-bootstrap` v15 → v19 · `@ng-select/ng-select` v11 → v20 | ✓ Complete |
-| L3 | `@ngxs/store` + plugins v3 → v20 | **Next** |
-| L4 | `bootstrap` v4 → v5 · `@ngx-formly` v6 → v7 | After L3 |
+| L3 | `@ngxs/store` + plugins v3 → v20 | ✓ Complete |
+| L4 | `bootstrap` v4 → v5 · `@ngx-formly` v6 → v7 | **Next** |
 | L5 | All remaining secondary libraries (moment, ngx-toastr, etc.) | After L4 |
 
 ### L3 — NGXS v3 → v20

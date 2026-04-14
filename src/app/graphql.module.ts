@@ -28,7 +28,9 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
 
   return {
     link: errorHandler.concat(asyncAuthLink.concat(http)),
-    cache: new InMemoryCache(),
+    // canonizeResults: true (the default) causes Apollo to freeze query results in dev mode,
+    // which breaks any code that mutates the response (normalizeData, ngx-formly model binding).
+    cache: new InMemoryCache({ canonizeResults: false }),
   };
 }
 
