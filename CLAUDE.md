@@ -83,7 +83,7 @@ Work through the checkpoints below in order — each checkpoint must pass
 | L2 | `ng-bootstrap` v15 → v19 · `@ng-select/ng-select` v11 → v20 | ✓ Complete |
 | L3 | `@ngxs/store` + plugins v3 → v20 | ✓ Complete |
 | L4 | `bootstrap` v4 → v5 · `@ngx-formly` v6 → v7 · `datatables.net-bs4` → `datatables.net-bs5` | ✓ Complete |
-| L5 | All remaining secondary libraries (moment, ngx-toastr, etc.) | **Next** |
+| L5 | `ngx-toastr` v15→v19 · `moment` v2.27→v2.30 · `datatables.net` v1→v2 · `datatables.net-bs4` removed | ✓ Complete |
 
 ### L3 — NGXS v3 → v20
 

@@ -50,7 +50,7 @@
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.js",
-              "node_modules/datatables.net/js/jquery.dataTables.js",
+              "node_modules/datatables.net/js/dataTables.js",
               "node_modules/datatables.net-bs5/js/dataTables.bootstrap5.js",
               "node_modules/bootstrap/dist/js/bootstrap.js",
               "src/sb-admin-2.min.js"
