@@ -103,8 +103,8 @@ before proceeding to the next.
 | P1 | Remove zombie dependencies (`popper.js`, `request`, `resumablejs`, `pusher-js`, `xterm`) | ✓ Complete |
 | P2 | Bump safe minor versions (`core-js`, `@types/node`, `prismjs`, `ts-node`, `applicationinsights`, etc.) | ✓ Complete |
 | P3 | Auth0: migrate `@auth0/auth0-spa-js` v1 → `@auth0/auth0-angular` v2 | ✓ Complete |
-| P4 | Apollo: `apollo-angular` v5 → v13 · `@apollo/client` v3 → v4 | **Next** |
-| P5 | Replace `moment` with `date-fns` (moment is in maintenance mode) | After P4 |
+| P4 | Apollo: `apollo-angular` v5 → v13 · `@apollo/client` v3 → v4 | ✓ Complete |
+| P5 | Replace `moment` with `date-fns` (moment is in maintenance mode) | **Next** |
 | P6 | CKEditor 4 → `ngx-quill` — replaced the single `richtext` formly field; CK4 removed | ✓ Complete |
 | P7 | Standalone component migration (`ng generate @angular/core:standalone`) | After P6 |
 | P8 | Angular v20 → v21 (unlocks ngx-toastr v20, NGXS v21, ng-bootstrap v20) | After P7 |
