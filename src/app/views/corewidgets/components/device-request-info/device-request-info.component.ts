@@ -919,6 +919,10 @@ export class DeviceRequestInfoComponent {
     if (data.deviceRequestNote.content == null){
       data.deviceRequestNote.content = ""
     }
+    // Convert collectionDate from datetime-local (local time) back to UTC ISO string for the server
+    if (data.collectionDate) {
+      data.collectionDate = new Date(data.collectionDate).toISOString();
+    }
     this.apollo
       .mutate({
         mutation: UPDATE_ENTITY,
