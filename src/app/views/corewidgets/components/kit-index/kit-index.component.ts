@@ -276,7 +276,7 @@ export class KitIndexComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
   isDonorParentAdmin = false;
-  isAdmin = false;
+  canBulkEdit = false;
   bulkMode = false;
   allPageSelected = false;
 
@@ -704,7 +704,7 @@ export class KitIndexComponent {
       this.user$.subscribe((user) => {
         this.user = user;
         this.isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
-        this.isAdmin = !!(user && user.authorities && user.authorities['app:admin']);
+        this.canBulkEdit = !!(user && user.authorities && user.authorities['app:bulkedit']);
         //console.log(this.isDonorParentAdmin);
         this.donorParentField.hideExpression = !this.isDonorParentAdmin;
         this.donorParentTypeField.hideExpression = !this.isDonorParentAdmin;
