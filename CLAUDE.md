@@ -27,8 +27,8 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 | Concern | Implementation | Key files |
 |---|---|---|
 | GraphQL client | Apollo Angular v13 (`@apollo/client@4`) | `src/app/graphql.module.ts` |
-| State management | NGXS 3.x | `src/app/state/` |
-| UI components | ng-bootstrap v19 + Bootstrap 5 | throughout |
+| State management | NGXS v21 | `src/app/state/` |
+| UI components | ng-bootstrap v20 + Bootstrap 5 | throughout |
 | Dynamic forms | ngx-formly v7 (8 custom field types) | `src/app/shared/modules/formly/` |
 | Auth | `@auth0/auth0-angular` v2 (`AuthModule.forRoot`) | `src/app/shared/services/authentication.service.ts`, `src/app/app.module.ts` |
 | Feature components | 36 components | `src/app/views/corewidgets/components/` |
@@ -108,6 +108,9 @@ before proceeding to the next.
 | P6 | CKEditor 4 → `ngx-quill` — replaced the single `richtext` formly field; CK4 removed | ✓ Complete |
 | P7 | Standalone component migration (`ng generate @angular/core:standalone`) | ✓ Complete |
 | P8 | Angular v20 → v21 (unlocks ngx-toastr v20, NGXS v21, ng-bootstrap v20) | ✓ Complete |
+| P9 | Remove zombie devDependencies (`wait-on`, `webdriver-manager`) — clears 11 audit findings | After P8 |
+| P10 | Migrate to the new esbuild build system (`use-application-builder`) | After P9 |
+| P11 | Convert remaining NgModules to standalone providers (`provideStore()`, `provideFormlyConfig()`, etc.) | After P10 |
 
 ### P1 — Remove zombie dependencies
 
@@ -209,3 +212,48 @@ Once P7 is done, upgrade Angular itself. This unlocks:
 - `@ng-bootstrap/ng-bootstrap` v20
 
 Follow the standard `ng update @angular/core @angular/cli` migration path.
+
+### P9 — Remove zombie devDependencies
+
+`wait-on` and `webdriver-manager` are listed in `devDependencies` but not used anywhere in `e2e/`
+or `playwright.config.ts`. They are the source of 11 of the 17 `npm audit` findings:
+
+- `webdriver-manager@12` → pulls in `request` (SSRF criticals), `jsprim`, `json-schema`, `form-data`
+- `wait-on@5` → pulls in `axios` (SSRF/CSRF criticals), `follow-redirects`
+
+Steps: `npm uninstall wait-on webdriver-manager` then verify build + tests pass.
+
+### P10 — Migrate to the new esbuild build system
+
+During the Angular 21 upgrade, the CLI flagged an optional migration:
+```bash
+ng update @angular/cli --name use-application-builder
+```
+This switches from the legacy webpack builder (`@angular-devkit/build-angular:browser`) to the
+new esbuild/Vite-based builder (`@angular/build:application`). Expected outcome: production builds
+drop from ~50 s to under 10 s; `ng serve` rebuilds become near-instant.
+
+Key changes the migration makes:
+- Updates `angular.json` builder targets from `browser` → `application`
+- Switches dev server from `dev-server` → `application-dev-server`
+- Removes webpack-specific options (none are used in this project — clean migration expected)
+
+Run `ng update @angular/cli --name use-application-builder`, then verify build + tests pass.
+
+### P11 — Convert remaining NgModules to standalone providers
+
+The standalone component migration (P7) left these NgModule files intact because they contain
+`forRoot()` provider configuration that cannot be auto-migrated:
+
+| File | Current pattern | Target pattern |
+|---|---|---|
+| `src/app/state/state.module.ts` | `NgxsModule.forRoot([UserState])` | `provideStore([UserState])` + `withNgxsRouterPlugin()` etc. |
+| `src/app/shared/modules/formly/index.ts` | `FormlyModule.forRoot(config)` | `provideFormlyConfig(config)` |
+| `src/app/graphql.module.ts` | `@NgModule` with `APOLLO_OPTIONS` provider | `provideApollo(...)` factory |
+| `src/app/app.routing.module.ts` | `RouterModule.forRoot(routes)` | `provideRouter(routes, ...)` |
+| `src/app/shared/index.ts` | `AppSharedModule` with service providers | inline `providers: []` in `main.ts` |
+| `src/app/shared/modules/auth/index.ts` | empty shell NgModule | delete |
+
+Once all providers are inlined into `bootstrapApplication(AppComponent, appConfig)` in
+`src/main.ts`, the remaining NgModule files can be deleted and `CoreWidgetsModule` can be
+replaced with a plain route array.
