@@ -12,7 +12,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from '
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { NgIf, NgFor } from '@angular/common';
+
 import { AppInitialComponent } from '../../../../shared/components/app-initial/app-initial.component';
 import { RouterLink } from '@angular/router';
 
@@ -72,7 +72,7 @@ query typeaheadFindAllUsers($page: PaginationInput!, $term: String) {
     selector: 'role-users',
     styleUrls: ['role-users.scss'],
     templateUrl: './role-users.html',
-    imports: [AppGridDirective_1, NgIf, NgFor, AppInitialComponent, RouterLink, ReactiveFormsModule, FormlyModule]
+    imports: [AppGridDirective_1, AppInitialComponent, RouterLink, ReactiveFormsModule, FormlyModule]
 })
 export class RoleUsersComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

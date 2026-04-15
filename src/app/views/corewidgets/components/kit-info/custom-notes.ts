@@ -3,7 +3,7 @@ import { FieldType } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 
 
 const UPDATE_NOTE = gql`
@@ -28,25 +28,27 @@ mutation deleteNote($id: ID!) {
     selector: 'formly-field-notes',
     template: `
 <div class="notes-list" style="max-height:350px; overflow-y:scroll">
-    <div *ngFor="let note of to.notes" class="note-item ">
-        <div style="border: solid 3px #e3e6f0" class="card">
-            <div class="card-body" style="padding:10px">
-                <span>{{ note.content }}</span>
-                <div class="d-flex row justify-content-between">
-                    <div class="d-flex col-9 flex-row align-items-center">
-                        <span style="max-width:40%" class="small text-muted text-truncate  mb-0 ms-2"><em>{{ note.volunteer }}</em></span>
-                        <span class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date : "dd/MM/yy HH:mm" }})</em></span>
-                    </div>
-                    <div class="d-flex col-2 flex-row">
-                        <button (click)="deleteNote(note.id)" class="btn rounded-0" type="button" title="Delete"><i style="color: #c51616" class="fas fa-window-close fa-lg"></i></button>
-                    </div>
-                </div>
+  @for (note of to.notes; track note) {
+    <div class="note-item ">
+      <div style="border: solid 3px #e3e6f0" class="card">
+        <div class="card-body" style="padding:10px">
+          <span>{{ note.content }}</span>
+          <div class="d-flex row justify-content-between">
+            <div class="d-flex col-9 flex-row align-items-center">
+              <span style="max-width:40%" class="small text-muted text-truncate  mb-0 ms-2"><em>{{ note.volunteer }}</em></span>
+              <span class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date : "dd/MM/yy HH:mm" }})</em></span>
             </div>
+            <div class="d-flex col-2 flex-row">
+              <button (click)="deleteNote(note.id)" class="btn rounded-0" type="button" title="Delete"><i style="color: #c51616" class="fas fa-window-close fa-lg"></i></button>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
+  }
 </div>
- `,
-    imports: [NgFor, DatePipe]
+`,
+    imports: [DatePipe]
 })
 export class FormlyCustomNote extends FieldType {
 

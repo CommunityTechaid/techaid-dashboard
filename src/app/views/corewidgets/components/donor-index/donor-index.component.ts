@@ -14,7 +14,7 @@ import * as Tablesaw from 'tablesaw';
 import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
-import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
 
@@ -95,7 +95,7 @@ query findAutocompleteDonorParents($term: String) {
     selector: 'donor-index',
     styleUrls: ['donor-index.scss'],
     templateUrl: './donor-index.html',
-    imports: [NgIf, AppGridDirective_1, NgFor, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class DonorIndexComponent {
 

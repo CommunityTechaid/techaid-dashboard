@@ -19,7 +19,7 @@
               class="table table-striped table-hover table-bordered table-md"
               datatable
               [dtOptions]="dtOptions"
-            >
+              >
               <thead>
                 <tr>
                   <th></th>
@@ -28,100 +28,112 @@
                   <th>Last Login</th>
                 </tr>
               </thead>
-              <tbody *ngIf="entities?.length != 0">
-                <tr
-                  *ngFor="let dt of entities"
-                  [class.selected]="selections[dt.id]"
-                  (click)="select(dt)"
-                >
-                  <td>
-                    <a href="#" [routerLink]="['./', dt.id]">
-                      <i class="fas fa-info-circle"></i>
-                    </a>
-                  </td>
-                  <td>
-                    <div class="d-flex">
-                      <img
-                        *ngIf="dt.picture?.length"
-                        class="me-2 mt-2 avatar"
-                        [src]="dt.picture"
-                      />
-                      <app-initial
-                        *ngIf="!dt.picture?.length"
-                        class="me-2 mt-2"
-                        [name]="dt.name"
-                      ></app-initial>
-                      <div class="d-flex flex-column">
-                        <div>
-                          <a href="#" [routerLink]="['./', dt.id]">{{
-                            dt.name
-                          }}</a>
-                          <span
-                            *ngIf="dt.username?.length && dt.email?.length"
-                            class="text-muted"
-                          >
-                            ({{ dt.username }})</span
-                          >
-                          <div>
-                            <span *ngFor="let r of dt.roles?.items" class="badge badge-secondary me-1 mb-1">{{r.name}}</span>
+              @if (entities?.length != 0) {
+                <tbody>
+                  @for (dt of entities; track dt) {
+                    <tr
+                      [class.selected]="selections[dt.id]"
+                      (click)="select(dt)"
+                      >
+                      <td>
+                        <a href="#" [routerLink]="['./', dt.id]">
+                          <i class="fas fa-info-circle"></i>
+                        </a>
+                      </td>
+                      <td>
+                        <div class="d-flex">
+                          @if (dt.picture?.length) {
+                            <img
+                              class="me-2 mt-2 avatar"
+                              [src]="dt.picture"
+                              />
+                          }
+                          @if (!dt.picture?.length) {
+                            <app-initial
+                              class="me-2 mt-2"
+                              [name]="dt.name"
+                            ></app-initial>
+                          }
+                          <div class="d-flex flex-column">
+                            <div>
+                              <a href="#" [routerLink]="['./', dt.id]">{{
+                                dt.name
+                              }}</a>
+                              @if (dt.username?.length && dt.email?.length) {
+                                <span
+                                  class="text-muted"
+                                  >
+                                  ({{ dt.username }})</span
+                                  >
+                                }
+                                <div>
+                                  @for (r of dt.roles?.items; track r) {
+                                    <span class="badge badge-secondary me-1 mb-1">{{r.name}}</span>
+                                  }
+                                </div>
+                              </div>
+                              <div class="text-muted">
+                                <span>{{ dt.email }}</span>
+                                @if (!dt.email?.length) {
+                                  <span>{{
+                                    dt.username
+                                  }}</span>
+                                }
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div class="text-muted">
-                          <span>{{ dt.email }}</span>
-                          <span *ngIf="!dt.email?.length">{{
-                            dt.username
-                          }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{{ dt.loginsCount }}</td>
-                  <td>{{ dt.lastLogin | date:'medium' }}</td>
-                </tr>
-              </tbody>
-              <tbody *ngIf="entities?.length == 0">
-                <tr>
-                  <td colspan="4" class="no-data-available">No data!</td>
-                </tr>
-              </tbody>
-            </table>
+                        </td>
+                        <td>{{ dt.loginsCount }}</td>
+                        <td>{{ dt.lastLogin | date:'medium' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                }
+                @if (entities?.length == 0) {
+                  <tbody>
+                    <tr>
+                      <td colspan="4" class="no-data-available">No data!</td>
+                    </tr>
+                  </tbody>
+                }
+              </table>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<ng-template #createApi let-c="close" let-d="dismiss">
-  <div class="modal-header">
-    <h4 class="modal-title">New User</h4>
-  </div>
-  <div class="modal-body">
-    <form [formGroup]="form">
-      <formly-form
-        [options]="options"
-        [form]="form"
-        [model]="model"
-        [fields]="fields"
-      >
-      </formly-form>
-    </form>
-  </div>
-  <div class="modal-footer">
-    <button
-      type="button"
-      class="btn btn-light btn-sm"
-      (click)="c('Close click')"
-    >
-      CANCEL
-    </button>
-    <button
-      [disabled]="form.invalid"
-      type="button"
-      class="btn btn-info btn-sm"
-      (click)="createUser(form.value); c('Close click')"
-    >
-      CREATE
-    </button>
-  </div>
-</ng-template>
+  <ng-template #createApi let-c="close" let-d="dismiss">
+    <div class="modal-header">
+      <h4 class="modal-title">New User</h4>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="form">
+        <formly-form
+          [options]="options"
+          [form]="form"
+          [model]="model"
+          [fields]="fields"
+          >
+        </formly-form>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button
+        type="button"
+        class="btn btn-light btn-sm"
+        (click)="c('Close click')"
+        >
+        CANCEL
+      </button>
+      <button
+        [disabled]="form.invalid"
+        type="button"
+        class="btn btn-info btn-sm"
+        (click)="createUser(form.value); c('Close click')"
+        >
+        CREATE
+      </button>
+    </div>
+  </ng-template>

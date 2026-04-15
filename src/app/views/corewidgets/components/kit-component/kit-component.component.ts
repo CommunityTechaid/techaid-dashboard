@@ -29,7 +29,7 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
-import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
 
@@ -152,7 +152,7 @@ const FIND_USERS = gql`
     selector: 'kit-component',
     styleUrls: ['kit-component.scss'],
     templateUrl: './kit-component.html',
-    imports: [NgIf, AppGridDirective_1, NgFor, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class KitComponent {
 

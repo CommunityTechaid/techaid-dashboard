@@ -11,7 +11,7 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
-import { NgIf, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 
 const QUERY_CONFIG = gql`
   query adminConfig {
@@ -49,7 +49,7 @@ const UPDATE_CONFIG = gql`
     selector: 'admin-panel',
     styleUrls: ['admin-panel.component.scss'],
     templateUrl: './admin-panel.component.html',
-    imports: [NgIf, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class AdminPanelComponent {
 

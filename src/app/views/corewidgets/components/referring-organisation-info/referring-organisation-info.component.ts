@@ -10,7 +10,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
-import { NgIf } from '@angular/common';
+
 import { ReferringOrganisationContactComponent } from '../referring-organisation-contact-component/referring-organisation-contact-component.component';
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 
@@ -50,7 +50,7 @@ const DELETE_ENTITY = gql`
     selector: 'app-referring-organisation-info',
     templateUrl: './referring-organisation-info.component.html',
     styleUrls: ['./referring-organisation-info.component.scss'],
-    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet]
 })
 export class ReferringOrganisationInfoComponent {
 

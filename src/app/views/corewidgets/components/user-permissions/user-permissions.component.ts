@@ -12,7 +12,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from '
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { NgIf, NgFor } from '@angular/common';
+
 
 const QUERY_PERMISSIONS = gql`
 query findPermissions($userId: String!, $page: PaginationInput) {
@@ -122,7 +122,7 @@ query findAutocompletePermissions($appId: String!, $userId: Int) {
     selector: 'user-permissions',
     styleUrls: ['user-permissions.scss'],
     templateUrl: './user-permissions.html',
-    imports: [AppGridDirective_1, NgIf, NgFor, NgbPopover, ReactiveFormsModule, FormlyModule]
+    imports: [AppGridDirective_1, NgbPopover, ReactiveFormsModule, FormlyModule]
 })
 export class UserPermissionsComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

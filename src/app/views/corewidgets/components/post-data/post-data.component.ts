@@ -12,7 +12,7 @@ import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
-import { NgIf } from '@angular/common';
+
 
 const QUERY_ENTITY = gql`
 query findPost($slug: String) {
@@ -40,7 +40,7 @@ query findPost($slug: String) {
     selector: 'post-data',
     styleUrls: ['post-data.scss'],
     templateUrl: './post-data.html',
-    imports: [NgIf, RouterLink]
+    imports: [RouterLink]
 })
 export class PostDataComponent {
   sub: Subscription;

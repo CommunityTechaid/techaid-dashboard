@@ -10,7 +10,7 @@ import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
-import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
 
@@ -61,7 +61,7 @@ query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: Refe
     selector: 'app-referring-organisation-index',
     templateUrl: './referring-organisation-index.component.html',
     styleUrls: ['./referring-organisation-index.component.scss'],
-    imports: [NgIf, AppGridDirective_1, NgFor, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class ReferringOrganisationIndexComponent {
 

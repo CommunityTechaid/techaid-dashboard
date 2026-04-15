@@ -27,7 +27,7 @@ import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 
 const QUERY_ENTITY = gql`
   query getDeviceRequestAuditTrail($id: Long!) {
@@ -65,7 +65,7 @@ const QUERY_ENTITY = gql`
     selector: 'device-request-audit-component',
     styleUrls: ['device-request-audit-component.scss'],
     templateUrl: './device-request-audit-component.html',
-    imports: [AppGridDirective_1, NgIf, NgFor, DatePipe]
+    imports: [AppGridDirective_1, DatePipe]
 })
 export class DeviceRequestAuditComponent {
 

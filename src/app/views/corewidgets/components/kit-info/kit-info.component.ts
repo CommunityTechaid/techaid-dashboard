@@ -17,7 +17,7 @@ import { HashUtils } from '@app/shared/utils';
 import { Title } from '@angular/platform-browser';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
-import { NgIf } from '@angular/common';
+
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 import { KitAuditComponent } from '../kit-audit-component/kit-audit-component.component';
 
@@ -260,7 +260,7 @@ query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
     selector: 'kit-info',
     styleUrls: ['kit-info.scss'],
     templateUrl: './kit-info.html',
-    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, KitAuditComponent, NgbNavOutlet]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, KitAuditComponent, NgbNavOutlet]
 })
 export class KitInfoComponent {
 

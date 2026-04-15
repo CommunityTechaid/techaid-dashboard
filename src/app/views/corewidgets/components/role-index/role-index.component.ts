@@ -13,7 +13,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { RouterLink } from '@angular/router';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { NgIf, NgFor } from '@angular/common';
+
 
 const QUERY_ROLES = gql`
 query findAllRoles($page: PaginationInput!, $term: String) {
@@ -33,7 +33,7 @@ query findAllRoles($page: PaginationInput!, $term: String) {
     selector: 'role-index',
     styleUrls: ['role-index.scss'],
     templateUrl: './role-index.html',
-    imports: [RouterLink, AppGridDirective_1, NgIf, NgFor, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu]
+    imports: [RouterLink, AppGridDirective_1, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu]
 })
 export class RoleIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

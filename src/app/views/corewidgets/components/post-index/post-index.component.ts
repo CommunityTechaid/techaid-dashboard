@@ -15,7 +15,7 @@ import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 const QUERY_ENTITY = gql`
@@ -71,7 +71,7 @@ mutation createPost($data: CreatePostInput!) {
     selector: 'post-index',
     styleUrls: ['post-index.scss'],
     templateUrl: './post-index.html',
-    imports: [AppGridDirective_1, NgIf, NgFor, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class PostIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

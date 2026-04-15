@@ -3,7 +3,7 @@ import { Select, Store } from '@ngxs/store';
 import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
 import { Observable, Subscription } from 'rxjs';
-import { NgIf } from '@angular/common';
+
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
@@ -16,7 +16,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
           padding-top: 5px;
         }
     `],
-    imports: [NgIf, RouterLink, RouterLinkActive]
+    imports: [RouterLink, RouterLinkActive]
 })
 
 export class AppSidebar {

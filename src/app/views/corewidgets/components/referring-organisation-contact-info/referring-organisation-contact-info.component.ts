@@ -11,7 +11,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
-import { NgIf } from '@angular/common';
+
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 
 const QUERY_ENTITY = gql`
@@ -78,7 +78,7 @@ query findAutocompleteReferringOrganisations($term: String) {
     selector: 'app-referring-organisation-contact-info',
     templateUrl: './referring-organisation-contact-info.component.html',
     styleUrls: ['./referring-organisation-contact-info.component.scss'],
-    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, NgbNavOutlet]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, NgbNavOutlet]
 })
 export class ReferringOrganisationContactInfoComponent {
 

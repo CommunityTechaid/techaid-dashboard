@@ -12,7 +12,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from '
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { NgIf, NgFor } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 
 const QUERY_PERMISSIONS = gql`
@@ -66,7 +66,7 @@ query findAutocompleteRoles($term: String, $term: String) {
     selector: 'user-roles',
     styleUrls: ['user-roles.scss'],
     templateUrl: './user-roles.html',
-    imports: [AppGridDirective_1, NgIf, NgFor, RouterLink, ReactiveFormsModule, FormlyModule]
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule]
 })
 export class UserRolesComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

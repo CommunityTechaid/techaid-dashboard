@@ -17,7 +17,7 @@ import { KIT_TYPES } from '@app/shared/utils';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { RouterLink } from '@angular/router';
-import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 
 const QUERY_ENTITY = gql`
@@ -233,7 +233,7 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
     selector: 'kit-index',
     styleUrls: ['kit-index.scss'],
     templateUrl: './kit-index.html',
-    imports: [RouterLink, NgIf, AppGridDirective_1, NgFor, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [RouterLink, AppGridDirective_1, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class KitIndexComponent {
 

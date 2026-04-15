@@ -3,7 +3,7 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { DomSanitizer } from '@angular/platform-browser';
 import { NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
-import { NgFor, NgIf } from '@angular/common';
+
 
 const QUERY_ENTITY = gql`
 query metabaseDashboard($ids: [ID!]) {
@@ -23,7 +23,7 @@ const DASHBOARDS = [
     selector: 'app-reports',
     templateUrl: './reports.html',
     styles: [],
-    imports: [NgbNav, NgFor, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgIf, NgbNavOutlet]
+    imports: [NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet]
 })
   export class ReportsComponent {
       dashboards = [];

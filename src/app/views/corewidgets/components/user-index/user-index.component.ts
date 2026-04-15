@@ -13,7 +13,7 @@ import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { RouterLink } from '@angular/router';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { AppInitialComponent } from '../../../../shared/components/app-initial/app-initial.component';
 
 const QUERY_USERS = gql`
@@ -39,7 +39,7 @@ query findAllUsers($page: PaginationInput!, $term: String) {
     selector: 'user-index',
     styleUrls: ['user-index.scss'],
     templateUrl: './user-index.html',
-    imports: [RouterLink, AppGridDirective_1, NgIf, NgFor, AppInitialComponent, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [RouterLink, AppGridDirective_1, AppInitialComponent, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class UserIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

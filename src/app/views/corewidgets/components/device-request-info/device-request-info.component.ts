@@ -13,7 +13,7 @@ import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
 import { getKitTypeLabel } from '@app/shared/utils';
-import { NgIf } from '@angular/common';
+
 import { KitComponent } from '../kit-component/kit-component.component';
 import { DeviceRequestAuditComponent } from '../device-request-audit-component/device-request-audit-component.component';
 
@@ -185,7 +185,7 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
     selector: 'app-device-request-info',
     templateUrl: './device-request-info.component.html',
     styleUrls: ['./device-request-info.component.scss'],
-    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, DeviceRequestAuditComponent, NgbNavOutlet]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, DeviceRequestAuditComponent, NgbNavOutlet]
 })
 export class DeviceRequestInfoComponent {
   @ViewChild('kitWarning') kitWarningModal: any;

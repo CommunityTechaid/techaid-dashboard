@@ -27,7 +27,7 @@ import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { NgIf, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 
 const QUERY_ENTITY = gql`
   query getAuditTrail($id: Long!) {
@@ -62,7 +62,7 @@ const QUERY_ENTITY = gql`
     selector: 'kit-audit-component',
     styleUrls: ['kit-audit-component.scss'],
     templateUrl: './kit-audit-component.html',
-    imports: [AppGridDirective_1, NgIf, NgFor, DatePipe]
+    imports: [AppGridDirective_1, DatePipe]
 })
 export class KitAuditComponent {
 

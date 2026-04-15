@@ -13,7 +13,7 @@ import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
-import { NgIf } from '@angular/common';
+
 import { KitComponent } from '../kit-component/kit-component.component';
 
 const QUERY_ENTITY = gql`
@@ -104,7 +104,7 @@ query findAutocompleteDonorParents($term: String) {
     selector: 'donor-info',
     styleUrls: ['donor-info.scss'],
     templateUrl: './donor-info.html',
-    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, NgbNavOutlet]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, NgbNavOutlet]
 })
 export class DonorInfoComponent {
 

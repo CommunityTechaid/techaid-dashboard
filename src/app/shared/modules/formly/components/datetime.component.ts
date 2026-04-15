@@ -3,7 +3,7 @@ import { NgbDateAdapter, NgbDateStruct, NgbTimeStruct, NgbInputDatepicker, NgbDa
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ReactiveFormsModule } from '@angular/forms';
 import { FieldType, FormlyModule } from '@ngx-formly/core';
 import { isValid, parse, format as fnsFormat, subYears, formatISO } from 'date-fns';
-import { NgIf, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 export interface NgbDateTimeStruct extends NgbDateStruct, NgbTimeStruct {}
 
 @Component({
@@ -30,7 +30,8 @@ export class DateTimeInput extends FieldType {
     ],
     template: `
 <div>
-    <div class="input-group" *ngIf="to.inline; else nonInline">
+  @if (to.inline) {
+    <div class="input-group">
       <input class="form-control"
         (blur)="onTouch()"
         (ngModelChange)="onDateChange($event)"
@@ -50,8 +51,7 @@ export class DateTimeInput extends FieldType {
         </button>
       </div>
     </div>
-
-    <ng-template #nonInline>
+  } @else {
     <div class="input-group">
       <ngb-datepicker #dp
         (blur)="onTouch()"
@@ -66,25 +66,26 @@ export class DateTimeInput extends FieldType {
         >
       </ngb-datepicker>
     </div>
-  </ng-template>
+  }
 
 
-    <div class="input-group">
-      <ngb-timepicker [ngStyle]="{'margin-top': to.time.spinners ? 'auto' : '5px'}"
-         (blur)="onTouch()"
-         [formControl]="time"
-         [seconds]="to.time.seconds"
-         [meridian]="to.time.meridian"
-         [spinners]="to.time.spinners"
-         [hourStep]="to.time.hourStep"
-         [minuteStep]="to.time.minuteStep"
-         [secondStep]="to.time.secondStep"
-         name="timepicker" (ngModelChange)="onTimeChange($event)" #timepicker>
-      </ngb-timepicker>
-    </div>
+
+  <div class="input-group">
+    <ngb-timepicker [ngStyle]="{'margin-top': to.time.spinners ? 'auto' : '5px'}"
+      (blur)="onTouch()"
+      [formControl]="time"
+      [seconds]="to.time.seconds"
+      [meridian]="to.time.meridian"
+      [spinners]="to.time.spinners"
+      [hourStep]="to.time.hourStep"
+      [minuteStep]="to.time.minuteStep"
+      [secondStep]="to.time.secondStep"
+      name="timepicker" (ngModelChange)="onTimeChange($event)" #timepicker>
+    </ngb-timepicker>
+  </div>
 </div>
-  `,
-    imports: [NgIf, NgbInputDatepicker, ReactiveFormsModule, NgbDatepicker, NgbTimepicker, NgStyle]
+`,
+    imports: [NgbInputDatepicker, ReactiveFormsModule, NgbDatepicker, NgbTimepicker, NgStyle]
 })
 export class DateTimeInputWidget implements ControlValueAccessor {
   @ViewChild('dp') dp;

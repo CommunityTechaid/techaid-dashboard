@@ -1,4 +1,4 @@
-import { enableProdMode, APP_INITIALIZER, importProvidersFrom } from '@angular/core';
+import { enableProdMode, APP_INITIALIZER, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 
 import { configServiceFactory, dateRangeValidator } from './app/app.module';
@@ -35,7 +35,7 @@ if (environment.production) {
 
 bootstrapApplication(AppComponent, {
     providers: [
-        importProvidersFrom(FormsModule, ReactiveFormsModule, AppSharedModule.forRoot(), FormlyModule.forRoot({
+        provideZoneChangeDetection(),importProvidersFrom(FormsModule, ReactiveFormsModule, AppSharedModule.forRoot(), FormlyModule.forRoot({
             validators: [{ name: 'dateRange', validation: dateRangeValidator }]
         }), FormlyBootstrapModule, NgbModule, AppFormModule.forRoot(), ToastrModule.forRoot({
             positionClass: 'toast-top-right',

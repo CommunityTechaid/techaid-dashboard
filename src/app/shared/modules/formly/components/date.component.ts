@@ -3,7 +3,7 @@ import { NgbDateAdapter, NgbDateStruct, NgbDate, NgbInputDatepicker, NgbDatepick
 import { FieldType, FormlyModule } from '@ngx-formly/core';
 import { isValid, parse, format as fnsFormat, subYears } from 'date-fns';
 import { DateUtils } from '@app/shared/utils/date_utils';
-import { NgIf } from '@angular/common';
+
 import { ReactiveFormsModule } from '@angular/forms';
 
 
@@ -98,28 +98,28 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
     ],
     template: `
 <div>
-  <div class="input-group"  *ngIf="to.inline; else nonInline">
-    <input (click)="to.openOnClick && dp.open()" class="form-control"
-      [displayMonths]="to.displayMonths"
-      [navigation]="to.navigation"
-      [showWeekNumbers]="to.showWeekNumbers"
-      placeholder="{{to.placeholder}}"
-      [formControl]="formControl"
-      [minDate]="minDate"
-      [maxDate]="maxDate"
-      [startDate]="startDate"
-      [formlyAttributes]="field"
-      [class.is-invalid]="showError"
-      [markDisabled]="isDisabled"
-      ngbDatepicker #dp="ngbDatepicker">
-    <div class="input-group-append">
-      <button type="button" [class.is-invalid]="showError" class="form-control btn {{to.buttonClass}}" (click)="dp.toggle()" >
-        <i class="fa fa-calendar"></i>
-      </button>
+  @if (to.inline) {
+    <div class="input-group" >
+      <input (click)="to.openOnClick && dp.open()" class="form-control"
+        [displayMonths]="to.displayMonths"
+        [navigation]="to.navigation"
+        [showWeekNumbers]="to.showWeekNumbers"
+        placeholder="{{to.placeholder}}"
+        [formControl]="formControl"
+        [minDate]="minDate"
+        [maxDate]="maxDate"
+        [startDate]="startDate"
+        [formlyAttributes]="field"
+        [class.is-invalid]="showError"
+        [markDisabled]="isDisabled"
+        ngbDatepicker #dp="ngbDatepicker">
+      <div class="input-group-append">
+        <button type="button" [class.is-invalid]="showError" class="form-control btn {{to.buttonClass}}" (click)="dp.toggle()" >
+          <i class="fa fa-calendar"></i>
+        </button>
+      </div>
     </div>
-  </div>
-
-  <ng-template #nonInline>
+  } @else {
     <div class="input-group">
       <ngb-datepicker #dp
         [class.is-invalid]="showError"
@@ -135,10 +135,11 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
         >
       </ngb-datepicker>
     </div>
-  </ng-template>
+  }
+
 </div>
-  `,
-    imports: [NgIf, NgbInputDatepicker, ReactiveFormsModule, FormlyModule, NgbDatepicker]
+`,
+    imports: [NgbInputDatepicker, ReactiveFormsModule, FormlyModule, NgbDatepicker]
 })
 export class DateInput extends FieldType implements OnInit {
   @ViewChild('dp') dp;

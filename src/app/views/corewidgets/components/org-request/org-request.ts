@@ -20,7 +20,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
-import { NgIf } from '@angular/common';
+
 import { AppLocalCSS } from './app-local-css.component';
 
 declare var window: any;
@@ -119,7 +119,7 @@ const QUERY_ADMIN_CONFIG = gql`
     selector: 'org-request',
     styleUrls: ['./org-request.scss'],
     templateUrl: './org-request.html',
-    imports: [NgIf, AppLocalCSS, ReactiveFormsModule, FormlyModule]
+    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule]
 })
 
 export class OrgRequestComponent implements AfterViewChecked {

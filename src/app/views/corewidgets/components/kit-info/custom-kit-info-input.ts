@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
-import { NgIf, NgFor } from '@angular/common';
+
 import { ReactiveFormsModule } from '@angular/forms';
 
 /*
@@ -31,31 +31,47 @@ Ideally, the input field should be dynamically rendered using custom selector bu
     selector: 'formly-field-kit-info-input',
     styleUrls: ['kit-info.scss'],
     template: `
-  <label *ngIf="to.label">{{to.label}}</label>
-    <div class="kit-info-input d-flex w-100 align-items-center justify-content-between" style="background-color: {{ to.bgcolor || 'white' }}">
+  @if (to.label) {
+    <label>{{to.label}}</label>
+  }
+  <div class="kit-info-input d-flex w-100 align-items-center justify-content-between" style="background-color: {{ to.bgcolor || 'white' }}">
     <div style="font-size:smaller" class="d-flex">
-
-      <select *ngIf="to.type=='select'" [hidden]="!editable" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="infoValue">
-        <option *ngFor="let val of to.options" 
-          [value]="val.value" >
-          {{val.label}}
-        </option>
-      </select>
-
-      <input *ngIf="to.type!='select'" [hidden]="!editable" (focusout)="toggleEdit()" [type]="to.type" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="infoValue">      
-      <span *ngIf="infoValue != undefined" [hidden]="editable" class="pr-1"  [innerText]="infoValue"></span>
-      <span *ngIf="infoValue == undefined" [hidden]="editable" class="pr-1 pl-1">None</span>
-      <span class="pr-1" *ngIf="to.descriptor">{{to.descriptor }}</span>
+  
+      @if (to.type=='select') {
+        <select [hidden]="!editable" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="infoValue">
+          @for (val of to.options; track val) {
+            <option
+              [value]="val.value" >
+              {{val.label}}
+            </option>
+          }
+        </select>
+      }
+  
+      @if (to.type!='select') {
+        <input [hidden]="!editable" (focusout)="toggleEdit()" [type]="to.type" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="infoValue">
+      }
+      @if (infoValue != undefined) {
+        <span [hidden]="editable" class="pr-1"  [innerText]="infoValue"></span>
+      }
+      @if (infoValue == undefined) {
+        <span [hidden]="editable" class="pr-1 pl-1">None</span>
+      }
+      @if (to.descriptor) {
+        <span class="pr-1">{{to.descriptor }}</span>
+      }
     </div>
     <div>
-    <div *ngIf="!to.readonly">
-      <i (click)="editField()" class="fas fa-edit fa-xs align-self-end"></i>
-    </div>
-      
-      
+      @if (!to.readonly) {
+        <div>
+          <i (click)="editField()" class="fas fa-edit fa-xs align-self-end"></i>
+        </div>
+      }
+  
+  
     </div>
   `,
-    imports: [NgIf, ReactiveFormsModule, FormlyModule, NgFor]
+    imports: [ReactiveFormsModule, FormlyModule]
 })
 export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> {
 //

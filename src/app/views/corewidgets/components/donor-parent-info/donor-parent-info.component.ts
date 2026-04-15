@@ -12,7 +12,7 @@ import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
-import { NgIf } from '@angular/common';
+
 import { DonorComponent } from '../donor-component/donor-component.component';
 import { KitComponent } from '../kit-component/kit-component.component';
 
@@ -69,7 +69,7 @@ mutation deleteDonorParent($id: ID!) {
     selector: 'donor-parent-info',
     styleUrls: ['donor-parent-info.scss'],
     templateUrl: './donor-parent-info.html',
-    imports: [NgIf, RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DonorComponent, KitComponent, NgbNavOutlet]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DonorComponent, KitComponent, NgbNavOutlet]
 })
 export class DonorParentInfoComponent {
 

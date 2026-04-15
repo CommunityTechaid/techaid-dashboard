@@ -12,7 +12,6 @@ import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
-import { NgIf, NgFor } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { PostIndexComponent } from '../post-index/post-index.component';
 
@@ -52,7 +51,7 @@ query findAll {
     selector: 'dashboard-index',
     styleUrls: ['dashboard-index.scss'],
     templateUrl: './dashboard-index.html',
-    imports: [NgIf, NgFor, NgbProgressbar, AppGridDirective_1, PostIndexComponent]
+    imports: [NgbProgressbar, AppGridDirective_1, PostIndexComponent]
 })
 export class DashboardIndexComponent {
   sub: Subscription;
