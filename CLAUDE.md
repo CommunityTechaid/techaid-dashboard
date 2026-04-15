@@ -110,7 +110,7 @@ before proceeding to the next.
 | P8 | Angular v20 → v21 (unlocks ngx-toastr v20, NGXS v21, ng-bootstrap v20) | ✓ Complete |
 | P9 | Remove zombie devDependencies (`wait-on`, `webdriver-manager`) — clears 11 audit findings | ✓ Complete |
 | P10 | Migrate to the new esbuild build system (`use-application-builder`) | ✓ Complete |
-| P11 | Convert remaining NgModules to standalone providers (`provideStore()`, `provideFormlyConfig()`, etc.) | After P10 |
+| P11 | Convert remaining NgModules to standalone providers (`provideStore()`, `provideFormlyConfig()`, etc.) | ✓ Complete |
 
 ### P1 — Remove zombie dependencies
 

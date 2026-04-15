@@ -1,36 +1,5 @@
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, APP_INITIALIZER } from '@angular/core';
-import { AuthModule } from '@auth0/auth0-angular';
-
-import { AppSharedModule } from '@app/shared';
-import { AppComponent } from './app.component';
-import { FormlyModule } from '@ngx-formly/core';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { AppFormModule } from './shared/modules/formly';
-import { AppHeader } from './components/app-header/app.header.component';
-import { AppSidebar } from './components/app-sidebar/app.sidebar.component';
-import { App404 } from '@app/shared/components/app-404/app-404.component';
-import { AppAuthModule } from './shared/modules/auth';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { AppRoutingModule } from './app.routing.module';
-import { NgProgressModule } from 'ngx-progressbar';
-import { AppNgProgressHttpModule } from '@app/shared/utils/app-ngx-progress-http';
-import { ToastrModule } from 'ngx-toastr';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { AbstractControl } from '@angular/forms';
 import { ConfigService } from '@app/shared/services/config.service';
-import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
-import { AppStateModule } from '@app/state/state.module';
-import { FormsModule, ReactiveFormsModule, AbstractControl } from '@angular/forms';
-import { GraphQLModule } from './graphql.module';
-import { FormlyCustomNote } from './views/corewidgets/components/kit-info/custom-notes';
-import { FormlyCustomCreateNote } from './views/corewidgets/components/kit-info/custom-create-note';
-import { FormlyCustomKitCheckboxType } from './views/corewidgets/components/kit-info/custom-kit-checkbox'
-import { FormlyCustomKitInfoType } from './views/corewidgets/components/kit-info/custom-kit-info-input'
-import { FormlyCustomDeviceRequestNote } from './views/corewidgets/components/device-request-info/custom-notes';
-import { FormlyCustomCreateDeviceRequestNote } from './views/corewidgets/components/device-request-info/custom-create-notes';
-
-
-
 
 export function dateRangeValidator(control: AbstractControl) {
   const { after, before } = control.value;

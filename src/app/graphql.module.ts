@@ -1,8 +1,8 @@
-import { NgModule } from '@angular/core';
+import { Provider } from '@angular/core';
 import { HttpHeaders } from '@angular/common/http';
 import { Apollo, APOLLO_OPTIONS } from 'apollo-angular';
 import { HttpLink } from 'apollo-angular/http';
-import { ApolloClientOptions, ApolloLink, InMemoryCache } from '@apollo/client/core';
+import { ApolloClientOptions, InMemoryCache } from '@apollo/client/core';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { ConfigService } from '@app/shared/services/config.service';
@@ -33,16 +33,11 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
   };
 }
 
-@NgModule({
-  providers: [
-    // Apollo must be explicitly provided — ApolloModule no longer exists in apollo-angular v13.
-    // provideApollo() does the same thing but requires a zero-argument factory (no DI).
-    Apollo,
-    {
-      provide: APOLLO_OPTIONS,
-      useFactory: createApollo,
-      deps: [HttpLink, ConfigService, AuthenticationService],
-    },
-  ],
-})
-export class GraphQLModule { }
+export const graphqlProviders: Provider[] = [
+  Apollo,
+  {
+    provide: APOLLO_OPTIONS,
+    useFactory: createApollo,
+    deps: [HttpLink, ConfigService, AuthenticationService],
+  },
+];

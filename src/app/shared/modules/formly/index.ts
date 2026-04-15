@@ -1,31 +1,32 @@
-
-import { NgModule, ModuleWithProviders } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Routes, RouterModule } from '@angular/router';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
-import { FormlyModule, ConfigOption } from '@ngx-formly/core';
-import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { Provider } from '@angular/core';
+import { UntypedFormControl } from '@angular/forms';
+import { provideFormlyConfig } from '@ngx-formly/core';
+import { ConfigOption } from '@ngx-formly/core';
+import { QuillModule } from 'ngx-quill';
 import { AppFormlyWrapperFormField } from './wrapper/form-field.wrapper';
 import { ChoiceInput } from './components/choice.component';
 import { PlaceInput } from './components/place.component';
 import { DateInput } from './components/date.component';
 import { DateTimeInput, DateTimeInputWidget } from './components/datetime.component';
 import { MaskedInput } from './components/input-mask.component';
-import { AppSharedModule } from '@app/shared';
 import { GalleryInput } from './components/gallery.component';
-import { QuillModule } from 'ngx-quill';
 import { RichTextComponent } from './components/richtext.component';
 import { RepeatTypeComponent } from './components/repeat.component';
 import { FormlyFieldButton } from './components/button.component';
 
+export { AppFormlyWrapperFormField } from './wrapper/form-field.wrapper';
+export { ChoiceInput } from './components/choice.component';
+export { DateInput } from './components/date.component';
+export { DateTimeInput, DateTimeInputWidget } from './components/datetime.component';
+export { MaskedInput } from './components/input-mask.component';
+export { RichTextComponent } from './components/richtext.component';
+export { RepeatTypeComponent } from './components/repeat.component';
+export { FormlyFieldButton } from './components/button.component';
 
 export function percentageValidator(c: UntypedFormControl, field) {
     if (c.value && c.value.toString().trim()) {
         return /^-?[0-9]+\.?[0-9]+%?$/.test(c.value.toString());
     }
-
     return true;
 }
 
@@ -33,7 +34,6 @@ export function numberValidator(c: UntypedFormControl, field) {
     if (c.value && c.value.toString().trim()) {
         return /^-?[0-9]+(\.[0-9]+)?$/.test(c.value.toString());
     }
-
     return true;
 }
 
@@ -47,9 +47,7 @@ export const FORMLYCONFIG: ConfigOption = {
                 templateOptions: {
                     mask: {
                         value: [],
-                        options: {
-                            keepMask: false
-                        }
+                        options: { keepMask: false }
                     }
                 }
             }
@@ -61,10 +59,7 @@ export const FORMLYCONFIG: ConfigOption = {
             defaultOptions: {
                 templateOptions: {
                     mask: {
-                        options: {
-                            keepMask: true,
-                            showMask: false
-                        },
+                        options: { keepMask: true, showMask: false },
                         value: {
                             type: 'number',
                             options: {
@@ -77,9 +72,7 @@ export const FORMLYCONFIG: ConfigOption = {
                         }
                     }
                 },
-                validators: {
-                    pattern: percentageValidator
-                }
+                validators: { pattern: percentageValidator }
             }
         },
         {
@@ -89,22 +82,14 @@ export const FORMLYCONFIG: ConfigOption = {
             defaultOptions: {
                 templateOptions: {
                     mask: {
-                        options: {
-                            keepMask: false,
-                            showMask: true
-                        },
+                        options: { keepMask: false, showMask: true },
                         value: {
                             type: 'number',
-                            options: {
-                                allowDecimal: true,
-                                includeThousandsSeparator: true
-                            }
+                            options: { allowDecimal: true, includeThousandsSeparator: true }
                         }
                     }
                 },
-                validators: {
-                    pattern: numberValidator
-                }
+                validators: { pattern: numberValidator }
             }
         },
         {
@@ -125,16 +110,12 @@ export const FORMLYCONFIG: ConfigOption = {
                 }
             }
         },
-        {name: 'repeat', component: RepeatTypeComponent },
+        { name: 'repeat', component: RepeatTypeComponent },
         {
             name: 'richtext',
             component: RichTextComponent,
             wrappers: ['form-field'],
-            defaultOptions: {
-                templateOptions: {
-                    placeholder: '',
-                }
-            }
+            defaultOptions: { templateOptions: { placeholder: '' } }
         },
         {
             name: 'place',
@@ -143,9 +124,7 @@ export const FORMLYCONFIG: ConfigOption = {
             defaultOptions: {
                 templateOptions: {
                     placeholder: '',
-                    mapOptions: {
-                        componentRestrictions: { country: 'GB' },
-                    }
+                    mapOptions: { componentRestrictions: { country: 'GB' } }
                 }
             }
         },
@@ -153,12 +132,7 @@ export const FORMLYCONFIG: ConfigOption = {
             name: 'gallery',
             component: GalleryInput,
             wrappers: ['form-field'],
-            defaultOptions: {
-                templateOptions: {
-                    placeholder: '',
-                    prefix: ''
-                }
-            }
+            defaultOptions: { templateOptions: { placeholder: '', prefix: '' } }
         },
         {
             name: 'date',
@@ -217,12 +191,9 @@ export const FORMLYCONFIG: ConfigOption = {
             component: FormlyFieldButton,
             wrappers: ['form-field'],
             defaultOptions: {
-              templateOptions: {
-                btnType: 'default',
-                type: 'button',
-              },
-            },
-          }
+                templateOptions: { btnType: 'default', type: 'button' }
+            }
+        }
     ],
     wrappers: [
         { name: 'form-field', component: AppFormlyWrapperFormField }
@@ -233,46 +204,6 @@ export const FORMLYCONFIG: ConfigOption = {
     ]
 };
 
-@NgModule({
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        NgSelectModule,
-        FormlyModule.forChild(FORMLYCONFIG),
-        FormlyBootstrapModule,
-        AppSharedModule,
-        NgbModule,
-        QuillModule.forRoot(),
-        AppFormlyWrapperFormField,
-        ChoiceInput,
-        DateInput,
-        DateTimeInput,
-        MaskedInput,
-        DateTimeInputWidget,
-        PlaceInput,
-        GalleryInput,
-        RichTextComponent,
-        RepeatTypeComponent,
-        FormlyFieldButton,
-    ],
-    exports: [
-        AppFormlyWrapperFormField,
-        ChoiceInput,
-        DateInput,
-        DateTimeInput,
-        FormlyModule,
-        FormlyBootstrapModule,
-        ReactiveFormsModule,
-        MaskedInput,
-        DateTimeInputWidget
-    ]
-})
-export class AppFormModule {
-    static forRoot(): ModuleWithProviders<AppFormModule> {
-    return {
-        ngModule: AppFormModule,
-        providers: []
-    };
-}
-}
-
+export const formlyProviders: Provider[] = [
+    provideFormlyConfig(FORMLYCONFIG),
+];
