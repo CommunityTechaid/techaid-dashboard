@@ -108,8 +108,8 @@ before proceeding to the next.
 | P6 | CKEditor 4 → `ngx-quill` — replaced the single `richtext` formly field; CK4 removed | ✓ Complete |
 | P7 | Standalone component migration (`ng generate @angular/core:standalone`) | ✓ Complete |
 | P8 | Angular v20 → v21 (unlocks ngx-toastr v20, NGXS v21, ng-bootstrap v20) | ✓ Complete |
-| P9 | Remove zombie devDependencies (`wait-on`, `webdriver-manager`) — clears 11 audit findings | After P8 |
-| P10 | Migrate to the new esbuild build system (`use-application-builder`) | After P9 |
+| P9 | Remove zombie devDependencies (`wait-on`, `webdriver-manager`) — clears 11 audit findings | ✓ Complete |
+| P10 | Migrate to the new esbuild build system (`use-application-builder`) | ✓ Complete |
 | P11 | Convert remaining NgModules to standalone providers (`provideStore()`, `provideFormlyConfig()`, etc.) | After P10 |
 
 ### P1 — Remove zombie dependencies
