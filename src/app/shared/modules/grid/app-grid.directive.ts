@@ -1,6 +1,6 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import 'datatables.net';
 import 'datatables.net-bs5';
 import 'datatables.net-rowreorder';
