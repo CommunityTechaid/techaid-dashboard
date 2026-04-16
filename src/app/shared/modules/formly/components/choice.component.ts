@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { NgSelectComponent } from '@ng-select/ng-select';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'form-choice',
-  template: `
+    selector: 'form-choice',
+    template: `
     <ng-select
         [formControl]="formControl"
         [class.is-invalid]="showError"
@@ -17,7 +18,8 @@ import { NgSelectComponent } from '@ng-select/ng-select';
         [typeahead]="to.typeahead"
         placeholder="{{this.to.placeholder}}">
     </ng-select>
-  `
+  `,
+    imports: [NgSelectComponent, ReactiveFormsModule]
 })
 export class ChoiceInput extends FieldType {
   @ViewChild(NgSelectComponent)

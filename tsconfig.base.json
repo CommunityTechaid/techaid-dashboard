@@ -6,8 +6,8 @@
     "baseUrl": "./src/",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
-    "emitDecoratorMetadata": true,
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
     "experimentalDecorators": true,
     "target": "es2015",
     "typeRoots": [
@@ -37,9 +37,8 @@
       ]
     },
     "lib": [
-      "es2017",
-      "dom",
-      "esnext.asynciterable"
+      "es2020",
+      "dom"
     ]
   },
   "include": [

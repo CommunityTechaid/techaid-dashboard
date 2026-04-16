@@ -2,22 +2,24 @@ import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { KIT_TYPES } from '@app/shared/utils';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { Lightbox } from 'ngx-lightbox';
-import { isObject } from 'util';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { HashUtils } from '@app/shared/utils';
 import { Title } from '@angular/platform-browser';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+
+import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
+import { KitAuditComponent } from '../kit-audit-component/kit-audit-component.component';
 
 export const KIT_STATUS = {
   'DONATION_NEW': 'New device registered',
@@ -255,9 +257,10 @@ query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
 `;
 
 @Component({
-  selector: 'kit-info',
-  styleUrls: ['kit-info.scss'],
-  templateUrl: './kit-info.html'
+    selector: 'kit-info',
+    styleUrls: ['kit-info.scss'],
+    templateUrl: './kit-info.html',
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, KitAuditComponent, NgbNavOutlet]
 })
 export class KitInfoComponent {
 
@@ -278,7 +281,7 @@ export class KitInfoComponent {
   @Select(UserState.user) user$: Observable<User>;
 
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   model: any = {};
   deviceModel = {};
@@ -934,6 +937,7 @@ export class KitInfoComponent {
     });
 
   private normalizeData(data: any) {
+    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
     if (data.donor && data.donor.id) {
       data.donorId = data.donor.id;
       this.donorField.templateOptions['items'] = [

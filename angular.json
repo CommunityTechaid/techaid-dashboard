@@ -9,14 +9,17 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "aot": true,
-            "outputPath": "dist",
+            "outputPath": {
+              "base": "dist",
+              "browser": ""
+            },
             "index": "src/index.html",
-            "main": "src/main.ts",
             "tsConfig": "src/tsconfig.app.json",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": [
+              "src/polyfills.ts"
+            ],
             "allowedCommonJsDependencies": [
               "ngx-google-places-autocomplete",
               "graphql-tag",
@@ -25,9 +28,10 @@
               "jquery",
               "datatables.net",
               "ngx-lightbox",
-              "datatables.net-bs4",
+              "datatables.net-bs5",
               "lodash",
-              "zen-observable"
+              "zen-observable",
+              "quill-delta"
             ],
             "assets": [
               "src/assets",
@@ -40,19 +44,28 @@
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.css",
-              "node_modules/datatables.net-bs4/css/dataTables.bootstrap4.css",
+              "node_modules/quill/dist/quill.snow.css",
+              "node_modules/datatables.net-bs5/css/dataTables.bootstrap5.css",
               "node_modules/prismjs/themes/prism.css",
               "node_modules/ngx-lightbox/lightbox.css",
+              "node_modules/@ng-select/ng-select/themes/default.theme.css",
+              "node_modules/ngx-toastr/toastr.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "src/styles.css",
               "src/sb-admin.css"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.js",
-              "node_modules/datatables.net/js/jquery.dataTables.js",
-              "node_modules/datatables.net-bs4/js/dataTables.bootstrap4.js",
+              "node_modules/datatables.net/js/dataTables.js",
+              "node_modules/datatables.net-bs5/js/dataTables.bootstrap5.js",
               "node_modules/bootstrap/dist/js/bootstrap.js",
               "src/sb-admin-2.min.js"
-            ]
+            ],
+            "extractLicenses": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true,
+            "browser": "src/main.ts"
           },
           "configurations": {
             "production": {
@@ -65,12 +78,8 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": false,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -122,48 +131,86 @@
                 }
               ],
               "outputHashing": "all"
+            },
+            "uat-local": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.uat-local.ts"
+                }
+              ]
             }
-          }
+          },
+          "defaultConfiguration": ""
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "options": {
-            "browserTarget": "angular-template:build",
-            "proxyConfig": "src/proxy.conf.json"
+            "proxyConfig": "src/proxy.conf.json",
+            "buildTarget": "angular-template:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "angular-template:build:production"
+              "buildTarget": "angular-template:build:production"
             },
             "local": {
-              "browserTarget": "angular-template:build:local"
+              "buildTarget": "angular-template:build:local"
             },
             "uat": {
-              "browserTarget": "angular-template:build:uat"
+              "buildTarget": "angular-template:build:uat"
+            },
+            "uat-local": {
+              "proxyConfig": "src/proxy.conf.uat.json",
+              "buildTarget": "angular-template:build:uat-local"
             },
             "dev": {
-              "browserTarget": "angular-template:build:dev",
-              "proxyConfig": "src/proxy.conf.json"
+              "proxyConfig": "src/proxy.conf.json",
+              "buildTarget": "angular-template:build:dev"
             }
           }
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
-            "browserTarget": "angular-template:build"
+            "buildTarget": "angular-template:build"
           }
         }
       }
     }
   },
-  "defaultProject": "angular-template",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",
-      "style": "css"
+      "style": "css",
+      "type": "component"
     },
     "@schematics/angular:directive": {
-      "prefix": "app"
+      "prefix": "app",
+      "type": "directive"
+    },
+    "@schematics/angular:service": {
+      "type": "service"
+    },
+    "@schematics/angular:guard": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:interceptor": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:module": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:pipe": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:resolver": {
+      "typeSeparator": "."
     }
   },
   "cli": {

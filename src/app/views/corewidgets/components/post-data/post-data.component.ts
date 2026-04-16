@@ -7,12 +7,12 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { FormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
+
 
 const QUERY_ENTITY = gql`
 query findPost($slug: String) {
@@ -37,10 +37,10 @@ query findPost($slug: String) {
 
 
 @Component({
-  selector: 'post-data',
-  styleUrls: ['post-data.scss'],
-
-  templateUrl: './post-data.html'
+    selector: 'post-data',
+    styleUrls: ['post-data.scss'],
+    templateUrl: './post-data.html',
+    imports: [RouterLink]
 })
 export class PostDataComponent {
   sub: Subscription;

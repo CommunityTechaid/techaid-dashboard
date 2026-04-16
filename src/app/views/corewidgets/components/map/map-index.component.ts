@@ -1,14 +1,14 @@
-import { Component, ViewChild, Inject, Renderer2, Input } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Component, ViewChild, Inject, Renderer2, Input, DOCUMENT } from '@angular/core';
+
 
 function _window(): any {
   return window;
 }
 
 @Component({
-  selector: 'map-index',
-  styleUrls: ['map-index.scss'],
-  templateUrl: './map-index.html'
+    selector: 'map-index',
+    styleUrls: ['map-index.scss'],
+    templateUrl: './map-index.html'
 })
 export class MapComponent {
   lat = 51.678418;

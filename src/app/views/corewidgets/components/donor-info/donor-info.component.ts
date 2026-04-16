@@ -2,18 +2,19 @@ import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
+
+import { KitComponent } from '../kit-component/kit-component.component';
 
 const QUERY_ENTITY = gql`
 query findDonor($id: Long) {
@@ -100,9 +101,10 @@ query findAutocompleteDonorParents($term: String) {
 `;
 
 @Component({
-  selector: 'donor-info',
-  styleUrls: ['donor-info.scss'],
-  templateUrl: './donor-info.html'
+    selector: 'donor-info',
+    styleUrls: ['donor-info.scss'],
+    templateUrl: './donor-info.html',
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, NgbNavOutlet]
 })
 export class DonorInfoComponent {
 
@@ -117,7 +119,7 @@ export class DonorInfoComponent {
 
   }
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
     formState: {
       disabled: true
@@ -304,7 +306,7 @@ export class DonorInfoComponent {
   }
 
   private normalizeData(data: any) {
-    // Not currently doing any normalization
+    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
 
     if (data.donorParent && data.donorParent.id) {
       data.donorParentId = data.donorParent.id;

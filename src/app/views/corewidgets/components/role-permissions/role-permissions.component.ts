@@ -6,11 +6,13 @@ import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
-import { FormControl, FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormControl, UntypedFormGroup, FormBuilder, Validators } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+
 
 const QUERY_PERMISSIONS = gql`
 query findPermissions($page: PaginationInput, $roleId: String!) {
@@ -50,10 +52,10 @@ query findAutocompletePermissions($appId: String!, $roleId: Int) {
 `;
 
 @Component({
-  selector: 'role-permissions',
-  styleUrls: ['role-permissions.scss'],
-
-  templateUrl: './role-permissions.html'
+    selector: 'role-permissions',
+    styleUrls: ['role-permissions.scss'],
+    templateUrl: './role-permissions.html',
+    imports: [AppGridDirective_1]
 })
 export class RolePermissionsComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
@@ -64,7 +66,7 @@ export class RolePermissionsComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
   @Select(CoreWidgetState.query) search$: Observable<string>;

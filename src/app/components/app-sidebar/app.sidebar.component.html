@@ -1,97 +1,106 @@
 <!-- Sidebar -->
-<ul *ngIf="user?.authenticated"
+@if (user?.authenticated) {
+  <ul
     class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="#" routerLink="/dashboard">
-        <div class="sidebar-brand-icon">
-            <i class="logo"></i>
-        </div>
-        <div class="sidebar-brand-text mx-3">Home</div>
+      <div class="sidebar-brand-icon">
+        <i class="logo"></i>
+      </div>
+      <div class="sidebar-brand-text mx-3">Home</div>
     </a>
-
     <!-- Divider -->
     <hr class="sidebar-divider my-0">
-
     <!-- Nav Item - Dashboard -->
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:kits']">
+    @if (user?.authorities['read:kits']) {
+      <li class="nav-item" routerLinkActive="active">
         <a class="nav-link" href="#" routerLink="/dashboard/devices">
-            <i class="fas fa-laptop"></i>
-            <span>Devices</span></a>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider my-0" *ngIf="user?.authorities['read:kits']">
-
-    <!-- Nav Item - Tables -->
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:donors']">
-        <a class="nav-link" href="#" routerLink="/dashboard/donors">
+          <i class="fas fa-laptop"></i>
+          <span>Devices</span></a>
+        </li>
+      }
+      <!-- Divider -->
+      @if (user?.authorities['read:kits']) {
+        <hr class="sidebar-divider my-0">
+      }
+      <!-- Nav Item - Tables -->
+      @if (user?.authorities['read:donors']) {
+        <li class="nav-item" routerLinkActive="active">
+          <a class="nav-link" href="#" routerLink="/dashboard/donors">
             <i class="fa fa-fw fa-table"></i>
             <span>Individual Donors</span></a>
-    </li>
-
-    <!-- Nav Item - Tables -->
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:donorParents']">
-      <a class="nav-link" href="#" routerLink="/dashboard/donor-parents">
-          <i class="fa fa-fw fa-sitemap"></i>
-          <span>Parent Donors</span></a>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider my-0" *ngIf="user?.authorities['read:donors']">
-
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
-      <a class="nav-link" href="#" routerLink="/dashboard/referring-organisations">
-          <i class="fas fa-address-book"></i>
-          <span>Orgs</span>
-      </a>
-    </li>
-
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
-      <a class="nav-link" href="#" routerLink="/dashboard/referring-organisation-contacts">
-          <i class="fas fa-users"></i>
-          <span>Referees</span>
-      </a>
-    </li>
-
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
-      <a class="nav-link" href="#" routerLink="/dashboard/device-requests">
-          <i class="fas fa-hands"></i>
-          <span>Requests</span>
-      </a>
-    </li>
-
-    <li class="nav-item" routerLinkActive="active" *ngIf="user?.authorities['read:organisations']">
-      <a class="nav-link" href="#" routerLink="/dashboard/distributions-and-deliveries">
-          <i class="fas fa-gift"></i>
-          <span>Distributions & Deliveries</span>
-      </a>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider my-0">
-
-    <li class="nav-item" routerLinkActive="active">
-        <a class="nav-link" href="#" (click)="logout()">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span></a>
-    </li>
-</ul>
-<ul *ngIf="!user?.authenticated"
-  class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-    <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="http://app.communitytechaid.org.uk/">
-        <div class="sidebar-brand-icon">
-            <i class="logo"></i>
-        </div>
-        <div class="sidebar-brand-text mx-3">Home</div>
-    </a>
-    <!-- Divider -->
-    <hr class="sidebar-divider my-0">
-    <li class="nav-item" routerLinkActive="active">
-        <a class="nav-link" href="#" (click)="login()">
-        <i class="fas fa-sign-in-alt"></i>
-        <span>Login</span></a>
-    </li>
-</ul>
-<!-- End of Sidebar -->
+          </li>
+        }
+        <!-- Nav Item - Tables -->
+        @if (user?.authorities['read:donorParents']) {
+          <li class="nav-item" routerLinkActive="active">
+            <a class="nav-link" href="#" routerLink="/dashboard/donor-parents">
+              <i class="fa fa-fw fa-sitemap"></i>
+              <span>Parent Donors</span></a>
+            </li>
+          }
+          <!-- Divider -->
+          @if (user?.authorities['read:donors']) {
+            <hr class="sidebar-divider my-0">
+          }
+          @if (user?.authorities['read:organisations']) {
+            <li class="nav-item" routerLinkActive="active">
+              <a class="nav-link" href="#" routerLink="/dashboard/referring-organisations">
+                <i class="fas fa-address-book"></i>
+                <span>Orgs</span>
+              </a>
+            </li>
+          }
+          @if (user?.authorities['read:organisations']) {
+            <li class="nav-item" routerLinkActive="active">
+              <a class="nav-link" href="#" routerLink="/dashboard/referring-organisation-contacts">
+                <i class="fas fa-users"></i>
+                <span>Referees</span>
+              </a>
+            </li>
+          }
+          @if (user?.authorities['read:organisations']) {
+            <li class="nav-item" routerLinkActive="active">
+              <a class="nav-link" href="#" routerLink="/dashboard/device-requests">
+                <i class="fas fa-hands"></i>
+                <span>Requests</span>
+              </a>
+            </li>
+          }
+          @if (user?.authorities['read:organisations']) {
+            <li class="nav-item" routerLinkActive="active">
+              <a class="nav-link" href="#" routerLink="/dashboard/distributions-and-deliveries">
+                <i class="fas fa-gift"></i>
+                <span>Distributions & Deliveries</span>
+              </a>
+            </li>
+          }
+          <!-- Divider -->
+          <hr class="sidebar-divider my-0">
+          <li class="nav-item" routerLinkActive="active">
+            <a class="nav-link" href="#" (click)="logout()">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Logout</span></a>
+            </li>
+          </ul>
+        }
+        @if (!user?.authenticated) {
+          <ul
+            class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="http://app.communitytechaid.org.uk/">
+              <div class="sidebar-brand-icon">
+                <i class="logo"></i>
+              </div>
+              <div class="sidebar-brand-text mx-3">Home</div>
+            </a>
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+            <li class="nav-item" routerLinkActive="active">
+              <a class="nav-link" href="#" (click)="login()">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Login</span></a>
+              </li>
+            </ul>
+          }
+          <!-- End of Sidebar -->

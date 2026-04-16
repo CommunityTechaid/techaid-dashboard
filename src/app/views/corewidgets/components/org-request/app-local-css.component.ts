@@ -9,8 +9,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 // <app-local-css [scriptURL]="'/path/to/file.css'"></app-local-css>
 
 @Component({
-  selector: "app-local-css",
-  template: '<span style="display:none" [innerHTML]="this.safeString"></span>'
+    selector: "app-local-css",
+    template: '<span style="display:none" [innerHTML]="this.safeString"></span>'
 })
 export class AppLocalCSS implements OnInit {
   constructor(protected sanitizer: DomSanitizer) {}

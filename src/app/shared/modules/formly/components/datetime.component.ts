@@ -1,34 +1,37 @@
 import { Component, Injectable,  Input, forwardRef, ViewChild } from '@angular/core';
-import { NgbDateAdapter, NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl  } from '@angular/forms';
-import { FieldType } from '@ngx-formly/core';
-import * as moment from 'moment';
+import { NgbDateAdapter, NgbDateStruct, NgbTimeStruct, NgbInputDatepicker, NgbDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ReactiveFormsModule } from '@angular/forms';
+import { FieldType, FormlyModule } from '@ngx-formly/core';
+import { isValid, parse, format as fnsFormat, subYears, formatISO } from 'date-fns';
+import { NgStyle } from '@angular/common';
 export interface NgbDateTimeStruct extends NgbDateStruct, NgbTimeStruct {}
 
 @Component({
-  selector: 'form-datetime',
-  template: `
+    selector: 'form-datetime',
+    template: `
   <div [class.is-invalid]="showError">
     <form-datetime-widget [to]="to" [formlyAttributes]="field" [formControl]="formControl"></form-datetime-widget>
   </div>
-  `
+  `,
+    imports: [forwardRef(() => DateTimeInputWidget), FormlyModule, ReactiveFormsModule]
 })
 export class DateTimeInput extends FieldType {
 
 }
 
 @Component({
-  selector: 'form-datetime-widget',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DateTimeInputWidget),
-      multi: true
-    }
-  ],
-  template: `
+    selector: 'form-datetime-widget',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DateTimeInputWidget),
+            multi: true
+        }
+    ],
+    template: `
 <div>
-    <div class="input-group" *ngIf="to.inline; else nonInline">
+  @if (to.inline) {
+    <div class="input-group">
       <input class="form-control"
         (blur)="onTouch()"
         (ngModelChange)="onDateChange($event)"
@@ -48,8 +51,7 @@ export class DateTimeInput extends FieldType {
         </button>
       </div>
     </div>
-
-    <ng-template #nonInline>
+  } @else {
     <div class="input-group">
       <ngb-datepicker #dp
         (blur)="onTouch()"
@@ -64,29 +66,31 @@ export class DateTimeInput extends FieldType {
         >
       </ngb-datepicker>
     </div>
-  </ng-template>
+  }
 
 
-    <div class="input-group">
-      <ngb-timepicker [ngStyle]="{'margin-top': to.time.spinners ? 'auto' : '5px'}"
-         (blur)="onTouch()"
-         [formControl]="time"
-         [seconds]="to.time.seconds"
-         [meridian]="to.time.meridian"
-         [spinners]="to.time.spinners"
-         [hourStep]="to.time.hourStep"
-         [minuteStep]="to.time.minuteStep"
-         [secondStep]="to.time.secondStep"
-         name="timepicker" (ngModelChange)="onTimeChange($event)" #timepicker>
-      </ngb-timepicker>
-    </div>
+
+  <div class="input-group">
+    <ngb-timepicker [ngStyle]="{'margin-top': to.time.spinners ? 'auto' : '5px'}"
+      (blur)="onTouch()"
+      [formControl]="time"
+      [seconds]="to.time.seconds"
+      [meridian]="to.time.meridian"
+      [spinners]="to.time.spinners"
+      [hourStep]="to.time.hourStep"
+      [minuteStep]="to.time.minuteStep"
+      [secondStep]="to.time.secondStep"
+      name="timepicker" (ngModelChange)="onTimeChange($event)" #timepicker>
+    </ngb-timepicker>
+  </div>
 </div>
-  `
+`,
+    imports: [NgbInputDatepicker, ReactiveFormsModule, NgbDatepicker, NgbTimepicker, NgStyle]
 })
 export class DateTimeInputWidget implements ControlValueAccessor {
   @ViewChild('dp') dp;
-  date = new FormControl();
-  time = new FormControl();
+  date = new UntypedFormControl();
+  time = new UntypedFormControl();
   model: any;
   minDate: NgbDateStruct;
   maxDate: NgbDateStruct;
@@ -167,8 +171,8 @@ export class DateTimeInputWidget implements ControlValueAccessor {
       };
     }
 
-    const dt = this.parseTime(this.model) || moment().toDate();
-    this.minDate = this.fetchDate(this.to.minDate) || this.fetchDate(moment(dt).subtract(10, 'years'));
+    const dt = this.parseTime(this.model) || new Date();
+    this.minDate = this.fetchDate(this.to.minDate) || this.fetchDate(subYears(dt, 10));
     this.maxDate = this.fetchDate(this.to.maxDate);
   }
 
@@ -200,37 +204,24 @@ export class DateTimeInputWidget implements ControlValueAccessor {
 
     if (this.to.input_formats && this.to.input_formats.length > 0  && typeof dt == 'string') {
       for (const format of this.to.input_formats) {
-          let m = moment(dt, format, true);
-          if (m.isValid()) {
-            return m.toDate();
-          } else {
-            m = moment(dt.substring(0, format.length), format, true);
-            if (m.isValid()) {
-              return m.toDate();
-            } else {
-              m = moment(dt, format.substring(0, dt.length), true);
-              if (m.isValid()) {
-                return m.toDate();
-              }
+        for (const candidate of [dt, dt.substring(0, format.length)]) {
+          try {
+            const parsed = parse(candidate, format, new Date());
+            if (isValid(parsed) && fnsFormat(parsed, format) === candidate) {
+              return parsed;
             }
-          }
+          } catch { /* ignore */ }
+        }
       }
 
-      if (this.to.output_format == 'default') {
-        const m = moment(dt);
-        if (m.isValid()) {
-          return m.toDate();
-        }
-      } else if (typeof dt == 'string') {
-        const m = moment(dt);
-        if (m.isValid()) {
-          return m.toDate();
-        }
+      const d = new Date(dt);
+      if (isValid(d)) {
+        return d;
       }
     } else {
-      const m = moment(dt);
-      if (m.isValid()) {
-        return m.toDate();
+      const d = new Date(dt);
+      if (isValid(d)) {
+        return d;
       }
     }
 
@@ -284,9 +275,9 @@ export class DateTimeInputWidget implements ControlValueAccessor {
       if (this.to.output_format == 'struct') {
           dt = {...model, time: dt};
       } else if (this.to.output_format == 'default') {
-        dt = moment(dt).format();
+        dt = formatISO(dt);
       } else {
-        dt = moment(dt).format(this.to.output_format);
+        dt = fnsFormat(dt, this.to.output_format);
       }
     }
 
@@ -298,4 +289,3 @@ export class DateTimeInputWidget implements ControlValueAccessor {
       this.onChange(this.value);
   }
 }
-

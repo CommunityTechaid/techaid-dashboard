@@ -1,75 +1,91 @@
 <!-- Topbar -->
 <nav class="navbar navbar-expand navbar-light bg-white topbar static-top shadow">
 
-    <!-- Sidebar Toggle (Topbar) -->
-    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3" (click)="toggleSideBar()">
-        <i class="fa fa-bars"></i>
-    </button>
+  <!-- Sidebar Toggle (Topbar) -->
+  <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle me-3" (click)="toggleSideBar()">
+    <i class="fa fa-bars"></i>
+  </button>
 
-    <!-- Topbar Navbar -->
-    <ul class="navbar-nav ml-auto" *ngIf="user?.authenticated">
-
-        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
-        <li class="nav-item dropdown no-arrow d-sm-none">
-            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown"
-                aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-search fa-fw"></i>
+  <!-- Topbar Navbar -->
+  @if (user?.authenticated) {
+    <ul class="navbar-nav ml-auto">
+      <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+      <li class="nav-item dropdown no-arrow d-sm-none">
+        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-search fa-fw"></i>
+        </a>
+      </li>
+      <div class="topbar-divider d-none d-sm-block"></div>
+      <!-- Nav Item - User Information -->
+      <li class="nav-item dropdown no-arrow">
+        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+          <span class="me-2 d-none d-lg-inline text-gray-600 small">{{user.name}}</span>
+          @if (user?.picture?.length) {
+            <img class="img-profile rounded-circle" [src]="user.picture">
+          }
+          @if (!user?.picture?.length) {
+            <app-initial [name]="user.name || 'Me'" width="40" height="40"></app-initial>
+          }
+        </a>
+        <!-- Dropdown - User Information -->
+        <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
+          @if (user?.authorities['app:admin']) {
+            <a class="dropdown-item" href="#" routerLink="/dashboard/admin-panel">
+              <i class="fas fa-toolbox fa-sm fa-fw me-2 text-gray-400"></i>
+              Admin Panel
             </a>
-        </li>
-
-        <div class="topbar-divider d-none d-sm-block"></div>
-        <!-- Nav Item - User Information -->
-        <li class="nav-item dropdown no-arrow">
-            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
-                aria-haspopup="true" aria-expanded="false">
-                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{user.name}}</span>
-                <img *ngIf="user?.picture?.length" class="img-profile rounded-circle" [src]="user.picture">
-                <app-initial *ngIf="!user?.picture?.length" [name]="user.name || 'Me'" width="40" height="40"></app-initial>
+          }
+          @if (user?.authorities['app:admin']) {
+            <div class="dropdown-divider"></div>
+          }
+          @if (user?.authorities['read:users']) {
+            <a class="dropdown-item" href="#" routerLink="/dashboard/users">
+              <i class="fas fa-user-lock fa-sm fa-fw me-2 text-gray-400"></i>
+              Users
             </a>
-            <!-- Dropdown - User Information -->
-            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                <a class="dropdown-item" href="#" routerLink="/dashboard/admin-panel" *ngIf="user?.authorities['app:admin']">
-                    <i class="fas fa-toolbox fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Admin Panel
-                </a>
-                <div class="dropdown-divider" *ngIf="user?.authorities['app:admin']"></div>
-                <a class="dropdown-item" href="#" routerLink="/dashboard/users" *ngIf="user?.authorities['read:users']">
-                    <i class="fas fa-user-lock fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Users
-                </a>
-                <a class="dropdown-item" href="#" routerLink="/dashboard/roles" *ngIf="user?.authorities['read:users']">
-                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Roles
-                </a>
-                <div class="dropdown-divider" *ngIf="user?.authorities['read:users']"></div>
-                <a class="dropdown-item" href="#" (click)="logout()" data-toggle="modal" data-target="#logoutModal">
-                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Logout
-                </a>
-                <a class="dropdown-item" href="#" (click)="clearCache()">
-                    <i class="fas fa-users-cog fa-sm fa-fw mr-2 text-gray-400"></i>
-                   Reset
-                </a>
-            </div>
-        </li>
+          }
+          @if (user?.authorities['read:users']) {
+            <a class="dropdown-item" href="#" routerLink="/dashboard/roles">
+              <i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>
+              Roles
+            </a>
+          }
+          @if (user?.authorities['read:users']) {
+            <div class="dropdown-divider"></div>
+          }
+          <a class="dropdown-item" href="#" (click)="logout()" data-toggle="modal" data-target="#logoutModal">
+            <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>
+            Logout
+          </a>
+          <a class="dropdown-item" href="#" (click)="clearCache()">
+            <i class="fas fa-users-cog fa-sm fa-fw me-2 text-gray-400"></i>
+            Reset
+          </a>
+        </div>
+      </li>
     </ul>
-    <p *ngIf="!user?.authenticated"><strong>Community TechAid</strong></p>
+  }
+  @if (!user?.authenticated) {
+    <p><strong>Community TechAid</strong></p>
+  }
 </nav>
 <!-- End of Topbar -->
 <div class="nav-scroller bg-white box-shadow">
-    <nav class="nav nav-underline">
-        <a class="nav-link"  routerLinkActive="active" href="#" routerLink="/dashboard">
-            <i class="fas fa-laugh-wink"></i>
-            Dashboard
-        </a>
-      <a class="nav-link" href="#"  routerLinkActive="active" routerLink="/device-request-admin">
-        <i class="fas fa-sitemap"></i>
-        Request Devices (Admin)
-      </a>
-      <a class="nav-link" href="#"  routerLinkActive="active" routerLink="/organisation-device-request" target="_blank">
-          <i class="fas fa-sitemap"></i>
-          Request Devices (Public-facing)
-      </a>
+  <nav class="nav nav-underline">
+    <a class="nav-link"  routerLinkActive="active" href="#" routerLink="/dashboard">
+      <i class="fas fa-laugh-wink"></i>
+      Dashboard
+    </a>
+    <a class="nav-link" href="#"  routerLinkActive="active" routerLink="/device-request-admin">
+      <i class="fas fa-sitemap"></i>
+      Request Devices (Admin)
+    </a>
+    <a class="nav-link" href="#"  routerLinkActive="active" routerLink="/organisation-device-request" target="_blank">
+      <i class="fas fa-sitemap"></i>
+      Request Devices (Public-facing)
+    </a>
   </nav>
 </div>
 <div class="mb-3"></div>

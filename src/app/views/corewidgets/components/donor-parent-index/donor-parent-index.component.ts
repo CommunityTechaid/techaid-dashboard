@@ -6,14 +6,17 @@ import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
-import { FormControl, FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { FormControl, UntypedFormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import * as Tablesaw from 'tablesaw';
 import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
+import { DatePipe } from '@angular/common';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { RouterLink } from '@angular/router';
 
 const QUERY_ENTITY = gql`
 query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorParentWhereInput!) {
@@ -66,9 +69,10 @@ mutation createDonorParent($data: CreateDonorParentInput!) {
 `;
 
 @Component({
-  selector: 'donor-parent-index',
-  styleUrls: ['donor-parent-index.scss'],
-  templateUrl: './donor-parent-index.html'
+    selector: 'donor-parent-index',
+    styleUrls: ['donor-parent-index.scss'],
+    templateUrl: './donor-parent-index.html',
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class DonorParentIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
@@ -79,7 +83,7 @@ export class DonorParentIndexComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
@@ -148,7 +152,7 @@ export class DonorParentIndexComponent {
   filter: any = {};
   filterCount = 0;
   filterModel: any = {};
-  filterForm: FormGroup = new FormGroup({});
+  filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',

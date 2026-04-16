@@ -6,11 +6,14 @@ import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
-import { FormControl, FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { FormControl, UntypedFormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+
+import { RouterLink } from '@angular/router';
 
 const QUERY_PERMISSIONS = gql`
 query findRoles($page: PaginationInput, $userId: String!) {
@@ -60,10 +63,10 @@ query findAutocompleteRoles($term: String, $term: String) {
 `;
 
 @Component({
-  selector: 'user-roles',
-  styleUrls: ['user-roles.scss'],
-
-  templateUrl: './user-roles.html'
+    selector: 'user-roles',
+    styleUrls: ['user-roles.scss'],
+    templateUrl: './user-roles.html',
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule]
 })
 export class UserRolesComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
@@ -74,7 +77,7 @@ export class UserRolesComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
 

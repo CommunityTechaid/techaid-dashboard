@@ -7,7 +7,10 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import { Apollo } from 'apollo-angular';
 import { SearchQuery } from '@views/corewidgets/state/actions';
-import * as $ from 'jquery';
+import $ from 'jquery';
+
+import { AppInitialComponent } from '../../shared/components/app-initial/app-initial.component';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 
 @Component({
@@ -17,7 +20,8 @@ import * as $ from 'jquery';
         .nav-border {
             border-bottom: 1px solid #f8f9fa;
         }
-    `]
+    `],
+    imports: [AppInitialComponent, RouterLink, RouterLinkActive]
 })
 export class AppHeader {
     private sub: Subscription;

@@ -12,7 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import {
   debounceTime,
@@ -26,6 +26,8 @@ import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { DatePipe } from '@angular/common';
 
 const QUERY_ENTITY = gql`
   query getAuditTrail($id: Long!) {
@@ -57,9 +59,10 @@ const QUERY_ENTITY = gql`
 `;
 
 @Component({
-  selector: 'kit-audit-component',
-  styleUrls: ['kit-audit-component.scss'],
-  templateUrl: './kit-audit-component.html',
+    selector: 'kit-audit-component',
+    styleUrls: ['kit-audit-component.scss'],
+    templateUrl: './kit-audit-component.html',
+    imports: [AppGridDirective_1, DatePipe]
 })
 export class KitAuditComponent {
 
@@ -83,7 +86,7 @@ export class KitAuditComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   ages = {
      0: 'I don\'t know',

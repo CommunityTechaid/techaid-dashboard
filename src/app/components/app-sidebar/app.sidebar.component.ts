@@ -4,6 +4,8 @@ import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
 import { Observable, Subscription } from 'rxjs';
 
+import { RouterLink, RouterLinkActive } from '@angular/router';
+
 @Component({
     selector: 'app-sidebar',
     templateUrl: 'app.sidebar.component.html',
@@ -13,7 +15,8 @@ import { Observable, Subscription } from 'rxjs';
           width: 75px;
           padding-top: 5px;
         }
-    `]
+    `],
+    imports: [RouterLink, RouterLinkActive]
 })
 
 export class AppSidebar {

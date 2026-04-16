@@ -13,8 +13,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -29,6 +29,9 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+import { DatePipe } from '@angular/common';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { RouterLink } from '@angular/router';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -146,9 +149,10 @@ const FIND_USERS = gql`
 `;
 
 @Component({
-  selector: 'kit-component',
-  styleUrls: ['kit-component.scss'],
-  templateUrl: './kit-component.html',
+    selector: 'kit-component',
+    styleUrls: ['kit-component.scss'],
+    templateUrl: './kit-component.html',
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class KitComponent {
 
@@ -172,7 +176,7 @@ export class KitComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   ages = {
      0: 'I don\'t know',
@@ -235,7 +239,7 @@ export class KitComponent {
   filter: any = {};
   filterCount = 0;
   filterModel: any = {};
-  filterForm: FormGroup = new FormGroup({});
+  filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',

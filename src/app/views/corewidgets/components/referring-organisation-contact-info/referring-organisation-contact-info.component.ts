@@ -1,16 +1,18 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+
+import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 
 const QUERY_ENTITY = gql`
   query findReferringOrganisationContact($id: Long) {
@@ -73,9 +75,10 @@ query findAutocompleteReferringOrganisations($term: String) {
 `;
 
 @Component({
-  selector: 'app-referring-organisation-contact-info',
-  templateUrl: './referring-organisation-contact-info.component.html',
-  styleUrls: ['./referring-organisation-contact-info.component.scss']
+    selector: 'app-referring-organisation-contact-info',
+    templateUrl: './referring-organisation-contact-info.component.html',
+    styleUrls: ['./referring-organisation-contact-info.component.scss'],
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, NgbNavOutlet]
 })
 export class ReferringOrganisationContactInfoComponent {
 
@@ -87,7 +90,7 @@ export class ReferringOrganisationContactInfoComponent {
     private apollo: Apollo
   ) {}
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
     formState: {
       disabled: true
@@ -242,7 +245,7 @@ export class ReferringOrganisationContactInfoComponent {
   }
 
   private normalizeData(data: any) {
-    // Not currently doing any normalization
+    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
 
     if (data.referringOrganisation && data.referringOrganisation.id) {
       data.referringOrganisationId = data.referringOrganisation.id;

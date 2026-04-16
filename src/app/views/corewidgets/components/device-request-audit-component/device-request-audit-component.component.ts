@@ -12,7 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import {
   debounceTime,
@@ -26,6 +26,8 @@ import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { DatePipe } from '@angular/common';
 
 const QUERY_ENTITY = gql`
   query getDeviceRequestAuditTrail($id: Long!) {
@@ -60,9 +62,10 @@ const QUERY_ENTITY = gql`
 `;
 
 @Component({
-  selector: 'device-request-audit-component',
-  styleUrls: ['device-request-audit-component.scss'],
-  templateUrl: './device-request-audit-component.html',
+    selector: 'device-request-audit-component',
+    styleUrls: ['device-request-audit-component.scss'],
+    templateUrl: './device-request-audit-component.html',
+    imports: [AppGridDirective_1, DatePipe]
 })
 export class DeviceRequestAuditComponent {
 
@@ -86,7 +89,7 @@ export class DeviceRequestAuditComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
   classes = {

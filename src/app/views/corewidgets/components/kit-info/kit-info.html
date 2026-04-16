@@ -1,100 +1,112 @@
 <!-- Content Row -->
 <div class="row">
-    <!-- Content Column -->
-    <div class="col-lg-12 mb-4">
-        <div *ngIf="!model?.id" class="overlay"></div>
-        <!-- Project Card Example -->
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="#" [routerLink]="['../']">Devices</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ entityName }}</li>
-            </ol>
-        </nav>
+  <!-- Content Column -->
+  <div class="col-lg-12 mb-4">
+    @if (!model?.id) {
+      <div class="overlay"></div>
+    }
+    <!-- Project Card Example -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#" [routerLink]="['../']">Devices</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ entityName }}</li>
+      </ol>
+    </nav>
 
-        <ngb-tabset [destroyOnHide]="false">
-            <ngb-tab title="Details">
-                <ng-template ngbTabContent>
-                    <div class="card shadow mb-4 mt-1" (keyup.enter)="updateEntity(getFormData())">
-                        <div class="card-header py-3">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                   <h6 class="m-0 font-weight-bold text-primary">{{entityName}}
-                                    <span class="ml-1 badge badge-primary">
-                                        {{model?.id}}
-                                     </span>
-                                   </h6>
-                                </div>
-                                <div>
-                                    <button [disabled]="form.invalid" (click)="updateEntity(getFormData())"
-                                        type="submit" class="btn btn-primary btn-sm">
-                                        <small>Save</small>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <form [formGroup]="form">
-                                <formly-form [options]="options" (ngSubmit)="form.valid && updateEntity(getFormData())"
-                                    [form]="form" [model]="model" [fields]="fields">
-                                </formly-form>
-                                <button style="width: 150px" [disabled]="form.invalid" (click)="updateEntity(getFormData())"
-                                    type="submit" class="btn btn-info btn-sm p-2">
-                                    <small>Save</small>
-                                </button>
-                            </form>
+    <ul ngbNav #nav="ngbNav" [destroyOnHide]="false" class="nav-tabs">
+      <li ngbNavItem>
+        <a ngbNavLink>Details</a>
+        <ng-template ngbNavContent>
+          <div class="card shadow mb-4 mt-1" (keyup.enter)="updateEntity(getFormData())">
+            <div class="card-header py-3">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h6 class="m-0 font-weight-bold text-primary">{{entityName}}
+                    <span class="ms-1 badge badge-primary">
+                      {{model?.id}}
+                    </span>
+                  </h6>
+                </div>
+                <div>
+                  <button [disabled]="form.invalid" (click)="updateEntity(getFormData())"
+                    type="submit" class="btn btn-primary btn-sm">
+                    <small>Save</small>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="form">
+                <formly-form [options]="options" (ngSubmit)="form.valid && updateEntity(getFormData())"
+                  [form]="form" [model]="model" [fields]="fields">
+                </formly-form>
+                <button style="width: 150px" [disabled]="form.invalid" (click)="updateEntity(getFormData())"
+                  type="submit" class="btn btn-info btn-sm p-2">
+                  <small>Save</small>
+                </button>
+              </form>
 
-                            <div  *ngIf="user?.authorities['delete:kits']" class="delete-api mt-5 ">
-                                <h3>Danger Zone</h3>
-                                <div class="border-bottom-danger card">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <h4>Delete Device</h4>
-                                                <p class="text-muted">The device will be removed, this action is not reversable</p>
-                                            </div>
-                                            <div>
-                                                <button type="submit" (click)="modal(confirmDelete);"
-                                                    class="btn btn-danger btn-sm">
-                                                    <small>DELETE</small>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+              @if (user?.authorities['delete:kits']) {
+                <div  class="delete-api mt-5 ">
+                  <h3>Danger Zone</h3>
+                  <div class="border-bottom-danger card">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between">
+                        <div>
+                          <h4>Delete Device</h4>
+                          <p class="text-muted">The device will be removed, this action is not reversable</p>
                         </div>
+                        <div>
+                          <button type="submit" (click)="modal(confirmDelete);"
+                            class="btn btn-danger btn-sm">
+                            <small>DELETE</small>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                </ng-template>
-            </ngb-tab>
-            <ngb-tab title="Device Requests" *ngIf="model?.deviceRequest?.id">
-              <ng-template ngbTabContent>
-                  <div class="mt-2">
-                      <device-request-component [where]="{id: {_eq: model.deviceRequest.id}}" [tableId]="'device-request-index-' + model.deviceRequest.id"></device-request-component>
                   </div>
-              </ng-template>
-            </ngb-tab>
-            <ngb-tab title="Audit Table" *ngIf="model?.id && user?.authorities['admin:kits']">
-              <ng-template ngbTabContent>
-                  <div class="mt-2">
-                      <kit-audit-component [kitId]="model.id" [tableId]="'kit-audit-' + model.id"></kit-audit-component>
-                  </div>
-              </ng-template>
-            </ngb-tab>
-      </ngb-tabset>
-    </div>
+                </div>
+              }
+            </div>
+          </div>
+        </ng-template>
+      </li>
+      @if (model?.deviceRequest?.id) {
+        <li ngbNavItem>
+          <a ngbNavLink>Device Requests</a>
+          <ng-template ngbNavContent>
+            <div class="mt-2">
+              <device-request-component [where]="{id: {_eq: model.deviceRequest.id}}" [tableId]="'device-request-index-' + model.deviceRequest.id"></device-request-component>
+            </div>
+          </ng-template>
+        </li>
+      }
+      @if (model?.id && user?.authorities['admin:kits']) {
+        <li ngbNavItem>
+          <a ngbNavLink>Audit Table</a>
+          <ng-template ngbNavContent>
+            <div class="mt-2">
+              <kit-audit-component [kitId]="model.id" [tableId]="'kit-audit-' + model.id"></kit-audit-component>
+            </div>
+          </ng-template>
+        </li>
+      }
+    </ul>
+    <div [ngbNavOutlet]="nav"></div>
+  </div>
 </div>
 
 <ng-template #confirmDelete let-c="close" let-d="dismiss">
-    <div class="modal-header">
-        <h4 class="modal-title">Are you absolutely sure?</h4>
-    </div>
-    <div class="modal-body">
-        <small>
-            <p>Are you really sure you want to delete "<strong>{{entityName}}</strong>"? This cannot be undone!</p>
-        </small>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-        <button type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
-    </div>
+  <div class="modal-header">
+    <h4 class="modal-title">Are you absolutely sure?</h4>
+  </div>
+  <div class="modal-body">
+    <small>
+      <p>Are you really sure you want to delete "<strong>{{entityName}}</strong>"? This cannot be undone!</p>
+    </small>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+    <button type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
+  </div>
 </ng-template>

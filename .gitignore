@@ -28,6 +28,7 @@ src/environments/version.ts
 !.vscode/extensions.json
 
 # misc
+/.angular/cache
 /.sass-cache
 /connect.lock
 /coverage
@@ -40,6 +41,9 @@ testem.log
 # e2e
 /e2e/*.js
 /e2e/*.map
+/e2e/.auth/
+/playwright-report/
+/test-results/
 
 # System Files
 .DS_Store

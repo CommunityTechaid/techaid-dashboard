@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { DomSanitizer } from '@angular/platform-browser';
+import { NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
+
 
 const QUERY_ENTITY = gql`
 query metabaseDashboard($ids: [ID!]) {
@@ -20,8 +22,9 @@ const DASHBOARDS = [
 @Component({
     selector: 'app-reports',
     templateUrl: './reports.html',
-    styles: []
-  })
+    styles: [],
+    imports: [NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet]
+})
   export class ReportsComponent {
       dashboards = [];
 

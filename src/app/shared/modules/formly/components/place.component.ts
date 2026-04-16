@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'form-place',
-  template: `
+    selector: 'form-place',
+    template: `
     <div class="input-group mb-2">
         <input class="form-control"
           #placesRef
@@ -18,7 +19,8 @@ import { FieldType } from '@ngx-formly/core';
           </button>
         </div>
     </div>
-  `
+  `,
+    imports: [ReactiveFormsModule]
 })
 export class PlaceInput extends FieldType {
   @ViewChild('placesRef') placesRef: any;

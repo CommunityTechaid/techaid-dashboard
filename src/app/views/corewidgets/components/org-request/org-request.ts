@@ -14,12 +14,14 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { AbstractControl, FormGroup } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { AbstractControl, UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+
+import { AppLocalCSS } from './app-local-css.component';
 
 declare var window: any;
 
@@ -114,14 +116,15 @@ const QUERY_ADMIN_CONFIG = gql`
 `;
 
 @Component({
-  selector: 'org-request',
-  styleUrls: ['./org-request.scss'],
-  templateUrl: './org-request.html'
+    selector: 'org-request',
+    styleUrls: ['./org-request.scss'],
+    templateUrl: './org-request.html',
+    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule]
 })
 
 export class OrgRequestComponent implements AfterViewChecked {
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   submitting = false;
   content: any = {};
@@ -919,6 +922,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   private normalizeData(data: any) {
+    data = { ...data, attributes: { ...data.attributes } }; // Apollo v3 freezes query results in dev mode; copy before mutating
     data.attributes.request = {
       'laptops': 0,
       'phones': 0,

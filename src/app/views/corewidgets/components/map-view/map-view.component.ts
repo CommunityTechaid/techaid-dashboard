@@ -3,12 +3,13 @@ import { Apollo } from 'apollo-angular';
 import { ToastrService } from 'ngx-toastr';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import gql from 'graphql-tag';
-import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { KIT_TYPES } from '@app/shared/utils';
+import { MapComponent } from '../map/map-index.component';
 
 const QUERY_ENTITY = gql`
 query find($kitFilter: KitWhereInput!) {
@@ -31,9 +32,10 @@ kits(where: $kitFilter){
 `;
 
 @Component({
-  selector: 'map-view',
-  styleUrls: ['map-view.scss'],
-  templateUrl: './map-view.html'
+    selector: 'map-view',
+    styleUrls: ['map-view.scss'],
+    templateUrl: './map-view.html',
+    imports: [MapComponent, ReactiveFormsModule, FormlyModule]
 })
 export class MapViewComponent {
   constructor(
@@ -45,7 +47,7 @@ export class MapViewComponent {
   }
 
   markers: Array<any> = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
   fields: Array<FormlyFieldConfig> = [

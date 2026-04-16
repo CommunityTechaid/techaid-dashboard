@@ -2,10 +2,11 @@ import { Component, ViewChild, ElementRef, Output, EventEmitter, OnInit } from '
 import { FieldType } from '@ngx-formly/core';
 import { Subscription } from 'rxjs';
 
+
 @Component({
-  selector: 'formly-field-file',
-  styles: [
-    `
+    selector: 'formly-field-file',
+    styles: [
+        `
     img {
       width: 100px;
       height: 100px;
@@ -41,23 +42,26 @@ import { Subscription } from 'rxjs';
       margin-left: 30px;
     }
     `
-  ],
-  template: `
+    ],
+    template: `
   <div [class.is-invalid]="showError">
-     <div class="">
-      <div *ngFor="let f of files;" class="file mr-1">
-        <img class="img-thumbnail" [src]="f.image || to.prefix + f.url" />
-        <a href="#" (click)="remove(f)"><i class="fas fa-times"></i></a>
-      </div>
+    <div class="">
+      @for (f of files; track f) {
+        <div class="file mr-1">
+          <img class="img-thumbnail" [src]="f.image || to.prefix + f.url" />
+          <a href="#" (click)="remove(f)"><i class="fas fa-times"></i></a>
+        </div>
+      }
       <div class="file file-button img-thumbnail mr-1">
         <label class="btn btn-sm btn-primary btn-outline">
-            <i class="fas fa-plus"></i>
-            <input (change)="fileChange($event)" #fileInput type="file" accept=".jpg,.jpeg,.png,.bmp,.gif" multiple style="display: none;">
+          <i class="fas fa-plus"></i>
+          <input (change)="fileChange($event)" #fileInput type="file" accept=".jpg,.jpeg,.png,.bmp,.gif" multiple style="display: none;">
         </label>
       </div>
-     </div>
+    </div>
   </div>
-  `
+  `,
+    imports: []
 })
 export class GalleryInput extends FieldType implements OnInit {
   @ViewChild('fileInput') fileInput: ElementRef;
