@@ -5,9 +5,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "node ./build/build-pre.js && ng build --configuration=production --aot --base-href / --output-path dist/ --deploy-url /",
-    "build-production": "node ./build/build-pre.js && ng build --configuration=production --aot --base-href / --output-path dist/ --deploy-url /",
-    "build-uat": "node ./build/build-pre.js && ng build --configuration=uat --aot --base-href / --output-path dist/ --deploy-url /",
+    "build": "node ./build/build-pre.js && ng build --configuration=production --aot --base-href /",
+    "build-production": "node ./build/build-pre.js && ng build --configuration=production --aot --base-href /",
+    "build-uat": "node ./build/build-pre.js && ng build --configuration=uat --aot --base-href /",
     "debug": "ng build --base-href /",
     "server": "node server.js",
     "e2e": "playwright test",
