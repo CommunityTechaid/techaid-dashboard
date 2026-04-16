@@ -100,6 +100,15 @@ mutation createKits($data: CreateKitInput!) {
 }
 `;
 
+const BULK_UPDATE_KITS = gql`
+mutation updateKits($ids: [ID!]!, $status: KitStatus) {
+  updateKits(data: { ids: $ids, status: $status }) {
+    id
+    status
+  }
+}
+`;
+
 const CREATE_QUICK_ENTITY = gql`
 mutation quickCreateKit($data: QuickCreateKitInput!) {
   quickCreateKit(data: $data){
@@ -245,13 +254,14 @@ export class KitIndexComponent {
 
   }
   @ViewChild(AppGridDirective) grid: AppGridDirective;
+  @ViewChild('bulkUpdateModal') bulkUpdateModalTpl: any;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
   table: any;
   total: number;
-  selections = {};
-  selected = [];
-  entities = [];
+  selections: {[id: string]: any} = {};
+  selected: any[] = [];
+  entities: any[] = [];
   options: FormlyFormOptions = {
     formState: {
       donorParentVisible: false
@@ -270,6 +280,25 @@ export class KitIndexComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
   isDonorParentAdmin = false;
+  canBulkEdit = false;
+  bulkMode = false;
+  allPageSelected = false;
+
+  bulkUpdateForm: FormGroup = new FormGroup({});
+  bulkUpdateModel: any = {};
+  bulkUpdateFields: Array<FormlyFieldConfig> = [
+    {
+      key: 'status',
+      type: 'choice',
+      className: 'col-md-12',
+      templateOptions: {
+        label: 'New Status',
+        items: KIT_STATUS_LABELS,
+        multiple: false,
+        required: true
+      }
+    }
+  ];
 
   classes = {
     'LOGISTICS': 'dark',
@@ -679,6 +708,7 @@ export class KitIndexComponent {
       this.user$.subscribe((user) => {
         this.user = user;
         this.isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
+        this.canBulkEdit = !!(user && user.authorities && user.authorities['app:bulkedit']);
         //console.log(this.isDonorParentAdmin);
         this.donorParentField.hideExpression = !this.isDonorParentAdmin;
         this.donorParentTypeField.hideExpression = !this.isDonorParentAdmin;
@@ -871,6 +901,7 @@ export class KitIndexComponent {
               }
             });
             this.entities = data.content;
+            this.allPageSelected = this.entities.length > 0 && this.entities.every(e => !!this.selections[e.id]);
           }
 
           callback({
@@ -1025,5 +1056,74 @@ export class KitIndexComponent {
     for (const k in this.selections) {
       this.selected.push(this.selections[k]);
     }
+    this.allPageSelected = this.entities.length > 0 && this.entities.every(e => !!this.selections[e.id]);
+  }
+
+  onRowClick(row: any) {
+    if (this.bulkMode) {
+      this.select(row);
+    }
+  }
+
+  onBulkLabelClick() {
+    if (!this.bulkMode) return;
+    this.toggleBulkMode();
+  }
+
+  onBulkButtonClick(event: MouseEvent) {
+    if (this.selected.length === 0) return; // bubble to label → toggles off
+    event.stopPropagation();
+    this.bulkUpdateModel = {};
+    this.bulkUpdateForm.reset();
+    this.modalService.open(this.bulkUpdateModalTpl, { centered: true, size: 'lg' });
+  }
+
+  toggleBulkMode() {
+    this.bulkMode = !this.bulkMode;
+    if (!this.bulkMode) {
+      this.clearSelection();
+      this.allPageSelected = false;
+    }
+  }
+
+  toggleSelectAll() {
+    if (this.allPageSelected) {
+      this.clearSelection();
+      this.allPageSelected = false;
+    } else {
+      this.selections = {};
+      this.entities.forEach(e => { this.selections[e.id] = e; });
+      this.selected = [...this.entities];
+      this.allPageSelected = true;
+      if (this.total > this.entities.length) {
+        this.toastr.warning(
+          `<small>Only the <strong>${this.entities.length}</strong> devices on this page are selected.
+          The full result set contains <strong>${this.total}</strong> devices.
+          Navigate to each page and repeat to include all results.</small>`,
+          'Partial Selection',
+          { enableHtml: true, timeOut: 8000 }
+        );
+      }
+    }
+  }
+
+  bulkUpdate(data: any, close: () => void) {
+    const ids = this.selected.map(s => s.id);
+    if (!ids.length) {
+      this.toastr.warning('<small>No devices selected.</small>', '', { enableHtml: true });
+      return;
+    }
+    this.apollo.mutate({
+      mutation: BULK_UPDATE_KITS,
+      variables: { ids, status: data.status }
+    }).subscribe(() => {
+      this.toastr.info(`<small>Successfully updated ${ids.length} device(s)</small>`, 'Bulk Update', { enableHtml: true });
+      this.clearSelection();
+      this.allPageSelected = false;
+      this.table.ajax.reload(null, false);
+      close();
+    }, (err: any) => {
+      this.toastr.error(`<small>${err.message}</small>`, 'Bulk Update Error', { enableHtml: true, timeOut: 15000 });
+    });
   }
 }

@@ -10,7 +10,32 @@
           <div>
             <h6 class="m-0 font-weight-bold text-primary pe-1">Devices</h6>
           </div>
-          <div>
+          <div class="d-flex align-items-center flex-wrap">
+            @if (canBulkEdit) {
+              <div class="custom-control custom-switch me-1 mb-1">
+                <input type="checkbox" class="custom-control-input" id="bulkToggle"
+                  [checked]="bulkMode" (change)="toggleBulkMode()">
+                <label class="custom-control-label"
+                  [attr.for]="bulkMode ? null : 'bulkToggle'"
+                  (click)="onBulkLabelClick()">
+                  @if (!bulkMode) {
+                    Bulk Update
+                  }
+                  @if (bulkMode) {
+                    <span class="btn btn-warning btn-icon-split btn-sm"
+                      [class.disabled]="selected.length === 0"
+                      (click)="onBulkButtonClick($event)">
+                      <span class="icon text-white-50"><i class="fas fa-edit"></i></span>
+                      <span class="text">Bulk Update
+                        @if (selected.length > 0) {
+                          <span class="badge badge-light">{{selected.length}}</span>
+                        }
+                      </span>
+                    </span>
+                  }
+                </label>
+              </div>
+            }
             <a href="#" class="btn btn-secondary btn-sm me-1 mb-1" routerLink="/dashboard/map">
               <i class="fas fa-map-marked-alt"></i> View Map
             </a>
@@ -38,7 +63,14 @@
               [dtOptions]="dtOptions" style="width:100%;">
               <thead>
                 <tr>
-                  <th></th>
+                  <th>
+                    @if (bulkMode) {
+                      <input type="checkbox"
+                        [checked]="allPageSelected"
+                        (change)="toggleSelectAll()"
+                        title="Select all on this page">
+                    }
+                  </th>
                   <th>Make</th>
                   <th>Model</th>
                   <th>Donor</th>
@@ -52,13 +84,18 @@
               @if (entities?.length > 0;) {
                 <tbody>
                   @for (dt of entities; track dt) {
-                    <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
+                    <tr [class.selected]="bulkMode && selections[dt.id]" (click)="onRowClick(dt)">
                       <td>
-                        <a href="#" [routerLink]="['/dashboard/devices', dt.id]">
-                          <span class="badge badge-secondary">
-                            {{dt.id}}
-                          </span>
-                        </a>
+                        @if (bulkMode) {
+                          <input type="checkbox" [checked]="selections[dt.id]"
+                            (click)="$event.stopPropagation(); select(dt)">
+                        } @else {
+                          <a href="#" [routerLink]="['/dashboard/devices', dt.id]">
+                            <span class="badge badge-secondary">
+                              {{dt.id}}
+                            </span>
+                          </a>
+                        }
                       </td>
                       <td>{{ dt.make }}</td>
                       <td>
@@ -153,4 +190,26 @@
       Filter
     </button>
   </div>
+</ng-template>
+
+<ng-template #bulkUpdateModal let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title">Bulk Update Devices</h4>
+    </div>
+    <div class="modal-body">
+        <p class="mb-3">
+            Updating <strong>{{selected.length}}</strong> selected device(s).
+        </p>
+        <form [formGroup]="bulkUpdateForm">
+            <formly-form [form]="bulkUpdateForm" [model]="bulkUpdateModel" [fields]="bulkUpdateFields">
+            </formly-form>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+        <button [disabled]="bulkUpdateForm.invalid" type="button" class="btn btn-warning btn-sm"
+            (click)="bulkUpdate(bulkUpdateForm.value, c)">
+            UPDATE
+        </button>
+    </div>
 </ng-template>
