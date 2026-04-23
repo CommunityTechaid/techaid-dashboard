@@ -178,6 +178,12 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
 }
 `;
 
+export interface DeviceAssignmentResult {
+  deviceId: string;
+  status: 'success' | 'warning' | 'error';
+  message: string;
+}
+
 @Component({
   selector: 'app-device-request-info',
   templateUrl: './device-request-info.component.html',
@@ -185,6 +191,7 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
 })
 export class DeviceRequestInfoComponent {
   @ViewChild('kitWarning') kitWarningModal: any;
+  @ViewChild('assignDevicesModal') assignDevicesModal: any;
 
   constructor(
     private modalService: NgbModal,
@@ -212,6 +219,10 @@ export class DeviceRequestInfoComponent {
   @Select(UserState.user) user$: Observable<User>;
   showAllDeviceTypes = false;
   deviceCount: number = 0;
+
+  assignDeviceIds: string = '';
+  assignmentResults: DeviceAssignmentResult[] = [];
+  isAssigning: boolean = false;
 
   deviceTypes = [
     { key: 'deviceRequestItems.laptops', label: 'Laptops', icon: 'fas fa-laptop' },
@@ -995,6 +1006,65 @@ export class DeviceRequestInfoComponent {
           );
         }
       );
+  }
+
+  openAssignDevicesModal() {
+    this.assignDeviceIds = '';
+    this.assignmentResults = [];
+    this.modalService.open(this.assignDevicesModal, { centered: true, size: 'lg' });
+  }
+
+  async assignDevices() {
+    const ids = this.assignDeviceIds
+      .split(',')
+      .map(id => id.trim())
+      .filter(id => id.length > 0);
+
+    if (ids.length === 0) {
+      return;
+    }
+
+    this.isAssigning = true;
+    this.assignmentResults = [];
+
+    // TODO: Replace with the actual endpoint URL when provided
+    const endpoint = `/api/device-requests/${this.requestId}/assign`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceIds: ids }),
+      });
+
+      const result = await response.json();
+
+      // Expect an array of per-device results or a wrapper object
+      if (Array.isArray(result)) {
+        this.assignmentResults = result;
+      } else if (result.results && Array.isArray(result.results)) {
+        this.assignmentResults = result.results;
+      } else {
+        this.assignmentResults = ids.map(id => ({
+          deviceId: id,
+          status: response.ok ? 'success' : 'error',
+          message: response.ok ? 'Assigned successfully' : (result.message || result.error || 'Assignment failed'),
+        }));
+      }
+
+      if (this.assignmentResults.some(r => r.status === 'success')) {
+        this.fetchDeviceCount();
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Network error';
+      this.assignmentResults = ids.map(id => ({
+        deviceId: id,
+        status: 'error',
+        message: msg,
+      }));
+    } finally {
+      this.isAssigning = false;
+    }
   }
 
   generatingPdf = false;
