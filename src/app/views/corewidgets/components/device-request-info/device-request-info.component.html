@@ -24,7 +24,7 @@
                               </h6>
                             </div>
                           <div>
-                              <button (click)="openAssignDevicesModal()"
+                              <button *ngIf="user?.authorities['app:bulkedit']" (click)="openAssignDevicesModal()"
                                   type="button" class="btn btn-success btn-sm mr-2">
                                   <small><i class="fas fa-link"></i> Assign Devices</small>
                               </button>
