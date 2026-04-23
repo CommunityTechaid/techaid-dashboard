@@ -325,12 +325,14 @@ export class DeviceRequestIndexComponent {
       },
       columns: [
         { data: 'id', width: '15px' },
-        { data: 'status' },
-        { data: 'clientRef' },
-        { data: 'referringOrganisationContact.referringOrganisation.name' },
+        { data: null, orderable: false },
         { data: 'referringOrganisationContact.fullName' },
-        { data: 'createdAt'},
+        { data: 'referringOrganisationContact.referringOrganisation.name' },
+        { data: 'clientRef' },
+        { data: 'createdAt' },
         { data: 'updatedAt' },
+        { data: 'status' },
+        { data: null, orderable: false },
       ]
     };
   }
