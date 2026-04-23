@@ -566,3 +566,10 @@ i.input-group-text {
  .modal-title{
      font-size: 0.9em;
  }
+
+/* ng-bootstrap v20 sets inline style z-index:1055 on ngb-modal-backdrop.
+   sb-admin.css (Bootstrap 4) overrides .modal { z-index: 1050 }, making the
+   modal window sit behind its own backdrop. Restore the window above it. */
+ngb-modal-window.modal {
+    z-index: 1056;
+}
