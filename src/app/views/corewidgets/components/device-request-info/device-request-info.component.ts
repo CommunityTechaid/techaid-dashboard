@@ -146,6 +146,17 @@ const DELETE_ENTITY = gql`
   }
 `;
 
+const ASSIGN_KITS = gql`
+  mutation assignKitsToDeviceRequest($data: BulkKitAssignmentInput!) {
+    assignKitsToDeviceRequest(data: $data) {
+      id
+      kits {
+        id
+      }
+    }
+  }
+`;
+
 const QUERY_DEVICE_COUNT = gql`
   query countDevicesForRequest($deviceRequestId: Long) {
     kitsConnection(where: { deviceRequest: { id: { _eq: $deviceRequestId } } }) {
@@ -178,6 +189,12 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
 }
 `;
 
+export interface DeviceAssignmentResult {
+  deviceId: string;
+  status: 'success' | 'warning' | 'error';
+  message: string;
+}
+
 @Component({
   selector: 'app-device-request-info',
   templateUrl: './device-request-info.component.html',
@@ -185,6 +202,7 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
 })
 export class DeviceRequestInfoComponent {
   @ViewChild('kitWarning') kitWarningModal: any;
+  @ViewChild('assignDevicesModal') assignDevicesModal: any;
 
   constructor(
     private modalService: NgbModal,
@@ -212,6 +230,10 @@ export class DeviceRequestInfoComponent {
   @Select(UserState.user) user$: Observable<User>;
   showAllDeviceTypes = false;
   deviceCount: number = 0;
+
+  assignDeviceIds: string = '';
+  assignmentResults: DeviceAssignmentResult[] = [];
+  isAssigning: boolean = false;
 
   deviceTypes = [
     { key: 'deviceRequestItems.laptops', label: 'Laptops', icon: 'fas fa-laptop' },
@@ -995,6 +1017,59 @@ export class DeviceRequestInfoComponent {
           );
         }
       );
+  }
+
+  openAssignDevicesModal() {
+    this.assignDeviceIds = '';
+    this.assignmentResults = [];
+    this.modalService.open(this.assignDevicesModal, { centered: true, size: 'lg' });
+  }
+
+  async assignDevices() {
+    const ids = this.assignDeviceIds
+      .split(',')
+      .map(id => id.trim())
+      .filter(id => id.length > 0);
+
+    if (ids.length === 0) {
+      return;
+    }
+
+    this.isAssigning = true;
+    this.assignmentResults = [];
+
+    // Call the mutation once per kit ID so each can succeed or fail independently
+    for (const kitId of ids) {
+      try {
+        await this.apollo.mutate({
+          mutation: ASSIGN_KITS,
+          variables: {
+            data: {
+              deviceRequestId: this.requestId,
+              kitIds: [kitId],
+            },
+          },
+        }).toPromise();
+
+        this.assignmentResults.push({
+          deviceId: kitId,
+          status: 'success',
+          message: 'Assigned successfully',
+        });
+      } catch (err) {
+        this.assignmentResults.push({
+          deviceId: kitId,
+          status: 'error',
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    if (this.assignmentResults.some(r => r.status === 'success')) {
+      this.fetchDeviceCount();
+    }
+
+    this.isAssigning = false;
   }
 
   generatingPdf = false;
