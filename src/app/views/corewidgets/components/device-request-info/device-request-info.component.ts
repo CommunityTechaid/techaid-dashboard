@@ -146,6 +146,17 @@ const DELETE_ENTITY = gql`
   }
 `;
 
+const ASSIGN_KITS = gql`
+  mutation assignKitsToDeviceRequest($data: BulkKitAssignmentInput!) {
+    assignKitsToDeviceRequest(data: $data) {
+      id
+      kits {
+        id
+      }
+    }
+  }
+`;
+
 const QUERY_DEVICE_COUNT = gql`
   query countDevicesForRequest($deviceRequestId: Long) {
     kitsConnection(where: { deviceRequest: { id: { _eq: $deviceRequestId } } }) {
@@ -1027,44 +1038,38 @@ export class DeviceRequestInfoComponent {
     this.isAssigning = true;
     this.assignmentResults = [];
 
-    // TODO: Replace with the actual endpoint URL when provided
-    const endpoint = `/api/device-requests/${this.requestId}/assign`;
+    // Call the mutation once per kit ID so each can succeed or fail independently
+    for (const kitId of ids) {
+      try {
+        await this.apollo.mutate({
+          mutation: ASSIGN_KITS,
+          variables: {
+            data: {
+              deviceRequestId: this.requestId,
+              kitIds: [kitId],
+            },
+          },
+        }).toPromise();
 
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceIds: ids }),
-      });
-
-      const result = await response.json();
-
-      // Expect an array of per-device results or a wrapper object
-      if (Array.isArray(result)) {
-        this.assignmentResults = result;
-      } else if (result.results && Array.isArray(result.results)) {
-        this.assignmentResults = result.results;
-      } else {
-        this.assignmentResults = ids.map(id => ({
-          deviceId: id,
-          status: response.ok ? 'success' : 'error',
-          message: response.ok ? 'Assigned successfully' : (result.message || result.error || 'Assignment failed'),
-        }));
+        this.assignmentResults.push({
+          deviceId: kitId,
+          status: 'success',
+          message: 'Assigned successfully',
+        });
+      } catch (err) {
+        this.assignmentResults.push({
+          deviceId: kitId,
+          status: 'error',
+          message: err instanceof Error ? err.message : String(err),
+        });
       }
-
-      if (this.assignmentResults.some(r => r.status === 'success')) {
-        this.fetchDeviceCount();
-      }
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Network error';
-      this.assignmentResults = ids.map(id => ({
-        deviceId: id,
-        status: 'error',
-        message: msg,
-      }));
-    } finally {
-      this.isAssigning = false;
     }
+
+    if (this.assignmentResults.some(r => r.status === 'success')) {
+      this.fetchDeviceCount();
+    }
+
+    this.isAssigning = false;
   }
 
   generatingPdf = false;
