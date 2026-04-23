@@ -505,6 +505,7 @@ export class DistributionsAndDeliveriesIndexComponent {
         { data: 'createdAt'},
         { data: 'updatedAt' },
         { data: 'status' },
+        { data: null, orderable: false },
       ]
     };
   }
