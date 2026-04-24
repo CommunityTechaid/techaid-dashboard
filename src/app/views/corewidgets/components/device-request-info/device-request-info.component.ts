@@ -234,6 +234,8 @@ export class DeviceRequestInfoComponent {
   assignDeviceIds: string = '';
   assignmentResults: DeviceAssignmentResult[] = [];
   isAssigning: boolean = false;
+  showAssignConfirmation: boolean = false;
+  parsedDeviceIds: string[] = [];
 
   deviceTypes = [
     { key: 'deviceRequestItems.laptops', label: 'Laptops', icon: 'fas fa-laptop' },
@@ -1022,10 +1024,12 @@ export class DeviceRequestInfoComponent {
   openAssignDevicesModal() {
     this.assignDeviceIds = '';
     this.assignmentResults = [];
+    this.showAssignConfirmation = false;
+    this.parsedDeviceIds = [];
     this.modalService.open(this.assignDevicesModal, { centered: true, size: 'lg' });
   }
 
-  async assignDevices() {
+  prepareAssignment() {
     const ids = this.assignDeviceIds
       .split(',')
       .map(id => id.trim())
@@ -1035,13 +1039,25 @@ export class DeviceRequestInfoComponent {
       return;
     }
 
+    this.parsedDeviceIds = ids;
+    this.showAssignConfirmation = true;
+  }
+
+  resetAssignModal() {
+    this.assignDeviceIds = '';
+    this.assignmentResults = [];
+    this.showAssignConfirmation = false;
+    this.parsedDeviceIds = [];
+  }
+
+  async executeAssignment() {
     this.isAssigning = true;
+    this.showAssignConfirmation = false;
     this.assignmentResults = [];
 
-    // Call the mutation once per kit ID so each can succeed or fail independently
-    for (const kitId of ids) {
+    for (const kitId of this.parsedDeviceIds) {
       try {
-        await this.apollo.mutate({
+        const res = await this.apollo.mutate<any>({
           mutation: ASSIGN_KITS,
           variables: {
             data: {
@@ -1051,17 +1067,16 @@ export class DeviceRequestInfoComponent {
           },
         }).toPromise();
 
-        this.assignmentResults.push({
-          deviceId: kitId,
-          status: 'success',
-          message: 'Assigned successfully',
-        });
+        const assignedKits: { id: string }[] = res.data['assignKitsToDeviceRequest']['kits'];
+        const wasAssigned = assignedKits.some(k => String(k.id) === String(kitId));
+
+        if (wasAssigned) {
+          this.assignmentResults.push({ deviceId: kitId, status: 'success', message: 'Assigned successfully' });
+        } else {
+          this.assignmentResults.push({ deviceId: kitId, status: 'error', message: 'Device not found' });
+        }
       } catch (err) {
-        this.assignmentResults.push({
-          deviceId: kitId,
-          status: 'error',
-          message: err instanceof Error ? err.message : String(err),
-        });
+        this.assignmentResults.push({ deviceId: kitId, status: 'error', message: this.extractGraphQLError(err) });
       }
     }
 
@@ -1070,6 +1085,16 @@ export class DeviceRequestInfoComponent {
     }
 
     this.isAssigning = false;
+  }
+
+  private extractGraphQLError(err: any): string {
+    if (err && err.graphQLErrors && err.graphQLErrors.length > 0) {
+      return err.graphQLErrors[0].message;
+    }
+    if (err && err.networkError) {
+      return err.networkError.message || 'Network error';
+    }
+    return err instanceof Error ? err.message : String(err);
   }
 
   generatingPdf = false;
