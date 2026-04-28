@@ -8,6 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Apollo } from 'apollo-angular';
 import { SearchQuery } from '@views/corewidgets/state/actions';
 import $ from 'jquery';
+import { environment } from '@env/environment';
 
 import { AppInitialComponent } from '../../shared/components/app-initial/app-initial.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
@@ -20,6 +21,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         .nav-border {
             border-bottom: 1px solid #f8f9fa;
         }
+        .testing-banner {
+            background-color: #fd7e14;
+            color: #fff;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
     `],
     imports: [AppInitialComponent, RouterLink, RouterLinkActive]
 })
@@ -27,6 +34,9 @@ export class AppHeader {
     private sub: Subscription;
     apis$: Observable<any>;
     public user: User;
+    readonly isTestEnvironment =
+        environment.environment !== 'production' ||
+        window.location.hostname === 'app-testing.communitytechaid.org.uk';
     @Select(UserState.user) user$: Observable<User>;
     constructor(
         private store: Store,
