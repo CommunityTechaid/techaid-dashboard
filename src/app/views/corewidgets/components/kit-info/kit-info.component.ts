@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { KIT_TYPES } from '@app/shared/utils';
@@ -11,7 +11,6 @@ import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
-import { Lightbox } from 'ngx-lightbox';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { HashUtils } from '@app/shared/utils';
 import { Title } from '@angular/platform-browser';
@@ -271,7 +270,6 @@ export class KitInfoComponent {
     private router: Router,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private lightbox: Lightbox,
     private titleService: Title
   ) {
     titleService.setTitle("TaDa - Device Info");

@@ -86,7 +86,8 @@ input[type="text"].srch {
     text-align: center;
 }
 
- .dataTables_empty {
+ .dataTables_empty,
+ td.dt-empty {
     text-align: center;
  }
 
@@ -555,7 +556,9 @@ i.input-group-text {
     text-align: center;
  }
 
- .dataTables_empty {
+ /* BUG-03/04: DataTables 2.x renamed dataTables_empty → dt-empty */
+ .dataTables_empty,
+ td.dt-empty {
      display: none;
  }
 
@@ -572,4 +575,74 @@ i.input-group-text {
    modal window sit behind its own backdrop. Restore the window above it. */
 ngb-modal-window.modal {
     z-index: 1056;
+}
+
+/* BUG-07: DataTables 2.x BS5 integration applies an opaque blue box-shadow to
+   .selected rows. Row selection exists in index tables purely as a visual
+   indicator; the solid blue obscures text. Soften to a light tint. */
+table.table.dataTable > tbody > tr.selected > * {
+    box-shadow: inset 0 0 0 9999px rgba(13, 110, 253, 0.12) !important;
+    color: inherit !important;
+}
+table.table.dataTable > tbody > tr.selected a {
+    color: inherit !important;
+}
+
+/* BUG-08: Bootstrap 5 renamed .custom-control → .form-check.
+   The status radio-button colour blocks use the old selector. */
+.device-request-status .form-check:nth-child(1) {
+    border-radius: 5px 5px 0 0;
+    background-color: #FFEAB3;
+}
+.device-request-status .form-check:nth-child(2),
+.device-request-status .form-check:nth-child(3) {
+    background-color: #FFEAB3;
+}
+.device-request-status .form-check:nth-child(4),
+.device-request-status .form-check:nth-child(5) {
+    background-color: #BFCEF9;
+}
+.device-request-status .form-check:nth-child(6),
+.device-request-status .form-check:nth-child(7) {
+    background-color: #FBCBC0;
+}
+.device-request-status .form-check:nth-child(8) {
+    background-color: #FBCBC0;
+    border-radius: 0 0 5px 5px;
+}
+
+.kit-status .form-check:nth-child(1) {
+    border-radius: 5px 5px 0 0;
+    background-color: #FFEAB3;
+}
+.kit-status .form-check:nth-child(2),
+.kit-status .form-check:nth-child(3),
+.kit-status .form-check:nth-child(4),
+.kit-status .form-check:nth-child(5) {
+    background-color: #FBCBC0;
+}
+.kit-status .form-check:nth-child(6),
+.kit-status .form-check:nth-child(7) {
+    background-color: #BFCEF9;
+}
+.kit-status .form-check:nth-child(8),
+.kit-status .form-check:nth-child(9) {
+    background-color: #BAE3D7;
+}
+.kit-status .form-check:nth-child(10) {
+    background-color: #DDB4E7;
+}
+.kit-status .form-check:nth-child(11) {
+    background-color: #DDB4E7;
+    border-radius: 0 0 5px 5px;
+}
+
+/* BUG-10: DataTables 2.x does not float/right-justify the pagination by
+   default. Right-align on medium+ screens; mobile stays centred (already
+   handled by the DataTables BS5 stylesheet). */
+@media screen and (min-width: 768px) {
+    div.dt-container div.dt-paging {
+        display: flex;
+        justify-content: flex-end;
+    }
 }
