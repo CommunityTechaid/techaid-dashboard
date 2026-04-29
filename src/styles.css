@@ -190,7 +190,7 @@ input[type="text"].srch {
 }
 
 .pac-container {
-    z-index: 1051 !important;
+    z-index: 1056 !important;
 }
 
 .nav-scroller {
@@ -635,6 +635,14 @@ table.table.dataTable > tbody > tr.selected a {
 .kit-status .form-check:nth-child(11) {
     background-color: #DDB4E7;
     border-radius: 0 0 5px 5px;
+}
+
+/* BUG-06: Bootstrap 5's --bs-nav-link-color defaults to #0d6efd (bright blue),
+   but sb-admin.css only overrides layout on .nav-tabs .nav-link, not color.
+   Active tabs get #6e707e from sb-admin.css; inactive tabs inherit Bootstrap 5's
+   bright blue. Pin inactive links to ctablue so both states use the same palette. */
+.nav-tabs .nav-link:not(.active) {
+    color: var(--ctablue);
 }
 
 /* BUG-10: DataTables 2.x does not float/right-justify the pagination by

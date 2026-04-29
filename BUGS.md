@@ -75,11 +75,11 @@ Status key: `[ ]` open · `[x]` fixed · `[-]` won't fix / by design
 
 **Symptom**: Inside a referee/org/request/donor record, some tabs render in a brighter blue than others (e.g. "Device Requests" tab vs "Details" tab).
 
-**Root cause (TBD)**: Mixed use of ng-bootstrap `ngbNav` tabs vs plain Bootstrap 5 `nav-link` markup. The two sets pick up different CSS custom-property values. Inspect which tabs in which components are not wrapped in `ngbNavLink`.
+**Root cause**: All tab templates already use `ngbNav`/`ngbNavLink`. The colour mismatch is a Bootstrap 4→5 cascade gap: `sb-admin.css` sets `color: #6e707e` on `.nav-tabs .nav-link.active` but does not set a colour for inactive (non-active) `.nav-tabs .nav-link`. Bootstrap 5's default `--bs-nav-link-color` (`#0d6efd`, bright blue) bled through for inactive tabs while active tabs used the sb-admin grey — making inactive tabs appear brighter than active ones.
 
-**Files**: [referring-organisation-contact-info.component.html](src/app/views/corewidgets/components/referring-organisation-contact-info/referring-organisation-contact-info.component.html), [referring-organisation-info.component.html](src/app/views/corewidgets/components/referring-organisation-info/referring-organisation-info.component.html), [donor-info.html](src/app/views/corewidgets/components/donor-info/donor-info.html), [donor-parent-info.html](src/app/views/corewidgets/components/donor-parent-info/donor-parent-info.html)
+**Fix**: Added `.nav-tabs .nav-link:not(.active) { color: var(--ctablue); }` to [styles.css](src/styles.css) so inactive tab links use the same dark navy as the rest of the theme, matching sb-admin's active-tab grey in visual weight.
 
-**Status**: [ ]
+**Status**: [x]
 
 ---
 
@@ -137,11 +137,11 @@ Status key: `[ ]` open · `[x]` fixed · `[-]` won't fix / by design
 
 **Symptom**: The address lookup field on the "Create Referee" form does nothing / returns no results.
 
-**Root cause (TBD)**: Google Places Autocomplete (`pac-container` z-index is set in [styles.css:192](src/styles.css#L192), so the widget is configured somewhere). Check for a broken API key, missing script load, or a broken formly field type.
+**Root cause**: Bootstrap 5 raised the modal z-index from 1050 to `--bs-modal-zindex: 1055`. The `.pac-container` override in [styles.css](src/styles.css) was `1051` — enough to sit above the Bootstrap 4 modal backdrop (1050) but now rendered below the Bootstrap 5 modal (1055). The Google Places autocomplete dropdown was appearing but hidden behind the modal.
 
-**Files**: [referring-organisation-contact-index.component.ts](src/app/views/corewidgets/components/referring-organisation-contact-index/referring-organisation-contact-index.component.ts) or the relevant formly field type in [src/app/shared/modules/formly/](src/app/shared/modules/formly/)
+**Fix**: Bumped `.pac-container { z-index }` from `1051` to `1056` in [styles.css](src/styles.css) so it renders above the Bootstrap 5 modal.
 
-**Status**: [ ]
+**Status**: [x]
 
 ---
 
@@ -181,4 +181,4 @@ The date-filter logic itself (`filter.AND` array with `collectionDate _gte/_lte`
 
 **Fix**: Removed premature `</div>` in [distributions-and-deliveries-index.component.html](src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.html); `card-body` is now inside the card.
 
-**Status**: [-] on hold — backend schema investigation needed (see prompt below)
+**Status**: [x] resolved at the database/backend level — no further frontend changes needed
