@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -190,13 +190,16 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
 export class DeviceRequestInfoComponent {
   @ViewChild('kitWarning') kitWarningModal: any;
 
+  private clickHandler: (e: MouseEvent) => void;
+
   constructor(
     private modalService: NgbModal,
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private titleService: Title
+    private titleService: Title,
+    private cdr: ChangeDetectorRef
   ) {
     titleService.setTitle("TaDa - Device Request");
   }
@@ -243,8 +246,9 @@ export class DeviceRequestInfoComponent {
       }
     }
 
-    // Trigger change detection by updating the form options
+    // Trigger change detection so formly re-evaluates hideExpression
     this.options = { ...this.options };
+    this.cdr.detectChanges();
   }
 
   newNoteField: FormlyFieldConfig = {
@@ -864,38 +868,15 @@ export class DeviceRequestInfoComponent {
     }));
 
     // Set up global click handler for toggle button using event delegation
-    document.addEventListener('click', (e: MouseEvent) => {
+    this.clickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-
-      // Check if clicked element's text matches our toggle button text
-      const text = target.textContent?.trim();
-      if (text === 'Show/hide unused device types') {
-        e.preventDefault();
-        this.toggleDeviceTypes();
-        return;
-      }
-
-      // Check if clicked element is the icon (has fa-chevron class)
-      if (target.className && (target.className.includes('fa-chevron-down') || target.className.includes('fa-chevron-up'))) {
-        e.preventDefault();
-        this.toggleDeviceTypes();
-        return;
-      }
-
-      // Check if clicked element is the icon or text span by ID
-      if (target.id === 'toggleIcon' || target.id === 'toggleText' || target.id === 'toggleDeviceTypesBtn') {
-        e.preventDefault();
-        this.toggleDeviceTypes();
-        return;
-      }
-
-      // Also check if clicked element or its parent is the toggle button
       const button = target.closest('#toggleDeviceTypesBtn');
       if (button) {
         e.preventDefault();
         this.toggleDeviceTypes();
       }
-    });
+    };
+    document.addEventListener('click', this.clickHandler);
   }
 
 
@@ -910,6 +891,9 @@ export class DeviceRequestInfoComponent {
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();
+    }
+    if (this.clickHandler) {
+      document.removeEventListener('click', this.clickHandler);
     }
   }
 

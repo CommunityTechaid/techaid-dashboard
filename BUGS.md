@@ -63,11 +63,11 @@ Status key: `[ ]` open · `[x]` fixed · `[-]` won't fix / by design
 
 **Symptom**: The `fa-laugh-wink` icon in the top nav-scroller bar is visually clipped against the right edge.
 
-**Root cause (TBD)**: Layout / padding issue in `.nav-scroller` or the Bootstrap 5 navbar. Check [app.header.component.html:86-99](src/app/components/app-header/app.header.component.html#L86).
+**Root cause**: The topbar `<ul class="navbar-nav">` used Bootstrap 4's `ml-auto` class. Bootstrap 5 replaced `ml-*`/`mr-*` with `ms-*`/`me-*`. Without `ms-auto`, the user dropdown was left-aligned rather than right-aligned, colliding with the nav-scroller content below.
 
-**Files**: [app.header.component.html](src/app/components/app-header/app.header.component.html), [styles.css](src/styles.css)
+**Fix**: Changed `ml-auto` → `ms-auto` on the `navbar-nav` in [app.header.component.html](src/app/components/app-header/app.header.component.html).
 
-**Status**: [ ]
+**Status**: [x]
 
 ---
 
@@ -111,11 +111,13 @@ Status key: `[ ]` open · `[x]` fixed · `[-]` won't fix / by design
 
 **Symptom**: The Audit Table tab inside a device request record shows a "no data!" message.
 
-**Root cause (TBD)**: Check [device-request-audit-component.component.ts](src/app/views/corewidgets/components/device-request-audit-component/device-request-audit-component.component.ts) — Apollo query or DataTables init likely broken.
+**Root cause**: Two issues in [device-request-audit-component.component.ts](src/app/views/corewidgets/components/device-request-audit-component/device-request-audit-component.component.ts):
+1. `watchQuery` was initialised with `variables: {}`, immediately firing a query without the required `$id: Long!` variable, causing a GraphQL validation error that could corrupt the queryRef state.
+2. The DataTables callback used `data['totalElements']` but `deviceRequestAudits` returns an array, not a paginated connection — so `totalElements` was always `undefined`.
 
-**Files**: [device-request-audit-component.component.ts](src/app/views/corewidgets/components/device-request-audit-component/device-request-audit-component.component.ts), [device-request-audit-component.html](src/app/views/corewidgets/components/device-request-audit-component/device-request-audit-component.html)
+**Fix**: Changed `variables: {}` → `variables: { id: this._deviceRequestId }` in `ngOnInit`, and changed `data['totalElements']` → `data.length || 0` in the ajax callback.
 
-**Status**: [ ]
+**Status**: [x]
 
 ---
 
@@ -159,11 +161,13 @@ Status key: `[ ]` open · `[x]` fixed · `[-]` won't fix / by design
 
 **Symptom**: Clicking "show/unhide device types" in the device requests view has no visible effect (expected to expand/collapse the device type list).
 
-**Root cause (TBD)**: Likely uses Bootstrap 4 `data-toggle="collapse"` / `data-target` which became `data-bs-toggle` / `data-bs-target` in Bootstrap 5.
+**Root cause**: Two bugs in [device-request-info.component.ts](src/app/views/corewidgets/components/device-request-info/device-request-info.component.ts):
+1. The `document.addEventListener('click', ...)` callback runs outside Angular's zone, so `this.options = { ...this.options }` does not trigger change detection. Formly never re-evaluates `hideExpression`.
+2. The event listener was never removed in `ngOnDestroy`, so every navigation visit stacked another listener. After an even number of visits, `toggleDeviceTypes()` fired twice per click (cancelling out).
 
-**Files**: [device-request-index.component.html](src/app/views/corewidgets/components/device-request-index/device-request-index.component.html) or [device-request-info.component.html](src/app/views/corewidgets/components/device-request-info/device-request-info.component.html)
+**Fix**: Stored the handler in `this.clickHandler`, removed the listener in `ngOnDestroy`, simplified detection to `target.closest('#toggleDeviceTypesBtn')` only, and added `this.cdr.detectChanges()` (injected `ChangeDetectorRef`) to force formly to re-evaluate expressions.
 
-**Status**: [ ]
+**Status**: [x]
 
 ---
 
@@ -171,8 +175,10 @@ Status key: `[ ]` open · `[x]` fixed · `[-]` won't fix / by design
 
 **Symptom**: Selecting a date filter on the Distributions & Deliveries page returns an empty table even when records exist for that date.
 
-**Root cause (TBD)**: Date filtering logic in [distributions-and-deliveries-index.component.ts](src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.ts). May be a format mismatch or a broken DataTables column search.
+**Root cause (partial)**: The [distributions-and-deliveries-index.component.html](src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.html) had a structural bug: a premature `</div>` after the quick-filter buttons closed the card early, leaving `div.card-body` (and the table) outside the Bootstrap card. Fixed by removing that extra `</div>`.
 
-**Files**: [distributions-and-deliveries-index.component.ts](src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.ts), [distributions-and-deliveries-index.component.html](src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.html)
+The date-filter logic itself (`filter.AND` array with `collectionDate _gte/_lte`) follows the same pattern as kit-index and should be correct. If records still fail to appear when a week is selected, further investigation of the backend `DeviceRequestWhereInput` schema is needed to confirm it supports a top-level `AND` array alongside other top-level filter properties.
 
-**Status**: [ ]
+**Fix**: Removed premature `</div>` in [distributions-and-deliveries-index.component.html](src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.html); `card-body` is now inside the card.
+
+**Status**: [-] on hold — backend schema investigation needed (see prompt below)

@@ -136,7 +136,7 @@ export class DeviceRequestAuditComponent {
   ngOnInit() {
     const queryRef = this.apollo.watchQuery({
       query: QUERY_ENTITY,
-      variables: {},
+      variables: { id: this._deviceRequestId },
     });
 
     this.sub = this.search$.subscribe((query) => {
@@ -187,7 +187,7 @@ export class DeviceRequestAuditComponent {
             callback({
               draw: params.draw,
               recordsTotal: this.total,
-              recordsFiltered: data['totalElements'],
+              recordsFiltered: data.length || 0,
               error: '',
               data: [],
             });
