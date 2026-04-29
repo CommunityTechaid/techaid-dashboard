@@ -2,7 +2,7 @@ import { State, StateContext, Action, Selector, NgxsOnInit } from '@ngxs/store';
 import { LoginUser, LogoutUser } from './actions/user.actions';
 import { NgZone, Injectable } from '@angular/core';
 import { AuthenticationService } from '@app/shared/services/authentication.service';
-import { tap, first } from 'rxjs/operators';
+import { tap, first, filter } from 'rxjs/operators';
 
 export interface UserStateModel {
    user: User;
@@ -59,14 +59,17 @@ export class UserState implements NgxsOnInit {
                 authenticated: true,
             })
         });
-        this.auth.getUser$().subscribe(u => {
+        this.auth.getUser$().pipe(filter(u => u != null), first()).subscribe(u => {
             u.authenticated = true;
             ctx.patchState({user: new User(u)});
-            this.auth.getTokenSilently$().pipe(first()).subscribe(data => {
-                const parts = data.split('.');
-                const token = JSON.parse(atob(parts[1]));
-                u.permissions = token.permissions || [];
-                ctx.patchState({user: new User(u)});
+            this.auth.getTokenSilently$().pipe(first()).subscribe({
+                next: (data) => {
+                    const parts = data.split('.');
+                    const token = JSON.parse(atob(parts[1]));
+                    u.permissions = token.permissions || [];
+                    ctx.patchState({user: new User(u)});
+                },
+                error: () => {}
             });
         });
     }

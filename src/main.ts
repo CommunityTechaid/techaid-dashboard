@@ -62,6 +62,7 @@ bootstrapApplication(AppComponent, {
         audience: 'https://api.communitytechaid.org.uk',
       },
       cacheLocation: 'localstorage',
+      useRefreshTokens: true,
     }),
     provideToastr({
       positionClass: 'toast-top-right',
