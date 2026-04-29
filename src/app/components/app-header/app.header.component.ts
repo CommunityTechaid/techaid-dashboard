@@ -21,12 +21,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         .nav-border {
             border-bottom: 1px solid #f8f9fa;
         }
-        .testing-banner {
-            background-color: #fd7e14;
-            color: #fff;
-            font-size: 0.875rem;
-            letter-spacing: 0.05em;
-        }
     `],
     imports: [AppInitialComponent, RouterLink, RouterLinkActive]
 })

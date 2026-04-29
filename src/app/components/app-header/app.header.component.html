@@ -1,12 +1,11 @@
-<!-- Testing environment banner -->
-@if (isTestEnvironment) {
-  <div class="testing-banner text-center fw-bold py-1">
-    TESTING SITE &mdash; data here is not live
-  </div>
-}
-
 <!-- Topbar -->
-<nav class="navbar navbar-expand navbar-light topbar static-top shadow bg-white">
+<nav class="navbar navbar-expand navbar-light topbar static-top shadow"
+     [class.bg-white]="!isTestEnvironment"
+     [class.bg-warning]="isTestEnvironment">
+
+  @if (isTestEnvironment) {
+    <span class="fw-bold small ms-2">TESTING SITE &mdash; data here is not live</span>
+  }
 
   <!-- Sidebar Toggle (Topbar) -->
   <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle me-3" (click)="toggleSideBar()">
