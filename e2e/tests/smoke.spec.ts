@@ -23,8 +23,8 @@ test.describe('Smoke', () => {
     // Sidebar should be visible (indicates authenticated state)
     await expect(page.locator('app-sidebar').first()).toBeVisible({ timeout: 10_000 });
 
-    // Filter out network-level errors — these are API/CORS failures, not Angular errors.
-    // We only want to catch Angular runtime crashes (e.g. template errors, DI failures).
+    // Filter out network-level errors and known SDK noise — we only want Angular
+    // runtime crashes (e.g. template errors, DI failures).
     const angularErrors = consoleErrors.filter(e =>
       !e.includes('favicon') &&
       !e.includes('zone') &&
@@ -33,7 +33,11 @@ test.describe('Smoke', () => {
       !e.includes('Access-Control') &&
       !e.includes('ERR_FAILED') &&
       !e.includes('Failed to load resource') &&
-      !e.includes('net::')
+      !e.includes('net::') &&
+      // Auth0 SDK warning when no refresh token is present in the synthetic storageState
+      !e.includes('Missing Refresh Token') &&
+      // Downstream GraphQL "Access Denied" errors caused by the missing refresh token
+      !e.includes('Access Denied')
     );
     expect(angularErrors, `Unexpected console errors: ${angularErrors.join('\n')}`).toHaveLength(0);
   });

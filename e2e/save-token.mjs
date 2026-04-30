@@ -145,17 +145,47 @@ const storageState = {
     {
       origin: 'http://localhost:4200',
       localStorage: [
-        { name: cacheKey,       value: cacheValue       },
+        { name: cacheKey,        value: cacheValue        },
         { name: idTokenCacheKey, value: idTokenCacheValue },
       ],
     },
   ],
 };
 
-const outDir  = join(__dirname, '.auth');
-const outPath = join(outDir, 'user.json');
+// Deployed UAT front-end storageState (used by playwright.config.uat.ts)
+const deployedAuthCookie = {
+  name:     `auth0.${clientId}.is.authenticated`,
+  value:    'true',
+  domain:   'app-testing.communitytechaid.org.uk',
+  path:     '/',
+  expires:  expiresAt,
+  httpOnly: false,
+  secure:   true,
+  sameSite: 'Lax',
+};
+
+const storageStateDeployed = {
+  cookies: [deployedAuthCookie],
+  origins: [
+    {
+      origin: 'https://app-testing.communitytechaid.org.uk',
+      localStorage: [
+        { name: cacheKey,        value: cacheValue        },
+        { name: idTokenCacheKey, value: idTokenCacheValue },
+      ],
+    },
+  ],
+};
+
+const outDir           = join(__dirname, '.auth');
+const outPath          = join(outDir, 'user.json');
+const outPathDeployed  = join(outDir, 'uat-deployed.json');
 mkdirSync(outDir, { recursive: true });
-writeFileSync(outPath, JSON.stringify(storageState, null, 2));
+writeFileSync(outPath,         JSON.stringify(storageState,         null, 2));
+writeFileSync(outPathDeployed, JSON.stringify(storageStateDeployed, null, 2));
 
 console.log(`Saved storageState → ${outPath}`);
-console.log('You can now run: npm run e2e');
+console.log(`Saved storageState → ${outPathDeployed}`);
+console.log('You can now run:');
+console.log('  npx playwright test                                        (local ng serve + UAT API)');
+console.log('  npx playwright test --config playwright.config.uat.ts     (deployed UAT front-end)');
