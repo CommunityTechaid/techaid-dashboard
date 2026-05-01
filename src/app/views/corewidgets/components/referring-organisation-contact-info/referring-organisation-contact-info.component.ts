@@ -109,7 +109,7 @@ export class ReferringOrganisationContactInfoComponent {
   referringOrganisationField: FormlyFieldConfig = {
     key: 'referringOrganisationId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
+    className: 'px-2 ms-auto justify-content-end text-right',
     templateOptions: {
       label: 'Referring Organisation',
       description: 'The organisation this referee is currently assigned to.',

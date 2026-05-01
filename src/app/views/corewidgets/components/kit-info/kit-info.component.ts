@@ -293,7 +293,7 @@ export class KitInfoComponent {
   donorField: FormlyFieldConfig = {
     key: 'donorId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
+    className: 'px-2 ms-auto justify-content-end text-right',
     templateOptions: {
       label: 'Donor',
       //description: 'The donor this device is currently assigned to.',
@@ -313,7 +313,7 @@ export class KitInfoComponent {
   deviceRequestField: FormlyFieldConfig = {
     key: 'deviceRequestId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
+    className: 'px-2 ms-auto justify-content-end text-right',
     templateOptions: {
       label: 'Device Request',
       //description: 'The device request this device is currently assigned to.',
@@ -522,7 +522,7 @@ export class KitInfoComponent {
         {
           key: 'lotId',
           type: 'input',
-          className: 'px-2 ml-auto justify-content-end text-right',
+          className: 'px-2 ms-auto justify-content-end text-right',
           defaultValue: '',
           templateOptions: {
             label: "Lot ID"
