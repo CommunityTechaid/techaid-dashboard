@@ -622,33 +622,29 @@ table.table.dataTable > tbody > tr.selected a {
 .kit-status .form-check {
     margin-bottom: 0;
 }
-/* Items 1-4: New device registered, Device received into CTA, Device wiped, OS installed → salmon */
 .kit-status .form-check:nth-child(2) {
     border-radius: 5px 5px 0 0;
-    background-color: #FBCBC0;
+    background-color: #FFEAB3;
 }
 .kit-status .form-check:nth-child(3),
 .kit-status .form-check:nth-child(4),
-.kit-status .form-check:nth-child(5) {
+.kit-status .form-check:nth-child(5),
+.kit-status .form-check:nth-child(6) {
     background-color: #FBCBC0;
 }
-/* Items 5-6: Assessment check completed, Quality check completed → blue */
-.kit-status .form-check:nth-child(6),
-.kit-status .form-check:nth-child(7) {
+.kit-status .form-check:nth-child(7),
+.kit-status .form-check:nth-child(8) {
     background-color: #BFCEF9;
 }
-/* Items 7-8: Collection/drop off arranged, Device received by beneficiary → green */
-.kit-status .form-check:nth-child(8),
-.kit-status .form-check:nth-child(9) {
+.kit-status .form-check:nth-child(9),
+.kit-status .form-check:nth-child(10) {
     background-color: #BAE3D7;
 }
-/* Items 9-10: Device recycled, Device in for repair → purple */
-.kit-status .form-check:nth-child(10),
 .kit-status .form-check:nth-child(11) {
     background-color: #DDB4E7;
 }
-/* Item 11: Device stored → no background (white) */
 .kit-status .form-check:nth-child(12) {
+    background-color: #DDB4E7;
     border-radius: 0 0 5px 5px;
 }
 
