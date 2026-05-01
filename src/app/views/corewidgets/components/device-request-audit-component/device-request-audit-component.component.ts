@@ -215,10 +215,6 @@ export class DeviceRequestAuditComponent {
           }
         );
       },
-      columns: [
-        { width: '100px' },
-        { width: '200px' }
-      ],
     };
   }
 

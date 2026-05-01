@@ -251,6 +251,17 @@ as 0 records and suppresses all Angular-rendered rows.
 
 **Files:** `src/app/views/corewidgets/components/kit-audit-component/kit-audit-component.component.ts`
 
+**Root cause (3):** `dtOptions.columns` had only 2 entries but the table has 11 `<th>`
+columns. DataTables requires the `columns` array length to match the DOM column count —
+mismatches throw `TypeError: Cannot read properties of undefined (reading 'sClass')` during
+`DataTable()` construction, before the ajax callback ever fires. This is why no GraphQL
+request was made despite root causes 1 and 2 being fixed.
+
+**Fix (3):** Removed `columns: [{ width: '100px' }, { width: '200px' }]` from
+`KitAuditComponent.dtOptions`. Since `ordering: false`, `params.order` is always empty
+and the `columns` array was dead code anyway. Same fix applied to `DeviceRequestAuditComponent`
+(15 DOM columns vs. 2 in the array). DataTables now auto-detects columns from the DOM.
+
 **Status**: [x]
 
 ---
