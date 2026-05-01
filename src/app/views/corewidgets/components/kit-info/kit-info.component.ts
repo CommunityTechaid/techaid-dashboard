@@ -493,7 +493,7 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'row d-flex',
+      fieldGroupClassName: 'd-flex py-2',
       fieldGroup: [
         {
           key: 'make',
@@ -532,7 +532,7 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'row d-flex',
+      fieldGroupClassName: 'd-flex py-2',
       fieldGroup: [
         {
           key: 'locationCode',
