@@ -202,6 +202,208 @@ test.describe('BUG-10: DataTables pagination is right-aligned', () => {
   });
 });
 
+// ─── BUG-15: Kit-info hardware row is horizontal ─────────────────────────────
+test.describe('BUG-15: Device hardware details row is laid out horizontally', () => {
+  test.afterEach(async ({ page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  });
+
+  test('hardware detail fields sit side-by-side, not stacked in a column', async ({ page }) => {
+    await withAuthInterceptor(page);
+    await page.goto('/dashboard/devices');
+
+    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
+      .then(() => true).catch(() => false);
+
+    if (!appeared) {
+      test.skip(true, 'No devices in UAT database — skipping');
+      return;
+    }
+
+    const href = await linkLocator.first().getAttribute('href');
+    await withAuthInterceptor(page);
+    await page.goto(href);
+    await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('formly-form')).toBeVisible({ timeout: 10_000 });
+    await page.waitForTimeout(1_000);
+
+    // The first field-group (hardware row) uses fieldGroupClassName that must NOT
+    // have Bootstrap's .row class. Without .row each formly-field is a flex item
+    // and the bounding boxes overlap horizontally (same Y, different X).
+    // With .row, Bootstrap forces width:100% on children so they stack vertically
+    // (consecutive Y values, same X).
+    const fieldGroup = page.locator('formly-group').first();
+    const fields = fieldGroup.locator('formly-field');
+    const count = await fields.count();
+    if (count < 2) {
+      test.skip(true, 'Fewer than 2 fields in first group — skipping');
+      return;
+    }
+
+    const box0 = await fields.nth(0).boundingBox();
+    const box1 = await fields.nth(1).boundingBox();
+    if (!box0 || !box1) return;
+
+    // If stacked vertically, box1.y > box0.y + box0.height (they don't overlap).
+    // If laid out horizontally, box1.y ≈ box0.y (they share the same row).
+    const verticallyStacked = box1.y > box0.y + box0.height;
+    expect(verticallyStacked).toBe(false);
+  });
+});
+
+// ─── BUG-16: Kit status colour blocks are coloured ───────────────────────────
+test.describe('BUG-16: Device status radio blocks have the correct coloured backgrounds', () => {
+  test.afterEach(async ({ page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  });
+
+  test('first .kit-status .form-check block has yellow background, not salmon or transparent', async ({ page }) => {
+    await withAuthInterceptor(page);
+    await page.goto('/dashboard/devices');
+
+    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
+      .then(() => true).catch(() => false);
+
+    if (!appeared) {
+      test.skip(true, 'No devices in UAT database — skipping');
+      return;
+    }
+
+    const href = await linkLocator.first().getAttribute('href');
+    await withAuthInterceptor(page);
+    await page.goto(href);
+    await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
+
+    const firstBlock = page.locator('.kit-status .form-check').first();
+    const blockAppeared = await firstBlock.waitFor({ state: 'visible', timeout: 10_000 })
+      .then(() => true).catch(() => false);
+    if (!blockAppeared) {
+      test.skip(true, 'kit-status block not found — skipping');
+      return;
+    }
+
+    const bg = await firstBlock.evaluate(el => getComputedStyle(el).backgroundColor);
+    // Transparent means nth-child is still off — fix did not apply
+    expect(bg).not.toBe('rgba(0, 0, 0, 0)');
+    // Salmon (#FBCBC0 = rgb(251,203,192)) means nth-child is wrong (off by one)
+    expect(bg).not.toBe('rgb(251, 203, 192)');
+    // Expected amber/yellow: styles.css .kit-status .form-check:nth-child(2) after fix
+    expect(bg).toBe('rgb(255, 234, 179)');
+  });
+
+  test('last .kit-status .form-check block (PROCESSING_STORED) has purple background', async ({ page }) => {
+    await withAuthInterceptor(page);
+    await page.goto('/dashboard/devices');
+
+    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
+      .then(() => true).catch(() => false);
+
+    if (!appeared) {
+      test.skip(true, 'No devices in UAT database — skipping');
+      return;
+    }
+
+    const href = await linkLocator.first().getAttribute('href');
+    await withAuthInterceptor(page);
+    await page.goto(href);
+    await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
+
+    const blocks = page.locator('.kit-status .form-check');
+    const blockCount = await blocks.count();
+    if (blockCount < 11) {
+      test.skip(true, 'Fewer than 11 kit-status blocks found — skipping');
+      return;
+    }
+
+    const lastBlock = blocks.last();
+    await lastBlock.waitFor({ state: 'visible', timeout: 10_000 });
+    const bg = await lastBlock.evaluate(el => getComputedStyle(el).backgroundColor);
+    // Transparent means the last item has no nth-child rule — fix did not apply
+    expect(bg).not.toBe('rgba(0, 0, 0, 0)');
+    // Expected purple: styles.css .kit-status .form-check:nth-child(12)
+    expect(bg).toBe('rgb(221, 180, 231)');
+  });
+});
+
+// ─── BUG-17: Device (kit) audit table loads data ─────────────────────────────
+test.describe('BUG-17: Device audit table shows rows rather than "No data!"', () => {
+  test.afterEach(async ({ page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  });
+
+  test('device audit table is populated, not blank', async ({ page }) => {
+    await withAuthInterceptor(page);
+    await page.goto('/dashboard/devices');
+
+    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
+      .then(() => true).catch(() => false);
+
+    if (!appeared) {
+      test.skip(true, 'No devices in UAT database — skipping');
+      return;
+    }
+
+    const href = await linkLocator.first().getAttribute('href');
+    await withAuthInterceptor(page);
+    await page.goto(href);
+    await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
+
+    const auditTab = page.locator('ul.nav-tabs .nav-link', { hasText: 'Audit Table' });
+    if (!(await auditTab.isVisible())) {
+      test.skip(true, 'Audit Table tab not found (no admin:kits authority) — skipping');
+      return;
+    }
+    await auditTab.click();
+
+    await expect(page.locator('kit-audit-component table')).toBeVisible({ timeout: 10_000 });
+    await page.waitForTimeout(3_000);
+
+    // Every device that has ever been saved has at least one audit revision.
+    // The pre-fix code fired the query without the id, so entities was always [].
+    await expect(page.locator('kit-audit-component td.no-data-available')).not.toBeVisible();
+  });
+});
+
+// ─── BUG-18: DnD week filter buttons show historical data ────────────────────
+test.describe('BUG-18: DnD week filter shows entries for past weeks', () => {
+  test.afterEach(async ({ page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  });
+
+  test('clicking a week filter button does not produce a persistently empty table', async ({ page }) => {
+    await withAuthInterceptor(page);
+    await page.goto('/dashboard/distributions-and-deliveries');
+    await expect(page.locator('table.dataTable')).toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(1_500);
+
+    // Week buttons should be present
+    const weekBtns = page.locator('button.btn-outline-primary, button.btn-primary');
+    if (!(await weekBtns.first().isVisible())) {
+      test.skip(true, 'No week filter buttons visible — skipping');
+      return;
+    }
+
+    // Click the first week button (oldest week — most likely to have historical data)
+    await weekBtns.first().click();
+    await page.waitForTimeout(2_000);
+
+    // Table must still be present (not broken by the filter)
+    await expect(page.locator('table.dataTable')).toBeVisible();
+
+    // The dt-empty / dataTables_empty cell must NOT be visible — pre-fix, week buttons
+    // only generated future-week windows so every click returned 0 results and showed
+    // the DataTables empty state.
+    const emptyCell = page.locator('td.dt-empty, td.dataTables_empty');
+    if (await emptyCell.count() > 0) {
+      await expect(emptyCell.first()).not.toBeVisible();
+    }
+  });
+});
+
 // ─── BUG-12: View Map button removed ─────────────────────────────────────────
 test.describe('BUG-12: Defunct View Map button is gone', () => {
   test('devices page does not contain a "View Map" button', async ({ page }) => {

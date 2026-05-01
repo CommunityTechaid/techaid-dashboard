@@ -24,9 +24,9 @@
       </li>
       <div class="topbar-divider d-none d-sm-block"></div>
       <!-- Nav Item - User Information -->
-      <li class="nav-item dropdown no-arrow">
-        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
-          aria-haspopup="true" aria-expanded="false">
+      <li class="nav-item no-arrow" ngbDropdown placement="bottom-end">
+        <a class="nav-link" href="#" id="userDropdown" role="button"
+          ngbDropdownToggle (click)="$event.preventDefault()">
           <span class="me-2 d-none d-lg-inline text-gray-600 small">{{user.name}}</span>
           @if (user?.picture?.length) {
             <img class="img-profile rounded-circle" [src]="user.picture">
@@ -36,9 +36,9 @@
           }
         </a>
         <!-- Dropdown - User Information -->
-        <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
+        <div ngbDropdownMenu class="dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
           @if (user?.authorities['app:admin']) {
-            <a class="dropdown-item" href="#" routerLink="/dashboard/admin-panel">
+            <a class="dropdown-item" routerLink="/dashboard/admin-panel">
               <i class="fas fa-toolbox fa-sm fa-fw me-2 text-gray-400"></i>
               Admin Panel
             </a>
@@ -47,13 +47,13 @@
             <div class="dropdown-divider"></div>
           }
           @if (user?.authorities['read:users']) {
-            <a class="dropdown-item" href="#" routerLink="/dashboard/users">
+            <a class="dropdown-item" routerLink="/dashboard/users">
               <i class="fas fa-user-lock fa-sm fa-fw me-2 text-gray-400"></i>
               Users
             </a>
           }
           @if (user?.authorities['read:users']) {
-            <a class="dropdown-item" href="#" routerLink="/dashboard/roles">
+            <a class="dropdown-item" routerLink="/dashboard/roles">
               <i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>
               Roles
             </a>
@@ -61,11 +61,11 @@
           @if (user?.authorities['read:users']) {
             <div class="dropdown-divider"></div>
           }
-          <a class="dropdown-item" href="#" (click)="logout()">
+          <a class="dropdown-item" href="#" (click)="logout(); $event.preventDefault()">
             <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>
             Logout
           </a>
-          <a class="dropdown-item" href="#" (click)="clearCache()">
+          <a class="dropdown-item" href="#" (click)="clearCache(); $event.preventDefault()">
             <i class="fas fa-users-cog fa-sm fa-fw me-2 text-gray-400"></i>
             Reset
           </a>

@@ -366,7 +366,7 @@ export class KitInfoComponent {
    */
   fields: Array<FormlyFieldConfig> = [
     {
-      fieldGroupClassName: 'row border-top-info d-flex',
+      fieldGroupClassName: 'd-flex flex-wrap gap-2 align-items-start py-2 border-top border-info',
       fieldGroup: [
         {
           key: 'type',

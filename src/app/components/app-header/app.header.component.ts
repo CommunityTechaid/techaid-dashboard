@@ -12,6 +12,7 @@ import { environment } from '@env/environment';
 
 import { AppInitialComponent } from '../../shared/components/app-initial/app-initial.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
 
 
 @Component({
@@ -22,7 +23,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
             border-bottom: 1px solid #f8f9fa;
         }
     `],
-    imports: [AppInitialComponent, RouterLink, RouterLinkActive]
+    imports: [AppInitialComponent, RouterLink, RouterLinkActive, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu]
 })
 export class AppHeader {
     private sub: Subscription;

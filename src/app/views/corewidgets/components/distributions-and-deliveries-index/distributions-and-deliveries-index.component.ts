@@ -250,10 +250,10 @@ export class DistributionsAndDeliveriesIndexComponent {
     monday.setDate(today.getDate() + diff);
     monday.setHours(0, 0, 0, 0);
 
-    // Generate 4 week buttons
+    // Generate 4 week buttons: 3 weeks back → current week (most data lives in the past)
     for (let i = 0; i < 4; i++) {
       const weekStart = new Date(monday);
-      weekStart.setDate(monday.getDate() + (i * 7));
+      weekStart.setDate(monday.getDate() + ((i - 3) * 7));
 
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);

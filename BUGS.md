@@ -182,3 +182,101 @@ The date-filter logic itself (`filter.AND` array with `collectionDate _gte/_lte`
 **Fix**: Removed premature `</div>` in [distributions-and-deliveries-index.component.html](src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.html); `card-body` is now inside the card.
 
 **Status**: [x] resolved at the database/backend level — no further frontend changes needed
+
+---
+
+## BUG-15 · Device record hardware details shown in a vertical column
+
+**Symptom:** On a device detail page the top row of hardware fields (Device type, RAM,
+Storage Type, Capacity, TPM, Battery Health, Serial Number, Donor) stacks vertically
+instead of spanning horizontally across the top.
+
+**Root cause:** `fieldGroupClassName: 'row border-top-info d-flex'` — Bootstrap 5's
+`.row > *` rule forces `width: 100%` on every direct child (`<formly-field>` element),
+causing each field to wrap to a new line. `border-top-info` is also not a valid
+Bootstrap 5 utility.
+
+**Fix:** Remove `row` and replace `border-top-info` with Bootstrap 5 utilities:
+`'d-flex flex-wrap gap-2 align-items-start py-2 border-top border-info'`
+
+**Files:** `src/app/views/corewidgets/components/kit-info/kit-info.component.ts`
+
+**Status**: [x]
+
+---
+
+## BUG-16 · Device status colour blocks wrong / bottom entries white / white lines
+
+**Symptom:** On the device detail form the coloured status radio-button column has:
+- The first option ("New device registered") shown in salmon instead of yellow.
+- The last one or two options shown with a white/transparent background.
+- Thin white lines visible between every status block.
+
+**Root cause:** The CSS selectors `.kit-status .form-check:nth-child(N)` were written
+assuming the first child of the parent div is a `.form-check`.  But the ngx-formly
+`FormlyWrapperFormField` renders a `<label>` as child 1, pushing all `.form-check`
+elements to positions 2 through 12.  Every nth-child value is off by one and the last
+status (position 12, PROCESSING_STORED) has no rule at all.  White lines come from
+Bootstrap 5's default `.form-check { margin-bottom: 0.125rem }`.
+
+The same off-by-one affects `.device-request-status` (BUG-08 CSS fix was correct in
+selector name but used the wrong nth-child numbers).
+
+**Fix:**
+1. Add `.kit-status .form-check { margin-bottom: 0; }` to close the gaps.
+2. Increment every `.kit-status` nth-child value by 1 and add the missing 12th entry.
+3. Same adjustment for `.device-request-status` (increment by 1, add 9th entry).
+
+**Files:** `src/styles.css`
+
+**Status**: [x]
+
+---
+
+## BUG-17 · Audit table on device detail page always blank
+
+**Symptom:** Clicking the "Audit Table" tab on a device record shows no rows even when
+audit history exists.
+
+**Root cause (1):** `KitAuditComponent.ngOnInit()` initialises the Apollo `watchQuery`
+with `variables: {}`, omitting the required `$id: Long!` variable.
+
+**Root cause (2):** The DataTables ajax callback passes `recordsFiltered: data['totalElements']`.
+`data` is a plain array so `data['totalElements']` is `undefined`; DataTables treats this
+as 0 records and suppresses all Angular-rendered rows.
+
+**Fix:**
+1. Change `variables: {}` → `variables: { id: this._kitId }`.
+2. Change `data['totalElements']` → `data.length || 0`.
+
+**Files:** `src/app/views/corewidgets/components/kit-audit-component/kit-audit-component.component.ts`
+
+**Status**: [x]
+
+---
+
+## BUG-18 · DnD view shows 0 entries when clicking any week filter button
+
+**Symptom:** On the Distributions & Deliveries page, clicking any of the four week-filter
+buttons returns 0 rows every time.
+
+**Root cause:** `generateWeekButtons()` generates buttons for the **current week and the
+three following weeks** (`i * 7` offset going forward).  Virtually all historical collection
+dates are in the past; filtering to future windows returns nothing.
+
+**Secondary structural issue:** `<div class="card-header py-3">` on line 8 is never closed
+before the filter-button `<div>` and `<div class="card-body">` that follow it. The table
+therefore lives inside the card-header in the DOM, inheriting its background and border
+styles.
+
+**Fix (1):** Change the loop offsets so buttons show the **current week and the three
+preceding weeks**: replace `monday.getDate() + (i * 7)` with
+`monday.getDate() + ((i - 3) * 7)` (loop still runs `i = 0..3`).
+
+**Fix (2):** Add the missing `</div>` after the inner `</div>` on line 29 to close
+`.card-header` before the filter buttons and card-body.
+
+**Files:** `src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.ts`,
+`src/app/views/corewidgets/components/distributions-and-deliveries-index/distributions-and-deliveries-index.component.html`
+
+**Status**: [x]

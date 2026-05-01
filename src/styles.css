@@ -589,51 +589,61 @@ table.table.dataTable > tbody > tr.selected a {
     color: inherit !important;
 }
 
-/* BUG-08: Bootstrap 5 renamed .custom-control → .form-check.
-   The status radio-button colour blocks use the old selector. */
-.device-request-status .form-check:nth-child(1) {
+/* BUG-08 / BUG-16: Bootstrap 5 renamed .custom-control → .form-check.
+   Additionally the formly form-field wrapper renders a <label> as the FIRST child of
+   its container <div>, pushing every .form-check to nth-child(2) and above.
+   The selectors below are corrected by +1 on every position.
+   margin-bottom:0 eliminates the white gaps Bootstrap 5 adds between .form-check items. */
+
+.device-request-status .form-check {
+    margin-bottom: 0;
+}
+.device-request-status .form-check:nth-child(2) {
     border-radius: 5px 5px 0 0;
     background-color: #FFEAB3;
 }
-.device-request-status .form-check:nth-child(2),
-.device-request-status .form-check:nth-child(3) {
+.device-request-status .form-check:nth-child(3),
+.device-request-status .form-check:nth-child(4) {
     background-color: #FFEAB3;
 }
-.device-request-status .form-check:nth-child(4),
-.device-request-status .form-check:nth-child(5) {
+.device-request-status .form-check:nth-child(5),
+.device-request-status .form-check:nth-child(6) {
     background-color: #BFCEF9;
 }
-.device-request-status .form-check:nth-child(6),
-.device-request-status .form-check:nth-child(7) {
+.device-request-status .form-check:nth-child(7),
+.device-request-status .form-check:nth-child(8) {
     background-color: #FBCBC0;
 }
-.device-request-status .form-check:nth-child(8) {
+.device-request-status .form-check:nth-child(9) {
     background-color: #FBCBC0;
     border-radius: 0 0 5px 5px;
 }
 
-.kit-status .form-check:nth-child(1) {
+.kit-status .form-check {
+    margin-bottom: 0;
+}
+.kit-status .form-check:nth-child(2) {
     border-radius: 5px 5px 0 0;
     background-color: #FFEAB3;
 }
-.kit-status .form-check:nth-child(2),
 .kit-status .form-check:nth-child(3),
 .kit-status .form-check:nth-child(4),
-.kit-status .form-check:nth-child(5) {
+.kit-status .form-check:nth-child(5),
+.kit-status .form-check:nth-child(6) {
     background-color: #FBCBC0;
 }
-.kit-status .form-check:nth-child(6),
-.kit-status .form-check:nth-child(7) {
+.kit-status .form-check:nth-child(7),
+.kit-status .form-check:nth-child(8) {
     background-color: #BFCEF9;
 }
-.kit-status .form-check:nth-child(8),
-.kit-status .form-check:nth-child(9) {
+.kit-status .form-check:nth-child(9),
+.kit-status .form-check:nth-child(10) {
     background-color: #BAE3D7;
 }
-.kit-status .form-check:nth-child(10) {
+.kit-status .form-check:nth-child(11) {
     background-color: #DDB4E7;
 }
-.kit-status .form-check:nth-child(11) {
+.kit-status .form-check:nth-child(12) {
     background-color: #DDB4E7;
     border-radius: 0 0 5px 5px;
 }

@@ -141,7 +141,7 @@ export class KitAuditComponent {
   ngOnInit() {
     const queryRef = this.apollo.watchQuery({
       query: QUERY_ENTITY,
-      variables: {},
+      variables: { id: this._kitId },
     });
 
     this.sub = this.search$.subscribe((query) => {
@@ -197,7 +197,7 @@ export class KitAuditComponent {
             callback({
               draw: params.draw,
               recordsTotal: this.total,
-              recordsFiltered: data['totalElements'],
+              recordsFiltered: data.length || 0,
               error: '',
               data: [],
             });
