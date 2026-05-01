@@ -109,7 +109,7 @@ export class ReferringOrganisationContactInfoComponent {
   referringOrganisationField: FormlyFieldConfig = {
     key: 'referringOrganisationId',
     type: 'choice',
-    className: 'px-2 ms-auto justify-content-end text-right',
+    className: 'ms-auto text-end',
     templateOptions: {
       label: 'Referring Organisation',
       description: 'The organisation this referee is currently assigned to.',
@@ -125,12 +125,12 @@ export class ReferringOrganisationContactInfoComponent {
 
   fields: Array<FormlyFieldConfig> = [
     {
-      fieldGroupClassName: 'row',
+      fieldGroupClassName: 'd-flex gap-3',
       fieldGroup: [
         {
           key: 'fullName',
           type: 'input',
-          className: 'col-md-6',
+          className: 'col-md-6 px-0',
           defaultValue: '',
           templateOptions: {
             label: 'Full Name',

@@ -127,7 +127,7 @@ export class DonorIndexComponent {
   donorParentField: FormlyFieldConfig = {
     key: 'donorParentId',
     type: 'choice',
-    className: 'px-2 ms-auto justify-content-end text-right',
+    className: 'ms-auto text-end',
     templateOptions: {
       label: 'Parent Donor',
       description: 'The parent donor for this donor.',

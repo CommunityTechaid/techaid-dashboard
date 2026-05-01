@@ -147,7 +147,7 @@ export class DonorInfoComponent {
   donorParentField: FormlyFieldConfig = {
     key: 'donorParentId',
     type: 'choice',
-    className: 'px-2 ms-auto justify-content-end text-right',
+    className: 'ms-auto text-end',
     templateOptions: {
       label: 'Parent Donor',
       description: 'The parent donor for this donor.',
@@ -164,12 +164,12 @@ export class DonorInfoComponent {
 
   fields: Array<FormlyFieldConfig> = [
     {
-      fieldGroupClassName: 'row',
+      fieldGroupClassName: 'd-flex gap-3',
       fieldGroup: [
         {
           key: 'name',
           type: 'input',
-          className: 'col-md-6',
+          className: 'col-md-6 px-0',
           defaultValue: '',
           templateOptions: {
             label: 'Full Name',

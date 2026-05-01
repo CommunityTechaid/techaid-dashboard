@@ -164,7 +164,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   referringOrgField: FormlyFieldConfig = {
     key: 'organisationId',
     type: 'choice',
-    className: 'px-2 ms-auto justify-content-end',
+    className: 'ms-auto text-end',
     hooks: {
       onInit: (field) => {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
