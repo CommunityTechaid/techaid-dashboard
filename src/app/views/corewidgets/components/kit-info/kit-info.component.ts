@@ -313,7 +313,7 @@ export class KitInfoComponent {
   deviceRequestField: FormlyFieldConfig = {
     key: 'deviceRequestId',
     type: 'choice',
-    className: 'px-2 ms-auto justify-content-end text-right',
+    className: 'ms-auto text-end',
     templateOptions: {
       label: 'Device Request',
       //description: 'The device request this device is currently assigned to.',
@@ -493,12 +493,12 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'd-flex py-2',
+      fieldGroupClassName: 'd-flex gap-3',
       fieldGroup: [
         {
           key: 'make',
           type: 'input',
-          className: 'col-md-2',
+          className: 'col-md-2 px-0',
           defaultValue: '',
           templateOptions: {
             label: 'Make',
@@ -510,7 +510,7 @@ export class KitInfoComponent {
         {
           key: 'model',
           type: 'input',
-          className: 'col-md-2',
+          className: 'col-md-2 px-0',
           defaultValue: '',
           templateOptions: {
             label: 'Model',
@@ -522,22 +522,22 @@ export class KitInfoComponent {
         {
           key: 'lotId',
           type: 'input',
-          className: 'px-2 ms-auto justify-content-end text-right',
+          className: 'ms-auto text-end',
           defaultValue: '',
           templateOptions: {
             label: "Lot ID"
           }
         }
-        
+
       ]
     },
     {
-      fieldGroupClassName: 'd-flex py-2',
+      fieldGroupClassName: 'd-flex gap-3',
       fieldGroup: [
         {
           key: 'locationCode',
           type: 'input',
-          className: 'col-md-2',
+          className: 'col-md-2 px-0',
           defaultValue: '',
           templateOptions: {
             label: "Location Code"
