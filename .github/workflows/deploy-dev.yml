@@ -25,6 +25,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Inject runtime env
+        run: |
+          cat > src/assets/env.js << 'EOF'
+          window.__env = window.__env || {};
+          EOF
+          echo "window.__env.appInsightsConnectionString = \"$APPINSIGHTS_CS\";" >> src/assets/env.js
+        env:
+          APPINSIGHTS_CS: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING_DEV }}
+
       - name: Build
         run: npx ng build --configuration production
 
@@ -35,8 +44,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_DEV }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: /
-          output_location: dist
+          app_location: dist
           skip_app_build: true
 
       - name: Tag deployment
