@@ -156,6 +156,89 @@ export class OrgRequestComponent implements AfterViewChecked {
 
   @ViewChild('tfForm') tfForm: ElementRef | undefined;
 
+  backendStatus: 'checking' | 'ready' | 'error' = 'checking';
+  private backendCheckAttempt = 0;
+  private readonly BACKEND_MAX_ATTEMPTS = 15;
+  private readonly BACKEND_POLL_INTERVAL_MS = 4000;
+  private backendPollTimer: any;
+
+  get backendStatusMessage(): string {
+    if (this.backendCheckAttempt < 3) {
+      return 'Starting up… this usually takes about 30 seconds.';
+    } else if (this.backendCheckAttempt < 8) {
+      return 'Still warming up… almost there.';
+    }
+    return 'Taking a bit longer than usual, please hang on…';
+  }
+
+  startBackendHealthCheck() {
+    this.backendStatus = 'checking';
+    this.backendCheckAttempt = 0;
+    this.pollBackend();
+  }
+
+  private pollBackend() {
+    this.apollo.query({
+      query: QUERY_ADMIN_CONFIG,
+      fetchPolicy: 'network-only'
+    }).toPromise().then(res => {
+      if (res && res.data) {
+        this.processAdminConfig(res.data['adminConfig']);
+        this.loadPageContent();
+        this.backendStatus = 'ready';
+        this.changeDetectorRef.detectChanges();
+      } else {
+        this.scheduleBackendRetry();
+      }
+    }).catch(() => {
+      this.scheduleBackendRetry();
+    });
+  }
+
+  private scheduleBackendRetry() {
+    this.backendCheckAttempt++;
+    if (this.backendCheckAttempt >= this.BACKEND_MAX_ATTEMPTS) {
+      this.backendStatus = 'error';
+      this.changeDetectorRef.detectChanges();
+      return;
+    }
+    this.backendPollTimer = setTimeout(() => this.pollBackend(), this.BACKEND_POLL_INTERVAL_MS);
+  }
+
+  private processAdminConfig(config: any) {
+    const options = [];
+    if (config.canPublicRequestLaptop) {
+      options.push({ value: 'laptops', label: 'Laptop' });
+    }
+    if (config.canPublicRequestDesktop) {
+      options.push({ value: 'desktops', label: 'Desktop' });
+    }
+    if (config.canPublicRequestTablet) {
+      options.push({ value: 'tablets', label: 'Tablet' });
+    }
+    if (config.canPublicRequestPhone) {
+      options.push({ value: 'phones', label: 'Smartphone' });
+    }
+    if (config.canPublicRequestSIMCard) {
+      options.push({ value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' });
+      this.additionalSimRequestPublic.hideExpression = false;
+    }
+    if (config.canPublicRequestBroadbandHub) {
+      options.push({ value: 'broadbandHubs', label: 'Broadband Hub' });
+      this.additionalBroadbandHubRequestPublic.hideExpression = false;
+    }
+    this.deviceTypesPublic.templateOptions.options = options;
+  }
+
+  private loadPageContent() {
+    this.apollo.query({
+      query: QUERY_CONTENT
+    }).toPromise().then(res => {
+      if (res.data) {
+        this.content = res.data['post'];
+      }
+    });
+  }
 
   //Review and remove
   referringOrgs$: Observable<any>;
@@ -972,13 +1055,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   ngOnInit() {
-    this.apollo.query({
-      query: QUERY_CONTENT
-    }).toPromise().then(res => {
-      if (res.data) {
-        this.content = res.data['post'];
-      }
-    });
+    this.startBackendHealthCheck();
 
     const orgRef = this.apollo
       .watchQuery({
@@ -1042,44 +1119,6 @@ export class OrgRequestComponent implements AfterViewChecked {
       })
     );
 
-    //Query for device request items
-    this.apollo.query({
-      query: QUERY_ADMIN_CONFIG
-    }).toPromise().then(res => {
-      if (res.data) {
-        const config = res.data['adminConfig'];
-        const options = [];
-
-        if (config.canPublicRequestLaptop) {
-          options.push({ value: 'laptops', label: 'Laptop' });
-        }
-        if (config.canPublicRequestDesktop) {
-          options.push({ value: 'desktops', label: 'Desktop' });
-        }
-        if (config.canPublicRequestTablet) {
-          options.push({ value: 'tablets', label: 'Tablet' });
-        }
-        if (config.canPublicRequestPhone) {
-          options.push({ value: 'phones', label: 'Smartphone' });
-        }
-        if (config.canPublicRequestSIMCard) {
-          options.push({
-            value: 'commsDevices',
-            label: 'SIM card (6 months, 20GB data, unlimited UK calls)'
-          });
-          this.additionalSimRequestPublic.hideExpression = false;
-        }
-        if (config.canPublicRequestBroadbandHub) {
-          options.push({
-            value: 'broadbandHubs',
-            label: 'Broadband Hub'
-          });
-          this.additionalBroadbandHubRequestPublic.hideExpression = false;
-        }
-
-        this.deviceTypesPublic.templateOptions.options = options;
-      }
-    });
 
   }
 
@@ -1374,6 +1413,9 @@ export class OrgRequestComponent implements AfterViewChecked {
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();
+    }
+    if (this.backendPollTimer) {
+      clearTimeout(this.backendPollTimer);
     }
   }
 
