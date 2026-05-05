@@ -1,0 +1,33 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "*.css",
+      "*.js",
+      "*.mjs",
+      "*.ico",
+      "*.png",
+      "*.jpg",
+      "*.jpeg",
+      "*.svg",
+      "*.gif",
+      "*.webp",
+      "*.woff",
+      "*.woff2",
+      "*.ttf",
+      "*.eot",
+      "*.map",
+      "*.json"
+    ]
+  },
+  "routes": [
+    {
+      "route": "/wakeup",
+      "rewrite": "/index.html"
+    }
+  ],
+  "globalHeaders": {
+    "Cache-Control": "no-cache"
+  }
+}
