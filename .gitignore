@@ -10,6 +10,9 @@
 /release
 /dist
 
+# Claude Code
+.claude/settings.local.json
+
 # IDEs and editors
 /.idea
 .project
