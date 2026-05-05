@@ -1,0 +1,7 @@
+name = "cta-places-proxy"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+account_id = "b54c483820627f3bc0532564ac159369"
+
+# GOOGLE_API_KEY is stored as a secret:
+#   wrangler secret put GOOGLE_API_KEY --name cta-places-proxy
