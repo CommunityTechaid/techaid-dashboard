@@ -35,7 +35,7 @@ jobs:
           APPINSIGHTS_CS: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING_DEV }}
 
       - name: Build
-        run: npx ng build --configuration production
+        run: npx ng build --configuration uat
 
       - name: Deploy to Azure Static Web Apps
         id: swa_deploy
