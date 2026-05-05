@@ -895,12 +895,10 @@ export class KitIndexComponent {
             if (!this.total) {
               this.total = data['totalElements'];
             }
-            data.content.forEach(d => {
-              if (d.donor) {
-                d.donorName = this.donorName(d.donor);
-              }
-            });
-            this.entities = data.content;
+            this.entities = data.content.map(d => ({
+              ...d,
+              donorName: d.donor ? this.donorName(d.donor) : undefined
+            }));
             this.allPageSelected = this.entities.length > 0 && this.entities.every(e => !!this.selections[e.id]);
           }
 

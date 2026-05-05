@@ -301,16 +301,10 @@ export class DonorParentIndexComponent {
               this.total = data['totalElements'];
             }
 
-            data.content.forEach(d => {
-              d.deviceCount = 0;
-              if (d.donors && d.donors.length) {
-                d.donors.forEach(k => {
-                  d.deviceCount += k.kitCount;
-                });
-              }
-            });
-
-            this.entities = data.content;
+            this.entities = data.content.map(d => ({
+              ...d,
+              deviceCount: d.donors ? d.donors.reduce((sum, k) => sum + k.kitCount, 0) : 0
+            }));
           }
 
           callback({
