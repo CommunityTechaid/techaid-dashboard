@@ -452,21 +452,20 @@ export class DistributionsAndDeliveriesIndexComponent {
           let data: any = {};
           if (res.data) {
             data = res['data']['deviceRequestConnection'];
-            data.content.forEach(d => {
-              d.types = {};
-              d.kitIds = {};
+            this.entities = data.content.map(d => {
+              const types: Record<string, number> = {};
+              const kitIds: Record<string, string[]> = {};
               if (d.kits && d.kits.length) {
                 d.kits.forEach(k => {
                   const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
                   const t = typeMap[k.type] || `${k.type}S`;
-                  d.types[t] = d.types[t] || 0;
-                  d.types[t]++;
-                  d.kitIds[t] = d.kitIds[t] || [];
-                  d.kitIds[t].push(k.id);
+                  types[t] = (types[t] || 0) + 1;
+                  kitIds[t] = kitIds[t] || [];
+                  kitIds[t].push(k.id);
                 });
               }
+              return { ...d, types, kitIds };
             });
-            this.entities = data.content;
           }
 
           callback({
