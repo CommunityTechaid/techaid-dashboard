@@ -10,7 +10,31 @@
             <app-header></app-header>
             <!-- Begin Page Content -->
             <div class="container-fluid">
-                <router-outlet></router-outlet>
+                @if (backendStatus === 'checking') {
+                    <div class="row d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+                        <div class="col-lg-5 col-md-8 text-center">
+                            <div class="card shadow p-5">
+                                <div class="spinner-border text-primary mb-4 mx-auto" role="status" style="width: 3rem; height: 3rem;">
+                                    <span class="visually-hidden">Loading…</span>
+                                </div>
+                                <h5 class="text-primary mb-2">Server is starting up</h5>
+                                <p class="text-muted mb-0">{{ backendStatusService.statusMessage }}</p>
+                            </div>
+                        </div>
+                    </div>
+                } @else if (backendStatus === 'error') {
+                    <div class="row d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+                        <div class="col-lg-5 col-md-8 text-center">
+                            <div class="card shadow p-5">
+                                <p class="text-muted">The server is taking longer than expected to respond.</p>
+                                <p class="text-muted mb-3">Please try again in a few minutes, or click below to retry now.</p>
+                                <button class="btn btn-primary btn-sm" (click)="backendStatusService.startCheck()">Retry</button>
+                            </div>
+                        </div>
+                    </div>
+                } @else {
+                    <router-outlet></router-outlet>
+                }
             </div>
             <!-- /.container-fluid -->
         </div>

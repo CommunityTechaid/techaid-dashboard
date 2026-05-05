@@ -9,10 +9,10 @@ import { Title } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
 import { AppInsightsService } from '@app/shared/services/app-insights.service';
 import { ConfigService } from '@app/shared/services/config.service';
-import { NgZone } from '@angular/core';
 import { NgProgressComponent } from 'ngx-progressbar';
 import { AppSidebar } from './components/app-sidebar/app.sidebar.component';
 import { AppHeader } from './components/app-header/app.header.component';
+import { BackendStatusService, BackendStatus } from '@app/shared/services/backend-status.service';
 
 @Component({
     selector: 'app-root',
@@ -24,6 +24,8 @@ export class AppComponent {
   private actionSub: Subscription;
   version = APP_VERSION;
   apiVersion = '';
+  backendStatus: BackendStatus = 'checking';
+
   constructor(
     private toastr: ToastrService,
     private store: Store,
@@ -33,7 +35,7 @@ export class AppComponent {
     private activatedRoute: ActivatedRoute,
     private appInsights: AppInsightsService,
     private config: ConfigService,
-    private zone: NgZone
+    readonly backendStatusService: BackendStatusService
   ) {
     titleService.setTitle("TaDa");
 
@@ -61,34 +63,25 @@ export class AppComponent {
 
   ngOnInit() {
     this.actionSub = this.actions.pipe(ofAction(RouterNavigation)).subscribe(({ event }) => this.handleAction(event));
-    this.fetchBuildInfo();
-  }
 
-  private fetchBuildInfo() {
-    const endpoint = this.config.environment.graphql_endpoint;
-    fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: '{ buildInfo { version commit time } }' })
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.zone.run(() => {
-          if (res && res.data && res.data.buildInfo) {
-            const info = res.data.buildInfo;
-            const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
-            this.apiVersion = `${info.version} (${info.commit})${time}`;
-          } else {
-            this.apiVersion = 'unavailable';
-          }
-        });
+    this.actionSub.add(
+      this.backendStatusService.status$.subscribe(status => {
+        this.backendStatus = status;
       })
-      .catch(err => {
-        console.warn('Failed to fetch buildInfo:', err);
-        this.zone.run(() => {
+    );
+
+    this.actionSub.add(
+      this.backendStatusService.buildInfo$.subscribe(info => {
+        if (info) {
+          const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
+          this.apiVersion = `${info.version} (${info.commit})${time}`;
+        } else if (this.backendStatus === 'error') {
           this.apiVersion = 'unavailable';
-        });
-      });
+        }
+      })
+    );
+
+    this.backendStatusService.startCheck();
   }
 
   handleAction(action) {
@@ -111,6 +104,7 @@ export class AppComponent {
     if (this.actionSub) {
       this.actionSub.unsubscribe();
     }
+    this.backendStatusService.cleanup();
   }
 
 }
