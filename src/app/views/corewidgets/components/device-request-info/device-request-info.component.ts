@@ -124,6 +124,12 @@ const UPDATE_ENTITY = gql`
       clientRef
       details
       borough
+      kits {
+        id
+        type
+        make
+        model
+      }
       deviceRequestNeeds {
         hasInternet
         hasMobilityIssues
@@ -1125,12 +1131,12 @@ export class DeviceRequestInfoComponent {
         collectionContactName: this.model.collectionContactName || (this.model.referringOrganisationContact?.fullName ? `Referee: ${this.model.referringOrganisationContact.fullName}` : 'N/A'),
         
         // Device details
-        dev1ID: this.model.kits[0]?.id || '',
-        dev1Type: getKitTypeLabel(this.model.kits[0]?.type) || '',
-        dev1Description: [this.model.kits[0]?.make, this.model.kits[0]?.model].filter(Boolean).join('/'),
-        dev2ID: this.model.kits[1]?.id || '',
-        dev2Type: getKitTypeLabel(this.model.kits[1]?.type) || '',
-        dev2Description: [this.model.kits[1]?.make, this.model.kits[1]?.model].filter(Boolean).join('/'),
+        dev1ID: this.model.kits?.[0]?.id || '',
+        dev1Type: getKitTypeLabel(this.model.kits?.[0]?.type) || '',
+        dev1Description: [this.model.kits?.[0]?.make, this.model.kits?.[0]?.model].filter(Boolean).join('/'),
+        dev2ID: this.model.kits?.[1]?.id || '',
+        dev2Type: getKitTypeLabel(this.model.kits?.[1]?.type) || '',
+        dev2Description: [this.model.kits?.[1]?.make, this.model.kits?.[1]?.model].filter(Boolean).join('/'),
       
         isCollection: this.model.collectionMethod === 'COLLECTION' ? 'X' : '',
         isDelivery: this.model.collectionMethod === 'DELIVERY' ? 'X' : '',
