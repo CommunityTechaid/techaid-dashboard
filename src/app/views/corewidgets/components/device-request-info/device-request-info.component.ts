@@ -1123,7 +1123,7 @@ export class DeviceRequestInfoComponent {
       const pdfData = {
         // Header fields
         organisationName: this.model.referringOrganisationContact?.referringOrganisation?.name || 'N/A',
-        date: this.model.collectionDate ? new Date(this.model.collectionDate).toLocaleDateString() : 'N/A',
+        date: this.model.collectionDate ? new Date(this.model.collectionDate).toLocaleDateString('en-GB') : 'N/A',
 
         // Device Request details
         requestId: this.requestId,
