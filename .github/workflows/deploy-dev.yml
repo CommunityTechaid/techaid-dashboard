@@ -25,6 +25,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Bump version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch --no-git-tag-version
+          git add package.json package-lock.json
+          git commit -m "chore: bump version [skip ci]"
+          git push origin dev
+
       - name: Inject runtime env
         run: |
           cat > src/assets/env.js << 'EOF'
