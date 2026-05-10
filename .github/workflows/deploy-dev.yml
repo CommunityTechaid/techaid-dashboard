@@ -34,6 +34,14 @@ jobs:
           git commit -m "chore: bump version [skip ci]"
           git push origin dev
 
+      - name: Generate version.ts
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          COMMIT=${GITHUB_SHA::7}
+          DATE=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+          BUILD=$(date -u +%y.%m.%d-%H%M)
+          echo "export const APP_VERSION = {version: '$VERSION', build: '$BUILD', date: '$DATE', commit: '$COMMIT'};" > src/environments/version.ts
+
       - name: Inject runtime env
         run: |
           cat > src/assets/env.js << 'EOF'
