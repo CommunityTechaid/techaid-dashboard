@@ -10,7 +10,7 @@
             <app-header></app-header>
             <!-- Begin Page Content -->
             <div class="container-fluid">
-                @if (backendStatus === 'checking') {
+                @if (authLoading || backendStatus === 'checking') {
                     <div class="row d-flex justify-content-center align-items-center" style="min-height: 60vh;">
                         <div class="col-lg-5 col-md-8 text-center">
                             <div class="card shadow p-5">

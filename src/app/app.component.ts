@@ -13,6 +13,7 @@ import { NgProgressComponent } from 'ngx-progressbar';
 import { AppSidebar } from './components/app-sidebar/app.sidebar.component';
 import { AppHeader } from './components/app-header/app.header.component';
 import { BackendStatusService, BackendStatus } from '@app/shared/services/backend-status.service';
+import { AuthenticationService } from '@app/shared/services/authentication.service';
 
 @Component({
     selector: 'app-root',
@@ -25,6 +26,7 @@ export class AppComponent {
   version = APP_VERSION;
   apiVersion = '';
   backendStatus: BackendStatus = 'checking';
+  authLoading = true;
 
   constructor(
     private toastr: ToastrService,
@@ -35,7 +37,8 @@ export class AppComponent {
     private activatedRoute: ActivatedRoute,
     private appInsights: AppInsightsService,
     private config: ConfigService,
-    readonly backendStatusService: BackendStatusService
+    readonly backendStatusService: BackendStatusService,
+    private authService: AuthenticationService
   ) {
     titleService.setTitle("TaDa");
 
@@ -63,6 +66,12 @@ export class AppComponent {
 
   ngOnInit() {
     this.actionSub = this.actions.pipe(ofAction(RouterNavigation)).subscribe(({ event }) => this.handleAction(event));
+
+    this.actionSub.add(
+      this.authService.isLoading$.subscribe(loading => {
+        this.authLoading = loading;
+      })
+    );
 
     this.actionSub.add(
       this.backendStatusService.status$.subscribe(status => {

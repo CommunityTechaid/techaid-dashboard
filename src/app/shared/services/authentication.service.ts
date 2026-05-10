@@ -18,6 +18,7 @@ import { LoginUser } from '@app/state/user/actions/user.actions';
 })
 export class AuthenticationService {
   isAuthenticated$: Observable<boolean> = this.authService.isAuthenticated$;
+  isLoading$: Observable<boolean> = this.authService.isLoading$;
   userProfile$: Observable<any> = this.authService.user$;
   loggedIn: boolean = null;
 
