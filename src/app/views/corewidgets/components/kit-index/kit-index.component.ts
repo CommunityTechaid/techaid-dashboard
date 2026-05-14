@@ -934,7 +934,6 @@ export class KitIndexComponent {
         { data: 'donor' },
         { data: 'createdAt'},
         { data: 'updatedAt'},
-        { data: 'age'},
         { data: 'type' },
         { data: 'status' },
       ]
