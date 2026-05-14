@@ -247,7 +247,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   referringOrgField: FormlyFieldConfig = {
     key: 'organisationId',
     type: 'choice',
-    className: 'ms-auto text-end',
+    className: 'col-md-12',
     hooks: {
       onInit: (field) => {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
@@ -421,15 +421,11 @@ export class OrgRequestComponent implements AfterViewChecked {
     hideExpression: true,
     fieldGroup: [
       {
-        //key: 'referringOrganisationContact',
         type: 'select',
         className: 'col-md-12',
         templateOptions: {
           label: 'Choose your name from the list below',
-          options: [{
-            label: "hello",
-            value: "test"
-          }],
+          options: [],
           required: false
         },
         hooks: {
@@ -1331,6 +1327,11 @@ export class OrgRequestComponent implements AfterViewChecked {
       } else {
         this.createNewOrganisationContactPrompt.hideExpression = false;
       }
+    }).catch(error => {
+      console.warn('Error looking up contact:', error);
+      this.toastr.warning('Could not look up your email. Please check your connection and try again.');
+      this.referringOrganisationContactsDropDown.hideExpression = true;
+      this.createNewOrganisationContactPrompt.hideExpression = true;
     });
 
   }
@@ -1512,9 +1513,14 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   displayTypeForm(correlationId: any) {
+    if (!this.wardSubmitted) {
+      console.warn('displayTypeForm: wardSubmitted was false — setting true so typeform can render.');
+      this.wardSubmitted = true;
+    }
     this.showTypeform = true;
-    this.content = {}
+    this.content = {};
     this.pendingCorrelationId = correlationId;
+    this.changeDetectorRef.detectChanges();
   }
 
   ngAfterViewChecked() {
