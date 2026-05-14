@@ -102,8 +102,14 @@ export class DeviceRequestComponent {
 
   @Input()
   set where(where: any) {
+    const serialised = JSON.stringify(where);
+    if (serialised === this._whereSerialized) {
+      return;
+    }
+    this._whereSerialized = serialised;
     this._where = where;
     if (this.table) {
+      this.total = 0;
       this.applyFilter(this.filterModel);
     }
   }
@@ -223,6 +229,7 @@ export class DeviceRequestComponent {
   tableId = 'device-request-component';
 
   _where = {};
+  _whereSerialized = '{}';
 
   applyFilter(data) {
     const filter = {};
@@ -272,6 +279,7 @@ export class DeviceRequestComponent {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    this.total = 0;
     this.table.ajax.reload(null, false);
   }
 
@@ -353,18 +361,17 @@ export class DeviceRequestComponent {
             if (!this.total) {
               this.total = data['totalElements'];
             }
-            data.content.forEach(d => {
-              d.types = {};
+            this.entities = data.content.map(d => {
+              const types: Record<string, number> = {};
               if (d.kits && d.kits.length) {
                 d.kits.forEach(k => {
                   const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
                   const t = typeMap[k.type] || `${k.type}S`;
-                  d.types[t] = d.types[t] || 0;
-                  d.types[t]++;
+                  types[t] = (types[t] || 0) + 1;
                 });
               }
+              return { ...d, types };
             });
-            this.entities = data.content;
           }
 
           callback({

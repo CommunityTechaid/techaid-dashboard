@@ -163,8 +163,14 @@ export class KitComponent {
   ) {}
   @Input()
   set where(where: any) {
+    const serialised = JSON.stringify(where);
+    if (serialised === this._whereSerialized) {
+      return;
+    }
+    this._whereSerialized = serialised;
     this._where = where;
     if (this.table) {
+      this.total = 0;
       this.applyFilter(this.filterModel);
     }
   }
@@ -362,9 +368,10 @@ export class KitComponent {
 
   _donorParentId = -1;
   _where = {};
+  _whereSerialized = '{}';
 
   applyFilter(data) {
-    const filter = {AND: []};
+    const filter: any = {};
     let count = 0;
     if(this._donorParentId != -1 && !data.donorParentId) {
       data.donorParentId = this._donorParentId;
@@ -402,6 +409,7 @@ export class KitComponent {
 
     if(data.after){
       count += 1;
+      filter['AND'] = filter['AND'] || [];
       filter['AND'].push({createdAt: {_gt: data.after }});
     }
 
@@ -410,6 +418,7 @@ export class KitComponent {
       endDate.setDate(endDate.getDate() + 1);
 
       count += 1;
+      filter['AND'] = filter['AND'] || [];
       filter['AND'].push({createdAt: {_lt: endDate }});
     }
 
@@ -417,6 +426,7 @@ export class KitComponent {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    this.total = 0;
     this.table.ajax.reload(null, false);
   }
 
@@ -550,12 +560,9 @@ export class KitComponent {
               if (!this.total) {
                 this.total = data['totalElements'];
               }
-              data.content.forEach((d) => {
-                if (d.donor) {
-                  d.donorName = this.donorName(d.donor);
-                }
+              this.entities = data.content.map((d) => {
+                return d.donor ? { ...d, donorName: this.donorName(d.donor) } : d;
               });
-              this.entities = data.content;
             }
 
             callback({
@@ -596,7 +603,6 @@ export class KitComponent {
         { data: 'donor' },
         { data: 'createdAt' },
         { data: 'updatedAt' },
-        { data: 'age' },
         { data: 'type' },
         { data: 'status' },
       ],
