@@ -293,8 +293,8 @@ export class DistributionsAndDeliveriesIndexComponent {
       ...this.filterModel,
       collectionDateStart: button.startDate.toISOString(),
       collectionDateEnd: button.endDate.toISOString(),
-      status: ['REQUEST_COMPLETED', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED']
     };
+    delete filterData['status'];
 
     this.applyFilter(filterData);
   }
