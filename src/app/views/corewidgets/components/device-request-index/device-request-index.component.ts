@@ -200,6 +200,10 @@ export class DeviceRequestIndexComponent {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    // Reset the cached total so it is re-captured from the next response,
+    // preventing recordsTotal from being stale (and smaller than recordsFiltered)
+    // when a filter is active on the first load (e.g. restored from localStorage).
+    this.total = 0;
     this.table.ajax.reload(null, false);
   }
 
