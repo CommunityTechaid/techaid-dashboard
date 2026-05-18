@@ -27,6 +27,12 @@
                   </h6>
                 </div>
                 <div>
+                  @if (user?.authorities['app:bulkedit']) {
+                    <button (click)="openAssignDevicesModal()"
+                      type="button" class="btn btn-success btn-sm me-2">
+                      <small><i class="fas fa-link"></i> Assign Devices</small>
+                    </button>
+                  }
                   <button [disabled]="generatingPdf" (click)="generatePDF()"
                     type="button" class="btn btn-info btn-sm me-2">
                     <small>
@@ -140,5 +146,108 @@
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
     <button type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
+  </div>
+</ng-template>
+
+<ng-template #assignDevicesModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title">Assign Devices to Request #{{requestId}}</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="d('Cross click')" [disabled]="isAssigning"></button>
+  </div>
+  <div class="modal-body">
+
+    <!-- Phase 1: Input -->
+    @if (!showAssignConfirmation && assignmentResults.length === 0) {
+      <div class="form-group">
+        <label for="assignDeviceInput"><strong>Device IDs</strong> (comma-separated)</label>
+        <textarea
+          id="assignDeviceInput"
+          class="form-control"
+          rows="3"
+          placeholder="e.g. 1234, 5678, 9012"
+          [value]="assignDeviceIds"
+          (input)="assignDeviceIds = $event.target['value']">
+        </textarea>
+        <small class="form-text text-muted">Enter the IDs of devices to assign to this request, separated by commas.</small>
+      </div>
+    }
+
+    <!-- Phase 2: Confirmation -->
+    @if (showAssignConfirmation && !isAssigning) {
+      <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        You are about to assign <strong>{{parsedDeviceIds.length}}</strong> device(s) to request <strong>#{{requestId}}</strong>. Click <strong>Confirm</strong> to continue.
+      </div>
+      <div class="border rounded p-2 bg-light" style="max-height: 180px; overflow-y: auto; font-family: monospace; font-size: 0.85rem;">
+        @for (id of parsedDeviceIds; track id) {
+          <div class="mb-1">
+            <i class="fas fa-hdd text-secondary me-1"></i> Device {{id}}
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Phase 3: Results (builds up during and after assignment) -->
+    @if (isAssigning || assignmentResults.length > 0) {
+      <div>
+        @if (isAssigning) {
+          <div class="mb-2 text-muted small">
+            <i class="fas fa-spinner fa-spin me-1"></i>
+            Assigning... ({{assignmentResults.length}} of {{parsedDeviceIds.length}} done)
+          </div>
+        }
+        @if (assignmentResults.length > 0) {
+          <div>
+            <h6 class="font-weight-bold">Assignment Results:</h6>
+            <div class="border rounded p-2" style="max-height: 240px; overflow-y: auto; background: #f8f9fa; font-family: monospace; font-size: 0.85rem;">
+              @for (result of assignmentResults; track result.deviceId) {
+                <div class="mb-1"
+                     [class.text-success]="result.status === 'success'"
+                     [class.text-warning]="result.status === 'warning'"
+                     [class.text-danger]="result.status === 'error'">
+                  <i [class.fas]="true"
+                     [class.fa-check-circle]="result.status === 'success'"
+                     [class.fa-exclamation-triangle]="result.status === 'warning'"
+                     [class.fa-times-circle]="result.status === 'error'"></i>
+                  <strong> Device {{result.deviceId}}:</strong> {{result.message}}
+                </div>
+              }
+            </div>
+            <small class="form-text text-muted mt-1">{{assignmentResults.length}} device(s) processed</small>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')" [disabled]="isAssigning">Close</button>
+
+    <!-- Phase 1 footer: Assign button -->
+    @if (!showAssignConfirmation && !isAssigning && assignmentResults.length === 0) {
+      <button type="button" class="btn btn-success btn-sm"
+        [disabled]="!assignDeviceIds.trim()"
+        (click)="prepareAssignment()">
+        <i class="fas fa-link"></i> Assign
+      </button>
+    }
+
+    <!-- Phase 2 footer: Back + Confirm -->
+    @if (showAssignConfirmation && !isAssigning) {
+      <button type="button" class="btn btn-secondary btn-sm" (click)="showAssignConfirmation = false">
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+      <button type="button" class="btn btn-success btn-sm" (click)="executeAssignment()">
+        <i class="fas fa-check"></i> Confirm
+      </button>
+    }
+
+    <!-- Phase 3 footer: Assign More -->
+    @if (assignmentResults.length > 0 && !isAssigning) {
+      <button type="button" class="btn btn-outline-success btn-sm"
+        (click)="resetAssignModal()">
+        <i class="fas fa-plus"></i> Assign More
+      </button>
+    }
   </div>
 </ng-template>
