@@ -999,3 +999,124 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
     expect(drRowCount, 'Expected at least one device-request row in the Device Requests tab').toBeGreaterThan(0);
   });
 });
+
+// ─── ORG-B2: Find Email shows not-found prompt ───────────────────────────────
+test.describe('ORG-B2: Find Email with unknown email shows not-found prompt', () => {
+  test.afterEach(async ({ page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  });
+
+  test('border-bottom-danger prompt appears after clicking Find Email with unknown email', async ({ page }) => {
+    // Mock GraphQL responses — no backend needed for this public page
+    await page.route('**/graphql', async route => {
+      const body = route.request().postDataJSON?.() ?? {};
+      const opName = body.operationName ?? '';
+      const query = body.query ?? '';
+
+      if (opName === 'findAutocompleteReferringOrgs' || query.includes('findAutocompleteReferringOrgs')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: { referringOrganisationsPublic: [{ id: 42, name: 'Test Org 42' }] },
+          }),
+        });
+        return;
+      }
+
+      if (opName === 'findOrganisationContact' || query.includes('referringOrganisationContactsPublic')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { referringOrganisationContactsPublic: [] } }),
+        });
+        return;
+      }
+
+      if (query.includes('adminConfig')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: {
+              adminConfig: {
+                canPublicRequestSIMCard: true,
+                canPublicRequestLaptop: true,
+                canPublicRequestPhone: true,
+                canPublicRequestBroadbandHub: true,
+                canPublicRequestTablet: true,
+                canPublicRequestDesktop: true,
+              },
+            },
+          }),
+        });
+        return;
+      }
+
+      if (query.includes('findContent')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { post: { id: 1, content: '' } } }),
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+
+    await page.goto('/organisation-device-request');
+    await expect(page.locator('h5.text-primary', { hasText: 'Request devices' })).toBeVisible({ timeout: 60_000 });
+
+    // Wait for backend ready state (spinner gone)
+    await page.waitForFunction(() => !document.querySelector('.spinner-border'), null, { timeout: 30_000 });
+
+    // Bypass the ward lookup iframe
+    await page.evaluate(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        origin: 'https://communitytechaid.github.io',
+        data: { borough: 'Lambeth', ward: 'Brixton Hill' },
+      }));
+    });
+
+    await page.waitForTimeout(800);
+
+    // Answer Yes to the Lambeth/Southwark question if present
+    const yesRadio = page.locator('input[type=radio][value="true"]').first();
+    if (await yesRadio.count() > 0) {
+      await yesRadio.check({ force: true });
+      await page.waitForTimeout(300);
+    }
+
+    // Type into the org autocomplete
+    const orgInput = page.locator('ng-select input').first();
+    await orgInput.waitFor({ state: 'visible', timeout: 10_000 });
+    await orgInput.fill('Tes');
+    await page.waitForTimeout(800);
+
+    // Select the first matched option
+    const option = page.locator('.ng-option').first();
+    await option.waitFor({ state: 'visible', timeout: 5_000 });
+    await option.click();
+
+    // Wait for the About you section
+    await expect(page.getByRole('heading', { name: 'About you', exact: true })).toBeVisible({ timeout: 5_000 });
+
+    // Fill in an email not associated with the org
+    const emailInput = page.locator('input[type=email]').first();
+    await emailInput.waitFor({ state: 'visible', timeout: 5_000 });
+    await emailInput.fill('unknown-email@example.com');
+
+    // Click Find Email
+    const findEmailBtn = page.locator('button', { hasText: 'Find Email' });
+    await findEmailBtn.click();
+
+    await page.waitForTimeout(2_000);
+
+    // The not-found prompt must be visible
+    // Pre-fix: hideExpression mutation was not reactive; field stayed hidden.
+    // Post-fix: field.hide + options.detectChanges() makes formly re-evaluate.
+    const notFoundCard = page.locator('.border-bottom-danger').first();
+    await expect(notFoundCard).toBeVisible({ timeout: 3_000 });
+  });
+});

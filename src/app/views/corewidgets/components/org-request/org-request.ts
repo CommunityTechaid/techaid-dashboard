@@ -253,8 +253,8 @@ export class OrgRequestComponent implements AfterViewChecked {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
 
           this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = []
-          this.referringOrganisationContactsDropDown.hideExpression = true;
-          this.createNewOrganisationContactPrompt.hideExpression = true;
+          this.referringOrganisationContactsDropDown.hide = true;
+          this.createNewOrganisationContactPrompt.hide = true;
           if (!this.isOrganisationExists) {
             (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
           } else {
@@ -406,7 +406,7 @@ export class OrgRequestComponent implements AfterViewChecked {
 
   referringOrganisationContactProceedButton: FormlyFieldConfig = {
 
-    hideExpression: true,
+    hide: true,
     type: 'button',
     templateOptions: {
       text: 'Proceed',
@@ -418,7 +418,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   referringOrganisationContactsDropDown: FormlyFieldConfig = {
-    hideExpression: true,
+    hide: true,
     fieldGroup: [
       {
         type: 'select',
@@ -431,7 +431,7 @@ export class OrgRequestComponent implements AfterViewChecked {
         hooks: {
           onInit: (field) => {
             this.sub.add(field.formControl.valueChanges.subscribe(v => {
-              this.referringOrganisationContactProceedButton.hideExpression = false;
+              this.referringOrganisationContactProceedButton.hide = false;
               this.referringContactIdField.formControl.setValue(v)
               this.isContactExists = true;
             }));
@@ -586,7 +586,7 @@ export class OrgRequestComponent implements AfterViewChecked {
    */
 
   createNewOrganisationContactPrompt: FormlyFieldConfig = {
-    hideExpression: true,
+    hide: true,
     className: 'col-md-12',
     template: `<div class="border-bottom-danger card mb-3 p-3">
 <p>The email you entered isn’t in our system. Please double-check the address for accuracy. If this is your first request, use <a class="btn btn-primary" role="button" href="https://ghjngk6ao4g.typeform.com/to/Qz4rILeN" target="_blank">this link</a> to provide your details so we can register you.</p>
@@ -1298,8 +1298,9 @@ export class OrgRequestComponent implements AfterViewChecked {
     }
 
     this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = []
-    this.referringOrganisationContactsDropDown.hideExpression = true;
-    this.createNewOrganisationContactPrompt.hideExpression = true;
+    this.referringOrganisationContactsDropDown.hide = true;
+    this.createNewOrganisationContactPrompt.hide = true;
+    this.options.detectChanges?.(this.fields[0]);
 
     this.apollo.query({
       query: FIND_ORGANISATION_CONTACT,
@@ -1316,8 +1317,8 @@ export class OrgRequestComponent implements AfterViewChecked {
           return { label: r.fullName, value: r.id };
         });
 
-        this.referringOrganisationContactProceedButton.hideExpression = true;
-        this.referringOrganisationContactsDropDown.hideExpression = false;
+        this.referringOrganisationContactProceedButton.hide = true;
+        this.referringOrganisationContactsDropDown.hide = false;
         this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = contacts;
 
       } else if (data && data.length == 1) {
@@ -1325,13 +1326,15 @@ export class OrgRequestComponent implements AfterViewChecked {
         this.isContactExists = true;
         this.showRequestPage();
       } else {
-        this.createNewOrganisationContactPrompt.hideExpression = false;
+        this.createNewOrganisationContactPrompt.hide = false;
       }
+      this.options.detectChanges?.(this.fields[0]);
     }).catch(error => {
       console.warn('Error looking up contact:', error);
       this.toastr.warning('Could not look up your email. Please check your connection and try again.');
-      this.referringOrganisationContactsDropDown.hideExpression = true;
-      this.createNewOrganisationContactPrompt.hideExpression = true;
+      this.referringOrganisationContactsDropDown.hide = true;
+      this.createNewOrganisationContactPrompt.hide = true;
+      this.options.detectChanges?.(this.fields[0]);
     });
 
   }
