@@ -155,6 +155,17 @@ const DELETE_ENTITY = gql`
   }
 `;
 
+const ASSIGN_KITS = gql`
+  mutation assignKitsToDeviceRequest($data: BulkKitAssignmentInput!) {
+    assignKitsToDeviceRequest(data: $data) {
+      id
+      kits {
+        id
+      }
+    }
+  }
+`;
+
 const QUERY_DEVICE_COUNT = gql`
   query countDevicesForRequest($deviceRequestId: Long) {
     kitsConnection(where: { deviceRequest: { id: { _eq: $deviceRequestId } } }) {
@@ -187,6 +198,12 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
 }
 `;
 
+export interface DeviceAssignmentResult {
+  deviceId: string;
+  status: 'success' | 'warning' | 'error';
+  message: string;
+}
+
 @Component({
     selector: 'app-device-request-info',
     templateUrl: './device-request-info.component.html',
@@ -195,6 +212,7 @@ query findAutocompleteReferringOrganisationContacts($term: String, $referringOrg
 })
 export class DeviceRequestInfoComponent {
   @ViewChild('kitWarning') kitWarningModal: any;
+  @ViewChild('assignDevicesModal') assignDevicesModal: any;
 
   private clickHandler: (e: MouseEvent) => void;
 
@@ -225,6 +243,12 @@ export class DeviceRequestInfoComponent {
   @Select(UserState.user) user$: Observable<User>;
   showAllDeviceTypes = false;
   deviceCount: number = 0;
+
+  assignDeviceIds: string = '';
+  assignmentResults: DeviceAssignmentResult[] = [];
+  isAssigning: boolean = false;
+  showAssignConfirmation: boolean = false;
+  parsedDeviceIds: string[] = [];
 
   deviceTypes = [
     { key: 'deviceRequestItems.laptops', label: 'Laptops', icon: 'fas fa-laptop' },
@@ -992,6 +1016,82 @@ export class DeviceRequestInfoComponent {
       );
   }
 
+  openAssignDevicesModal() {
+    this.assignDeviceIds = '';
+    this.assignmentResults = [];
+    this.showAssignConfirmation = false;
+    this.parsedDeviceIds = [];
+    this.modalService.open(this.assignDevicesModal, { centered: true, size: 'lg' });
+  }
+
+  prepareAssignment() {
+    const ids = this.assignDeviceIds
+      .split(',')
+      .map(id => id.trim())
+      .filter(id => id.length > 0);
+
+    if (ids.length === 0) {
+      return;
+    }
+
+    this.parsedDeviceIds = ids;
+    this.showAssignConfirmation = true;
+  }
+
+  resetAssignModal() {
+    this.assignDeviceIds = '';
+    this.assignmentResults = [];
+    this.showAssignConfirmation = false;
+    this.parsedDeviceIds = [];
+  }
+
+  async executeAssignment() {
+    this.isAssigning = true;
+    this.showAssignConfirmation = false;
+    this.assignmentResults = [];
+
+    for (const kitId of this.parsedDeviceIds) {
+      try {
+        const res = await this.apollo.mutate<any>({
+          mutation: ASSIGN_KITS,
+          variables: {
+            data: {
+              deviceRequestId: this.requestId,
+              kitIds: [kitId],
+            },
+          },
+        }).toPromise();
+
+        const assignedKits: { id: string }[] = res.data['assignKitsToDeviceRequest']['kits'];
+        const wasAssigned = assignedKits.some(k => String(k.id) === String(kitId));
+
+        if (wasAssigned) {
+          this.assignmentResults.push({ deviceId: kitId, status: 'success', message: 'Assigned successfully' });
+        } else {
+          this.assignmentResults.push({ deviceId: kitId, status: 'error', message: 'Device not found' });
+        }
+      } catch (err) {
+        this.assignmentResults.push({ deviceId: kitId, status: 'error', message: this.extractGraphQLError(err) });
+      }
+    }
+
+    if (this.assignmentResults.some(r => r.status === 'success')) {
+      this.fetchDeviceCount();
+    }
+
+    this.isAssigning = false;
+  }
+
+  private extractGraphQLError(err: any): string {
+    if (err && err.graphQLErrors && err.graphQLErrors.length > 0) {
+      return err.graphQLErrors[0].message;
+    }
+    if (err && err.networkError) {
+      return err.networkError.message || 'Network error';
+    }
+    return err instanceof Error ? err.message : String(err);
+  }
+
   generatingPdf = false;
 
   async generatePDF() {
@@ -1012,7 +1112,7 @@ export class DeviceRequestInfoComponent {
       const pdfData = {
         // Header fields
         organisationName: this.model.referringOrganisationContact?.referringOrganisation?.name || 'N/A',
-        date: this.model.collectionDate ? new Date(this.model.collectionDate).toLocaleDateString() : 'N/A',
+        date: this.model.collectionDate ? new Date(this.model.collectionDate).toLocaleDateString('en-GB') : 'N/A',
 
         // Device Request details
         requestId: this.requestId,
