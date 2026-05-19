@@ -14,7 +14,7 @@ import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
-import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -246,6 +246,7 @@ export class KitComponent {
   filterCount = 0;
   filterModel: any = {};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
+  filterOptions: FormlyFormOptions = {};
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
@@ -514,8 +515,8 @@ export class KitComponent {
       this.user$.subscribe((user) => {
         this.user = user;
         const isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
-        console.log(isDonorParentAdmin);
-        this.donorParentField.hideExpression = !isDonorParentAdmin;
+        this.donorParentField.hide = !isDonorParentAdmin;
+        this.filterOptions.detectChanges?.(this.filterFields[0]);
       })
     );
 

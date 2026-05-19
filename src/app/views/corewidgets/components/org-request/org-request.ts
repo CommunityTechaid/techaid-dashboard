@@ -637,12 +637,13 @@ export class OrgRequestComponent implements AfterViewChecked {
           onInit: (field) => {
             this.sub.add(field.formControl.valueChanges.subscribe(v => {
               if (v) {
-                this.refOrganisationPage.hideExpression = false;
-                this.isLambethErrorMessage.hideExpression = true;
+                this.refOrganisationPage.hide = false;
+                this.isLambethErrorMessage.hide = true;
               } else {
-                this.refOrganisationPage.hideExpression = true;
-                this.isLambethErrorMessage.hideExpression = false;
+                this.refOrganisationPage.hide = true;
+                this.isLambethErrorMessage.hide = false;
               }
+              this.options.detectChanges?.(this.fields[0]);
             }));
           }
         },

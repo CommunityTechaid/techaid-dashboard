@@ -709,9 +709,9 @@ export class KitIndexComponent {
         this.user = user;
         this.isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
         this.canBulkEdit = !!(user && user.authorities && user.authorities['app:bulkedit']);
-        //console.log(this.isDonorParentAdmin);
-        this.donorParentField.hideExpression = !this.isDonorParentAdmin;
-        this.donorParentTypeField.hideExpression = !this.isDonorParentAdmin;
+        this.donorParentField.hide = !this.isDonorParentAdmin;
+        this.donorParentTypeField.hide = !this.isDonorParentAdmin;
+        this.filterOptions.detectChanges?.(this.filterFields[0]);
       })
     );
 
