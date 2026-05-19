@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -222,8 +222,7 @@ export class DeviceRequestInfoComponent {
     private router: Router,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private titleService: Title,
-    private cdr: ChangeDetectorRef
+    private titleService: Title
   ) {
     titleService.setTitle("TaDa - Device Request");
   }
@@ -276,9 +275,7 @@ export class DeviceRequestInfoComponent {
       }
     }
 
-    // Trigger change detection so formly re-evaluates hideExpression
-    this.options = { ...this.options };
-    this.cdr.detectChanges();
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   newNoteField: FormlyFieldConfig = {

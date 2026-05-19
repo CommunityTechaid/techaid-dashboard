@@ -1341,44 +1341,49 @@ export class OrgRequestComponent implements AfterViewChecked {
 
   showThankYouPage() {
     this.content = {}
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = true;
-    this.thankYouPage.hideExpression = false;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = true;
+    this.thankYouPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   showMoreThanThreeRequestsPage() {
     this.content = {}
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = true;
-    this.moreThanThreeRequestsPage.hideExpression = false;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = true;
+    this.moreThanThreeRequestsPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   showNotSupportedPage() {
     this.content = {}
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = true;
-    this.notSupportedPage.hideExpression = false;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = true;
+    this.notSupportedPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   showTimerUpPage() {
     this.showTypeform = false;
     this.content = {}
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = true;
-    this.timerUpPage.hideExpression = false;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = true;
+    this.timerUpPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
 
   showRequestPage() {
-    this.isLambethPage.hideExpression = true
-    this.referringOrgField.hideExpression = true;
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = false;
+    this.isLambethPage.hide = true;
+    this.referringOrgField.hide = true;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   showOrganisationPage() {
