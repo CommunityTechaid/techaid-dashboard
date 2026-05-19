@@ -644,6 +644,9 @@ export class DeviceRequestInfoComponent {
                       <span id="toggleText">Show/hide unused device types</span>
                     </div>
                   `,
+                  // Angular's DomSanitizer strips `id` from [innerHTML] content;
+                  // safeHtml bypasses it so the event-delegation click handler can find the button.
+                  templateOptions: { safeHtml: true },
                   hideExpression: (model: any) => {
                     // Hide button if all device types have values
                     if (!model.deviceRequestItems) return true;
