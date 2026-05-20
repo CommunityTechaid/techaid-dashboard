@@ -27,6 +27,9 @@ export class AppComponent {
   apiVersion = '';
   backendStatus: BackendStatus = 'checking';
   authLoading = true;
+  showInterstitial = false;
+  private interstitialTimer: any;
+  private readonly INTERSTITIAL_GRACE_MS = 1000;
 
   constructor(
     private toastr: ToastrService,
@@ -70,12 +73,14 @@ export class AppComponent {
     this.actionSub.add(
       this.authService.isLoading$.subscribe(loading => {
         this.authLoading = loading;
+        this.updateInterstitial();
       })
     );
 
     this.actionSub.add(
       this.backendStatusService.status$.subscribe(status => {
         this.backendStatus = status;
+        this.updateInterstitial();
       })
     );
 
@@ -113,7 +118,24 @@ export class AppComponent {
     if (this.actionSub) {
       this.actionSub.unsubscribe();
     }
+    clearTimeout(this.interstitialTimer);
     this.backendStatusService.cleanup();
+  }
+
+  private updateInterstitial() {
+    const loading = this.authLoading || this.backendStatus === 'checking';
+    if (loading) {
+      if (!this.showInterstitial && !this.interstitialTimer) {
+        this.interstitialTimer = setTimeout(() => {
+          this.interstitialTimer = null;
+          this.showInterstitial = true;
+        }, this.INTERSTITIAL_GRACE_MS);
+      }
+    } else {
+      clearTimeout(this.interstitialTimer);
+      this.interstitialTimer = null;
+      this.showInterstitial = false;
+    }
   }
 
 }
