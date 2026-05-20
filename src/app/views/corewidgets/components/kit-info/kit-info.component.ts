@@ -356,6 +356,7 @@ export class KitInfoComponent {
       show: true,
     },
     expressionProperties: {
+      'templateOptions.disabled': () => this.disabledStatuses,
       'validation.show': 'model.showErrorState'
     }
   }
@@ -894,16 +895,6 @@ export class KitInfoComponent {
     const disabledStatusGroup = ['ALLOCATION_DELIVERY_ARRANGED','ALLOCATION_QC_COMPLETED','ALLOCATION_READY','DISTRIBUTION_DELIVERED'];
     var currentStatus = data['status'];
 
-    // Disable or enable the status field based on flags
-    const statusControl = this.form.get('status');
-    if (statusControl) {
-      if (this.disabledStatuses) {
-        statusControl.disable({emitEvent: false});
-      } else {
-        statusControl.enable({emitEvent: false});
-      }
-    }
-
     if(this.disabledStatuses && disabledStatusGroup.includes(currentStatus)) {
       console.log('Invalidating');
       setTimeout(() => this.statusField.formControl.setErrors({incorrect: true, serverError: { message: "Error"}}));
@@ -915,6 +906,7 @@ export class KitInfoComponent {
           disableTimeOut: true
         });
     } else {
+      const statusControl = this.form.get('status');
       if (statusControl) {
         statusControl.setErrors(null);
       }
