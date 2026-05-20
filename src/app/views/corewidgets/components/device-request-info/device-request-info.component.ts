@@ -1,18 +1,21 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
 import { getKitTypeLabel } from '@app/shared/utils';
+
+import { KitComponent } from '../kit-component/kit-component.component';
+import { DeviceRequestAuditComponent } from '../device-request-audit-component/device-request-audit-component.component';
 
 export const DEVICE_REQUEST_STATUS = {
     'NEW':'New request',
@@ -202,13 +205,16 @@ export interface DeviceAssignmentResult {
 }
 
 @Component({
-  selector: 'app-device-request-info',
-  templateUrl: './device-request-info.component.html',
-  styleUrls: ['./device-request-info.component.scss']
+    selector: 'app-device-request-info',
+    templateUrl: './device-request-info.component.html',
+    styleUrls: ['./device-request-info.component.scss'],
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, DeviceRequestAuditComponent, NgbNavOutlet]
 })
 export class DeviceRequestInfoComponent {
   @ViewChild('kitWarning') kitWarningModal: any;
   @ViewChild('assignDevicesModal') assignDevicesModal: any;
+
+  private clickHandler: (e: MouseEvent) => void;
 
   constructor(
     private modalService: NgbModal,
@@ -222,7 +228,7 @@ export class DeviceRequestInfoComponent {
   }
 
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
     formState: {
       disabled: true
@@ -269,8 +275,7 @@ export class DeviceRequestInfoComponent {
       }
     }
 
-    // Trigger change detection by updating the form options
-    this.options = { ...this.options };
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   newNoteField: FormlyFieldConfig = {
@@ -639,6 +644,9 @@ export class DeviceRequestInfoComponent {
                       <span id="toggleText">Show/hide unused device types</span>
                     </div>
                   `,
+                  // Angular's DomSanitizer strips `id` from [innerHTML] content;
+                  // safeHtml bypasses it so the event-delegation click handler can find the button.
+                  templateOptions: { safeHtml: true },
                   hideExpression: (model: any) => {
                     // Hide button if all device types have values
                     if (!model.deviceRequestItems) return true;
@@ -736,6 +744,7 @@ export class DeviceRequestInfoComponent {
   }
 
   private normalizeData(data: any) {
+    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
 
     this.newNoteField.templateOptions['requestId'] = this.requestId
 
@@ -889,38 +898,15 @@ export class DeviceRequestInfoComponent {
     }));
 
     // Set up global click handler for toggle button using event delegation
-    document.addEventListener('click', (e: MouseEvent) => {
+    this.clickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-
-      // Check if clicked element's text matches our toggle button text
-      const text = target.textContent?.trim();
-      if (text === 'Show/hide unused device types') {
-        e.preventDefault();
-        this.toggleDeviceTypes();
-        return;
-      }
-
-      // Check if clicked element is the icon (has fa-chevron class)
-      if (target.className && (target.className.includes('fa-chevron-down') || target.className.includes('fa-chevron-up'))) {
-        e.preventDefault();
-        this.toggleDeviceTypes();
-        return;
-      }
-
-      // Check if clicked element is the icon or text span by ID
-      if (target.id === 'toggleIcon' || target.id === 'toggleText' || target.id === 'toggleDeviceTypesBtn') {
-        e.preventDefault();
-        this.toggleDeviceTypes();
-        return;
-      }
-
-      // Also check if clicked element or its parent is the toggle button
       const button = target.closest('#toggleDeviceTypesBtn');
       if (button) {
         e.preventDefault();
         this.toggleDeviceTypes();
       }
-    });
+    };
+    document.addEventListener('click', this.clickHandler);
   }
 
 
@@ -935,6 +921,9 @@ export class DeviceRequestInfoComponent {
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();
+    }
+    if (this.clickHandler) {
+      document.removeEventListener('click', this.clickHandler);
     }
   }
 

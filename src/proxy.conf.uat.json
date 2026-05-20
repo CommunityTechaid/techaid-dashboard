@@ -1,0 +1,20 @@
+{
+  "/graphql": {
+    "target": "https://api-testing.communitytechaid.org.uk",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "warn",
+    "headers": {
+      "Origin": "https://api-testing.communitytechaid.org.uk"
+    }
+  },
+  "/auth": {
+    "target": "https://api-testing.communitytechaid.org.uk",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "warn",
+    "headers": {
+      "Origin": "https://api-testing.communitytechaid.org.uk"
+    }
+  }
+}

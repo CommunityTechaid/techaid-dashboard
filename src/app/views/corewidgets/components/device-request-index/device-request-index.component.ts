@@ -1,17 +1,20 @@
 import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils';
+import { DatePipe } from '@angular/common';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { RouterLink } from '@angular/router';
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -67,9 +70,10 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
 `;
 
 @Component({
-  selector: 'app-device-request-index',
-  templateUrl: './device-request-index.component.html',
-  styleUrls: ['./device-request-index.component.scss']
+    selector: 'app-device-request-index',
+    templateUrl: './device-request-index.component.html',
+    styleUrls: ['./device-request-index.component.scss'],
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class DeviceRequestIndexComponent {
 
@@ -96,7 +100,7 @@ export class DeviceRequestIndexComponent {
   filter: any = {};
   filterCount = 0;
   filterModel: any = {is_sales: [false]};
-  filterForm: FormGroup = new FormGroup({});
+  filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterDeviceTypes = DEVICE_TYPES;
   filterFields: Array<FormlyFieldConfig> = [
     {
@@ -196,6 +200,10 @@ export class DeviceRequestIndexComponent {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    // Reset the cached total so it is re-captured from the next response,
+    // preventing recordsTotal from being stale (and smaller than recordsFiltered)
+    // when a filter is active on the first load (e.g. restored from localStorage).
+    this.total = 0;
     this.table.ajax.reload(null, false);
   }
 
@@ -277,21 +285,20 @@ export class DeviceRequestIndexComponent {
             if (!this.total) {
               this.total = data['totalElements'];
             }
-            data.content.forEach(d => {
-              d.types = {};
-              d.kitIds = {};
+            this.entities = data.content.map(d => {
+              const types: Record<string, number> = {};
+              const kitIds: Record<string, string[]> = {};
               if (d.kits && d.kits.length) {
                 d.kits.forEach(k => {
                   const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
                   const t = typeMap[k.type] || `${k.type}S`;
-                  d.types[t] = d.types[t] || 0;
-                  d.types[t]++;
-                  d.kitIds[t] = d.kitIds[t] || [];
-                  d.kitIds[t].push(k.id);
+                  types[t] = (types[t] || 0) + 1;
+                  kitIds[t] = kitIds[t] || [];
+                  kitIds[t].push(k.id);
                 });
               }
+              return { ...d, types, kitIds };
             });
-            this.entities = data.content;
           }
 
           callback({
@@ -321,12 +328,14 @@ export class DeviceRequestIndexComponent {
       },
       columns: [
         { data: 'id', width: '15px' },
-        { data: 'status' },
-        { data: 'clientRef' },
-        { data: 'referringOrganisationContact.referringOrganisation.name' },
+        { data: null, orderable: false },
         { data: 'referringOrganisationContact.fullName' },
-        { data: 'createdAt'},
+        { data: 'referringOrganisationContact.referringOrganisation.name' },
+        { data: 'clientRef' },
+        { data: 'createdAt' },
         { data: 'updatedAt' },
+        { data: 'status' },
+        { data: null, orderable: false },
       ]
     };
   }

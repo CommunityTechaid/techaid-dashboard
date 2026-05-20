@@ -1,5 +1,5 @@
-<ng-progress color="#FDB918"></ng-progress>
-<ng-progress id="root-http" color="#FDB918"></ng-progress>
+<ng-progress color="var(--primary)"></ng-progress>
+<ng-progress id="root-http" color="var(--primary)"></ng-progress>
 <!-- Page Wrapper -->
 <div id="wrapper">
     <app-sidebar class="bg-gradient-primary"></app-sidebar>
@@ -10,7 +10,31 @@
             <app-header></app-header>
             <!-- Begin Page Content -->
             <div class="container-fluid">
-                <router-outlet></router-outlet>
+                @if ((authLoading || backendStatus === 'checking') && showInterstitial) {
+                    <div class="row d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+                        <div class="col-lg-5 col-md-8 text-center">
+                            <div class="card shadow p-5">
+                                <div class="spinner-border text-primary mb-4 mx-auto" role="status" style="width: 3rem; height: 3rem;">
+                                    <span class="visually-hidden">Loading…</span>
+                                </div>
+                                <h5 class="text-primary mb-2">Server is starting up</h5>
+                                <p class="text-muted mb-0">{{ backendStatusService.statusMessage }}</p>
+                            </div>
+                        </div>
+                    </div>
+                } @else if (backendStatus === 'error') {
+                    <div class="row d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+                        <div class="col-lg-5 col-md-8 text-center">
+                            <div class="card shadow p-5">
+                                <p class="text-muted">The server is taking longer than expected to respond.</p>
+                                <p class="text-muted mb-3">Please try again in a few minutes, or click below to retry now.</p>
+                                <button class="btn btn-primary btn-sm" (click)="backendStatusService.startCheck()">Retry</button>
+                            </div>
+                        </div>
+                    </div>
+                } @else {
+                    <router-outlet></router-outlet>
+                }
             </div>
             <!-- /.container-fluid -->
         </div>
@@ -25,7 +49,7 @@
             </div>
 
             <div style="position:absolute;bottom: 0; right: 0;" title="API: {{apiVersion || '...'}} / Web: {{version.version}} ({{version.commit}}) {{version.build}}">
-                <small class="mr-1"><sup>Version Info</sup></small>
+                <small class="me-1"><sup>Version Info</sup></small>
             </div>
         </footer>
         <!-- End of Footer -->

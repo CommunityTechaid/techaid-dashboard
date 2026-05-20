@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd, RouterOutlet, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
 import { Store, Actions, ofAction } from '@ngxs/store';
@@ -9,17 +9,28 @@ import { Title } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
 import { AppInsightsService } from '@app/shared/services/app-insights.service';
 import { ConfigService } from '@app/shared/services/config.service';
-import { NgZone } from '@angular/core';
+import { NgProgressComponent } from 'ngx-progressbar';
+import { AppSidebar } from './components/app-sidebar/app.sidebar.component';
+import { AppHeader } from './components/app-header/app.header.component';
+import { BackendStatusService, BackendStatus } from '@app/shared/services/backend-status.service';
+import { AuthenticationService } from '@app/shared/services/authentication.service';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css'],
+    imports: [NgProgressComponent, AppSidebar, AppHeader, RouterOutlet, RouterLink]
 })
 export class AppComponent {
   private actionSub: Subscription;
   version = APP_VERSION;
   apiVersion = '';
+  backendStatus: BackendStatus = 'checking';
+  authLoading = true;
+  showInterstitial = false;
+  private interstitialTimer: any;
+  private readonly INTERSTITIAL_GRACE_MS = 1000;
+
   constructor(
     private toastr: ToastrService,
     private store: Store,
@@ -29,7 +40,8 @@ export class AppComponent {
     private activatedRoute: ActivatedRoute,
     private appInsights: AppInsightsService,
     private config: ConfigService,
-    private zone: NgZone
+    readonly backendStatusService: BackendStatusService,
+    private authService: AuthenticationService
   ) {
     titleService.setTitle("TaDa");
 
@@ -57,34 +69,33 @@ export class AppComponent {
 
   ngOnInit() {
     this.actionSub = this.actions.pipe(ofAction(RouterNavigation)).subscribe(({ event }) => this.handleAction(event));
-    this.fetchBuildInfo();
-  }
 
-  private fetchBuildInfo() {
-    const endpoint = this.config.environment.graphql_endpoint;
-    fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: '{ buildInfo { version commit time } }' })
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.zone.run(() => {
-          if (res && res.data && res.data.buildInfo) {
-            const info = res.data.buildInfo;
-            const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
-            this.apiVersion = `${info.version} (${info.commit})${time}`;
-          } else {
-            this.apiVersion = 'unavailable';
-          }
-        });
+    this.actionSub.add(
+      this.authService.isLoading$.subscribe(loading => {
+        this.authLoading = loading;
+        this.updateInterstitial();
       })
-      .catch(err => {
-        console.warn('Failed to fetch buildInfo:', err);
-        this.zone.run(() => {
+    );
+
+    this.actionSub.add(
+      this.backendStatusService.status$.subscribe(status => {
+        this.backendStatus = status;
+        this.updateInterstitial();
+      })
+    );
+
+    this.actionSub.add(
+      this.backendStatusService.buildInfo$.subscribe(info => {
+        if (info) {
+          const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
+          this.apiVersion = `${info.version} (${info.commit})${time}`;
+        } else if (this.backendStatus === 'error') {
           this.apiVersion = 'unavailable';
-        });
-      });
+        }
+      })
+    );
+
+    this.backendStatusService.startCheck();
   }
 
   handleAction(action) {
@@ -106,6 +117,24 @@ export class AppComponent {
   ngOnDestroy() {
     if (this.actionSub) {
       this.actionSub.unsubscribe();
+    }
+    clearTimeout(this.interstitialTimer);
+    this.backendStatusService.cleanup();
+  }
+
+  private updateInterstitial() {
+    const loading = this.authLoading || this.backendStatus === 'checking';
+    if (loading) {
+      if (!this.showInterstitial && !this.interstitialTimer) {
+        this.interstitialTimer = setTimeout(() => {
+          this.interstitialTimer = null;
+          this.showInterstitial = true;
+        }, this.INTERSTITIAL_GRACE_MS);
+      }
+    } else {
+      clearTimeout(this.interstitialTimer);
+      this.interstitialTimer = null;
+      this.showInterstitial = false;
     }
   }
 

@@ -1,11 +1,8 @@
-import { Injectable, Optional, Inject, NgZone } from '@angular/core';
-import { HttpInterceptor, HttpEvent, HttpHandler, HttpRequest } from '@angular/common/http';
+import { Injectable, Optional, Inject, NgZone, Provider } from '@angular/core';
+import { HttpInterceptor, HttpEvent, HttpHandler, HttpRequest, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { NgProgress, NgProgressRef } from '@ngx-progressbar/core';
-
-import { NgModule, ModuleWithProviders } from '@angular/core';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { NgProgress, NgProgressRef } from 'ngx-progressbar';
 import { InjectionToken } from '@angular/core';
 
 export interface AppNgProgressHttpConfig {
@@ -25,17 +22,15 @@ export class AppNgProgressInterceptor implements HttpInterceptor {
     silentApis: []
   };
 
-  constructor(private ngProgress: NgProgress, private zone: NgZone,  @Optional() @Inject(CONFIG) config?: AppNgProgressHttpConfig) {
-    this._config = {...this._config, ...config};
+  constructor(private ngProgress: NgProgress, private zone: NgZone, @Optional() @Inject(CONFIG) config?: AppNgProgressHttpConfig) {
+    this._config = { ...this._config, ...config };
     this._progressRef = ngProgress.ref(this._config.id);
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-
     if (this.checkUrl(req)) {
       return next.handle(req);
     }
-
 
     this._inProgressCount++;
     this.zone.run(() => {
@@ -56,10 +51,6 @@ export class AppNgProgressInterceptor implements HttpInterceptor {
     );
   }
 
-  /**
-   * Check if request is silent.
-   * @param req request
-   */
   private checkUrl(req: HttpRequest<any>) {
     const url = req.url.toLowerCase();
     const found = this._config.silentApis.find((u) => url.startsWith(u));
@@ -67,17 +58,9 @@ export class AppNgProgressInterceptor implements HttpInterceptor {
   }
 }
 
-
-@NgModule({
-})
-export class AppNgProgressHttpModule {
-  static forRoot(config?: AppNgProgressHttpConfig): ModuleWithProviders<AppNgProgressHttpModule> {
-    return {
-      ngModule: AppNgProgressHttpModule,
-      providers: [
-        { provide: CONFIG, useValue: config },
-        { provide: HTTP_INTERCEPTORS, useClass: AppNgProgressInterceptor, multi: true }
-      ]
-    };
-  }
+export function provideNgProgressHttp(config?: AppNgProgressHttpConfig): Provider[] {
+  return [
+    { provide: CONFIG, useValue: config },
+    { provide: HTTP_INTERCEPTORS, useClass: AppNgProgressInterceptor, multi: true }
+  ];
 }

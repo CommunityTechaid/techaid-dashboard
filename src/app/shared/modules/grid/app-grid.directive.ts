@@ -1,14 +1,12 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import 'datatables.net';
-import 'datatables.net-bs4';
+import 'datatables.net-bs5';
 import 'datatables.net-rowreorder';
 import 'datatables.net-responsive';
 
-@Directive({
-  selector: '[datatable]'
-})
+@Directive({ selector: '[datatable]' })
 export class AppGridDirective implements OnDestroy, OnInit {
   /**
    * The DataTable option you pass to configure your table.

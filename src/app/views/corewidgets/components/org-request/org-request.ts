@@ -14,12 +14,14 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { AbstractControl, FormGroup } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { AbstractControl, UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+
+import { AppLocalCSS } from './app-local-css.component';
 
 declare var window: any;
 
@@ -114,14 +116,15 @@ const QUERY_ADMIN_CONFIG = gql`
 `;
 
 @Component({
-  selector: 'org-request',
-  styleUrls: ['./org-request.scss'],
-  templateUrl: './org-request.html'
+    selector: 'org-request',
+    styleUrls: ['./org-request.scss'],
+    templateUrl: './org-request.html',
+    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule]
 })
 
 export class OrgRequestComponent implements AfterViewChecked {
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   submitting = false;
   content: any = {};
@@ -153,6 +156,89 @@ export class OrgRequestComponent implements AfterViewChecked {
 
   @ViewChild('tfForm') tfForm: ElementRef | undefined;
 
+  backendStatus: 'checking' | 'ready' | 'error' = 'checking';
+  private backendCheckAttempt = 0;
+  private readonly BACKEND_MAX_ATTEMPTS = 15;
+  private readonly BACKEND_POLL_INTERVAL_MS = 4000;
+  private backendPollTimer: any;
+
+  get backendStatusMessage(): string {
+    if (this.backendCheckAttempt < 3) {
+      return 'Starting up… this usually takes about 30 seconds.';
+    } else if (this.backendCheckAttempt < 8) {
+      return 'Still warming up… almost there.';
+    }
+    return 'Taking a bit longer than usual, please hang on…';
+  }
+
+  startBackendHealthCheck() {
+    this.backendStatus = 'checking';
+    this.backendCheckAttempt = 0;
+    this.pollBackend();
+  }
+
+  private pollBackend() {
+    this.apollo.query({
+      query: QUERY_ADMIN_CONFIG,
+      fetchPolicy: 'network-only'
+    }).toPromise().then(res => {
+      if (res && res.data) {
+        this.processAdminConfig(res.data['adminConfig']);
+        this.loadPageContent();
+        this.backendStatus = 'ready';
+        this.changeDetectorRef.detectChanges();
+      } else {
+        this.scheduleBackendRetry();
+      }
+    }).catch(() => {
+      this.scheduleBackendRetry();
+    });
+  }
+
+  private scheduleBackendRetry() {
+    this.backendCheckAttempt++;
+    if (this.backendCheckAttempt >= this.BACKEND_MAX_ATTEMPTS) {
+      this.backendStatus = 'error';
+      this.changeDetectorRef.detectChanges();
+      return;
+    }
+    this.backendPollTimer = setTimeout(() => this.pollBackend(), this.BACKEND_POLL_INTERVAL_MS);
+  }
+
+  private processAdminConfig(config: any) {
+    const options = [];
+    if (config.canPublicRequestLaptop) {
+      options.push({ value: 'laptops', label: 'Laptop' });
+    }
+    if (config.canPublicRequestDesktop) {
+      options.push({ value: 'desktops', label: 'Desktop' });
+    }
+    if (config.canPublicRequestTablet) {
+      options.push({ value: 'tablets', label: 'Tablet' });
+    }
+    if (config.canPublicRequestPhone) {
+      options.push({ value: 'phones', label: 'Smartphone' });
+    }
+    if (config.canPublicRequestSIMCard) {
+      options.push({ value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' });
+      this.additionalSimRequestPublic.hideExpression = false;
+    }
+    if (config.canPublicRequestBroadbandHub) {
+      options.push({ value: 'broadbandHubs', label: 'Broadband Hub' });
+      this.additionalBroadbandHubRequestPublic.hideExpression = false;
+    }
+    this.deviceTypesPublic.templateOptions.options = options;
+  }
+
+  private loadPageContent() {
+    this.apollo.query({
+      query: QUERY_CONTENT
+    }).toPromise().then(res => {
+      if (res.data) {
+        this.content = res.data['post'];
+      }
+    });
+  }
 
   //Review and remove
   referringOrgs$: Observable<any>;
@@ -161,14 +247,14 @@ export class OrgRequestComponent implements AfterViewChecked {
   referringOrgField: FormlyFieldConfig = {
     key: 'organisationId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end',
+    className: 'col-md-12',
     hooks: {
       onInit: (field) => {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
 
           this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = []
-          this.referringOrganisationContactsDropDown.hideExpression = true;
-          this.createNewOrganisationContactPrompt.hideExpression = true;
+          this.referringOrganisationContactsDropDown.hide = true;
+          this.createNewOrganisationContactPrompt.hide = true;
           if (!this.isOrganisationExists) {
             (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
           } else {
@@ -320,7 +406,7 @@ export class OrgRequestComponent implements AfterViewChecked {
 
   referringOrganisationContactProceedButton: FormlyFieldConfig = {
 
-    hideExpression: true,
+    hide: true,
     type: 'button',
     templateOptions: {
       text: 'Proceed',
@@ -332,24 +418,20 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   referringOrganisationContactsDropDown: FormlyFieldConfig = {
-    hideExpression: true,
+    hide: true,
     fieldGroup: [
       {
-        //key: 'referringOrganisationContact',
         type: 'select',
         className: 'col-md-12',
         templateOptions: {
           label: 'Choose your name from the list below',
-          options: [{
-            label: "hello",
-            value: "test"
-          }],
+          options: [],
           required: false
         },
         hooks: {
           onInit: (field) => {
             this.sub.add(field.formControl.valueChanges.subscribe(v => {
-              this.referringOrganisationContactProceedButton.hideExpression = false;
+              this.referringOrganisationContactProceedButton.hide = false;
               this.referringContactIdField.formControl.setValue(v)
               this.isContactExists = true;
             }));
@@ -504,7 +586,7 @@ export class OrgRequestComponent implements AfterViewChecked {
    */
 
   createNewOrganisationContactPrompt: FormlyFieldConfig = {
-    hideExpression: true,
+    hide: true,
     className: 'col-md-12',
     template: `<div class="border-bottom-danger card mb-3 p-3">
 <p>The email you entered isn’t in our system. Please double-check the address for accuracy. If this is your first request, use <a class="btn btn-primary" role="button" href="https://ghjngk6ao4g.typeform.com/to/Qz4rILeN" target="_blank">this link</a> to provide your details so we can register you.</p>
@@ -555,12 +637,13 @@ export class OrgRequestComponent implements AfterViewChecked {
           onInit: (field) => {
             this.sub.add(field.formControl.valueChanges.subscribe(v => {
               if (v) {
-                this.refOrganisationPage.hideExpression = false;
-                this.isLambethErrorMessage.hideExpression = true;
+                this.refOrganisationPage.hide = false;
+                this.isLambethErrorMessage.hide = true;
               } else {
-                this.refOrganisationPage.hideExpression = true;
-                this.isLambethErrorMessage.hideExpression = false;
+                this.refOrganisationPage.hide = true;
+                this.isLambethErrorMessage.hide = false;
               }
+              this.options.detectChanges?.(this.fields[0]);
             }));
           }
         },
@@ -919,6 +1002,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   private normalizeData(data: any) {
+    data = { ...data, attributes: { ...data.attributes } }; // Apollo v3 freezes query results in dev mode; copy before mutating
     data.attributes.request = {
       'laptops': 0,
       'phones': 0,
@@ -968,13 +1052,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   ngOnInit() {
-    this.apollo.query({
-      query: QUERY_CONTENT
-    }).toPromise().then(res => {
-      if (res.data) {
-        this.content = res.data['post'];
-      }
-    });
+    this.startBackendHealthCheck();
 
     const orgRef = this.apollo
       .watchQuery({
@@ -1038,44 +1116,6 @@ export class OrgRequestComponent implements AfterViewChecked {
       })
     );
 
-    //Query for device request items
-    this.apollo.query({
-      query: QUERY_ADMIN_CONFIG
-    }).toPromise().then(res => {
-      if (res.data) {
-        const config = res.data['adminConfig'];
-        const options = [];
-
-        if (config.canPublicRequestLaptop) {
-          options.push({ value: 'laptops', label: 'Laptop' });
-        }
-        if (config.canPublicRequestDesktop) {
-          options.push({ value: 'desktops', label: 'Desktop' });
-        }
-        if (config.canPublicRequestTablet) {
-          options.push({ value: 'tablets', label: 'Tablet' });
-        }
-        if (config.canPublicRequestPhone) {
-          options.push({ value: 'phones', label: 'Smartphone' });
-        }
-        if (config.canPublicRequestSIMCard) {
-          options.push({
-            value: 'commsDevices',
-            label: 'SIM card (6 months, 20GB data, unlimited UK calls)'
-          });
-          this.additionalSimRequestPublic.hideExpression = false;
-        }
-        if (config.canPublicRequestBroadbandHub) {
-          options.push({
-            value: 'broadbandHubs',
-            label: 'Broadband Hub'
-          });
-          this.additionalBroadbandHubRequestPublic.hideExpression = false;
-        }
-
-        this.deviceTypesPublic.templateOptions.options = options;
-      }
-    });
 
   }
 
@@ -1259,8 +1299,9 @@ export class OrgRequestComponent implements AfterViewChecked {
     }
 
     this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = []
-    this.referringOrganisationContactsDropDown.hideExpression = true;
-    this.createNewOrganisationContactPrompt.hideExpression = true;
+    this.referringOrganisationContactsDropDown.hide = true;
+    this.createNewOrganisationContactPrompt.hide = true;
+    this.options.detectChanges?.(this.fields[0]);
 
     this.apollo.query({
       query: FIND_ORGANISATION_CONTACT,
@@ -1277,8 +1318,8 @@ export class OrgRequestComponent implements AfterViewChecked {
           return { label: r.fullName, value: r.id };
         });
 
-        this.referringOrganisationContactProceedButton.hideExpression = true;
-        this.referringOrganisationContactsDropDown.hideExpression = false;
+        this.referringOrganisationContactProceedButton.hide = true;
+        this.referringOrganisationContactsDropDown.hide = false;
         this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = contacts;
 
       } else if (data && data.length == 1) {
@@ -1286,52 +1327,64 @@ export class OrgRequestComponent implements AfterViewChecked {
         this.isContactExists = true;
         this.showRequestPage();
       } else {
-        this.createNewOrganisationContactPrompt.hideExpression = false;
+        this.createNewOrganisationContactPrompt.hide = false;
       }
+      this.options.detectChanges?.(this.fields[0]);
+    }).catch(error => {
+      console.warn('Error looking up contact:', error);
+      this.toastr.warning('Could not look up your email. Please check your connection and try again.');
+      this.referringOrganisationContactsDropDown.hide = true;
+      this.createNewOrganisationContactPrompt.hide = true;
+      this.options.detectChanges?.(this.fields[0]);
     });
 
   }
 
   showThankYouPage() {
     this.content = {}
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = true;
-    this.thankYouPage.hideExpression = false;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = true;
+    this.thankYouPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   showMoreThanThreeRequestsPage() {
     this.content = {}
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = true;
-    this.moreThanThreeRequestsPage.hideExpression = false;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = true;
+    this.moreThanThreeRequestsPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   showNotSupportedPage() {
     this.content = {}
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = true;
-    this.notSupportedPage.hideExpression = false;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = true;
+    this.notSupportedPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   showTimerUpPage() {
     this.showTypeform = false;
     this.content = {}
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = true;
-    this.timerUpPage.hideExpression = false;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = true;
+    this.timerUpPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
 
   showRequestPage() {
-    this.isLambethPage.hideExpression = true
-    this.referringOrgField.hideExpression = true;
-    this.refOrganisationPage.hideExpression = true;
-    this.refContactPage.hideExpression = true;
-    this.requestPage.hideExpression = false;
+    this.isLambethPage.hide = true;
+    this.referringOrgField.hide = true;
+    this.refOrganisationPage.hide = true;
+    this.refContactPage.hide = true;
+    this.requestPage.hide = false;
+    this.options.detectChanges?.(this.fields[0]);
   }
 
   showOrganisationPage() {
@@ -1370,6 +1423,9 @@ export class OrgRequestComponent implements AfterViewChecked {
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();
+    }
+    if (this.backendPollTimer) {
+      clearTimeout(this.backendPollTimer);
     }
   }
 
@@ -1466,9 +1522,14 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   displayTypeForm(correlationId: any) {
+    if (!this.wardSubmitted) {
+      console.warn('displayTypeForm: wardSubmitted was false — setting true so typeform can render.');
+      this.wardSubmitted = true;
+    }
     this.showTypeform = true;
-    this.content = {}
+    this.content = {};
     this.pendingCorrelationId = correlationId;
+    this.changeDetectorRef.detectChanges();
   }
 
   ngAfterViewChecked() {

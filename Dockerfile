@@ -1,4 +1,4 @@
-FROM node:12.20.0-alpine3.10  as builder
+FROM node:22-alpine as builder
 
 ARG CONFIGURATION=production
 

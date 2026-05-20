@@ -5,12 +5,16 @@ import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
-import { FormControl, FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { FormControl, FormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
+import { RouterLink } from '@angular/router';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { DatePipe } from '@angular/common';
+import { AppInitialComponent } from '../../../../shared/components/app-initial/app-initial.component';
 
 const QUERY_USERS = gql`
 query findAllUsers($page: PaginationInput!, $term: String) {
@@ -32,10 +36,10 @@ query findAllUsers($page: PaginationInput!, $term: String) {
 `;
 
 @Component({
-  selector: 'user-index',
-  styleUrls: ['user-index.scss'],
-
-  templateUrl: './user-index.html'
+    selector: 'user-index',
+    styleUrls: ['user-index.scss'],
+    templateUrl: './user-index.html',
+    imports: [RouterLink, AppGridDirective_1, AppInitialComponent, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class UserIndexComponent {
   @ViewChild(AppGridDirective) grid: AppGridDirective;

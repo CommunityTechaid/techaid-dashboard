@@ -2,41 +2,43 @@
 <div class="row">
   <!-- Content Column -->
   <div class="col-lg-12 mb-4">
-      <div *ngIf="!model?.id" class="overlay"></div>
-      <!-- Project Card Example -->
-      <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-              <li class="breadcrumb-item"><a href="#" [routerLink]="['/dashboard']">Dashboard</a></li>
-              <li class="breadcrumb-item active" aria-current="page">Application Configuration</li>
-          </ol>
-      </nav>
+    @if (!model?.id) {
+      <div class="overlay"></div>
+    }
+    <!-- Project Card Example -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#" [routerLink]="['/dashboard']">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Application Configuration</li>
+      </ol>
+    </nav>
 
-      <div class="card shadow mb-4 mt-1">
-          <div class="card-header py-3">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h6 class="m-0 font-weight-bold text-primary">
-                    Application Configuration Settings (Last updated: {{ model?.updatedAt | date:'short' }})
-                  </h6>
-                </div>
-              <div>
-                  <button [disabled]="form.invalid" (click)="updateConfig(form.value)"
-                      type="submit" class="btn btn-primary btn-sm">
-                      <small>Save Configuration</small>
-                  </button>
-                  </div>
-              </div>
+    <div class="card shadow mb-4 mt-1">
+      <div class="card-header py-3">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="m-0 font-weight-bold text-primary">
+              Application Configuration Settings (Last updated: {{ model?.updatedAt | date:'short' }})
+            </h6>
           </div>
-          <div class="card-body">
-              <form [formGroup]="form">
-                  <formly-form [options]="options" (ngSubmit)="updateConfig(form.value)"
-                      [form]="form" [model]="model" [fields]="fields">
-                  </formly-form>
-              </form>
-
-
+          <div>
+            <button [disabled]="form.invalid" (click)="updateConfig(form.value)"
+              type="submit" class="btn btn-primary btn-sm">
+              <small>Save Configuration</small>
+            </button>
           </div>
+        </div>
       </div>
+      <div class="card-body">
+        <form [formGroup]="form">
+          <formly-form [options]="options" (ngSubmit)="updateConfig(form.value)"
+            [form]="form" [model]="model" [fields]="fields">
+          </formly-form>
+        </form>
+
+
+      </div>
+    </div>
   </div>
 </div>
 

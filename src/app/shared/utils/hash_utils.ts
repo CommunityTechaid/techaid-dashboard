@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
-import * as moment from 'moment';
-import { DateUtils } from './date_utils';
+import { isValid, parse, format as fnsFormat, startOfDay } from 'date-fns';
+import { DateUtils, toFnsFormat } from './date_utils';
 
 export interface Token {
     start: number;
@@ -72,29 +72,35 @@ export class HashUtils {
             return new Date();
         },
         'date.today': () => {
-            return moment().startOf('day').toDate();
+            return startOfDay(new Date());
         },
         'self': (args: string[], options: any) => {
             return HashUtils.dotNotation(options.env, args[0]);
         },
         'date.format': (args: string[]) => {
             const [date, format] = args;
-            let dt = null;
+            let dt: Date = null;
 
             if (typeof date == 'string') {
                 for (const fmt of DateUtils.options.formats) {
-                    const m = moment(date.substring(0, fmt.length), fmt, true);
-                    if (m.isValid()) {
-                        dt = m;
-                        break;
-                    }
+                    const candidate = date.substring(0, fmt.length);
+                    try {
+                        const parsed = parse(candidate, fmt, new Date());
+                        if (isValid(parsed) && fnsFormat(parsed, fmt) === candidate) {
+                            dt = parsed;
+                            break;
+                        }
+                    } catch { /* ignore */ }
                 }
             }
 
-            if (!dt) { dt = moment(date); }
+            if (!dt) {
+                const d = new Date(date as any);
+                if (isValid(d)) { dt = d; }
+            }
 
-            if (dt.isValid()) {
-                return dt.format(format);
+            if (dt && isValid(dt)) {
+                return fnsFormat(dt, toFnsFormat(format));
             }
 
             return null;
@@ -109,13 +115,15 @@ export class HashUtils {
             return DateUtils.math(date, opts);
         },
         'date.parse': (args: string[]) => {
-            const [expr, format, strict] = args;
-
-            const m = moment(expr.substring(0, format.length), format, !!strict);
-            if (m.isValid()) {
-                return m.toDate();
-            }
-
+            const [expr, format] = args;
+            const fmt = toFnsFormat(format);
+            const candidate = expr.substring(0, fmt.length);
+            try {
+                const parsed = parse(candidate, fmt, new Date());
+                if (isValid(parsed) && fnsFormat(parsed, fmt) === candidate) {
+                    return parsed;
+                }
+            } catch { /* ignore */ }
             return null;
         },
     };

@@ -10,6 +10,9 @@
 /release
 /dist
 
+# Claude Code
+.claude/settings.local.json
+
 # IDEs and editors
 /.idea
 .project
@@ -28,6 +31,7 @@ src/environments/version.ts
 !.vscode/extensions.json
 
 # misc
+/.angular/cache
 /.sass-cache
 /connect.lock
 /coverage

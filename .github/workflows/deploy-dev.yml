@@ -1,0 +1,75 @@
+name: Deploy to Dev SWA
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to push the deploy tag
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Bump version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch --no-git-tag-version
+          git add package.json package-lock.json
+          git commit -m "chore: bump version [skip ci]"
+          git push origin dev
+
+      - name: Generate version.ts
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          COMMIT=${GITHUB_SHA::7}
+          DATE=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+          BUILD=$(date -u +%y.%m.%d-%H%M)
+          echo "export const APP_VERSION = {version: '$VERSION', build: '$BUILD', date: '$DATE', commit: '$COMMIT'};" > src/environments/version.ts
+
+      - name: Inject runtime env
+        run: |
+          cat > src/assets/env.js << 'EOF'
+          window.__env = window.__env || {};
+          EOF
+          echo "window.__env.appInsightsConnectionString = \"$APPINSIGHTS_CS\";" >> src/assets/env.js
+        env:
+          APPINSIGHTS_CS: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING_DEV }}
+
+      - name: Build
+        run: npx ng build --configuration uat
+
+      - name: Deploy to Azure Static Web Apps
+        id: swa_deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_DEV }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: dist
+          skip_app_build: true
+
+      - name: Tag deployment
+        run: |
+          TAG="deploy/dev/$(date -u +%Y-%m-%d)-${GITHUB_SHA::7}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+        env:
+          GITHUB_SHA: ${{ github.sha }}

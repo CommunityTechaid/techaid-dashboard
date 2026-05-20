@@ -2,6 +2,14 @@
     margin-top: 15%;
 }
 
+/* B4: prevent mid-word line breaks inside CMS-injected highlighted/bold spans */
+:host ::ng-deep .row.justify-content-center span,
+:host ::ng-deep .row.justify-content-center strong,
+:host ::ng-deep .row.justify-content-center b {
+    word-break: keep-all;
+    overflow-wrap: normal;
+}
+
 .no-data-available {
    text-align: center;
 }

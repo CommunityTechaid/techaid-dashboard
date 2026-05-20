@@ -1,16 +1,17 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
+import { RoleUsersComponent } from '../role-users/role-users.component';
+import { RolePermissionsComponent } from '../role-permissions/role-permissions.component';
 
 const QUERY_ROLE = gql`
 query findRole($id: String!) {
@@ -23,10 +24,10 @@ query findRole($id: String!) {
 `;
 
 @Component({
-  selector: 'role-info',
-  styleUrls: ['role-info.scss'],
-
-  templateUrl: './role-info.html'
+    selector: 'role-info',
+    styleUrls: ['role-info.scss'],
+    templateUrl: './role-info.html',
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, RoleUsersComponent, RolePermissionsComponent, NgbNavOutlet]
 })
 export class RoleInfoComponent {
 
@@ -41,7 +42,7 @@ export class RoleInfoComponent {
 
   }
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   roleName: string;
   roleId: string;

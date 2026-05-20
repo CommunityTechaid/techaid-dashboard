@@ -1,32 +1,15 @@
-import { NgModule, ModuleWithProviders } from '@angular/core';
-import { NgxsModule } from '@ngxs/store';
-import { NgxsLoggerPluginModule } from '@ngxs/logger-plugin';
-import { NgxsReduxDevtoolsPluginModule } from '@ngxs/devtools-plugin';
-import { NgxsRouterPluginModule } from '@ngxs/router-plugin';
-import { NgxsFormPluginModule } from '@ngxs/form-plugin';
+import { EnvironmentProviders } from '@angular/core';
+import { provideStore } from '@ngxs/store';
+import { withNgxsRouterPlugin } from '@ngxs/router-plugin';
+import { withNgxsFormPlugin } from '@ngxs/form-plugin';
+import { withNgxsReduxDevtoolsPlugin } from '@ngxs/devtools-plugin';
 import { UserState } from './user/user.state';
-export { UserState } from './user/user.state';
-const DevToolsOptions: any = {
-    name: 'PICNGXS',
-    serialize: undefined
-};
 
-@NgModule({
-    exports: [
-    ],
-    imports: [
-        NgxsModule.forRoot([UserState]),
-        // NgxsLoggerPluginModule.forRoot(),
-        NgxsRouterPluginModule.forRoot(),
-        NgxsFormPluginModule.forRoot(),
-        NgxsReduxDevtoolsPluginModule.forRoot()
-    ],
-})
-export class AppStateModule {
-    static forRoot(): ModuleWithProviders<AppStateModule> {
-    return {
-        ngModule: AppStateModule,
-        providers: []
-    };
-}
-}
+export { UserState } from './user/user.state';
+
+export const appStateProviders: EnvironmentProviders = provideStore(
+    [UserState],
+    withNgxsRouterPlugin(),
+    withNgxsFormPlugin(),
+    withNgxsReduxDevtoolsPlugin()
+);

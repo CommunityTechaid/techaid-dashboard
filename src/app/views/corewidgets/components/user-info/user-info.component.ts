@@ -1,11 +1,13 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormGroup } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { UserRolesComponent } from '../user-roles/user-roles.component';
+import { UserPermissionsComponent } from '../user-permissions/user-permissions.component';
 
 const QUERY_USER = gql`
 query findUser($id: String!) {
@@ -23,10 +25,10 @@ query findUser($id: String!) {
 
 
 @Component({
-  selector: 'user-info',
-  styleUrls: ['user-info.scss'],
-
-  templateUrl: './user-info.html'
+    selector: 'user-info',
+    styleUrls: ['user-info.scss'],
+    templateUrl: './user-info.html',
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, UserRolesComponent, UserPermissionsComponent, NgbNavOutlet]
 })
 export class UserInfoComponent {
 
@@ -40,7 +42,7 @@ export class UserInfoComponent {
 
   }
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   userName: string;
   userId: string;

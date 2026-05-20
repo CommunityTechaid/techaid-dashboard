@@ -5,8 +5,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { UntypedFormGroup, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import 'datatables.net-responsive';
@@ -16,6 +16,9 @@ import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { KIT_TYPES } from '@app/shared/utils';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+import { RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -236,9 +239,10 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
 `;
 
 @Component({
-  selector: 'kit-index',
-  styleUrls: ['kit-index.scss'],
-  templateUrl: './kit-index.html'
+    selector: 'kit-index',
+    styleUrls: ['kit-index.scss'],
+    templateUrl: './kit-index.html',
+    imports: [RouterLink, AppGridDirective_1, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class KitIndexComponent {
 
@@ -263,7 +267,7 @@ export class KitIndexComponent {
       donorParentVisible: false
     }
   };
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   ages = {
      0: 'I don\'t know',
@@ -382,7 +386,7 @@ export class KitIndexComponent {
   filterCount = 0;
   filterModel: any = {archived: [false]};
   filterOptions: FormlyFormOptions = {};
-  filterForm: FormGroup = new FormGroup({});
+  filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
@@ -531,7 +535,7 @@ export class KitIndexComponent {
     },
   };
 
-  quickForm: FormGroup = new FormGroup({});
+  quickForm: UntypedFormGroup = new UntypedFormGroup({});
   quickFields: Array<FormlyFieldConfig> = [
     {
       key: 'type',
@@ -705,9 +709,9 @@ export class KitIndexComponent {
         this.user = user;
         this.isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
         this.canBulkEdit = !!(user && user.authorities && user.authorities['app:bulkedit']);
-        //console.log(this.isDonorParentAdmin);
-        this.donorParentField.hideExpression = !this.isDonorParentAdmin;
-        this.donorParentTypeField.hideExpression = !this.isDonorParentAdmin;
+        this.donorParentField.hide = !this.isDonorParentAdmin;
+        this.donorParentTypeField.hide = !this.isDonorParentAdmin;
+        this.filterOptions.detectChanges?.(this.filterFields[0]);
       })
     );
 
@@ -891,12 +895,10 @@ export class KitIndexComponent {
             if (!this.total) {
               this.total = data['totalElements'];
             }
-            data.content.forEach(d => {
-              if (d.donor) {
-                d.donorName = this.donorName(d.donor);
-              }
-            });
-            this.entities = data.content;
+            this.entities = data.content.map(d => ({
+              ...d,
+              donorName: d.donor ? this.donorName(d.donor) : undefined
+            }));
             this.allPageSelected = this.entities.length > 0 && this.entities.every(e => !!this.selections[e.id]);
           }
 
@@ -932,7 +934,6 @@ export class KitIndexComponent {
         { data: 'donor' },
         { data: 'createdAt'},
         { data: 'updatedAt'},
-        { data: 'age'},
         { data: 'type' },
         { data: 'status' },
       ]

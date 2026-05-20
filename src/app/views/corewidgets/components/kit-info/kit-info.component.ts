@@ -1,23 +1,24 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { KIT_TYPES } from '@app/shared/utils';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
-import { Lightbox } from 'ngx-lightbox';
-import { isObject } from 'util';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { HashUtils } from '@app/shared/utils';
 import { Title } from '@angular/platform-browser';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+
+import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
+import { KitAuditComponent } from '../kit-audit-component/kit-audit-component.component';
 
 export const KIT_STATUS = {
   'DONATION_NEW': 'New device registered',
@@ -255,9 +256,10 @@ query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
 `;
 
 @Component({
-  selector: 'kit-info',
-  styleUrls: ['kit-info.scss'],
-  templateUrl: './kit-info.html'
+    selector: 'kit-info',
+    styleUrls: ['kit-info.scss'],
+    templateUrl: './kit-info.html',
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, KitAuditComponent, NgbNavOutlet]
 })
 export class KitInfoComponent {
 
@@ -268,7 +270,6 @@ export class KitInfoComponent {
     private router: Router,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private lightbox: Lightbox,
     private titleService: Title
   ) {
     titleService.setTitle("TaDa - Device Info");
@@ -278,7 +279,7 @@ export class KitInfoComponent {
   @Select(UserState.user) user$: Observable<User>;
 
   sub: Subscription;
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   model: any = {};
   deviceModel = {};
@@ -292,7 +293,7 @@ export class KitInfoComponent {
   donorField: FormlyFieldConfig = {
     key: 'donorId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
+    className: 'px-2 ms-auto justify-content-end text-right',
     templateOptions: {
       label: 'Donor',
       //description: 'The donor this device is currently assigned to.',
@@ -312,7 +313,7 @@ export class KitInfoComponent {
   deviceRequestField: FormlyFieldConfig = {
     key: 'deviceRequestId',
     type: 'choice',
-    className: 'px-2 ml-auto justify-content-end text-right',
+    className: 'ms-auto text-end',
     templateOptions: {
       label: 'Device Request',
       //description: 'The device request this device is currently assigned to.',
@@ -365,7 +366,7 @@ export class KitInfoComponent {
    */
   fields: Array<FormlyFieldConfig> = [
     {
-      fieldGroupClassName: 'row border-top-info d-flex',
+      fieldGroupClassName: 'd-flex flex-wrap gap-2 align-items-start py-2 border-top border-info',
       fieldGroup: [
         {
           key: 'type',
@@ -492,12 +493,12 @@ export class KitInfoComponent {
       ]
     },
     {
-      fieldGroupClassName: 'row d-flex',
+      fieldGroupClassName: 'd-flex gap-3',
       fieldGroup: [
         {
           key: 'make',
           type: 'input',
-          className: 'col-md-2',
+          className: 'col-md-2 px-0',
           defaultValue: '',
           templateOptions: {
             label: 'Make',
@@ -509,7 +510,7 @@ export class KitInfoComponent {
         {
           key: 'model',
           type: 'input',
-          className: 'col-md-2',
+          className: 'col-md-2 px-0',
           defaultValue: '',
           templateOptions: {
             label: 'Model',
@@ -521,22 +522,22 @@ export class KitInfoComponent {
         {
           key: 'lotId',
           type: 'input',
-          className: 'px-2 ml-auto justify-content-end text-right',
+          className: 'ms-auto text-end',
           defaultValue: '',
           templateOptions: {
             label: "Lot ID"
           }
         }
-        
+
       ]
     },
     {
-      fieldGroupClassName: 'row d-flex',
+      fieldGroupClassName: 'd-flex gap-3',
       fieldGroup: [
         {
           key: 'locationCode',
           type: 'input',
-          className: 'col-md-2',
+          className: 'col-md-2 px-0',
           defaultValue: '',
           templateOptions: {
             label: "Location Code"
@@ -669,7 +670,7 @@ export class KitInfoComponent {
               key: 'subStatus.lockedToUser',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'Locked to user?',
                 required: false,
@@ -691,7 +692,7 @@ export class KitInfoComponent {
               key: 'subStatus.wipeFailed',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'Device wipe failed?',
                 required: false,
@@ -714,7 +715,7 @@ export class KitInfoComponent {
               key: 'subStatus.installationOfOSFailed',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'OS Installation failed?',
                 required: false,
@@ -736,7 +737,7 @@ export class KitInfoComponent {
               key: 'subStatus.needsFurtherInvestigation',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'Needs further investigation?',
                 required: false,
@@ -758,7 +759,7 @@ export class KitInfoComponent {
               key: 'subStatus.needsSparePart',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'Needs spare part?',
                 required: false,
@@ -934,6 +935,15 @@ export class KitInfoComponent {
     });
 
   private normalizeData(data: any) {
+    // Apollo v4 freezes query results; deep-copy nested objects that Formly writes into (defaultValue,
+    // two-way ngModel) — a shallow spread leaves subStatus/attributes frozen and silently drops writes,
+    // which is what caused the "Needs Further Investigation" checkbox to render blank for records
+    // whose flag was actually true.
+    data = {
+      ...data,
+      subStatus: { ...(data.subStatus || {}) },
+      attributes: { ...(data.attributes || {}) },
+    };
     if (data.donor && data.donor.id) {
       data.donorId = data.donor.id;
       this.donorField.templateOptions['items'] = [

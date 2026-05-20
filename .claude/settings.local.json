@@ -4,7 +4,13 @@
       "Bash(npm run build:*)",
       "Bash(npx ng build:*)",
       "Bash(test:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm --version)",
+      "Bash(npx ng:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git commit -m 'docs: mark P7 complete, P8 next:*)",
+      "Bash(npm list:*)"
     ],
     "deny": [],
     "ask": []

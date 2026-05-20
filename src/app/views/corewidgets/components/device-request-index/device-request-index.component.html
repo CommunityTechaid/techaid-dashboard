@@ -3,195 +3,267 @@
 
   <!-- Content Column -->
   <div class="col-lg-12 mb-4">
-      <!-- Project Card Example -->
-      <div class="card shadow mb-4">
-          <div class="card-header py-3">
-              <div class="d-flex justify-content-between">
-                  <div>
-                      <h6 class="m-0 font-weight-bold text-primary">Device Requests</h6>
-                  </div>
-                  <div>
-                      <a href="#" (click)="modal(filters); false;" class="btn btn-info btn-icon-split btn-sm mr-1 mb-1">
-                          <span class="icon text-white-50">
-                              <i class="fas fa-filter"></i>
-                          </span>
-                          <span class="text">Filter <span *ngIf="filterCount > 0" class="badge badge-danger">{{filterCount}}</span></span>
-                      </a>
-                  </div>
-              </div>
+    <!-- Project Card Example -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="m-0 font-weight-bold text-primary">Device Requests</h6>
           </div>
-          <div class="card-body">
-              <div class="w-100">
-                  <div class="table-responsive">
-                      <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable
-                          [dtOptions]="dtOptions" style="width:100%;">
-                          <thead>
-                              <tr>
-                                  <th>ID</th>
-                                  <th>Requests</th>
-                                  <th>Referee</th>
-                                  <th>Organisation</th>
-                                  <th>Client Ref</th>
-                                  <th>Created</th>
-                                  <th>Updated</th>
-                                  <th>Status</th>
-                                  <th>Is Prepped</th>
-                              </tr>
-                          </thead>
-                          <tbody *ngIf="entities?.length != 0;">
-                              <tr *ngFor="let dt of entities" [class.selected]="selections[dt.id]" (click)="select(dt)">
-                                  <td>
-                                      <a href="#" [routerLink]="['./', dt.id]">
-                                          <span class="badge badge-primary">
-                                              {{dt.id}}
-                                          </span>
-                                      </a>
-                                  </td>
-                                  <td>
-                                    <div class="d-flex">
-                                        <div class="d-flex flex-column">
-                                            <div>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.other != 0">
-                                                  <span class="badge badge-primary">
-                                                      <span class="badge badge-secondary">Other</span>
-                                                      {{dt.types['OTHER'] || 0}}  / {{dt.deviceRequestItems.other || 0}}
-                                                  </span>
-                                              </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.laptops != 0">
-                                                  <span class="badge badge-primary">
-                                                      <span class="badge badge-secondary">Laptops</span>
-                                                      {{dt.types['LAPTOPS'] || 0}}  / {{dt.deviceRequestItems.laptops || 0}}
-                                                  </span>
-                                              </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.tablets != 0">
-                                                <span class="badge badge-primary">
-                                                    <span class="badge badge-secondary">Tablets</span>
-                                                    {{dt.types['TABLETS'] || 0}}  / {{dt.deviceRequestItems.tablets || 0}}
-                                                </span>
-                                              </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.allInOnes != 0">
-                                                <span class="badge badge-primary">
-                                                    <span class="badge badge-secondary">All-in-ones</span>
-                                                    {{dt.types['ALLINONES'] || 0}}  / {{dt.deviceRequestItems.allInOnes || 0}}
-                                                </span>
-                                              </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.desktops != 0">
-                                                <span class="badge badge-primary">
-                                                    <span class="badge badge-secondary">Desktops</span>
-                                                    {{dt.types['DESKTOPS'] || 0}}  / {{dt.deviceRequestItems.desktops || 0}}
-                                                </span>
-                                              </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.phones != 0">
-                                                <span class="badge badge-primary">
-                                                    <span class="badge badge-secondary">Phones</span>
-                                                    {{dt.types['PHONES'] || 0}}  / {{dt.deviceRequestItems.phones || 0}}
-                                                </span>
-                                              </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.commsDevices != 0">
-                                                <span class="badge badge-primary">
-                                                    <span class="badge badge-secondary">SIM Cards</span>
-                                                    {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
-                                                </span>
-                                              </span>
-                                              <span class="mr-1 mb-1" *ngIf="dt.deviceRequestItems.broadbandHubs != 0">
-                                                <span class="badge badge-primary">
-                                                    <span class="badge badge-secondary">Broadband Hubs</span>
-                                                    {{dt.types['BROADBANDHUBS'] || 0}}  / {{dt.deviceRequestItems.broadbandHubs || 0}}
-                                                </span>
-                                              </span>
-                                          </div>
-                                          <div *ngIf="dt.types && (dt.types['OTHER'] > 0 || dt.types['LAPTOPS'] > 0 || dt.types['TABLETS'] > 0 || dt.types['ALLINONES'] > 0 || dt.types['DESKTOPS'] > 0 || dt.types['PHONES'] > 0 || dt.types['COMMSDEVICES'] > 0 || dt.types['BROADBANDHUBS'] > 0)" class="mt-2">
-                                            <small>
-                                              <span *ngIf="dt.kitIds['OTHER'] && dt.kitIds['OTHER'].length" class="mr-2">
-                                                <strong>Other:</strong>
-                                                <span *ngFor="let kitId of dt.kitIds['OTHER']; let last = last">
-                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
-                                                </span>
-                                              </span>
-                                              <span *ngIf="dt.kitIds['LAPTOPS'] && dt.kitIds['LAPTOPS'].length" class="mr-2">
-                                                <strong>Laptops:</strong>
-                                                <span *ngFor="let kitId of dt.kitIds['LAPTOPS']; let last = last">
-                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
-                                                </span>
-                                              </span>
-                                              <span *ngIf="dt.kitIds['TABLETS'] && dt.kitIds['TABLETS'].length" class="mr-2">
-                                                <strong>Tablets:</strong>
-                                                <span *ngFor="let kitId of dt.kitIds['TABLETS']; let last = last">
-                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
-                                                </span>
-                                              </span>
-                                              <span *ngIf="dt.kitIds['ALLINONES'] && dt.kitIds['ALLINONES'].length" class="mr-2">
-                                                <strong>All-in-ones:</strong>
-                                                <span *ngFor="let kitId of dt.kitIds['ALLINONES']; let last = last">
-                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
-                                                </span>
-                                              </span>
-                                              <span *ngIf="dt.kitIds['DESKTOPS'] && dt.kitIds['DESKTOPS'].length" class="mr-2">
-                                                <strong>Desktops:</strong>
-                                                <span *ngFor="let kitId of dt.kitIds['DESKTOPS']; let last = last">
-                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
-                                                </span>
-                                              </span>
-                                              <span *ngIf="dt.kitIds['PHONES'] && dt.kitIds['PHONES'].length" class="mr-2">
-                                                <strong>Phones:</strong>
-                                                <span *ngFor="let kitId of dt.kitIds['PHONES']; let last = last">
-                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
-                                                </span>
-                                              </span>
-                                              <span *ngIf="dt.kitIds['COMMSDEVICES'] && dt.kitIds['COMMSDEVICES'].length" class="mr-2">
-                                                <strong>SIM Cards:</strong>
-                                                <span *ngFor="let kitId of dt.kitIds['COMMSDEVICES']; let last = last">
-                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
-                                                </span>
-                                              </span>
-                                              <span *ngIf="dt.kitIds['BROADBANDHUBS'] && dt.kitIds['BROADBANDHUBS'].length" class="mr-2">
-                                                <strong>Broadband Hubs:</strong>
-                                                <span *ngFor="let kitId of dt.kitIds['BROADBANDHUBS']; let last = last">
-                                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a><span *ngIf="!last">, </span>
-                                                </span>
-                                              </span>
-                                            </small>
-                                          </div>
-                                        </div>
-                                    </div>
-                                  </td>
-                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
-                                  <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
-                                  <td>{{dt.clientRef}}</td>
-                                  <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
-                                      {{ dt.createdAt | date:'medium' }}
-                                  </td>
-                                  <td [title]="dt.updatedAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.updatedAt | date:'full'}}" triggers="click:blur">
-                                      {{ dt.updatedAt | date:'medium' }}
-                                  </td>
-                                  <td><a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a></td>
-                                  <td><input type="checkbox" [checked]="dt.isPrepped" onclick="return false;"></td>
-                              </tr>
-                          </tbody>
-                      </table>
-                  </div>
-              </div>
+          <div>
+            <a href="#" (click)="modal(filters); false;" class="btn btn-info btn-icon-split btn-sm me-1 mb-1">
+              <span class="icon text-white-50">
+                <i class="fas fa-filter"></i>
+              </span>
+              <span class="text">Filter @if (filterCount > 0) {
+                <span class="badge badge-danger">{{filterCount}}</span>
+              }</span>
+            </a>
           </div>
+        </div>
       </div>
-  </div>
+      <div class="card-body">
+        <div class="w-100">
+          <div class="table-responsive">
+            <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable
+              [dtOptions]="dtOptions" style="width:100%;">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Requests</th>
+                  <th>Referee</th>
+                  <th>Organisation</th>
+                  <th>Client Ref</th>
+                  <th>Created</th>
+                  <th>Updated</th>
+                  <th>Status</th>
+                  <th>Is Prepped</th>
+                </tr>
+              </thead>
+              @if (entities?.length != 0;) {
+                <tbody>
+                  @for (dt of entities; track dt) {
+                    <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
+                      <td>
+                        <a href="#" [routerLink]="['./', dt.id]">
+                          <span class="badge badge-primary">
+                            {{dt.id}}
+                          </span>
+                        </a>
+                      </td>
+                      <td>
+                        <div class="d-flex">
+                          <div class="d-flex flex-column">
+                            <div>
+                              @if (dt.deviceRequestItems.other != 0) {
+                                <span class="me-1 mb-1">
+                                  <span class="badge badge-primary">
+                                    <span class="badge badge-secondary">Other</span>
+                                    {{dt.types['OTHER'] || 0}}  / {{dt.deviceRequestItems.other || 0}}
+                                  </span>
+                                </span>
+                              }
+                              @if (dt.deviceRequestItems.laptops != 0) {
+                                <span class="me-1 mb-1">
+                                  <span class="badge badge-primary">
+                                    <span class="badge badge-secondary">Laptops</span>
+                                    {{dt.types['LAPTOPS'] || 0}}  / {{dt.deviceRequestItems.laptops || 0}}
+                                  </span>
+                                </span>
+                              }
+                              @if (dt.deviceRequestItems.tablets != 0) {
+                                <span class="me-1 mb-1">
+                                  <span class="badge badge-primary">
+                                    <span class="badge badge-secondary">Tablets</span>
+                                    {{dt.types['TABLETS'] || 0}}  / {{dt.deviceRequestItems.tablets || 0}}
+                                  </span>
+                                </span>
+                              }
+                              @if (dt.deviceRequestItems.allInOnes != 0) {
+                                <span class="me-1 mb-1">
+                                  <span class="badge badge-primary">
+                                    <span class="badge badge-secondary">All-in-ones</span>
+                                    {{dt.types['ALLINONES'] || 0}}  / {{dt.deviceRequestItems.allInOnes || 0}}
+                                  </span>
+                                </span>
+                              }
+                              @if (dt.deviceRequestItems.desktops != 0) {
+                                <span class="me-1 mb-1">
+                                  <span class="badge badge-primary">
+                                    <span class="badge badge-secondary">Desktops</span>
+                                    {{dt.types['DESKTOPS'] || 0}}  / {{dt.deviceRequestItems.desktops || 0}}
+                                  </span>
+                                </span>
+                              }
+                              @if (dt.deviceRequestItems.phones != 0) {
+                                <span class="me-1 mb-1">
+                                  <span class="badge badge-primary">
+                                    <span class="badge badge-secondary">Phones</span>
+                                    {{dt.types['PHONES'] || 0}}  / {{dt.deviceRequestItems.phones || 0}}
+                                  </span>
+                                </span>
+                              }
+                              @if (dt.deviceRequestItems.commsDevices != 0) {
+                                <span class="me-1 mb-1">
+                                  <span class="badge badge-primary">
+                                    <span class="badge badge-secondary">SIM Cards</span>
+                                    {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
+                                  </span>
+                                </span>
+                              }
+                              @if (dt.deviceRequestItems.broadbandHubs != 0) {
+                                <span class="me-1 mb-1">
+                                  <span class="badge badge-primary">
+                                    <span class="badge badge-secondary">Broadband Hubs</span>
+                                    {{dt.types['BROADBANDHUBS'] || 0}}  / {{dt.deviceRequestItems.broadbandHubs || 0}}
+                                  </span>
+                                </span>
+                              }
+                            </div>
+                            @if (dt.types && (dt.types['OTHER'] > 0 || dt.types['LAPTOPS'] > 0 || dt.types['TABLETS'] > 0 || dt.types['ALLINONES'] > 0 || dt.types['DESKTOPS'] > 0 || dt.types['PHONES'] > 0 || dt.types['COMMSDEVICES'] > 0 || dt.types['BROADBANDHUBS'] > 0)) {
+                              <div class="mt-2">
+                                <small>
+                                  @if (dt.kitIds['OTHER'] && dt.kitIds['OTHER'].length) {
+                                    <span class="me-2">
+                                      <strong>Other:</strong>
+                                      @for (kitId of dt.kitIds['OTHER']; track kitId; let last = $last) {
+                                        <span>
+                                          <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                          <span>, </span>
+                                        }
+                                      </span>
+                                    }
+                                  </span>
+                                }
+                                @if (dt.kitIds['LAPTOPS'] && dt.kitIds['LAPTOPS'].length) {
+                                  <span class="me-2">
+                                    <strong>Laptops:</strong>
+                                    @for (kitId of dt.kitIds['LAPTOPS']; track kitId; let last = $last) {
+                                      <span>
+                                        <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                        <span>, </span>
+                                      }
+                                    </span>
+                                  }
+                                </span>
+                              }
+                              @if (dt.kitIds['TABLETS'] && dt.kitIds['TABLETS'].length) {
+                                <span class="me-2">
+                                  <strong>Tablets:</strong>
+                                  @for (kitId of dt.kitIds['TABLETS']; track kitId; let last = $last) {
+                                    <span>
+                                      <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                      <span>, </span>
+                                    }
+                                  </span>
+                                }
+                              </span>
+                            }
+                            @if (dt.kitIds['ALLINONES'] && dt.kitIds['ALLINONES'].length) {
+                              <span class="me-2">
+                                <strong>All-in-ones:</strong>
+                                @for (kitId of dt.kitIds['ALLINONES']; track kitId; let last = $last) {
+                                  <span>
+                                    <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                    <span>, </span>
+                                  }
+                                </span>
+                              }
+                            </span>
+                          }
+                          @if (dt.kitIds['DESKTOPS'] && dt.kitIds['DESKTOPS'].length) {
+                            <span class="me-2">
+                              <strong>Desktops:</strong>
+                              @for (kitId of dt.kitIds['DESKTOPS']; track kitId; let last = $last) {
+                                <span>
+                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                  <span>, </span>
+                                }
+                              </span>
+                            }
+                          </span>
+                        }
+                        @if (dt.kitIds['PHONES'] && dt.kitIds['PHONES'].length) {
+                          <span class="me-2">
+                            <strong>Phones:</strong>
+                            @for (kitId of dt.kitIds['PHONES']; track kitId; let last = $last) {
+                              <span>
+                                <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                <span>, </span>
+                              }
+                            </span>
+                          }
+                        </span>
+                      }
+                      @if (dt.kitIds['COMMSDEVICES'] && dt.kitIds['COMMSDEVICES'].length) {
+                        <span class="me-2">
+                          <strong>SIM Cards:</strong>
+                          @for (kitId of dt.kitIds['COMMSDEVICES']; track kitId; let last = $last) {
+                            <span>
+                              <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                              <span>, </span>
+                            }
+                          </span>
+                        }
+                      </span>
+                    }
+                    @if (dt.kitIds['BROADBANDHUBS'] && dt.kitIds['BROADBANDHUBS'].length) {
+                      <span class="me-2">
+                        <strong>Broadband Hubs:</strong>
+                        @for (kitId of dt.kitIds['BROADBANDHUBS']; track kitId; let last = $last) {
+                          <span>
+                            <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                            <span>, </span>
+                          }
+                        </span>
+                      }
+                    </span>
+                  }
+                </small>
+              </div>
+            }
+          </div>
+        </div>
+      </td>
+      <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
+      <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
+      <td>{{dt.clientRef}}</td>
+      <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
+        {{ dt.createdAt | date:'medium' }}
+      </td>
+      <td [title]="dt.updatedAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.updatedAt | date:'full'}}" triggers="click:blur">
+        {{ dt.updatedAt | date:'medium' }}
+      </td>
+      <td><a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a></td>
+      <td><input type="checkbox" [checked]="dt.isPrepped" onclick="return false;"></td>
+    </tr>
+  }
+</tbody>
+}
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 
 
 <ng-template #filters let-c="close" let-d="dismiss">
   <div class="modal-header">
-      <h4 class="modal-title">Device Request Filters</h4>
+    <h4 class="modal-title">Device Request Filters</h4>
   </div>
   <div class="modal-body">
-      <form [formGroup]="filterForm">
-          <formly-form [model]="filterModel" [form]="filterForm" [fields]="filterFields">
-          </formly-form>
-      </form>
+    <form [formGroup]="filterForm">
+      <formly-form [model]="filterModel" [form]="filterForm" [fields]="filterFields">
+      </formly-form>
+    </form>
   </div>
   <div class="modal-footer">
-      <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-      <button [disabled]="filterForm.invalid" type="button" class="btn btn-primary btn-sm"
-          (click)="applyFilter(filterForm.value); c('Close click')">
-          Filter
-      </button>
+    <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+    <button [disabled]="filterForm.invalid" type="button" class="btn btn-primary btn-sm"
+      (click)="applyFilter(filterForm.value); c('Close click')">
+      Filter
+    </button>
   </div>
 </ng-template>

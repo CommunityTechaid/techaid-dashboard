@@ -13,8 +13,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -29,6 +29,9 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+import { DatePipe } from '@angular/common';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { RouterLink } from '@angular/router';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -146,9 +149,10 @@ const FIND_USERS = gql`
 `;
 
 @Component({
-  selector: 'kit-component',
-  styleUrls: ['kit-component.scss'],
-  templateUrl: './kit-component.html',
+    selector: 'kit-component',
+    styleUrls: ['kit-component.scss'],
+    templateUrl: './kit-component.html',
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class KitComponent {
 
@@ -159,8 +163,14 @@ export class KitComponent {
   ) {}
   @Input()
   set where(where: any) {
+    const serialised = JSON.stringify(where);
+    if (serialised === this._whereSerialized) {
+      return;
+    }
+    this._whereSerialized = serialised;
     this._where = where;
     if (this.table) {
+      this.total = 0;
       this.applyFilter(this.filterModel);
     }
   }
@@ -172,7 +182,7 @@ export class KitComponent {
   selections = {};
   selected = [];
   entities = [];
-  form: FormGroup = new FormGroup({});
+  form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   ages = {
      0: 'I don\'t know',
@@ -235,7 +245,8 @@ export class KitComponent {
   filter: any = {};
   filterCount = 0;
   filterModel: any = {};
-  filterForm: FormGroup = new FormGroup({});
+  filterForm: UntypedFormGroup = new UntypedFormGroup({});
+  filterOptions: FormlyFormOptions = {};
   filterFields: Array<FormlyFieldConfig> = [
     {
       fieldGroupClassName: 'row',
@@ -358,9 +369,10 @@ export class KitComponent {
 
   _donorParentId = -1;
   _where = {};
+  _whereSerialized = '{}';
 
   applyFilter(data) {
-    const filter = {AND: []};
+    const filter: any = {};
     let count = 0;
     if(this._donorParentId != -1 && !data.donorParentId) {
       data.donorParentId = this._donorParentId;
@@ -398,6 +410,7 @@ export class KitComponent {
 
     if(data.after){
       count += 1;
+      filter['AND'] = filter['AND'] || [];
       filter['AND'].push({createdAt: {_gt: data.after }});
     }
 
@@ -406,6 +419,7 @@ export class KitComponent {
       endDate.setDate(endDate.getDate() + 1);
 
       count += 1;
+      filter['AND'] = filter['AND'] || [];
       filter['AND'].push({createdAt: {_lt: endDate }});
     }
 
@@ -413,6 +427,7 @@ export class KitComponent {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    this.total = 0;
     this.table.ajax.reload(null, false);
   }
 
@@ -500,8 +515,8 @@ export class KitComponent {
       this.user$.subscribe((user) => {
         this.user = user;
         const isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
-        console.log(isDonorParentAdmin);
-        this.donorParentField.hideExpression = !isDonorParentAdmin;
+        this.donorParentField.hide = !isDonorParentAdmin;
+        this.filterOptions.detectChanges?.(this.filterFields[0]);
       })
     );
 
@@ -546,12 +561,9 @@ export class KitComponent {
               if (!this.total) {
                 this.total = data['totalElements'];
               }
-              data.content.forEach((d) => {
-                if (d.donor) {
-                  d.donorName = this.donorName(d.donor);
-                }
+              this.entities = data.content.map((d) => {
+                return d.donor ? { ...d, donorName: this.donorName(d.donor) } : d;
               });
-              this.entities = data.content;
             }
 
             callback({
@@ -592,7 +604,6 @@ export class KitComponent {
         { data: 'donor' },
         { data: 'createdAt' },
         { data: 'updatedAt' },
-        { data: 'age' },
         { data: 'type' },
         { data: 'status' },
       ],

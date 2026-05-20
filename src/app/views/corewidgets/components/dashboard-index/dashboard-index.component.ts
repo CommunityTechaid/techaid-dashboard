@@ -1,18 +1,19 @@
 import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { FormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { isInteger } from '@ng-bootstrap/ng-bootstrap/util/util';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
+import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { PostIndexComponent } from '../post-index/post-index.component';
 
 const QUERY_ENTITY = gql`
 query findAll {
@@ -47,10 +48,10 @@ query findAll {
 
 
 @Component({
-  selector: 'dashboard-index',
-  styleUrls: ['dashboard-index.scss'],
-
-  templateUrl: './dashboard-index.html'
+    selector: 'dashboard-index',
+    styleUrls: ['dashboard-index.scss'],
+    templateUrl: './dashboard-index.html',
+    imports: [NgbProgressbar, AppGridDirective_1, PostIndexComponent]
 })
 export class DashboardIndexComponent {
   sub: Subscription;
