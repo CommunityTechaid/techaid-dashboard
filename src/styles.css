@@ -622,6 +622,7 @@ table.table.dataTable > tbody > tr.selected a {
 
 .kit-status .form-check {
     margin-bottom: 0;
+    padding-left: 2rem;
 }
 .kit-status .form-check:nth-child(3) {
     border-radius: 5px 5px 0 0;
