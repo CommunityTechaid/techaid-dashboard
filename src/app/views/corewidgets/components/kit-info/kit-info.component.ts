@@ -997,10 +997,6 @@ export class KitInfoComponent {
         this.model = this.normalizeData(data);
         this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
         this.updateDisabledStatusFlag(data);
-        // Form controls created before the kit loaded keep their initial undefined value when
-        // the [model] reference changes — Formly only refreshes a control's `defaultValue`, not
-        // its live `value`. Patch after the rebuild so subStatus checkboxes reflect the model.
-        setTimeout(() => this.form.patchValue(this.model, { emitEvent: false }));
       } else {
         this.model = {};
         this.entityName = 'Not Found!';
@@ -1146,7 +1142,6 @@ export class KitInfoComponent {
     }).subscribe(res => {
       this.model = this.normalizeData(res.data['updateKit']);
       this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
-      setTimeout(() => this.form.patchValue(this.model, { emitEvent: false }));
       this.toastr.info(`
       <small>Successfully updated device ${this.entityName}</small>
       `, 'Updated Device', {

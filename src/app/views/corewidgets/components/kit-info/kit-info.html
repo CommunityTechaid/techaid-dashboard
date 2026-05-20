@@ -37,13 +37,15 @@
             </div>
             <div class="card-body">
               <form [formGroup]="form">
-                <formly-form [options]="options" (ngSubmit)="form.valid && updateEntity(getFormData())"
-                  [form]="form" [model]="model" [fields]="fields">
-                </formly-form>
-                <button style="width: 150px" [disabled]="form.invalid" (click)="updateEntity(getFormData())"
-                  type="submit" class="btn btn-info btn-sm p-2">
-                  <small>Save</small>
-                </button>
+                @if (model?.id) {
+                  <formly-form [options]="options" (ngSubmit)="form.valid && updateEntity(getFormData())"
+                    [form]="form" [model]="model" [fields]="fields">
+                  </formly-form>
+                  <button style="width: 150px" [disabled]="form.invalid" (click)="updateEntity(getFormData())"
+                    type="submit" class="btn btn-info btn-sm p-2">
+                    <small>Save</small>
+                  </button>
+                }
               </form>
 
               @if (user?.authorities['delete:kits']) {
