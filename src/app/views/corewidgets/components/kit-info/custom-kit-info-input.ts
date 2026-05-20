@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
 
 import { ReactiveFormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 /*
 This component is a custom made formly type. This is probably not the cleanest way to do things but I could not figure out quite a bit of things needed to make it work 
@@ -73,10 +75,11 @@ Ideally, the input field should be dynamically rendered using custom selector bu
   `,
     imports: [ReactiveFormsModule, FormlyModule]
 })
-export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> {
+export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> implements OnInit, OnDestroy {
     editable: boolean = false;
     choice: boolean = false;
-    
+    private destroy$ = new Subject<void>();
+
     toggleEdit(){
       this.editable = !this.editable
     }
@@ -91,5 +94,28 @@ export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> {
       this.field.templateOptions.hidden = true;
       if (!this.field.templateOptions.type)
         this.field.templateOptions.type = "input";
+
+      if (this.to.type === 'number') {
+        this.formControl.valueChanges
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(value => {
+            if (value === '' || value === undefined) {
+              if (this.formControl.value !== null) {
+                this.formControl.setValue(null, { emitEvent: false, onlySelf: true });
+              }
+              return;
+            }
+            if (typeof value === 'string') {
+              const parsed = parseInt(value, 10);
+              const next = Number.isFinite(parsed) ? parsed : null;
+              this.formControl.setValue(next, { emitEvent: false, onlySelf: true });
+            }
+          });
+      }
+    }
+
+    ngOnDestroy(){
+      this.destroy$.next();
+      this.destroy$.complete();
     }
 }
