@@ -670,7 +670,7 @@ export class KitInfoComponent {
               key: 'subStatus.lockedToUser',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'Locked to user?',
                 required: false,
@@ -692,7 +692,7 @@ export class KitInfoComponent {
               key: 'subStatus.wipeFailed',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'Device wipe failed?',
                 required: false,
@@ -715,7 +715,7 @@ export class KitInfoComponent {
               key: 'subStatus.installationOfOSFailed',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'OS Installation failed?',
                 required: false,
@@ -737,7 +737,7 @@ export class KitInfoComponent {
               key: 'subStatus.needsFurtherInvestigation',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'Needs further investigation?',
                 required: false,
@@ -759,7 +759,7 @@ export class KitInfoComponent {
               key: 'subStatus.needsSparePart',
               type: 'kit-checkbox',
               className: '',
-              defaultValue: '',
+              resetOnHide: false,
               templateOptions: {
                 label: 'Needs spare part?',
                 required: false,
