@@ -38,7 +38,7 @@ Ideally, the input field should be dynamically rendered using custom selector bu
     <div style="font-size:smaller" class="d-flex">
   
       @if (to.type=='select') {
-        <select [hidden]="!editable" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="infoValue">
+        <select [hidden]="!editable" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field">
           @for (val of to.options; track val) {
             <option
               [value]="val.value" >
@@ -47,14 +47,14 @@ Ideally, the input field should be dynamically rendered using custom selector bu
           }
         </select>
       }
-  
+
       @if (to.type!='select') {
-        <input [hidden]="!editable" (focusout)="toggleEdit()" [type]="to.type" [formControl]="formControl" [formlyAttributes]="field" [(ngModel)]="infoValue">
+        <input [hidden]="!editable" (focusout)="toggleEdit()" [type]="to.type" [formControl]="formControl" [formlyAttributes]="field">
       }
-      @if (infoValue != undefined) {
-        <span [hidden]="editable" class="pr-1"  [innerText]="infoValue"></span>
+      @if (formControl.value != null && formControl.value !== '') {
+        <span [hidden]="editable" class="pr-1"  [innerText]="formControl.value"></span>
       }
-      @if (infoValue == undefined) {
+      @if (formControl.value == null || formControl.value === '') {
         <span [hidden]="editable" class="pr-1 pl-1">None</span>
       }
       @if (to.descriptor) {
@@ -74,8 +74,6 @@ Ideally, the input field should be dynamically rendered using custom selector bu
     imports: [ReactiveFormsModule, FormlyModule]
 })
 export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> {
-//
-    infoValue: string;
     editable: boolean = false;
     choice: boolean = false;
     
