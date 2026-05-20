@@ -356,7 +356,10 @@ export class KitInfoComponent {
       show: true,
     },
     expressionProperties: {
-      'templateOptions.disabled': () => this.disabledStatuses,
+      'templateOptions.disabled': (model) => {
+        const s = model?.subStatus || {};
+        return !!(s.needsFurtherInvestigation || s.needsSparePart || s.installationOfOSFailed || s.wipeFailed || s.lockedToUser);
+      },
       'validation.show': 'model.showErrorState'
     }
   }
@@ -561,8 +564,9 @@ export class KitInfoComponent {
                   <small><strong>Status locked:</strong> Status changes are disabled while one or more flags are enabled (Device wipe failed, OS Installation failed, Needs further investigation, or Needs spare part).</small>
                 </div>
               `,
-              hideExpression: (model, state, field) => {
-                return !this.disabledStatuses;
+              hideExpression: (model) => {
+                const s = model?.subStatus || {};
+                return !(s.needsFurtherInvestigation || s.needsSparePart || s.installationOfOSFailed || s.wipeFailed || s.lockedToUser);
               }
             }
           ]
