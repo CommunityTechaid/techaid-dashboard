@@ -1453,26 +1453,44 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
   private readonly THREE_REQUEST_LIMIT_MARKER = 'Could not create new requests. This user already has';
+  // GraphQL emits this boilerplate alongside any non-nullable mutation that returns null.
+  // It's noisy and unhelpful; strip it before showing anything to the user.
+  private readonly NULL_BUBBLE_RE =
+    /\s*The field at path '[^']*' was declared as a non null type[\s\S]*?within parent type '[^']*'\.?\s*/g;
 
   private parseApolloError(error: any): { isLimit: boolean; isNetwork: boolean; message: string } {
-    const gqlErrors: any[] = error?.graphQLErrors || [];
-    const gqlMessages = gqlErrors.map(e => (e && e.message) || '').filter(Boolean);
-    const combined = gqlMessages.join(' | ');
+    const gqlMessages: string[] = (((error?.graphQLErrors as any[]) || []))
+      .map(e => (e && e.message) || '').filter(Boolean);
+    const networkResultMessages: string[] = (((error?.networkError?.result?.errors as any[]) || []))
+      .map((e: any) => (e && e.message) || '').filter(Boolean);
+    const rawMessage: string = (error?.message || '').toString();
 
-    if (combined.includes(this.THREE_REQUEST_LIMIT_MARKER)) {
-      return { isLimit: true, isNetwork: false, message: combined };
+    const sources = [...gqlMessages, ...networkResultMessages, rawMessage].filter(Boolean);
+    const haystack = sources.join(' || ');
+
+    if (haystack.includes(this.THREE_REQUEST_LIMIT_MARKER)) {
+      return { isLimit: true, isNetwork: false, message: '' };
     }
-    if (gqlMessages.length > 0) {
-      return { isLimit: false, isNetwork: false, message: gqlMessages[0] };
+
+    const cleaned = sources
+      .map(m => m.replace(this.NULL_BUBBLE_RE, ' ').replace(/\s{2,}/g, ' ').trim())
+      .filter(Boolean);
+
+    if (cleaned.length > 0) {
+      return { isLimit: false, isNetwork: false, message: cleaned[0] };
     }
-    if (error?.networkError || /network/i.test(error?.message || '')) {
+    if (error?.networkError || /network|fetch|cors/i.test(rawMessage)) {
       return {
         isLimit: false,
         isNetwork: true,
-        message: "We couldn't reach the server. Please check your connection and try again in a moment."
+        message: "We couldn't reach the server. Please check your connection and try again in a moment.",
       };
     }
-    return { isLimit: false, isNetwork: false, message: error?.message || 'Unknown error' };
+    return {
+      isLimit: false,
+      isNetwork: false,
+      message: 'Something went wrong while saving your request. Please try again, or contact distributions@communitytechaid.org.uk if it persists.',
+    };
   }
 
   private async probeBackendReady(timeoutMs = 45000): Promise<boolean> {
