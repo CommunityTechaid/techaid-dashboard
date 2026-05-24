@@ -1172,8 +1172,8 @@ export class OrgRequestComponent implements AfterViewChecked {
         return false;
 
       }).catch(error => {
-        const message = error.message?.split(':')[1]?.trim() || "Unknown error";
-        this.toastr.error(message);
+        const parsed = this.parseApolloError(error);
+        this.toastr.error(parsed.message);
         return false;
       });
     };
@@ -1241,7 +1241,8 @@ export class OrgRequestComponent implements AfterViewChecked {
         return false;
       }
     }).catch(error => {
-      this.toastr.error(error.message.split(':')[1]);
+      const parsed = this.parseApolloError(error);
+      this.toastr.error(parsed.message);
       console.error(error);
       return false;
     });
@@ -1284,7 +1285,8 @@ export class OrgRequestComponent implements AfterViewChecked {
         return false;
       }
     }).catch(error => {
-      this.toastr.error(error.message.split(':')[1]);
+      const parsed = this.parseApolloError(error);
+      this.toastr.error(parsed.message);
       console.error(error);
       return false;
     });
@@ -1450,8 +1452,57 @@ export class OrgRequestComponent implements AfterViewChecked {
    return payload;
   }
 
-  createNewDeviceRequest() {
+  private readonly THREE_REQUEST_LIMIT_MARKER = 'Could not create new requests. This user already has';
 
+  private parseApolloError(error: any): { isLimit: boolean; isNetwork: boolean; message: string } {
+    const gqlErrors: any[] = error?.graphQLErrors || [];
+    const gqlMessages = gqlErrors.map(e => (e && e.message) || '').filter(Boolean);
+    const combined = gqlMessages.join(' | ');
+
+    if (combined.includes(this.THREE_REQUEST_LIMIT_MARKER)) {
+      return { isLimit: true, isNetwork: false, message: combined };
+    }
+    if (gqlMessages.length > 0) {
+      return { isLimit: false, isNetwork: false, message: gqlMessages[0] };
+    }
+    if (error?.networkError || /network/i.test(error?.message || '')) {
+      return {
+        isLimit: false,
+        isNetwork: true,
+        message: "We couldn't reach the server. Please check your connection and try again in a moment."
+      };
+    }
+    return { isLimit: false, isNetwork: false, message: error?.message || 'Unknown error' };
+  }
+
+  private async probeBackendReady(timeoutMs = 45000): Promise<boolean> {
+    const start = Date.now();
+    const intervalMs = 3000;
+    while (Date.now() - start < timeoutMs) {
+      try {
+        const res = await this.apollo.query({
+          query: QUERY_ADMIN_CONFIG,
+          fetchPolicy: 'network-only'
+        }).toPromise();
+        if (res && res.data) {
+          return true;
+        }
+      } catch {
+        // swallow and retry until timeout
+      }
+      await new Promise(r => setTimeout(r, intervalMs));
+    }
+    return false;
+  }
+
+  private submitDeviceRequest(data: any) {
+    return this.apollo.mutate({
+      mutation: CREATE_DEVICE_REQUEST,
+      variables: { data }
+    }).toPromise();
+  }
+
+  async createNewDeviceRequest(): Promise<boolean> {
     this.deviceRequestCreateButton.templateOptions.disabled = true;
     const deviceRequest: any = this.requestPage.formControl.value;
 
@@ -1465,60 +1516,79 @@ export class OrgRequestComponent implements AfterViewChecked {
 
     if (!deviceRequest.clientRef) {
       this.toastr.error("Please fill in a client reference");
-      return Promise.resolve(false)
+      return false;
     }
-
 
     var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded, deviceRequest.isBroadbandHubNeeded)
 
     if (Object.keys(requestItems).length === 0) {
       this.toastr.error("Please select the item your client needs");
-      return Promise.resolve(false)
+      return false;
     }
 
     if (!isValid) {
-      return Promise.resolve(false)
+      return false;
     }
 
     const data: any = {
       clientRef: deviceRequest.clientRef,
-      //deviceRequestNeeds: deviceRequest.deviceRequestNeeds,
       details: deviceRequest.details,
       referringOrganisationContact: deviceRequest.referringOrganisationContactId,
       deviceRequestItems: requestItems,
       borough: this.borough
     };
 
-
-    return this.apollo.mutate({
-      mutation: CREATE_DEVICE_REQUEST,
-      variables: { data }
-    }).toPromise().then(res => {
-
-      let data = res["data"]["createDeviceRequest"];
-      console.log(data);
-      console.log('res', res);
-      if (data) {
-        if (data["id"]) {
-          this.deviceRequestId = data["id"];
-          this.displayTypeForm(data["correlationId"]);
-          this.toastr.info("Please fill in the equalities data ")
-          return true;
-        }
+    const handleSuccess = (res: any): boolean => {
+      const created = res && res.data && res.data['createDeviceRequest'];
+      if (created && created.id) {
+        this.deviceRequestId = created.id;
+        this.displayTypeForm(created.correlationId);
+        this.toastr.info("Please fill in the equalities data");
+        return true;
       }
-
       this.toastr.error("Could not create your request.");
       return false;
+    };
 
-    }).catch(error => {
-      var message = error.message.split(':')[1]
-      if (message.trim().startsWith("Could not create new requests. This user already has")) {
-        this.showMoreThanThreeRequestsPage()
+    try {
+      const res = await this.submitDeviceRequest(data);
+      return handleSuccess(res);
+    } catch (firstError) {
+      console.warn('createDeviceRequest failed (first attempt):', firstError);
+      const parsed = this.parseApolloError(firstError);
+
+      if (parsed.isLimit) {
+        this.showMoreThanThreeRequestsPage();
         return false;
       }
-      this.toastr.error(message);
-      return false;
-    });
+
+      // Only retry on transport-level failures — GraphQL business errors won't change on retry.
+      if (!parsed.isNetwork) {
+        this.toastr.error(parsed.message);
+        return false;
+      }
+
+      this.toastr.info('Waking up the server, please wait a moment…', '', { timeOut: 6000 });
+      const ready = await this.probeBackendReady();
+      if (!ready) {
+        this.toastr.error("The server isn't responding. Please try again in a minute or contact distributions@communitytechaid.org.uk.");
+        return false;
+      }
+
+      try {
+        const res = await this.submitDeviceRequest(data);
+        return handleSuccess(res);
+      } catch (retryError) {
+        console.warn('createDeviceRequest failed (retry):', retryError);
+        const retryParsed = this.parseApolloError(retryError);
+        if (retryParsed.isLimit) {
+          this.showMoreThanThreeRequestsPage();
+          return false;
+        }
+        this.toastr.error(retryParsed.message);
+        return false;
+      }
+    }
   }
 
   displayTypeForm(correlationId: any) {
