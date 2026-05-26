@@ -36,6 +36,44 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 
 Environment configs live in `src/environments/` (dev, prod, uat, local).
 
+## Release Workflow
+
+`master` represents the latest state deployed to production — it is not the
+default development branch. Versioning and the changelog hang off this rule.
+
+1. Work merges into `dev` via PR. `dev` auto-deploys to UAT and patch-bumps
+   `package.json` (see `.github/workflows/deploy-dev.yml`).
+2. Each PR that produces a user-visible change must add a bullet under
+   `## [Unreleased]` in `CHANGELOG.md`, grouped under
+   `Added` / `Changed` / `Fixed` / `Removed` / `Security`. Pure refactors,
+   test-only changes, and CI tweaks don't need an entry.
+3. Production deploys are manual: run the `Deploy to Production SWA`
+   workflow (`workflow_dispatch`) — it builds and deploys from `dev`.
+4. **After a successful production deploy**, fast-forward `master` to the
+   deployed commit and push:
+   ```bash
+   git fetch origin
+   git checkout master
+   git merge --ff-only origin/dev
+   git push origin master
+   ```
+   If a fast-forward isn't possible, stop and investigate — `master`
+   should never diverge from `dev`'s history.
+5. Then cut the release: read the current `package.json` version (e.g.
+   `1.0.27`), rename `## [Unreleased]` in `CHANGELOG.md` to
+   `## [1.0.27] — YYYY-MM-DD`, add a fresh empty `## [Unreleased]` above
+   it, commit to `master`, tag (`git tag v1.0.27 && git push origin v1.0.27`),
+   and create a GitHub Release for the tag using that changelog section
+   as the body.
+
+Safety rails:
+- Never push to `master` other than the fast-forward described above.
+- Never tag `dev` commits — tags belong on `master` so they always point
+  at production state.
+- If `dev` has multiple version bumps between prod deploys, the release
+  takes whatever version is on `master` after the fast-forward — that's
+  the version that actually shipped.
+
 ## Testing
 
 Run the full e2e suite against the UAT backend (requires a valid token in `e2e/.auth/user.json`):
