@@ -45,8 +45,9 @@
                       {{ generatingPdf ? 'Generating...' : 'Generate PDF' }}
                     </small>
                   </button>
-                  <button [disabled]="form.invalid" (click)="updateEntity(form.value)"
-                    type="submit" class="btn btn-primary btn-sm">
+                  <button (click)="updateEntity(form.value)"
+                    type="submit" class="btn btn-sm"
+                    [class.btn-primary]="!form.invalid" [class.btn-warning]="form.invalid">
                     <small>Save</small>
                   </button>
                 </div>

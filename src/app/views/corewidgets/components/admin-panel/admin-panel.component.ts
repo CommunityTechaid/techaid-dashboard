@@ -12,6 +12,7 @@ import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 const QUERY_CONFIG = gql`
   query adminConfig {
@@ -224,10 +225,7 @@ export class AdminPanelComponent {
   }
 
   updateConfig(data: any) {
-    if (!this.form.valid) {
-      this.model['showErrorState'] = true;
-      return;
-    }
+    if (warnIfFormInvalid(this.form, this.fields, this.toastr, 'Cannot save configuration')) return;
 
     this.apollo
       .mutate({
