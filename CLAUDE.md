@@ -38,19 +38,32 @@ Environment configs live in `src/environments/` (dev, prod, uat, local).
 
 ## Release Workflow
 
-`master` represents the latest state deployed to production — it is not the
-default development branch. Versioning and the changelog hang off this rule.
+`master` represents the latest state deployed to production. Releases are
+driven by [release-please](https://github.com/googleapis/release-please)
+running on `dev` (see `.github/workflows/release-please.yml` and
+`release-please-config.json`).
 
-1. Work merges into `dev` via PR. `dev` auto-deploys to UAT and patch-bumps
-   `package.json` (see `.github/workflows/deploy-dev.yml`).
-2. Each PR that produces a user-visible change must add a bullet under
-   `## [Unreleased]` in `CHANGELOG.md`, grouped under
-   `Added` / `Changed` / `Fixed` / `Removed` / `Security`. Pure refactors,
-   test-only changes, and CI tweaks don't need an entry.
-3. Production deploys are manual: run the `Deploy to Production SWA`
-   workflow (`workflow_dispatch`) — it builds and deploys from `dev`.
-4. **After a successful production deploy**, fast-forward `master` to the
-   deployed commit and push:
+How it works:
+
+1. Work merges into `dev` via PR. `dev` auto-deploys to UAT
+   (`deploy-dev.yml`). UAT builds carry the **last released** semver from
+   `package.json` plus a unique `build` datestamp and `commit` SHA in
+   `src/environments/version.ts` — together those three fields identify
+   the exact UAT build, even though the semver itself only changes when
+   a release ships.
+2. release-please watches `dev` and maintains a single open "release PR"
+   that bumps `package.json` and updates `CHANGELOG.md` based on
+   conventional commit titles (`fix:` → patch, `feat:` → minor, `feat!:`
+   or a `BREAKING CHANGE:` footer → major). It updates that PR as more
+   commits land.
+3. When ready to ship, **merge the release PR into `dev`**. This is the
+   explicit "we're shipping this" gate. release-please then tags the
+   merge commit `vX.Y.Z` and creates a GitHub Release using the new
+   changelog section as the body.
+4. Run the `Deploy to Production SWA` workflow (`workflow_dispatch`) to
+   deploy the new version from `dev` to production.
+5. **After the prod deploy succeeds**, fast-forward `master` from `dev`
+   and push:
    ```bash
    git fetch origin
    git checkout master
@@ -59,20 +72,20 @@ default development branch. Versioning and the changelog hang off this rule.
    ```
    If a fast-forward isn't possible, stop and investigate — `master`
    should never diverge from `dev`'s history.
-5. Then cut the release: read the current `package.json` version (e.g.
-   `1.0.27`), rename `## [Unreleased]` in `CHANGELOG.md` to
-   `## [1.0.27] — YYYY-MM-DD`, add a fresh empty `## [Unreleased]` above
-   it, commit to `master`, tag (`git tag v1.0.27 && git push origin v1.0.27`),
-   and create a GitHub Release for the tag using that changelog section
-   as the body.
+
+Conventional commits matter here: release-please reads them to pick the
+version bump and to build the changelog. When squash-merging a PR, give
+it a conventional title (`fix: …`, `feat: …`, `chore: …`, `docs: …`,
+`feat!: …`) so the next release reflects the change correctly. Pure
+refactors, test-only changes, and CI tweaks (`chore:`, `test:`, `ci:`,
+`refactor:`) won't trigger a version bump or appear in the changelog.
 
 Safety rails:
 - Never push to `master` other than the fast-forward described above.
-- Never tag `dev` commits — tags belong on `master` so they always point
-  at production state.
-- If `dev` has multiple version bumps between prod deploys, the release
-  takes whatever version is on `master` after the fast-forward — that's
-  the version that actually shipped.
+- Never create `v*` tags manually — release-please owns those.
+- The `deploy/dev/*` and `deploy/prod/*` tags created by the deploy
+  workflows are deployment markers (separate from release tags) and
+  remain useful for "which build went out when".
 
 ## Testing
 
