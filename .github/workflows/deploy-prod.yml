@@ -64,3 +64,12 @@ jobs:
           git push origin "$TAG"
         env:
           GITHUB_SHA: ${{ github.sha }}
+
+      - name: Fast-forward master to deployed commit
+        run: |
+          # HEAD is the dev commit just deployed to prod. A plain push
+          # (no --force) only succeeds if master is strictly behind, so
+          # this preserves the "master never diverges from dev" rule.
+          # If this step fails, master needs manual investigation — the
+          # prod deploy itself has already succeeded.
+          git push origin HEAD:refs/heads/master

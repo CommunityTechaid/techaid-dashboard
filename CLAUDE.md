@@ -61,17 +61,21 @@ How it works:
    merge commit `vX.Y.Z` and creates a GitHub Release using the new
    changelog section as the body.
 4. Run the `Deploy to Production SWA` workflow (`workflow_dispatch`) to
-   deploy the new version from `dev` to production.
-5. **After the prod deploy succeeds**, fast-forward `master` from `dev`
-   and push:
+   deploy the new version from `dev` to production. On success the
+   workflow itself fast-forwards `master` to the deployed commit and
+   pushes — no manual step required. The push is a plain (non-force)
+   push, so if `master` has somehow diverged from `dev` the workflow
+   will fail at that step (the prod deploy itself will have already
+   succeeded; recover by inspecting why `master` diverged and fixing it
+   by hand).
+
+   Manual fallback, if you ever need to FF `master` yourself:
    ```bash
    git fetch origin
    git checkout master
    git merge --ff-only origin/dev
    git push origin master
    ```
-   If a fast-forward isn't possible, stop and investigate — `master`
-   should never diverge from `dev`'s history.
 
 Conventional commits matter here: release-please reads them to pick the
 version bump and to build the changelog. When squash-merging a PR, give
