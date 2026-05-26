@@ -28,8 +28,9 @@
                   </h6>
                 </div>
                 <div>
-                  <button [disabled]="form.invalid" (click)="updateEntity(getFormData())"
-                    type="submit" class="btn btn-primary btn-sm">
+                  <button [class.btn-warning]="form.invalid" [class.btn-primary]="!form.invalid"
+                    (click)="updateEntity(getFormData())"
+                    type="submit" class="btn btn-sm">
                     <small>Save</small>
                   </button>
                 </div>
@@ -41,8 +42,9 @@
                   <formly-form [options]="options" (ngSubmit)="form.valid && updateEntity(getFormData())"
                     [form]="form" [model]="model" [fields]="fields">
                   </formly-form>
-                  <button style="width: 150px" [disabled]="form.invalid" (click)="updateEntity(getFormData())"
-                    type="submit" class="btn btn-info btn-sm p-2">
+                  <button style="width: 150px" (click)="updateEntity(getFormData())"
+                    type="submit" class="btn btn-sm p-2"
+                    [class.btn-info]="!form.invalid" [class.btn-warning]="form.invalid">
                     <small>Save</small>
                   </button>
                 }
