@@ -8,6 +8,7 @@ import { Apollo } from 'apollo-angular';
 import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findPost($id: Long!) {
@@ -194,6 +195,7 @@ export class PostInfoComponent {
   }
 
   updateEntity(data: any) {
+    if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     data.id = this.entityId;
     this.apollo.mutate({
       mutation: UPDATE_ENTITY,

@@ -22,8 +22,9 @@
             </h6>
           </div>
           <div>
-            <button [disabled]="form.invalid" (click)="updateConfig(form.value)"
-              type="submit" class="btn btn-primary btn-sm">
+            <button (click)="updateConfig(form.value)"
+              type="submit" class="btn btn-sm"
+              [class.btn-primary]="!form.invalid" [class.btn-warning]="form.invalid">
               <small>Save Configuration</small>
             </button>
           </div>

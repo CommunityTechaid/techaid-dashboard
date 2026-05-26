@@ -12,7 +12,7 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
-import { getKitTypeLabel } from '@app/shared/utils';
+import { getKitTypeLabel, warnIfFormInvalid } from '@app/shared/utils';
 
 import { KitComponent } from '../kit-component/kit-component.component';
 import { DeviceRequestAuditComponent } from '../device-request-audit-component/device-request-audit-component.component';
@@ -928,11 +928,7 @@ export class DeviceRequestInfoComponent {
   }
 
   updateEntity(data: any) {
-
-    if (!this.form.valid) {
-      this.model['showErrorState'] = true;
-      return;
-    }
+    if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     data.id = this.requestId;
 
     if (data.deviceRequestNote.content == null){
