@@ -924,6 +924,20 @@ export class KitInfoComponent {
     return this.form.getRawValue();
   }
 
+  private collectInvalidFieldLabels(fields: FormlyFieldConfig[] = [], out: string[] = []): string[] {
+    for (const f of fields) {
+      if (f.fieldGroup && f.fieldGroup.length) {
+        this.collectInvalidFieldLabels(f.fieldGroup, out);
+        continue;
+      }
+      const control = f.formControl;
+      if (!control || control.valid || control.disabled) continue;
+      const label = (f.templateOptions?.label as string) || (f.key as string) || '';
+      if (label && !out.includes(label)) out.push(label);
+    }
+    return out;
+  }
+
   private queryRef = this.apollo
     .watchQuery({
       query: QUERY_ENTITY,
@@ -1122,7 +1136,15 @@ export class KitInfoComponent {
   }
 
   updateEntity(data: any) {
-    console.log(this.form.invalid);
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      const missing = this.collectInvalidFieldLabels(this.fields);
+      const body = missing.length
+        ? `<small>Required fields are incomplete: ${missing.join(', ')}</small>`
+        : `<small>Required fields are incomplete. Please review the highlighted fields above.</small>`;
+      this.toastr.error(body, 'Cannot save', { enableHtml: true });
+      return;
+    }
     data.id = this.entityId;
 
     // we set the value of content to a blank string if it is null so as to not create issues in the back
