@@ -71,6 +71,17 @@ async function getFirstIdFromList(page: import('@playwright/test').Page, listUrl
 }
 
 test.describe('Tab navigation (ngb-nav migration regression)', () => {
+  test.beforeEach(async ({ page }) => {
+    // Several kit-info child components (custom-kit-info-input, custom-notes) call the
+    // native confirm() API for edit/delete confirmations. If a confirm fires while
+    // Playwright is in the middle of a tab click — e.g. due to a focusout event on
+    // an input or a mis-hit on an edit icon — and no handler is registered, Chromium
+    // raises "Protocol error (Page.handleJavaScriptDialog): Internal server error,
+    // session closed." causing a flaky crash. Registering a dismiss handler here
+    // ensures any unexpected dialog is silently dismissed rather than killing the test.
+    page.on('dialog', dialog => dialog.dismiss().catch(() => {}));
+  });
+
   test.afterEach(async ({ page }) => {
     await page.unrouteAll({ behavior: 'ignoreErrors' });
   });
