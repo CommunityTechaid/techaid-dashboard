@@ -968,9 +968,13 @@ export class DeviceRequestInfoComponent {
           );
         },
         (err) => {
+          console.error('updateDeviceRequest failed:', err);
+          const raw: string = err.message ?? String(err);
+          const MAX = 200;
+          const toast = raw.length > MAX ? raw.slice(0, MAX) + '… (full error in console)' : raw;
           this.toastr.error(
             `
-      <small>${err.message}</small>
+      <small>${toast}</small>
       `,
             'Update Error',
             {
