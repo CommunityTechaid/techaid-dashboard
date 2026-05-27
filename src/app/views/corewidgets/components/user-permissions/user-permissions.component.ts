@@ -322,12 +322,14 @@ export class UserPermissionsComponent {
             });
 
             this.entities = data.content.map(row => {
-              row.mappedRoles = '';
-              row.roles =  roles[row.name] || [];
-              row.byRole = roles[row.name] && roles[row.name].length > 0;
-              row.mappedRoles = this.trimString((roles[row.name] || []).join(','), 150);
-              row.direct = !roles[row.name];
-              return row;
+              const rowRoles = roles[row.name] || [];
+              return {
+                ...row,
+                roles: rowRoles,
+                byRole: rowRoles.length > 0,
+                mappedRoles: this.trimString(rowRoles.join(','), 150),
+                direct: !roles[row.name],
+              };
             });
           }
 

@@ -47,8 +47,10 @@ const DASHBOARDS = [
         this.queryRef.refetch({ids: Object.keys(ref)}).then(res => {
           if(res.data && res.data['metabaseDashboard']){
             res.data['metabaseDashboard'].forEach(v => {
-              v.url = this.sanitizer.bypassSecurityTrustResourceUrl(`${v.url}#bordered=true&titled=true`)
-              ref[v.id]['payload'] = v;
+              ref[v.id]['payload'] = {
+                ...v,
+                url: this.sanitizer.bypassSecurityTrustResourceUrl(`${v.url}#bordered=true&titled=true`)
+              };
             });
           }
         });
