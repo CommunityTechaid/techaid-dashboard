@@ -744,7 +744,7 @@ export class DeviceRequestInfoComponent {
   }
 
   private normalizeData(data: any) {
-    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
+    data = structuredClone(data); // Apollo v4 deep-freezes query/mutation responses; deep-clone before Formly writes to nested objects
 
     this.newNoteField.templateOptions['requestId'] = this.requestId
 
