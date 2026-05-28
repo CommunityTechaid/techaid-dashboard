@@ -1145,25 +1145,13 @@ test.describe('BUG-20: Devices tab on device-request record shows assigned kits'
     await page.goto(href);
     await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
 
-    // Find the "Devices Assigned" tab (it shows the count when kits are linked)
-    const devicesTab = page.locator('ul.nav-tabs .nav-link').filter({ hasText: /Device.*Assigned/i });
-    const tabAppeared = await devicesTab.waitFor({ state: 'visible', timeout: 10_000 })
-      .then(() => true).catch(() => false);
-    if (!tabAppeared) {
-      test.skip(true, 'Devices Assigned tab not present — record has no kits, skipping');
-      return;
-    }
-
-    // Only proceed if the tab label says "N Device(s) Assigned" (not "No Devices Assigned").
-    // NOTE: UAT data can be inconsistent — the device-request list shows a kit badge
-    // for request 3171 (kit 8574), but the detail page shows "No Devices Assigned",
-    // meaning the relationship is one-directional in the data. This test skips in
-    // that case rather than asserting an incorrect expectation.
-    const tabText = await devicesTab.textContent() ?? '';
-    if (/No Devices Assigned/i.test(tabText)) {
-      test.skip(true, 'Found request has 0 devices on detail page (UAT data inconsistency) — skipping');
-      return;
-    }
+    // The "Devices Assigned" tab label is bound to `deviceCount`, which is set
+    // by the async `countDevicesForRequest` query. Match the count-bearing form
+    // ("N Device(s) Assigned") rather than the initial "No Devices Assigned"
+    // placeholder — otherwise we read the placeholder before the count query
+    // resolves and skip spuriously.
+    const devicesTab = page.locator('ul.nav-tabs .nav-link', { hasText: /\d+ Device.*Assigned/i });
+    await expect(devicesTab).toBeVisible({ timeout: 15_000 });
 
     await devicesTab.click();
     await expect(devicesTab).toHaveClass(/active/, { timeout: 5_000 });
@@ -1213,22 +1201,30 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
       return;
     }
 
-    const rows = page.locator('table tbody tr');
-    const rowCount = await rows.count();
-    if (rowCount === 0) {
+    // Bump page size to 100 so we scan a wider slice of UAT data — the first 10
+    // kits (default page size) on UAT rarely include one with a linked request.
+    const pageSizeSelect = page.locator('select[name$="_length"]').first();
+    if (await pageSizeSelect.count() > 0) {
+      await pageSizeSelect.selectOption('100').catch(() => {});
+      await page.waitForTimeout(2_000);
+    }
+
+    // Collect all kit hrefs from the current page up-front. Iterating with
+    // `rows.nth(i)` after each navigation produced flaky results — the table
+    // reloaded between visits and the locator caught a half-hydrated state.
+    const hrefs = await page.locator('table tbody tr a[href*="/dashboard/devices/"]')
+      .evaluateAll(els => Array.from(new Set(
+        (els as HTMLAnchorElement[]).map(a => a.getAttribute('href') ?? '').filter(Boolean)
+      )));
+    if (hrefs.length === 0) {
       test.skip(true, 'No devices in UAT — skipping');
       return;
     }
 
-    // Walk through device rows looking for one that shows a "Device Requests" tab.
-    // Increased cap to 50 so the test has a better chance of finding a linked kit
-    // on UAT without requiring seeded data; still skips gracefully if none found.
+    // Visit each kit detail page until one has a "Device Requests" tab.
+    // The tab only renders when model.deviceRequest.id is truthy on the kit.
     let foundHref: string | null = null;
-    for (let i = 0; i < Math.min(rowCount, 50); i++) {
-      const link = rows.nth(i).locator('a[href*="/dashboard/devices/"]').first();
-      const href = await link.getAttribute('href').catch(() => null);
-      if (!href) continue;
-
+    for (const href of hrefs.slice(0, 50)) {
       await withAuthInterceptor(page);
       await page.goto(href);
       const tabsLoaded = await page.locator('ul.nav-tabs').waitFor({ state: 'visible', timeout: 10_000 })
@@ -1240,14 +1236,6 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
         foundHref = href;
         break;
       }
-
-      // Back to list for next iteration
-      await withAuthInterceptor(page);
-      await page.goto('/dashboard/devices');
-      const listLoaded = await page.locator('table.dataTable').waitFor({ state: 'visible', timeout: 10_000 })
-        .then(() => true).catch(() => false);
-      if (!listLoaded) break; // auth likely failed — stop iterating
-      await page.waitForTimeout(1_000);
     }
 
     if (!foundHref) {
@@ -1255,7 +1243,7 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
       // in the first 50 rows on this page. The assertion is still meaningful whenever
       // a linked kit exists: pre-fix 9c36e27, the device-request-component table would
       // show "No data!" even for a kit that had model.deviceRequest.id set.
-      test.skip(true, 'No device with an assigned device-request found in first 50 rows — skipping (needs UAT data with linked requests)');
+      test.skip(true, `No device with an assigned device-request found in ${Math.min(hrefs.length, 50)} kits — skipping (needs UAT data with linked requests)`);
       return;
     }
 
