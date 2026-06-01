@@ -118,7 +118,7 @@ export class UserIndexComponent {
         const sort = params.order.map(o => {
           return {
             key: sorted[`${this.dtOptions.columns[o.column].data}`],
-            value: (o.dir == 'asc') ? 1 : -1
+            value: o.dir
           };
         });
 
