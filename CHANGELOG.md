@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.0.28](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.0.27...v1.0.28) (2026-06-01)
+
+
+### Bug Fixes
+
+* clone Apollo response nested objects in device-request-info ([#71](https://github.com/CommunityTechaid/techaid-dashboard/issues/71)) ([8ca276b](https://github.com/CommunityTechaid/techaid-dashboard/commit/8ca276b1fafe3cfe47c7b605481e7c5c5021906f))
+* guard user/role detail tabs against null nested relationships ([#75](https://github.com/CommunityTechaid/techaid-dashboard/issues/75)) ([2f6a0d7](https://github.com/CommunityTechaid/techaid-dashboard/commit/2f6a0d7350660063707be521ef42641400c7ba17))
+* replace Apollo v4 response mutations in reports and user-permissions ([#39](https://github.com/CommunityTechaid/techaid-dashboard/issues/39)) ([#69](https://github.com/CommunityTechaid/techaid-dashboard/issues/69)) ([89a441e](https://github.com/CommunityTechaid/techaid-dashboard/commit/89a441e8c013466a4f3c423317ce5c2d71fadc3a))
+* send pagination sort direction as String in user tables ([#72](https://github.com/CommunityTechaid/techaid-dashboard/issues/72)) ([#73](https://github.com/CommunityTechaid/techaid-dashboard/issues/73)) ([aa22a14](https://github.com/CommunityTechaid/techaid-dashboard/commit/aa22a14118b54d9f89ba150cc4890e22819da3c2))
+* truncate long GraphQL error toasts in device-request-info ([#38](https://github.com/CommunityTechaid/techaid-dashboard/issues/38)) ([#66](https://github.com/CommunityTechaid/techaid-dashboard/issues/66)) ([9e6085c](https://github.com/CommunityTechaid/techaid-dashboard/commit/9e6085c5fccdbf6f3336302abbf967330adf3eb8))
+
 ## [Unreleased]
 
 ### Added
