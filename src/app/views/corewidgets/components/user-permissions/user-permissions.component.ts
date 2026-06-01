@@ -309,13 +309,13 @@ export class UserPermissionsComponent {
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res && res.data) {
-            data = res['data']['user']['permissions'];
+            data = res['data']?.['user']?.['permissions'] || { totalElements: 0, content: [] };
             if (!this.total) {
               this.total = data['totalElements'];
             }
             const roles = {};
-            res['data']['user']['roles']['content'].forEach(r => {
-              r['permissions']['items'].forEach(p => {
+            (res['data']?.['user']?.['roles']?.['content'] || []).forEach(r => {
+              (r?.['permissions']?.['items'] || []).forEach(p => {
                 roles[p.name] = roles[p.name] || [];
                 roles[p.name].push(r.name);
               });
