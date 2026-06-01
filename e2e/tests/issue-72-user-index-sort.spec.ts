@@ -5,18 +5,20 @@ import { resolve } from 'path';
 /**
  * Regression test for issue #72 — "Unable to view 'users' in tada".
  *
- * Every server-side paginated table sends a `$page: PaginationInput` variable whose
- * `sort` is a list of `{ key, value }` pairs. The server types `sort[].value` as a
- * String ("asc" / "desc"). user-index (and role-users) were sending it as an integer
- * (`(o.dir == 'asc') ? 1 : -1`), so GraphQL rejected the whole variable with:
+ * The Users tables build a `$page: PaginationInput` whose `sort` is a list of
+ * `{ key, value }` pairs. The `users` resolver validates the combined `key:value`
+ * string against the pattern `^field:(1|-1)$` AND requires `value` to be a String.
+ * user-index (and role-users) sent `value` as the integer `1`/`-1`, so GraphQL
+ * rejected the whole variable with:
  *
  *   Variable 'page' has an invalid value: Expected a String input, but it was a 'Integer'
  *
- * Both tables declare a default sort (user-index order [3,'desc'], role-users [0,'desc']),
- * so the bad sort goes out on the very first load and the table never renders.
+ * The fix sends the string `'1'`/`'-1'` (NOT `"asc"`/`"desc"` — the users resolver
+ * rejects those with a pattern error, unlike the other tables' resolvers).
  *
- * Before the fix these tests fail: the findAllUsers response carries the Integer error
- * and no data rows render. After the fix (value: o.dir) the query succeeds.
+ * user-index declares a default sort (order [3,'desc']), so the bad value goes out
+ * on the very first load and the table never renders. Before the fix this test fails
+ * (a users-query GraphQL error is captured and no rows render); after it passes.
  */
 
 function getBearerToken(): string {
@@ -33,27 +35,16 @@ function getBearerToken(): string {
   throw new Error('No Auth0 token found in e2e/.auth/user.json — run: node e2e/save-token.mjs');
 }
 
-/** True if a GraphQL errors[] payload contains the integer-sort type error. */
-function hasIntegerSortError(bodyText: string): boolean {
-  try {
-    const json = JSON.parse(bodyText);
-    return (json.errors ?? []).some((e: any) =>
-      /invalid value: Expected a String input, but it was a 'Integer'/i.test(e?.message ?? '')
-    );
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Routes /graphql to UAT with a bearer token (mirrors the other specs) and records
- * whether any findAllUsers response carried the integer-sort error.
+ * the first GraphQL error returned by any users query (operation name contains
+ * "findAllUsers", which covers both user-index and the role-users table query).
  */
 async function withAuthAndErrorCapture(
   page: import('@playwright/test').Page,
-): Promise<{ sawIntegerError: () => boolean }> {
+): Promise<{ usersQueryError: () => string | null }> {
   const token = getBearerToken();
-  let integerError = false;
+  let firstError: string | null = null;
 
   await page.route('**/graphql', async route => {
     try {
@@ -69,8 +60,12 @@ async function withAuthAndErrorCapture(
         },
       });
       const bodyText = await response.text();
-      if (postData.includes('findAllUsers') && hasIntegerSortError(bodyText)) {
-        integerError = true;
+      if (postData.includes('findAllUsers') && firstError === null) {
+        try {
+          const json = JSON.parse(bodyText);
+          const err = (json.errors ?? [])[0]?.message;
+          if (err) firstError = err;
+        } catch { /* non-JSON body */ }
       }
       await route.fulfill({ response, body: bodyText });
     } catch {
@@ -78,39 +73,31 @@ async function withAuthAndErrorCapture(
     }
   });
 
-  return { sawIntegerError: () => integerError };
+  return { usersQueryError: () => firstError };
 }
 
-test.describe("Issue #72 — users table sort value must be a String", () => {
+test.describe("Issue #72 — users table sort value must be the string '1'/'-1'", () => {
   test.afterEach(async ({ page }) => {
     await page.unrouteAll({ behavior: 'ignoreErrors' });
   });
 
-  test('user-index loads without the Integer-sort GraphQL error', async ({ page }) => {
+  test('user-index loads and renders rows without a users-query GraphQL error', async ({ page }) => {
     const capture = await withAuthAndErrorCapture(page);
     await page.goto('/dashboard/users');
 
-    // Table element renders regardless; the bug is that the ajax query errors.
     await expect(page.locator('table#user-index')).toBeVisible({ timeout: 20_000 });
 
-    // The data rows only appear if findAllUsers succeeded. Before the fix this never
-    // resolves and the integer error is captured below.
+    // UAT has users, so rows MUST render once the sorted query succeeds. Before the
+    // fix the query errors, entities stay empty and no row links ever appear.
     const dataRow = page.locator('table#user-index tbody tr td a[href*="/dashboard/users/"]');
-    const rowsAppeared = await dataRow.first().waitFor({ state: 'visible', timeout: 20_000 })
-      .then(() => true)
-      .catch(() => false);
+    await expect(dataRow.first()).toBeVisible({ timeout: 20_000 });
 
-    expect(capture.sawIntegerError(),
-      "findAllUsers returned the integer-sort error — sort[].value was sent as an Integer").toBe(false);
-
-    if (!rowsAppeared) {
-      test.skip(true, 'No users in UAT database — no rows to assert, but the query did not error');
-      return;
-    }
-    await expect(dataRow.first()).toBeVisible();
+    expect(capture.usersQueryError(),
+      'findAllUsers returned a GraphQL error — sort[].value was not the expected String "1"/"-1"')
+      .toBeNull();
   });
 
-  test('role-users tab loads without the Integer-sort GraphQL error', async ({ page }) => {
+  test('role-users tab loads without a users-query GraphQL error', async ({ page }) => {
     const capture = await withAuthAndErrorCapture(page);
     await page.goto('/dashboard/roles');
 
@@ -125,21 +112,18 @@ test.describe("Issue #72 — users table sort value must be a String", () => {
 
     await page.goto((await roleLink.first().getAttribute('href'))!);
 
-    const usersTab = page.locator('ul.nav-tabs .nav-link', { hasText: /^\s*users\s*$/i });
-    const tabVisible = await usersTab.first().waitFor({ state: 'visible', timeout: 15_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!tabVisible) {
-      test.skip(true, 'No Users tab on the role page — structure may have changed');
-      return;
-    }
+    // role-info renders the Users tab via ngbNav (<a ngbNavLink>Users</a>).
+    const usersTab = page.locator('.nav-tabs .nav-link', { hasText: /^\s*users\s*$/i });
+    await expect(usersTab.first()).toBeVisible({ timeout: 15_000 });
     await usersTab.first().click();
 
-    // Give the tab's DataTable ajax a moment to fire and resolve.
-    await expect(page.locator('table[id*="user"], table.dataTable')).toBeVisible({ timeout: 15_000 });
+    // Let the tab's DataTable ajax fire and resolve (role may have 0 users, so we
+    // assert on the absence of an error rather than on rows).
+    await expect(page.locator('table[id*="user"], table.dataTable').first()).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(2_000);
 
-    expect(capture.sawIntegerError(),
-      'role-users findAllUsers returned the integer-sort error — sort[].value was sent as an Integer').toBe(false);
+    expect(capture.usersQueryError(),
+      'role-users users query returned a GraphQL error — sort[].value was not the expected String "1"/"-1"')
+      .toBeNull();
   });
 });

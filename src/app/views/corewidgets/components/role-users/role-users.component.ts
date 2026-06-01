@@ -230,7 +230,7 @@ export class RoleUsersComponent {
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
-            value: o.dir
+            value: (o.dir == 'asc') ? '1' : '-1'
           };
         });
 
