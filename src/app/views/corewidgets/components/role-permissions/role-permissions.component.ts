@@ -162,7 +162,7 @@ export class RolePermissionsComponent {
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res && res.data) {
-            data = res['data']['role']['permissions'];
+            data = res['data']?.['role']?.['permissions'] || { totalElements: 0, content: [] };
             if (!this.total) {
               this.total = data['totalElements'];
             }

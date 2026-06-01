@@ -247,7 +247,7 @@ export class RoleUsersComponent {
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res && res.data) {
-            data = res['data']['role']['users'];
+            data = res['data']?.['role']?.['users'] || { totalElements: 0, content: [] };
             if (!this.total) {
               this.total = data['totalElements'];
             }
