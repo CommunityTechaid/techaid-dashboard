@@ -479,6 +479,18 @@ export class KitIndexComponent {
             required: false
           }
         },
+        {
+          key: 'statusExclude',
+          type: 'choice',
+          className: 'col-md-12',
+          templateOptions: {
+            label: 'Exclude statuses',
+            description: 'Hide devices that have any of these statuses (e.g. exclude Recycled).',
+            items: KIT_STATUS_LABELS,
+            multiple: true,
+            required: false
+          }
+        },
         this.deviceRequestField,
         this.donorParentField,
         this.donorParentTypeField,
@@ -600,6 +612,11 @@ export class KitIndexComponent {
     if (data.status && data.status.length) {
       count = count + data.status.length;
       filter['status'] = {'_in': data.status };
+    }
+
+    if (data.statusExclude && data.statusExclude.length) {
+      count += data.statusExclude.length;
+      data.statusExclude.forEach(s => filter['AND'].push({ status: { _neq: s } }));
     }
 
     if(data.subStatus) {
