@@ -1,23 +1,16 @@
 name: Issue Status Labels
 
 # Updates status labels on issues linked to a PR via "Fixes #N" / "Closes #N"
-# in the PR body. Runs on three events:
-#   1. PR opened/reopened targeting dev  → status: in-development
-#   2. PR merged into dev                → status: in-uat  (dev auto-deploys to UAT)
-#   3. Successful prod deploy            → status: shipped (called by deploy-prod.yml)
+# in the PR body. Runs on two events:
+#   1. PR merged into dev  → status: in-uat  (dev auto-deploys to UAT)
+#   2. Successful prod deploy                → status: shipped
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-    branches: [dev]
-
   push:
     branches: [dev]
 
 jobs:
-  # ── Job 1: fired by pull_request events ──────────────────────────────────────
-  label-on-pr-event:
-    if: github.event_name == 'pull_request'
+  label-on-merge-to-dev:
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -29,10 +22,9 @@ jobs:
         with:
           script: |
             const labels = [
-              { name: 'status: in-development', color: 'fbca04', description: 'Issue has an open PR in development' },
-              { name: 'status: in-uat',         color: '0075ca', description: 'Fix is deployed to UAT for testing' },
-              { name: 'status: shipped',         color: '0e8a16', description: 'Fix is live in production' },
-              { name: 'status: backlog',         color: 'd93f0b', description: 'Confirmed issue, not yet in development' },
+              { name: 'status: in-uat',  color: '0075ca', description: 'Fix is deployed to UAT for testing' },
+              { name: 'status: shipped', color: '0e8a16', description: 'Fix is live in production' },
+              { name: 'status: backlog', color: 'd93f0b', description: 'Confirmed issue, not yet in development' },
             ];
             for (const l of labels) {
               try {
@@ -42,61 +34,10 @@ jobs:
               }
             }
 
-      - name: Apply label to linked issues
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-            const body = pr.body || '';
-            const merged = pr.merged;
-
-            // Determine which label to apply based on the event action / merge state
-            const label = merged ? 'status: in-uat' : 'status: in-development';
-            const remove = merged ? 'status: in-development' : null;
-
-            // Parse "Fixes #N", "Closes #N", "Resolves #N" (case-insensitive)
-            const refs = [...body.matchAll(/(?:fixes|closes|resolves)\s+#(\d+)/gi)];
-            const issueNumbers = [...new Set(refs.map(m => parseInt(m[1])))];
-
-            if (issueNumbers.length === 0) {
-              console.log('No linked issues found in PR body.');
-              return;
-            }
-
-            for (const num of issueNumbers) {
-              console.log(`Applying "${label}" to issue #${num}`);
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: num,
-                labels: [label],
-              });
-              if (remove) {
-                try {
-                  await github.rest.issues.removeLabel({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: num,
-                    name: remove,
-                  });
-                } catch { /* label may not have been present */ }
-              }
-            }
-
-  # ── Job 2: fired by push-to-dev (PR merge) ───────────────────────────────────
-  label-on-merge-to-dev:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: read
-
-    steps:
       - name: Label linked issues as in-uat
         uses: actions/github-script@v7
         with:
           script: |
-            // Find PRs merged in the commits that landed on dev
             const commit = context.sha;
             const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               owner: context.repo.owner,
@@ -119,13 +60,5 @@ jobs:
                   issue_number: num,
                   labels: ['status: in-uat'],
                 });
-                try {
-                  await github.rest.issues.removeLabel({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: num,
-                    name: 'status: in-development',
-                  });
-                } catch { /* label may not have been present */ }
               }
             }

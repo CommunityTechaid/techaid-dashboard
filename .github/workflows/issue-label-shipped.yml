@@ -84,7 +84,7 @@ jobs:
                     issue_number: num,
                     labels: ['status: shipped'],
                   });
-                  for (const stale of ['status: in-uat', 'status: in-development']) {
+                  for (const stale of ['status: in-uat']) {
                     try {
                       await github.rest.issues.removeLabel({
                         owner: context.repo.owner,
