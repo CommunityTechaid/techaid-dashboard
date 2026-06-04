@@ -56,10 +56,17 @@ jobs:
           app_location: dist
           skip_app_build: true
 
-      - name: Label linked issues as in-uat
+      - name: Promote linked issues to "In UAT" (label + project board)
         uses: actions/github-script@v7
         with:
+          # PROJECTS_PAT: classic PAT (project + repo scopes). The built-in
+          # GITHUB_TOKEN cannot write org-level Projects v2, so a PAT is required.
+          github-token: ${{ secrets.PROJECTS_PAT }}
           script: |
+            // "TaDa Kanban" (project #2) Status single-select — see workflow docs.
+            const PROJECT_ID = 'PVT_kwDOB1-IbM4BZvoG';
+            const STATUS_FIELD = 'PVTSSF_lADOB1-IbM4BZvoGzhUsLjg';
+            const OPTION_IN_UAT = '47fc9ee4';
             const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -69,17 +76,29 @@ jobs:
             for (const pr of mergedPRs) {
               const refs = [...(pr.body || '').matchAll(/(?:fixes|closes|resolves)\s+#(\d+)/gi)];
               for (const [, num] of refs) {
-                console.log(`PR #${pr.number} → issue #${num}: status: in-uat`);
+                const issue_number = parseInt(num);
+                console.log(`PR #${pr.number} → issue #${issue_number}: In UAT`);
+                // 1) Labels (kept as a parallel, filterable signal)
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: parseInt(num), labels: ['status: in-uat'],
+                  issue_number, labels: ['status: in-uat'],
                 });
                 try {
                   await github.rest.issues.removeLabel({
                     owner: context.repo.owner, repo: context.repo.repo,
-                    issue_number: parseInt(num), name: 'status: backlog',
+                    issue_number, name: 'status: backlog',
                   });
                 } catch { /* label may not be present */ }
+                // 2) Project board Status field → In UAT
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner, repo: context.repo.repo, issue_number,
+                });
+                const added = await github.graphql(
+                  `mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}`,
+                  { p: PROJECT_ID, c: issue.node_id });
+                await github.graphql(
+                  `mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f,value:{singleSelectOptionId:$o}}){projectV2Item{id}}}`,
+                  { p: PROJECT_ID, i: added.addProjectV2ItemById.item.id, f: STATUS_FIELD, o: OPTION_IN_UAT });
               }
             }
 
