@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write   # needed to push the deploy tag
+      issues: write     # needed to apply status labels
 
     steps:
       - name: Checkout dev branch
@@ -64,6 +65,48 @@ jobs:
           git push origin "$TAG"
         env:
           GITHUB_SHA: ${{ github.sha }}
+
+      - name: Label linked issues as shipped
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            // Find the previous prod deploy tag to bound the commit range
+            const tags = execSync('git tag --list "deploy/prod/*" --sort=-creatordate')
+              .toString().trim().split('\n').filter(Boolean);
+            const prevTag = tags[0] || null; // most recent existing tag (new one not pushed yet)
+            const range = prevTag ? `${prevTag}..HEAD` : 'HEAD~50..HEAD';
+            const commits = execSync(`git log ${range} --format=%H`)
+              .toString().trim().split('\n').filter(Boolean);
+            console.log(`Scanning ${commits.length} commits since ${prevTag || 'beginning'}`);
+            const seen = new Set();
+            for (const sha of commits) {
+              let prs;
+              try {
+                const res = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner: context.repo.owner, repo: context.repo.repo, commit_sha: sha,
+                });
+                prs = res.data;
+              } catch { continue; }
+              for (const pr of prs.filter(p => p.merged_at && p.base.ref === 'dev')) {
+                if (seen.has(pr.number)) continue;
+                seen.add(pr.number);
+                const refs = [...(pr.body || '').matchAll(/(?:fixes|closes|resolves)\s+#(\d+)/gi)];
+                for (const [, num] of refs) {
+                  console.log(`PR #${pr.number} → issue #${num}: status: shipped`);
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    issue_number: parseInt(num), labels: ['status: shipped'],
+                  });
+                  try {
+                    await github.rest.issues.removeLabel({
+                      owner: context.repo.owner, repo: context.repo.repo,
+                      issue_number: parseInt(num), name: 'status: in-uat',
+                    });
+                  } catch { /* label may not be present */ }
+                }
+              }
+            }
 
       - name: Fast-forward master to deployed commit
         run: |
