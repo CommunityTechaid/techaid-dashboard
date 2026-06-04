@@ -12,6 +12,7 @@ jobs:
 
     steps:
       - name: Apply backlog label
+        continue-on-error: true   # board sync must never fail the workflow
         uses: actions/github-script@v7
         with:
           # PROJECTS_PAT: classic PAT (project + repo scopes). The built-in

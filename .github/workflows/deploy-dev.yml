@@ -57,6 +57,7 @@ jobs:
           skip_app_build: true
 
       - name: Promote linked issues to "In UAT" (label + project board)
+        continue-on-error: true   # board sync must never fail the deploy
         uses: actions/github-script@v7
         with:
           # PROJECTS_PAT: classic PAT (project + repo scopes). The built-in
