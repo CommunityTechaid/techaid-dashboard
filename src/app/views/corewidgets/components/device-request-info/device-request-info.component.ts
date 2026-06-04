@@ -927,6 +927,11 @@ export class DeviceRequestInfoComponent {
     }
   }
 
+  clearCollectionDate() {
+    this.form.patchValue({ collectionDate: null });
+    this.model = { ...this.model, collectionDate: null };
+  }
+
   updateEntity(data: any) {
     if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     data.id = this.requestId;
