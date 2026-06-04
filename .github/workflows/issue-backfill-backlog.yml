@@ -1,0 +1,47 @@
+name: Backfill Backlog Labels
+
+# One-time utility: labels all open issues that have no status: label.
+# Run manually from Actions → Backfill Backlog Labels → Run workflow.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Label unlabeled open issues as backlog
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let page = 1;
+            let labelled = 0;
+            while (true) {
+              const { data: issues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                per_page: 100,
+                page,
+              });
+              if (issues.length === 0) break;
+              for (const issue of issues) {
+                if (issue.pull_request) continue; // skip PRs
+                const hasStatus = issue.labels.some(l => l.name.startsWith('status:'));
+                if (!hasStatus) {
+                  console.log(`Labelling issue #${issue.number}: ${issue.title}`);
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    labels: ['status: backlog'],
+                  });
+                  labelled++;
+                }
+              }
+              page++;
+            }
+            console.log(`Done — labelled ${labelled} issue(s).`);
