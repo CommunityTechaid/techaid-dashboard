@@ -692,6 +692,13 @@ export class DeviceRequestInfoComponent {
               }
             },
             {
+              template: `<button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="clearCollectionDateBtn">
+                <small><i class="fas fa-times"></i> Clear date</small>
+              </button>`,
+              templateOptions: { safeHtml: true },
+              hideExpression: (model: any) => !model.collectionDate,
+            },
+            {
               key: 'collectionMethod',
               type: 'radio',
               className: '',
@@ -900,10 +907,12 @@ export class DeviceRequestInfoComponent {
     // Set up global click handler for toggle button using event delegation
     this.clickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const button = target.closest('#toggleDeviceTypesBtn');
-      if (button) {
+      if (target.closest('#toggleDeviceTypesBtn')) {
         e.preventDefault();
         this.toggleDeviceTypes();
+      } else if (target.closest('#clearCollectionDateBtn')) {
+        e.preventDefault();
+        this.clearCollectionDate();
       }
     };
     document.addEventListener('click', this.clickHandler);
@@ -930,6 +939,8 @@ export class DeviceRequestInfoComponent {
   clearCollectionDate() {
     this.form.patchValue({ collectionDate: null });
     this.model = { ...this.model, collectionDate: null };
+    this.options = { ...this.options };
+    this.updateEntity(this.form.value);
   }
 
   updateEntity(data: any) {
