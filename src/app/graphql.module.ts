@@ -5,26 +5,59 @@ import { HttpLink } from 'apollo-angular/http';
 import { ApolloClientOptions, InMemoryCache } from '@apollo/client/core';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
+import { ServerError } from '@apollo/client/errors';
 import { ConfigService } from '@app/shared/services/config.service';
 import { AuthenticationService } from './shared/services/authentication.service';
 
+// Auth0 error codes that mean the session is genuinely gone and the user must log in again
+// (as opposed to a transient/network failure, where bouncing them to Auth0 would be wrong).
+const REAUTH_ERROR_CODES = ['login_required', 'consent_required', 'missing_refresh_token'];
 
 export function createApollo(httpLink: HttpLink, config: ConfigService, authService: AuthenticationService): ApolloClientOptions {
   const http = httpLink.create({
     uri: config.environment.graphql_endpoint
   });
 
+  // A burst of failed queries (e.g. several tables loading at once) can each detect the auth
+  // failure; guard so only the first triggers the redirect to Auth0 and we never loop.
+  let reauthInProgress = false;
+  const redirectToLogin = () => {
+    if (reauthInProgress) {
+      return;
+    }
+    reauthInProgress = true;
+    // Preserve the current route so the user returns here after logging in — same mechanism
+    // the AuthGuard uses (login(state.url)).
+    authService.login(window.location.pathname + window.location.search);
+  };
+
   const asyncAuthLink = setContext((_request, _previous) => new Promise((success) => {
     authService.getTokenSilently$({ audience: config.environment.auth_audience }).subscribe(
       token => {
         success({ headers: new HttpHeaders({ 'Authorization': `Bearer ${token}` }) });
       },
-      () => success({})
+      (err) => {
+        // The Auth0 session has expired: send the user to log in again rather than firing an
+        // unauthenticated request, which the API rejects as a confusing "Access Denied".
+        if (err && REAUTH_ERROR_CODES.includes(err.error)) {
+          redirectToLogin();
+        }
+        success({});
+      }
     );
   }));
 
-  const errorHandler = onError(_options => {
-    // network errors are handled silently — lists will be empty without the API
+  const errorHandler = onError(({ error }) => {
+    // A 401 from the API means the token is missing/expired → prompt re-login. A GraphQL-level
+    // "Access Denied" (HTTP 200, surfaced as a CombinedGraphQLErrors with no statusCode) is
+    // deliberately left alone: it can be a genuine permission denial for an authenticated user,
+    // and redirecting on it would cause a login loop.
+    const status = ServerError.is(error)
+      ? error.statusCode
+      : ((error as any)?.statusCode ?? (error as any)?.status);
+    if (status === 401) {
+      redirectToLogin();
+    }
   });
 
   return {

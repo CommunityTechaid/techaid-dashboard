@@ -6,6 +6,11 @@ import 'datatables.net-bs5';
 import 'datatables.net-rowreorder';
 import 'datatables.net-responsive';
 
+// Suppress DataTables' default blocking browser-alert on an ajax failure. Errors are already
+// surfaced via toastr by the table components; the alert was the source of the confusing
+// "Access Denied" popup when a request went out unauthenticated (e.g. during an API restart).
+($.fn.dataTable as any).ext.errMode = 'none';
+
 @Directive({ selector: '[datatable]' })
 export class AppGridDirective implements OnDestroy, OnInit {
   /**
