@@ -29,6 +29,13 @@ const QUERY_ENTITY = gql`
         id
         name
       }
+      notes {
+        id
+        content
+        volunteer
+        createdAt
+        updatedAt
+      }
     }
   }
 `;
@@ -45,6 +52,13 @@ const UPDATE_ENTITY = gql`
       referringOrganisation {
         id
         name
+      }
+      notes {
+        id
+        content
+        volunteer
+        createdAt
+        updatedAt
       }
     }
   }
@@ -102,6 +116,21 @@ export class ReferringOrganisationContactInfoComponent {
   referringOrganisationId: number;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
+
+  newNoteField: FormlyFieldConfig = {
+    key: 'note.content',
+    type: 'referee-new-note',
+    templateOptions: {
+      placeholder: "Type your note here and hit save"
+    }
+  }
+
+  notesField: FormlyFieldConfig = {
+    type: 'referee-notes',
+    templateOptions: {
+      notes: [],
+    },
+  }
 
   referringOrganisations$: Observable<any>;
   referringOrganisationInput$ = new Subject<string>();
@@ -232,6 +261,13 @@ export class ReferringOrganisationContactInfoComponent {
         }
       ],
     },
+    {
+      fieldGroupClassName: 'row',
+      fieldGroup: [
+        { className: 'col-md-6', fieldGroup: [this.newNoteField] },
+        { className: 'col-md-6', fieldGroup: [this.notesField] },
+      ],
+    },
   ];
 
 
@@ -245,7 +281,10 @@ export class ReferringOrganisationContactInfoComponent {
   }
 
   private normalizeData(data: any) {
-    data = { ...data }; // Apollo v3 freezes query results in dev mode; copy before mutating
+    data = structuredClone(data); // Apollo v4 deep-freezes query/mutation responses; deep-clone before Formly writes to nested objects
+
+    this.newNoteField.templateOptions['refereeId'] = this.refereeId;
+    this.displayNotes(data);
 
     if (data.referringOrganisation && data.referringOrganisation.id) {
       data.referringOrganisationId = data.referringOrganisation.id;
@@ -254,6 +293,16 @@ export class ReferringOrganisationContactInfoComponent {
       ];
     }
     return data;
+  }
+
+  private displayNotes(data) {
+    if (data.notes) {
+      var notes = [];
+      data.notes.forEach(n => {
+        notes.push({ content: n.content, id: n.id, volunteer: n.volunteer, updated_at: n.updatedAt });
+      });
+      this.notesField.templateOptions['notes'] = notes;
+    }
   }
 
   private fetchData() {
@@ -361,6 +410,10 @@ export class ReferringOrganisationContactInfoComponent {
       return;
     }
     data.id = this.refereeId;
+
+    if (data.note && data.note.content == null) {
+      data.note.content = "";
+    }
 
     this.apollo
       .mutate({

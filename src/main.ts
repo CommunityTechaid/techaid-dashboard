@@ -26,6 +26,8 @@ import { FormlyCustomNote } from './app/views/corewidgets/components/kit-info/cu
 import { FormlyCustomCreateNote } from './app/views/corewidgets/components/kit-info/custom-create-note';
 import { FormlyCustomDeviceRequestNote } from './app/views/corewidgets/components/device-request-info/custom-notes';
 import { FormlyCustomCreateDeviceRequestNote } from './app/views/corewidgets/components/device-request-info/custom-create-notes';
+import { FormlyCustomReferringOrganisationContactNote } from './app/views/corewidgets/components/referring-organisation-contact-info/custom-notes';
+import { FormlyCustomCreateReferringOrganisationContactNote } from './app/views/corewidgets/components/referring-organisation-contact-info/custom-create-notes';
 import { FormlyCustomKitCheckboxType } from './app/views/corewidgets/components/kit-info/custom-kit-checkbox';
 import { FormlyCustomKitInfoType } from './app/views/corewidgets/components/kit-info/custom-kit-info-input';
 
@@ -50,6 +52,8 @@ bootstrapApplication(AppComponent, {
         { name: 'new-note', component: FormlyCustomCreateNote },
         { name: 'device-request-notes', component: FormlyCustomDeviceRequestNote },
         { name: 'device-request-new-note', component: FormlyCustomCreateDeviceRequestNote },
+        { name: 'referee-notes', component: FormlyCustomReferringOrganisationContactNote },
+        { name: 'referee-new-note', component: FormlyCustomCreateReferringOrganisationContactNote },
         { name: 'kit-checkbox', component: FormlyCustomKitCheckboxType },
         { name: 'kit-info-input', component: FormlyCustomKitInfoType },
       ]
