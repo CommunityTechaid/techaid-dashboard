@@ -41,7 +41,7 @@
                     <tr>
                       <td> <span class="badge badge-secondary"> {{dt.revision.id}} </span> </td>
                       <td>{{ dt.revision.timestamp | date:'medium' }}</td>
-                      <td>{{ dt.revision.customUser?.split("|")[1] }}</td>
+                      <td>{{ dt.revision.customUser?.split("|")[1] || 'System' }}</td>
                       <td>{{ statusTypes[dt.entity.status] || dt.entity.status }}</td>
                       <td>{{ dt.entity.clientRef }}</td>
                       <td>{{ dt.entity.borough }}</td>
