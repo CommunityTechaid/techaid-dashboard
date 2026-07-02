@@ -33,14 +33,6 @@ const CREATE_ENTITY = gql`
   }
 `;
 
-const CREATE_REFERRING_ORGANISATION = gql`
-  mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
-    createReferringOrganisation(data: $data){
-      id
-    }
-  }
-`;
-
 const QUERY_CONTENT = gql`
   query findContent {
     post(where: {slug: {_eq: "/organisation-device-request"}}){
@@ -255,9 +247,7 @@ export class OrgRequestComponent implements AfterViewChecked {
           this.referringOrganisationContactsDropDown.fieldGroup[0].templateOptions['options'] = []
           this.referringOrganisationContactsDropDown.hide = true;
           this.createNewOrganisationContactPrompt.hide = true;
-          if (!this.isOrganisationExists) {
-            (this.referringOrganisationDetailFormGroup.fieldGroup[0].formControl.setValue(v));
-          } else {
+          if (this.isOrganisationExists) {
             this.referringOrgIdField.formControl.setValue(v)
           }
         }));
@@ -276,105 +266,6 @@ export class OrgRequestComponent implements AfterViewChecked {
     },
   };
 
-
-  /**
-   * NEW REFERRING ORGANISATION
-   * These fields collect details of a new organisation and is displayed only
-   * if the organisation search results return no results
-   */
-  referringOrganisationDetailFormGroup: FormlyFieldConfig = {
-    fieldGroupClassName: 'row',
-    hideExpression: true,
-    fieldGroup: [
-      {
-        key: 'referringOrganisation.name',
-        type: 'input',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: '',
-          placeholder: 'Organisation Name',
-          minLength: 3,
-          required: true
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': 'model.showErrorState',
-        }
-      },
-      {
-        key: 'referringOrganisation.website',
-        type: 'input',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: '',
-          pattern: /^(https?:\/\/)?([\w\d-_]+)\.([\w\d-_\.]+)\/?\??([^#\n\r]*)?#?([^\n\r]*)/,
-          placeholder: 'Organisation website',
-          required: true
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': 'model.showErrorState',
-        }
-      },
-      /*       {
-              key: 'referringOrganisation.address',
-              type: 'place',
-              className: 'col-md-12',
-              defaultValue: '',
-              templateOptions: {
-                placeholder: 'Organisation Address',
-                postCode: false,
-                required: true
-              },
-              validation: {
-                show: false
-              },
-              expressionProperties: {
-                'validation.show': 'model.showErrorState'
-              }
-            }, */
-      {
-        key: 'referringOrganisation.phoneNumber',
-        type: 'input',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: '',
-          pattern: /^(((\+44\s?\d{4}|\(?0\d{4}\)?)\s?\d{3}\s?\d{3})|((\+44\s?\d{3}|\(?0\d{3}\)?)\s?\d{3}\s?\d{4})|((\+44\s?\d{2}|\(?0\d{2}\)?)\s?\d{4}\s?\d{4}))(\s?\#(\d{4}|\d{3}))?$/,
-          placeholder: 'Organisation phone number',
-          required: false
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': 'model.showErrorState',
-        }
-      },
-      {
-        type: 'button',
-        templateOptions: {
-          text: 'Next',
-          onClick: () => {
-            this.saveNewReferringOrganisation().then(success => {
-              if (success) {
-                this.isOrganisationExists = false;
-                this.showContactPage();
-                this.referringOrganisationDetailFormGroup.hideExpression = true
-
-              }
-            });
-          },
-        },
-      }
-    ]
-  };
 
   //hidden field for ID of the referringOrganisation
   referringOrgIdField: FormlyFieldConfig = {
@@ -688,8 +579,7 @@ export class OrgRequestComponent implements AfterViewChecked {
         template: '<h6 class="m-0 font-weight-bold text-primary">About your organisation</h6>'
       },
       this.referringOrgField,
-      this.createNewOrganisationPrompt,
-      this.referringOrganisationDetailFormGroup
+      this.createNewOrganisationPrompt
     ]
   }
 
@@ -1204,51 +1094,6 @@ export class OrgRequestComponent implements AfterViewChecked {
     }, 1000);
   }
 
-  async saveNewReferringOrganisation(): Promise<boolean> {
-
-    //var address = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key ==="referringOrganisation.address").formControl.value
-    var website = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key === "referringOrganisation.website").formControl.value
-    if (!website) {
-      this.toastr.error("Please fill in a website");
-      return false
-
-    }
-
-    var nameField = this.referringOrganisationDetailFormGroup.fieldGroup.find(f => f.key === "referringOrganisation.name")
-    var name = nameField.formControl.value
-    if (!name) {
-      this.toastr.error("Please fill in the name of your organisation");
-      return false
-    } else if (name.length < 3) {
-      nameField.validation.show = true
-      this.toastr.error("Name of organisation should be at least 3 characters.");
-      return false
-    }
-
-    var data = this.referringOrganisationDetailFormGroup.formControl.value["referringOrganisation"];
-    return this.apollo.mutate({
-      mutation: CREATE_REFERRING_ORGANISATION,
-      variables: { data }
-    }).toPromise().then(res => {
-
-      var data = res["data"]["createReferringOrganisation"]["id"];
-      if (data) {
-        this.toastr.info("Your organisation details were saved.")
-        this.referringOrgIdField.formControl.setValue(data);
-        return true;
-      } else {
-        this.toastr.error("Could not create the organisation.");
-        return false;
-      }
-    }).catch(error => {
-      const parsed = this.parseApolloError(error);
-      this.toastr.error(parsed.message);
-      console.error(error);
-      return false;
-    });
-
-  }
-
   async saveNewReferringOrganisationContact(): Promise<boolean> {
 
     var contactFormControl = this.referringOrganisationContactDetailFormGroup.formControl;
@@ -1395,9 +1240,6 @@ export class OrgRequestComponent implements AfterViewChecked {
 
   showContactPage() {
 
-
-    this.referringOrganisationDetailFormGroup.hideExpression = this.isOrganisationExists;
-
     this.refContactPage.hideExpression = false;
 
     if (!this.isContactExists) {
@@ -1412,7 +1254,6 @@ export class OrgRequestComponent implements AfterViewChecked {
     this.isOrganisationExists = hide;
     this.isContactExists = hide;
     this.createNewOrganisationPrompt.hideExpression = hide;
-    //this.referringOrganisationDetailFormGroup.hideExpression = this.isOrganisationExists;
     this.refContactPage.hideExpression = !this.isOrganisationExists;
   }
 
