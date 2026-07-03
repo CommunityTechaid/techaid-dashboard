@@ -11,12 +11,28 @@ Time = estimated agent wall-clock.
 
 ## Current status
 
-- **Active batch:** 1 complete pending e2e verification; PR open from `claude/hygiene-batch1`
-- **Next action:** human saves a fresh UAT bearer token (`E2E_BEARER_TOKEN=<token> node e2e/save-token.mjs`),
-  then run `npx playwright test` on the branch; after merge, start Batch 2 (CSP)
-- **Blocked on:** e2e suite needs a fresh token — the saved one expired 2026-06-05, and an expired
-  token makes the Auth0 SDK redirect every spec (even mocked ones) to the login page
-- **Last updated:** 2026-07-03
+- **Active batch:** 2 (CSP) — PR open from `claude/hygiene-batch2`; Batch 1 merged (PR #89)
+- **Next action:** after Batch 2 merges + UAT deploy, run the deployed-UAT suite
+  (`npx playwright test --config playwright.config.uat.ts`) and check the browser console for CSP
+  violations across login, dashboard, and the public referral form; then Batch 3
+- **Last updated:** 2026-07-03 (afternoon)
+
+### E2E harness notes (2026-07-03)
+
+- **Fixed in PR #89:** `save-token.mjs` must key the token cache by the scope the SDK actually
+  requests — `openid profile email offline_access` (the app's `useRefreshTokens: true` appends
+  `offline_access`). With the wrong key the lookup misses and every spec bounces to Auth0 login
+  ("Missing Refresh Token"). Suite went 24 failed → 52 passed / 9 data-skips / 1 fail after the fix.
+- The one remaining failure (`DEVREQ-B1`) is pre-existing UAT data drift — it fails identically
+  on the pre-upgrade deployed build. Not a regression.
+- The `setup` Playwright project never runs: its `testMatch` (`auth.setup.ts`) lies outside
+  `testDir` (`e2e/tests`). Token injection via `save-token.mjs` is the real auth path.
+- **Autonomy option (Batch 4 decision):** store `E2E_USERNAME`/`E2E_PASSWORD` as secrets so
+  `auth.setup.ts` can do a real headless login (removes the ~24h manual token hand-off), or keep
+  the token hand-off as the single human touchpoint.
+- **Suite speed levers (fold into Batch 4):** parallel workers for read-only specs (currently
+  `workers: 1`), replace the 43 `waitForTimeout` sleeps, split a fast route-mocked project from
+  the UAT-data specs, abort third-party requests (Typeform/App Insights) in a global fixture.
 
 ### Batch 1 outcome notes
 
@@ -71,8 +87,8 @@ Pause point: PR open, this tracker committed.
 
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
-| [ ] | 2.1 | `staticwebapp.config.json` CSP `globalHeaders` (self, Auth0 tenant, embed.typeform.com, App Insights ingestion, API origin) | M | 45–60m | Opus |
-| [ ] | 2.2 | Post-merge on UAT: verify Auth0 round-trip, GraphQL load, Typeform widget, no CSP console violations | S | 20m | Sonnet |
+| [x] | 2.1 | CSP + nosniff/Referrer-Policy/Permissions-Policy in existing `src/staticwebapp.config.json`. Origins beyond the obvious: ward-lookup iframe (`communitytechaid.github.io`), Places proxy worker (`cta-places-proxy.community-techaid.workers.dev`), Apps Script PDF fetch (`script.google.com` + `*.googleusercontent.com` redirect), Wix logos (img). No `unsafe-inline`/`unsafe-eval` in script-src; `unsafe-inline` required for style-src (Angular runtime style injection) | M | 45–60m | Opus |
+| [ ] | 2.2 | Post-merge on UAT: deployed-UAT suite + verify Auth0 round-trip, GraphQL load, Typeform widget, ward iframe, no CSP console violations | S | 20m | Sonnet |
 
 ## Batch 3 — Correctness sweep (`fix:` PRs, red/green specs)
 
