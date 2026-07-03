@@ -11,9 +11,30 @@ Time = estimated agent wall-clock.
 
 ## Current status
 
-- **Active batch:** 1 (security & dependency patch), branch `claude/hygiene-batch1`
-- **Next action:** milestone 1.1 — bump `@angular/*` to latest 21.2.x
+- **Active batch:** 1 complete pending e2e verification; PR open from `claude/hygiene-batch1`
+- **Next action:** human saves a fresh UAT bearer token (`E2E_BEARER_TOKEN=<token> node e2e/save-token.mjs`),
+  then run `npx playwright test` on the branch; after merge, start Batch 2 (CSP)
+- **Blocked on:** e2e suite needs a fresh token — the saved one expired 2026-06-05, and an expired
+  token makes the Auth0 SDK redirect every spec (even mocked ones) to the login page
 - **Last updated:** 2026-07-03
+
+### Batch 1 outcome notes
+
+- Angular 21 is now **LTS** (21.2.17 framework / 21.2.18 CLI); **Angular 22 is the current major**
+  (22.0.5) — the v22 upgrade is added to the Batch 6 backlog list (6.6).
+- Regenerating `package-lock.json` from scratch (delete lock + node_modules) dropped production
+  `npm audit` from 13 vulns (8 high) to 1 low. An npm quirk blocks in-place Angular patch bumps:
+  the resolver seeds from the installed tree's exact cross-pins, so a clean reinstall is required.
+- `@babel/core` fixed via a root `overrides` entry (`^7.29.7` — same version `@angular/build`
+  already ships; only `@angular/compiler-cli` pinned the vulnerable 7.29.0).
+- **Accepted risk:** `quill@2.0.3` XSS-via-HTML-export (GHSA-v3m3-f69x-jf25) has **no upstream
+  fix** (npm's suggested "fix" is a downgrade to 2.0.2, which is older). Exposure is limited:
+  the editor is only reachable by authenticated staff and Angular's template sanitizer guards
+  rendering. Revisit when quill >2.0.3 ships.
+- Typeform's evergreen `next/embed.js` cannot be SRI-pinned (mutable by design) — moved to
+  explicit `https:` + `crossorigin`; CSP (Batch 2) is the compensating control.
+- 1.4: `PostDataComponent`'s query hard-filters `published: {_eq: true}` server-side, so the
+  unguarded `'**'` route can only render published CMS posts. Safe by design; no change.
 
 ## Review findings (verified 2026-07-03)
 
@@ -39,10 +60,10 @@ Time = estimated agent wall-clock.
 
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
-| [ ] | 1.1 | Bump `@angular/*` → latest 21.2.x; `npm install`; prod build + full e2e suite | S | 30–45m | Sonnet |
-| [ ] | 1.2 | `npm audit` remediation: quill patch (ngx-quill compat), `overrides` for `@nevware21/ts-utils`, `@babel/core` | M | 30–60m | Sonnet |
-| [ ] | 1.3 | `index.html`: Typeform URLs → explicit `https:`; SRI/pinning if a versioned URL exists | S | 15m | Haiku |
-| [ ] | 1.4 | Verify `PostDataComponent` on `'**'` renders only public/published posts; guard/filter if not | S | 15–30m | Sonnet |
+| [x] | 1.1 | Bump `@angular/*` → 21.2.17/21.2.18 LTS; fresh lockfile; prod build ✓; e2e pending fresh token | S | 30–45m | Sonnet |
+| [x] | 1.2 | `npm audit` 13 (8 high) → 1 low: fresh lock + `@babel/core` override; quill = accepted risk (no upstream fix) | M | 30–60m | Sonnet |
+| [x] | 1.3 | `index.html`: Typeform URLs → explicit `https:` + `crossorigin`; SRI impossible (evergreen script), CSP is the control | S | 15m | Haiku |
+| [x] | 1.4 | Verified: `PostDataComponent` query hard-filters `published: true` server-side — safe, no change | S | 15–30m | Sonnet |
 
 Pause point: PR open, this tracker committed.
 
