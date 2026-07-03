@@ -70,10 +70,18 @@ if (expiresIn <= 0) {
 console.log(`Token expires at: ${new Date(expiresAt * 1000).toISOString()} (${Math.round(expiresIn / 3600 * 10) / 10}h from now)`);
 
 // Auth0 SPA JS v2 cache key: @@auth0spajs@@::<clientId>::<audience>::<scope>
+// The app sets useRefreshTokens: true (main.ts), so the SDK appends
+// offline_access to every requested scope. The cache entry key must match that
+// requested scope exactly, or the lookup misses and the SDK falls through to
+// the refresh-token path — which a synthetic entry cannot satisfy ("Missing
+// Refresh Token" → redirect to login). We write the offline_access key as the
+// primary entry and keep the plain-scope key for compatibility.
 const clientId  = 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX';
 const audience  = 'https://api.communitytechaid.org.uk';
-const scope     = 'openid profile email';
-const cacheKey  = `@@auth0spajs@@::${clientId}::${audience}::${scope}`;
+const scope     = 'openid profile email offline_access';
+const legacyScope = 'openid profile email';
+const cacheKey       = `@@auth0spajs@@::${clientId}::${audience}::${scope}`;
+const legacyCacheKey = `@@auth0spajs@@::${clientId}::${audience}::${legacyScope}`;
 
 // Synthesize a minimal id_token JWT from access-token claims.
 // The SDK does NOT re-verify the signature of cached tokens — a placeholder sig is fine.
@@ -119,6 +127,10 @@ const cacheBody = {
   decodedToken,
 };
 const cacheValue = JSON.stringify({ body: cacheBody, expiresAt });
+const legacyCacheValue = JSON.stringify({
+  body: { ...cacheBody, scope: legacyScope },
+  expiresAt,
+});
 
 // Id-token entry: stored DIRECTLY (not wrapped) at @@auth0spajs@@::<clientId>::@@user@@
 // CacheManager.setIdToken() calls cache.set(cacheKey, { id_token, decodedToken }) without wrapping.
@@ -146,6 +158,7 @@ const storageState = {
       origin: 'http://localhost:4200',
       localStorage: [
         { name: cacheKey,        value: cacheValue        },
+        { name: legacyCacheKey,  value: legacyCacheValue  },
         { name: idTokenCacheKey, value: idTokenCacheValue },
       ],
     },
@@ -171,6 +184,7 @@ const storageStateDeployed = {
       origin: 'https://app-testing.communitytechaid.org.uk',
       localStorage: [
         { name: cacheKey,        value: cacheValue        },
+        { name: legacyCacheKey,  value: legacyCacheValue  },
         { name: idTokenCacheKey, value: idTokenCacheValue },
       ],
     },
