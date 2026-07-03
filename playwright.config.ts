@@ -21,7 +21,23 @@ export default defineConfig({
     baseURL: 'http://localhost:4200',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    launchOptions: {
+      args: [
+        // Fail third-party requests fast instead of waiting on real CDNs:
+        // nothing in the suite asserts on the Typeform embed or telemetry.
+        // (Google Fonts and wixstatic stay reachable — layout specs measure
+        // rendered geometry.)
+        '--host-resolver-rules=' +
+          'MAP embed.typeform.com 127.0.0.1,' +
+          'MAP api.typeform.com 127.0.0.1,' +
+          'MAP *.in.applicationinsights.azure.com 127.0.0.1,' +
+          'MAP *.livediagnostics.monitor.azure.com 127.0.0.1,' +
+          'MAP dc.services.visualstudio.com 127.0.0.1',
+      ],
+    },
   },
+  // Fast inner-loop subset: `npm run e2e:fast` runs only specs tagged @mocked
+  // (fully page.route-stubbed, no live UAT data dependency) — ~20s.
   projects: [
     {
       name: 'setup',

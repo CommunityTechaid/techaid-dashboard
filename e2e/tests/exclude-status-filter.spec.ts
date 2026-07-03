@@ -125,11 +125,10 @@ test.describe('Exclude statuses filter (kit-index, issue #64)', () => {
     await dropdownOption.first().waitFor({ state: 'visible', timeout: 5_000 });
     await dropdownOption.first().click();
 
-    // Apply the filter.
+    // Apply the filter — start waiting for the reload response before triggering it.
+    const filterReload = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
     await page.locator('.modal-footer button.btn-primary', { hasText: /Filter/i }).click();
-
-    // Wait for the table to reload.
-    await page.waitForTimeout(2_000); // allow Ajax reload
+    await filterReload;
     await rowLocator.first().waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {
       // If no rows after filtering, that's also valid (all had the excluded status).
     });

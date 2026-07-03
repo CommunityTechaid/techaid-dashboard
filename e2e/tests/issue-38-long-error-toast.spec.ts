@@ -58,7 +58,7 @@ const FAKE_DEVICE_REQUEST = {
   deviceRequestNotes: [],
 };
 
-test.describe('Issue #38: long GraphQL error toast is truncated', () => {
+test.describe('Issue #38: long GraphQL error toast is truncated @mocked', () => {
   test.afterEach(async ({ page }) => {
     await page.unrouteAll({ behavior: 'ignoreErrors' });
   });
@@ -147,11 +147,11 @@ test.describe('Issue #38: long GraphQL error toast is truncated', () => {
 
       // Wait for the form to render (Formly must have processed the fixture)
       await expect(page.locator('formly-form')).toBeVisible({ timeout: 30_000 });
-      await page.waitForTimeout(1_500);
 
       // ── Click Save ─────────────────────────────────────────────────────────
       // The Save button in device-request-info is labelled "Save" or "Update".
       const saveBtn = page.locator('button').filter({ hasText: /^(Save|Update)$/i }).first();
+      await saveBtn.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
       const saveBtnVisible = await saveBtn.isVisible();
       if (!saveBtnVisible) {
         // Fallback: find any button whose text includes "Save"

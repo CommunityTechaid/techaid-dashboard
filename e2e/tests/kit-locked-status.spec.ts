@@ -134,73 +134,83 @@ function probe(page: import('@playwright/test').Page) {
   });
 }
 
-test('locked kit: NFI checkbox checked, status radios disabled, banner shown', async ({ page }) => {
-  test.setTimeout(60_000);
-  await installGraphqlMocks(page, { ...SUBSTATUS_UNFLAGGED, needsFurtherInvestigation: true });
+test.describe('kit-info locked status @mocked', () => {
+  test('locked kit: NFI checkbox checked, status radios disabled, banner shown', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installGraphqlMocks(page, { ...SUBSTATUS_UNFLAGGED, needsFurtherInvestigation: true });
 
-  await page.goto('/dashboard/devices/2129');
-  await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.waitForTimeout(2000);
+    await page.goto('/dashboard/devices/2129');
+    await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('label:has-text("Needs further investigation")').waitFor({ state: 'visible', timeout: 10_000 });
 
-  const r = await probe(page);
-  expect(r.nfiChecked, 'needsFurtherInvestigation checkbox should render checked').toBe(true);
-  expect(r.allStatusDisabled, 'all status radios should be disabled').toBe(true);
-  expect(r.bannerVisible, '"Status locked" banner should be visible').toBe(true);
-});
+    // Formly's hideExpression/expressionProperties evaluate asynchronously after the
+    // fields first render, so poll the probe until the locked-state fields settle
+    // rather than sleeping a fixed duration.
+    await expect.poll(async () => (await probe(page)).nfiChecked, { timeout: 5_000 }).toBe(true);
 
-test('unlocked kit: status radios enabled and banner hidden', async ({ page }) => {
-  test.setTimeout(60_000);
-  await installGraphqlMocks(page, SUBSTATUS_UNFLAGGED);
+    const r = await probe(page);
+    expect(r.nfiChecked, 'needsFurtherInvestigation checkbox should render checked').toBe(true);
+    expect(r.allStatusDisabled, 'all status radios should be disabled').toBe(true);
+    expect(r.bannerVisible, '"Status locked" banner should be visible').toBe(true);
+  });
 
-  await page.goto('/dashboard/devices/2129');
-  await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.waitForTimeout(2000);
+  test('unlocked kit: status radios enabled and banner hidden', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installGraphqlMocks(page, SUBSTATUS_UNFLAGGED);
 
-  const r = await probe(page);
-  expect(r.nfiChecked, 'needsFurtherInvestigation checkbox should be unchecked').toBe(false);
-  expect(r.anyStatusDisabled, 'no status radio should be disabled when nothing is locked').toBe(false);
-  expect(r.bannerVisible, '"Status locked" banner should be hidden').toBe(false);
-});
+    await page.goto('/dashboard/devices/2129');
+    await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('label:has-text("Needs further investigation")').waitFor({ state: 'visible', timeout: 10_000 });
 
-test('toggling NFI off re-enables radios and hides banner without saving', async ({ page }) => {
-  test.setTimeout(60_000);
-  await installGraphqlMocks(page, { ...SUBSTATUS_UNFLAGGED, needsFurtherInvestigation: true });
+    await expect.poll(async () => (await probe(page)).anyStatusDisabled, { timeout: 5_000 }).toBe(false);
 
-  await page.goto('/dashboard/devices/2129');
-  await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.waitForTimeout(2000);
+    const r = await probe(page);
+    expect(r.nfiChecked, 'needsFurtherInvestigation checkbox should be unchecked').toBe(false);
+    expect(r.anyStatusDisabled, 'no status radio should be disabled when nothing is locked').toBe(false);
+    expect(r.bannerVisible, '"Status locked" banner should be hidden').toBe(false);
+  });
 
-  // Locked: radios disabled, banner visible.
-  let r = await probe(page);
-  expect(r.allStatusDisabled).toBe(true);
-  expect(r.bannerVisible).toBe(true);
+  test('toggling NFI off re-enables radios and hides banner without saving', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installGraphqlMocks(page, { ...SUBSTATUS_UNFLAGGED, needsFurtherInvestigation: true });
 
-  // Untick the NFI checkbox via Angular forms (not the UI click — the change
-  // handler matters but the assertion here is that Formly's expression
-  // re-evaluates from the model, regardless of who toggled the control).
-  await page.locator('label:has-text("Needs further investigation") + input[type="checkbox"], label:has-text("Needs further investigation") ~ input[type="checkbox"]').first().uncheck();
-  await page.waitForTimeout(500);
+    await page.goto('/dashboard/devices/2129');
+    await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('label:has-text("Needs further investigation")').waitFor({ state: 'visible', timeout: 10_000 });
+    await expect.poll(async () => (await probe(page)).allStatusDisabled, { timeout: 5_000 }).toBe(true);
 
-  r = await probe(page);
-  expect(r.nfiChecked, 'NFI should now be unchecked').toBe(false);
-  expect(r.anyStatusDisabled, 'radios should re-enable as soon as NFI is unchecked, before Save').toBe(false);
-  expect(r.bannerVisible, 'banner should hide as soon as NFI is unchecked').toBe(false);
-});
+    // Locked: radios disabled, banner visible.
+    let r = await probe(page);
+    expect(r.allStatusDisabled).toBe(true);
+    expect(r.bannerVisible).toBe(true);
 
-test('Save sends the device type — type field is not coerced to null', async ({ page }) => {
-  test.setTimeout(60_000);
-  const captured: { body: any }[] = [];
-  await installGraphqlMocks(page, SUBSTATUS_UNFLAGGED, captured);
+    // Untick the NFI checkbox via Angular forms (not the UI click — the change
+    // handler matters but the assertion here is that Formly's expression
+    // re-evaluates from the model, regardless of who toggled the control).
+    await page.locator('label:has-text("Needs further investigation") + input[type="checkbox"], label:has-text("Needs further investigation") ~ input[type="checkbox"]').first().uncheck();
+    await expect.poll(async () => (await probe(page)).anyStatusDisabled, { timeout: 5_000 }).toBe(false);
 
-  await page.goto('/dashboard/devices/2129');
-  await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.waitForTimeout(2000);
+    r = await probe(page);
+    expect(r.nfiChecked, 'NFI should now be unchecked').toBe(false);
+    expect(r.anyStatusDisabled, 'radios should re-enable as soon as NFI is unchecked, before Save').toBe(false);
+    expect(r.bannerVisible, 'banner should hide as soon as NFI is unchecked').toBe(false);
+  });
 
-  await page.locator('button:has-text("Save")').first().click();
-  await page.waitForTimeout(1500);
+  test('Save sends the device type — type field is not coerced to null', async ({ page }) => {
+    test.setTimeout(60_000);
+    const captured: { body: any }[] = [];
+    await installGraphqlMocks(page, SUBSTATUS_UNFLAGGED, captured);
 
-  expect(captured.length, 'updateKit mutation should fire on Save').toBeGreaterThan(0);
-  const sentData = captured[0].body?.variables?.data;
-  expect(sentData, 'mutation must carry a data variable').toBeTruthy();
-  expect(sentData.type, 'data.type must not be null (KitType! is NonNull)').toBe('LAPTOP');
+    await page.goto('/dashboard/devices/2129');
+    await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('button:has-text("Save")').first().waitFor({ state: 'visible', timeout: 10_000 });
+
+    await page.locator('button:has-text("Save")').first().click();
+    await expect.poll(() => captured.length, { timeout: 5_000 }).toBeGreaterThan(0);
+
+    expect(captured.length, 'updateKit mutation should fire on Save').toBeGreaterThan(0);
+    const sentData = captured[0].body?.variables?.data;
+    expect(sentData, 'mutation must carry a data variable').toBeTruthy();
+    expect(sentData.type, 'data.type must not be null (KitType! is NonNull)').toBe('LAPTOP');
+  });
 });

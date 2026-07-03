@@ -106,39 +106,40 @@ async function installGraphqlMocks(
   });
 }
 
-test('Save on invalid form: surfaces an error toast and does not fire updateKit', async ({ page }) => {
-  test.setTimeout(60_000);
-  const captured: { body: any }[] = [];
-  await installGraphqlMocks(page, SUBSTATUS_EMPTY_NETWORK, captured);
+test.describe('kit-info Save required-field feedback @mocked', () => {
+  test('Save on invalid form: surfaces an error toast and does not fire updateKit', async ({ page }) => {
+    test.setTimeout(60_000);
+    const captured: { body: any }[] = [];
+    await installGraphqlMocks(page, SUBSTATUS_EMPTY_NETWORK, captured);
 
-  await page.goto('/dashboard/devices/20031');
-  await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.waitForTimeout(2000);
+    await page.goto('/dashboard/devices/20031');
+    await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('button:has-text("Save")').first().waitFor({ state: 'visible', timeout: 10_000 });
 
-  // The form is invalid (subStatus.network is required for SMARTPHONE and unset).
-  // Pre-fix: button is disabled, the click is a no-op, no toast appears.
-  // Post-fix: the click runs updateEntity which surfaces a toast and aborts the mutation.
-  await page.locator('button:has-text("Save")').first().click({ force: true });
-  await page.waitForTimeout(1500);
+    // The form is invalid (subStatus.network is required for SMARTPHONE and unset).
+    // Pre-fix: button is disabled, the click is a no-op, no toast appears.
+    // Post-fix: the click runs updateEntity which surfaces a toast and aborts the mutation.
+    await page.locator('button:has-text("Save")').first().click({ force: true });
 
-  // Toast must be visible with copy that names the missing-fields condition.
-  const toast = page.locator('.toast-error, [role="alert"]').filter({ hasText: /required fields/i }).first();
-  await expect(toast, 'an error toast should explain that required fields are incomplete').toBeVisible({ timeout: 5_000 });
+    // Toast must be visible with copy that names the missing-fields condition.
+    const toast = page.locator('.toast-error, [role="alert"]').filter({ hasText: /required fields/i }).first();
+    await expect(toast, 'an error toast should explain that required fields are incomplete').toBeVisible({ timeout: 5_000 });
 
-  expect(captured.length, 'updateKit must NOT fire when the form is invalid').toBe(0);
-});
+    expect(captured.length, 'updateKit must NOT fire when the form is invalid').toBe(0);
+  });
 
-test('Save on valid form: still fires updateKit', async ({ page }) => {
-  test.setTimeout(60_000);
-  const captured: { body: any }[] = [];
-  await installGraphqlMocks(page, SUBSTATUS_WITH_NETWORK, captured);
+  test('Save on valid form: still fires updateKit', async ({ page }) => {
+    test.setTimeout(60_000);
+    const captured: { body: any }[] = [];
+    await installGraphqlMocks(page, SUBSTATUS_WITH_NETWORK, captured);
 
-  await page.goto('/dashboard/devices/20031');
-  await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.waitForTimeout(2000);
+    await page.goto('/dashboard/devices/20031');
+    await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('button:has-text("Save")').first().waitFor({ state: 'visible', timeout: 10_000 });
 
-  await page.locator('button:has-text("Save")').first().click();
-  await page.waitForTimeout(1500);
+    await page.locator('button:has-text("Save")').first().click();
+    await expect.poll(() => captured.length, { timeout: 5_000 }).toBeGreaterThan(0);
 
-  expect(captured.length, 'updateKit should fire on a valid form').toBeGreaterThan(0);
+    expect(captured.length, 'updateKit should fire on a valid form').toBeGreaterThan(0);
+  });
 });

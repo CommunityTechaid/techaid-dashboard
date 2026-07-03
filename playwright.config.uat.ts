@@ -29,6 +29,17 @@ export default defineConfig({
     baseURL: 'https://app-testing.communitytechaid.org.uk',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    launchOptions: {
+      args: [
+        // See playwright.config.ts — fast-fail third-party requests.
+        '--host-resolver-rules=' +
+          'MAP embed.typeform.com 127.0.0.1,' +
+          'MAP api.typeform.com 127.0.0.1,' +
+          'MAP *.in.applicationinsights.azure.com 127.0.0.1,' +
+          'MAP *.livediagnostics.monitor.azure.com 127.0.0.1,' +
+          'MAP dc.services.visualstudio.com 127.0.0.1',
+      ],
+    },
   },
   projects: [
     {
