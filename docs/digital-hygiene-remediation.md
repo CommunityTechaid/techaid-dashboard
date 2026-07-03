@@ -90,6 +90,17 @@ Pause point: PR open, this tracker committed.
 | [x] | 2.1 | CSP + nosniff/Referrer-Policy/Permissions-Policy in existing `src/staticwebapp.config.json`. Origins beyond the obvious: ward-lookup iframe (`communitytechaid.github.io`), Places proxy worker (`cta-places-proxy.community-techaid.workers.dev`), Apps Script PDF fetch (`script.google.com` + `*.googleusercontent.com` redirect), Wix logos (img). No `unsafe-inline`/`unsafe-eval` in script-src; `unsafe-inline` required for style-src (Angular runtime style injection) | M | 45–60m | Opus |
 | [ ] | 2.2 | Post-merge on UAT: deployed-UAT suite + verify Auth0 round-trip, GraphQL load, Typeform widget, ward iframe, no CSP console violations | S | 20m | Sonnet |
 
+**Second UAT soak finding (2026-07-03, caught by the deployed-UAT suite, fixed in follow-up #2):**
+- ngx-formly evaluates STRING-valued expressions (`hideExpression`, `expressionProperties`
+  values) via `new Function()` — blocked by the CSP, breaking conditional required/validation/
+  hide behavior and kit-info Save on the deployed build. All 57 string expressions across 14
+  components converted to arrow functions (CSP-safe). **Lesson: the first CSP probe only
+  covered page loads; form *interactions* are where eval hides. The deployed-UAT suite caught
+  it — concrete proof of the suite-as-deploy-gate goal.**
+- E2E parallelism calibrated in the same PR: local config `workers: 2` (4 starved the dev-mode
+  ng serve and produced timing flakes), deployed-UAT config `workers: 4` (4.3m → 3.4m). Future
+  specs that write real UAT data must run serial or own their records (comment in config).
+
 **First UAT soak (2026-07-03) found three issues, fixed in the follow-up PR:**
 - `crossorigin="anonymous"` on the Typeform tags (added in Batch 1) made the browser CORS-block
   the embed entirely — Typeform's CDN sends no CORS headers. Attribute removed; it's only useful
