@@ -14,15 +14,12 @@ import { DonorIndexComponent } from './components/donor-index/donor-index.compon
 import { DonorInfoComponent } from './components/donor-info/donor-info.component';
 import { UserIndexComponent } from './components/user-index/user-index.component';
 import { UserInfoComponent } from './components/user-info/user-info.component';
-import { MapComponent } from './components/map/map-index.component';
-import { MapViewComponent } from './components/map-view/map-view.component';
 import { PostIndexComponent } from './components/post-index/post-index.component';
 import { PostInfoComponent } from './components/post-info/post-info.component';
 import { PostDataComponent } from './components/post-data/post-data.component';
 import { DashboardIndexComponent } from './components/dashboard-index/dashboard-index.component';
 import { OrgRequestComponent } from './components/org-request/org-request';
 import { KitComponent } from './components/kit-component/kit-component.component';
-import { ReportsComponent } from './components/reports/reports.component';
 import { DeviceRequestIndexComponent } from './components/device-request-index/device-request-index.component';
 import { DeviceRequestInfoComponent } from './components/device-request-info/device-request-info.component';
 import { ReferringOrganisationIndexComponent } from './components/referring-organisation-index/referring-organisation-index.component';
