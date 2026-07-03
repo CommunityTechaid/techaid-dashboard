@@ -280,7 +280,7 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-  <button [disabled]="form.invalid" type="button" class="btn btn-primary btn-sm"
+  <button type="button" class="btn btn-primary btn-sm"
     (click)="createEntity(form.value); c('Close click')">
     CREATE
   </button>
@@ -299,8 +299,8 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button [disabled]="form.invalid" type="button" class="btn btn-primary btn-sm"
-      (click)="applyFilter(filterForm.value); c('Close click')">
+    <button type="button" class="btn btn-primary btn-sm"
+      (click)="applyFilterFromModal(filterForm.value); c('Close click')">
       Filter
     </button>
   </div>

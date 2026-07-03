@@ -13,7 +13,7 @@ import 'datatables.net-responsive';
 import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
-import { KIT_TYPES } from '@app/shared/utils';
+import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { RouterLink } from '@angular/router';
@@ -601,6 +601,7 @@ export class KitIndexComponent {
   tableId = 'kit-index';
 
   applyFilter(data) {
+    if (warnIfFormInvalid(this.filterForm, this.filterFields, this.toastr)) return;
     const filter = {AND: []};
     let count = 0;
 
@@ -1035,6 +1036,7 @@ export class KitIndexComponent {
   }
 
   quickCreateEntity(data:any){
+    if (warnIfFormInvalid(this.quickForm, this.quickFields, this.toastr)) return;
 
     this.apollo.mutate({
       mutation: CREATE_QUICK_ENTITY,

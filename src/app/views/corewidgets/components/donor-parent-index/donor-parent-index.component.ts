@@ -17,6 +17,7 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorParentWhereInput!) {
@@ -199,6 +200,7 @@ export class DonorParentIndexComponent {
   }
 
   applyFilter(data) {
+    if (warnIfFormInvalid(this.filterForm, this.filterFields, this.toastr)) return;
     const filter = {};
     let count = 0;
 
@@ -372,6 +374,7 @@ export class DonorParentIndexComponent {
 
 
   createEntity(data: any) {
+    if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     this.apollo.mutate({
       mutation: CREATE_ENTITY,
       variables: { data }
