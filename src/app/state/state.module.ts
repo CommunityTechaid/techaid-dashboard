@@ -9,6 +9,11 @@ export { UserState } from './user/user.state';
 
 export const appStateProviders: EnvironmentProviders = provideStore(
     [UserState],
+    {
+        // Without this NGXS builds property getters via new Function(),
+        // which the Content-Security-Policy (no unsafe-eval) blocks.
+        compatibility: { strictContentSecurityPolicy: true }
+    },
     withNgxsRouterPlugin(),
     withNgxsFormPlugin(),
     withNgxsReduxDevtoolsPlugin()

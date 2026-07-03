@@ -90,6 +90,17 @@ Pause point: PR open, this tracker committed.
 | [x] | 2.1 | CSP + nosniff/Referrer-Policy/Permissions-Policy in existing `src/staticwebapp.config.json`. Origins beyond the obvious: ward-lookup iframe (`communitytechaid.github.io`), Places proxy worker (`cta-places-proxy.community-techaid.workers.dev`), Apps Script PDF fetch (`script.google.com` + `*.googleusercontent.com` redirect), Wix logos (img). No `unsafe-inline`/`unsafe-eval` in script-src; `unsafe-inline` required for style-src (Angular runtime style injection) | M | 45–60m | Opus |
 | [ ] | 2.2 | Post-merge on UAT: deployed-UAT suite + verify Auth0 round-trip, GraphQL load, Typeform widget, ward iframe, no CSP console violations | S | 20m | Sonnet |
 
+**First UAT soak (2026-07-03) found three issues, fixed in the follow-up PR:**
+- `crossorigin="anonymous"` on the Typeform tags (added in Batch 1) made the browser CORS-block
+  the embed entirely — Typeform's CDN sends no CORS headers. Attribute removed; it's only useful
+  alongside SRI, which the evergreen script can't support anyway.
+- `sb-admin.css` @imports the Poppins font from `fonts.googleapis.com` — missed in the origin
+  sweep (it greps `src/app`, the import is in `src/`). Added `fonts.googleapis.com` (style-src)
+  and `fonts.gstatic.com` (font-src). Self-hosting the font is a Batch 6 candidate.
+- NGXS builds property getters via `new Function()` (an eval), blocked by script-src. Fixed
+  properly with `compatibility: { strictContentSecurityPolicy: true }` in `state.module.ts`
+  rather than allowing `unsafe-eval`.
+
 ## Batch 3 — Correctness sweep (`fix:` PRs, red/green specs)
 
 | Done | ID | Task | Cx | Time | Model |

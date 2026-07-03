@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="stylesheet" href="https://embed.typeform.com/next/css/widget.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://embed.typeform.com/next/css/widget.css" />
   <script src="assets/env.js"></script>
 </head>
 
@@ -16,7 +16,9 @@
   <app-root></app-root>
 </body>
 <!-- Typeform's evergreen embed script mutates upstream, so SRI pinning is not
-     possible; script-src CSP allowlisting is the compensating control. -->
-<script src="https://embed.typeform.com/next/embed.js" crossorigin="anonymous"></script>
+     possible; script-src CSP allowlisting is the compensating control. No
+     crossorigin attribute: Typeform's CDN sends no CORS headers, so adding it
+     makes the browser block the resource entirely. -->
+<script src="https://embed.typeform.com/next/embed.js"></script>
 
 </html>
