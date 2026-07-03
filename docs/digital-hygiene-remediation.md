@@ -122,7 +122,7 @@ Pause point: PR open, this tracker committed.
 |------|----|------|----|------|-------|
 | [ ] | 3.1 | kit-info resetOnHide completion (6 fields) + red-first spec (extend `kit-locked-status.spec.ts` mocked pattern) | M | 1–1.5h | Opus |
 | [ ] | 3.2 | Migrate 24 buttons / 15 templates off `[disabled]="form.invalid"` → `warnIfFormInvalid()`; extend `save-button-clickable.spec.ts` | M | 1–2h | Sonnet |
-| [ ] | 3.3 | Delete dead components (`reports/`, `map/`, `map-view/`) + route imports + commented blocks (`kit-info.component.ts:816-877`, `kit-audit-component.html`) | S | 30m | Haiku |
+| [x] | 3.3 | Done 2026-07-03: deleted `reports/`, `map/`, `map-view/` (393 lines) + route imports + commented blocks. Bonus finding for 6.4: `ngx-google-places-autocomplete` was already fully unreferenced (place field uses the proxy worker), and `@types/googlemaps` + `tsconfig.app.json` `"types": ["googlemaps"]` are now orphaned — remove all three together in 6.4 | S | 30m | Haiku |
 | [ ] | 3.4 | Apps Script URL → environment config; error toasts on lookup `watchQuery` subs; standardize `date:'medium'` outliers; native `confirm()` → modal in 3 `custom-notes.ts` | M | 1h | Sonnet |
 
 ## Batch 4 — CI + lint gate (`ci:` PR)
