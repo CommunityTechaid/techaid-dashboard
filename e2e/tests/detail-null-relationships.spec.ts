@@ -84,8 +84,13 @@ test.describe('Detail pages survive null nested relationships', () => {
     await page.goto(`/dashboard/users/${uid}`);
     // Roles tab is the default; then switch to Permissions.
     await expect(page.locator('.nav-tabs .nav-link', { hasText: /roles/i }).first()).toBeVisible({ timeout: 15_000 });
+    const permissionsResp = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
     await page.locator('.nav-tabs .nav-link', { hasText: /permissions/i }).first().click();
-    await page.waitForTimeout(3_000);
+    await permissionsResp;
+    // The null-deref (if present) throws synchronously inside the DataTables ajax
+    // callback right after the response resolves; there's no positive DOM signal for
+    // "no error was thrown", so a short capped settle covers the callback's tick.
+    await page.waitForTimeout(500);
 
     expect(cap.nullDerefErrors(), 'user detail tabs threw a null-deref on null relationships').toEqual([]);
   });
@@ -97,8 +102,11 @@ test.describe('Detail pages survive null nested relationships', () => {
 
     await page.goto(`/dashboard/roles/${rid}`);
     await expect(page.locator('.nav-tabs .nav-link', { hasText: /users/i }).first()).toBeVisible({ timeout: 15_000 });
+    const permissionsResp = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
     await page.locator('.nav-tabs .nav-link', { hasText: /permissions/i }).first().click();
-    await page.waitForTimeout(3_000);
+    await permissionsResp;
+    // Same rationale as above: short capped settle for the synchronous ajax-callback throw.
+    await page.waitForTimeout(500);
 
     expect(cap.nullDerefErrors(), 'role detail tabs threw a null-deref on null relationships').toEqual([]);
   });

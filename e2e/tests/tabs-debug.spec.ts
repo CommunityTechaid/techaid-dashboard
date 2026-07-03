@@ -54,7 +54,7 @@ test('debug: detail page navigation with interceptor', async ({ page }) => {
   console.log('URL after goto:', page.url());
 
   // Step 3: Check what rendered
-  await page.waitForTimeout(3000);
+  await page.locator('ul.nav-tabs').first().waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
   const navTabsCount = await page.locator('ul.nav-tabs').count();
   const bodyText = await page.locator('body').innerText();
   console.log('Nav tabs found:', navTabsCount);

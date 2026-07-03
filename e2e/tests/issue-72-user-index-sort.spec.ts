@@ -115,12 +115,18 @@ test.describe("Issue #72 — users table sort value must be the string '1'/'-1'"
     // role-info renders the Users tab via ngbNav (<a ngbNavLink>Users</a>).
     const usersTab = page.locator('.nav-tabs .nav-link', { hasText: /^\s*users\s*$/i });
     await expect(usersTab.first()).toBeVisible({ timeout: 15_000 });
+    // The findAllUsers query fires as the tab's DataTable initialises — wait for that
+    // specific round trip so `capture.usersQueryError()` reflects the resolved response.
+    const usersQueryResp = page.waitForResponse(
+      r => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('findAllUsers'),
+      { timeout: 15_000 },
+    ).catch(() => null);
     await usersTab.first().click();
+    await usersQueryResp;
 
     // Let the tab's DataTable ajax fire and resolve (role may have 0 users, so we
     // assert on the absence of an error rather than on rows).
     await expect(page.locator('table[id*="user"], table.dataTable').first()).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(2_000);
 
     expect(capture.usersQueryError(),
       'role-users users query returned a GraphQL error — sort[].value was not the expected String "1"/"-1"')

@@ -108,11 +108,12 @@ test.describe('BUG-03/04: DataTables empty-state hidden', () => {
 
   async function assertNoVisibleEmptyRow(page: import('@playwright/test').Page, url: string) {
     await withAuthInterceptor(page);
+    const dataLoaded = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
     await page.goto(url);
     // Wait for the DataTable to initialise
     await expect(page.locator('table.dataTable')).toBeVisible({ timeout: 15_000 });
-    // Wait a tick for AJAX + Angular rendering
-    await page.waitForTimeout(2_000);
+    // Wait for the AJAX response that populates the table, then let Angular render it.
+    await dataLoaded;
 
     // td.dt-empty (DataTables 2.x class) must not be visible
     const emptyCell = page.locator('td.dt-empty');
@@ -154,9 +155,9 @@ test.describe('BUG-07: Row click does not turn row opaque blue', () => {
     await withAuthInterceptor(page);
     await page.goto('/dashboard/device-requests');
     await expect(page.locator('table.dataTable')).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(1_500);
 
     const firstRow = page.locator('table tbody tr').first();
+    await firstRow.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
     if (!(await firstRow.isVisible())) {
       test.skip(true, 'No rows — skipping');
       return;
@@ -185,9 +186,9 @@ test.describe('BUG-10: DataTables pagination is right-aligned', () => {
     await withAuthInterceptor(page);
     await page.goto('/dashboard/devices');
     await expect(page.locator('table.dataTable')).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(1_000);
 
     const paging = page.locator('div.dt-paging').first();
+    await paging.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
     if (!(await paging.isVisible())) return;
 
     const pagingBox = await paging.boundingBox();
@@ -225,7 +226,7 @@ test.describe('BUG-15: Device hardware details row is laid out horizontally', ()
     await page.goto(href);
     await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('formly-form')).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(1_000);
+    await page.locator('formly-group').first().locator('formly-field').first().waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
 
     // The first field-group (hardware row) uses fieldGroupClassName that must NOT
     // have Bootstrap's .row class. Without .row each formly-field is a flex item
@@ -356,10 +357,14 @@ test.describe('BUG-17: Device audit table shows rows rather than "No data!"', ()
       test.skip(true, 'Audit Table tab not found (no admin:kits authority) — skipping');
       return;
     }
+    const auditResp = page.waitForResponse(
+      r => r.url().includes('/graphql') && /getAuditTrail|kitAudits/.test(r.request().postData() ?? '') && r.status() === 200,
+      { timeout: 15_000 },
+    ).catch(() => null);
     await auditTab.click();
+    await auditResp;
 
     await expect(page.locator('kit-audit-component table')).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(3_000);
 
     // Every device that has ever been saved has at least one audit revision.
     // The pre-fix code fired the query without the id, so entities was always [].
@@ -377,18 +382,19 @@ test.describe('BUG-18: DnD week filter shows entries for past weeks', () => {
     await withAuthInterceptor(page);
     await page.goto('/dashboard/distributions-and-deliveries');
     await expect(page.locator('table.dataTable')).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(1_500);
 
     // Week buttons should be present
     const weekBtns = page.locator('button.btn-outline-primary, button.btn-primary');
+    await weekBtns.first().waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
     if (!(await weekBtns.first().isVisible())) {
       test.skip(true, 'No week filter buttons visible — skipping');
       return;
     }
 
     // Click the first week button (oldest week — most likely to have historical data)
+    const weekReload = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
     await weekBtns.first().click();
-    await page.waitForTimeout(2_000);
+    await weekReload;
 
     // Table must still be present (not broken by the filter)
     await expect(page.locator('table.dataTable')).toBeVisible();
@@ -516,10 +522,14 @@ test.describe('BUG-09: Device request audit table loads correctly', () => {
       test.skip(true, 'Audit Table tab not found — skipping');
       return;
     }
+    const auditResp = page.waitForResponse(
+      r => r.url().includes('/graphql') && /getDeviceRequestAuditTrail|deviceRequestAudits/.test(r.request().postData() ?? '') && r.status() === 200,
+      { timeout: 15_000 },
+    ).catch(() => null);
     await auditTab.click();
+    await auditResp;
 
     await expect(page.locator('device-request-audit-component table')).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(3_000);
 
     // Every device request that has ever been saved must have at least one audit revision.
     // The pre-fix code fired the query without the id variable, so entities was always empty.
@@ -574,9 +584,9 @@ test.describe('BUG-13: Show/hide device types toggle changes field visibility', 
     await page.goto(href);
     await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('formly-form')).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(1_500);
 
     const toggleBtn = page.locator('#toggleDeviceTypesBtn');
+    await toggleBtn.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
     if (!(await toggleBtn.isVisible())) {
       test.skip(true, 'Toggle button hidden (all device types filled) — skipping');
       return;
@@ -591,7 +601,7 @@ test.describe('BUG-13: Show/hide device types toggle changes field visibility', 
 
     const before = await countVisible();
     await toggleBtn.click();
-    await page.waitForTimeout(500);
+    await expect.poll(() => countVisible(), { timeout: 5_000 }).toBeGreaterThan(before);
     const after = await countVisible();
 
     // Toggling to showAllDeviceTypes=true must reveal at least one previously hidden field
@@ -678,7 +688,6 @@ test.describe('BUG-19: Device-request filter info label has correct totals', () 
     // The status field is a ng-select inside the modal body. Open the dropdown.
     const ngSelectContainer = modalDialog.locator('.modal-body ng-select').first();
     await ngSelectContainer.click();
-    await page.waitForTimeout(300);
 
     // Pick the first option from the ng-select dropdown panel.
     const firstOption = page.locator('.ng-dropdown-panel .ng-option').first();
@@ -698,17 +707,16 @@ test.describe('BUG-19: Device-request filter info label has correct totals', () 
     // The button's text content is multi-line ("\n      Filter") so an anchored
     // regex won't match — use a plain-string substring match instead.
     const applyBtn = modalDialog.locator('.modal-footer button', { hasText: 'Filter' });
+    // A plain "info label matches the of-N-entries pattern" wait (the previous approach)
+    // resolves instantly here because infoTextBefore already matches that same pattern —
+    // it doesn't prove the AJAX reload actually happened. Wait for the real network
+    // round trip instead, started before the triggering click.
+    const filterReload = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 20_000 }).catch(() => null);
     await applyBtn.click();
-
-    // Wait for the info label to update (it will change after the AJAX reload)
-    await page.waitForFunction(
-      () => {
-        const el = document.querySelector('div.dt-info');
-        return el && /of \d[\d,]* entr/i.test(el.textContent ?? '');
-      },
-      { timeout: 20_000 }
-    );
-    await page.waitForTimeout(1_500);
+    await filterReload;
+    // Short capped settle for Angular to render the response — there's no DOM signal
+    // that reliably distinguishes "re-rendered with identical text" from "not yet rendered".
+    await page.waitForTimeout(500);
 
     const infoTextAfter = await infoEl.textContent() ?? '';
 
@@ -949,9 +957,6 @@ test.describe('DEVREQ-B1: Show/hide device types toggle reveals zero-count field
     // findDeviceRequest has returned and the model has been normalised (laptops=1 so it shows).
     await expect(page.locator('label', { hasText: 'Laptops' }).first()).toBeVisible({ timeout: 10_000 });
 
-    // Wait a tick for Angular expressions to settle
-    await page.waitForTimeout(500);
-
     // --- INITIAL STATE: Phones field must be hidden (phones=0, toggle off) ---
     // Formly evaluates hideExpression and either sets display:none on the formly-field
     // host element or removes it from the DOM entirely. Either way, the "Phones" label
@@ -994,7 +999,6 @@ test.describe('DEVREQ-B1: Show/hide device types toggle reveals zero-count field
         // Ignore: the hideExpression re-evaluation happens before this throw.
       }
     });
-    await page.waitForTimeout(1_000);
 
     // After toggle: Phones label must now be visible.
     // Pre-fix: options.detectChanges was not called so formly never re-evaluated
@@ -1016,9 +1020,13 @@ test.describe('DEVREQ-B1: Show/hide device types toggle reveals zero-count field
         }
       }
     });
-    await page.waitForTimeout(600);
 
     // After toggling off, Phones field should be hidden again (either not in DOM or display:none)
+    await expect.poll(async () => {
+      const loc = page.locator('label', { hasText: 'Phones' }).first();
+      return (await loc.count()) === 0 || !(await loc.isVisible());
+    }, { timeout: 5_000 }).toBe(true);
+
     const phonesLabelAfterToggleOff = page.locator('label', { hasText: 'Phones' }).first();
     const phonesLabelCount = await phonesLabelAfterToggleOff.count();
     if (phonesLabelCount > 0) {
@@ -1038,7 +1046,8 @@ test.describe('BUG-14: Distributions & Deliveries week filter keeps table in car
     await withAuthInterceptor(page);
     await page.goto('/dashboard/distributions-and-deliveries');
     await expect(page.locator('table.dataTable')).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(1_000);
+    // Wait for the card/card-body/table nesting to be in place (structural, not data-dependent).
+    await expect(page.locator('.card .card-body table.dataTable')).toBeVisible({ timeout: 10_000 });
 
     // Verify the table is inside .card > .card-body before any filter click
     const tableInCard = await page.evaluate(() => {
@@ -1050,8 +1059,12 @@ test.describe('BUG-14: Distributions & Deliveries week filter keeps table in car
     // Click the first week filter button
     const weekBtn = page.locator('button.btn-outline-primary, button.btn-primary').first();
     if (await weekBtn.isVisible()) {
+      // Wait for the reload response the click triggers — started before the click
+      // fires, per the DataTables-specs calibration (response-waits, not blind sleeps,
+      // are what keeps BUG-14 stable).
+      const weekReload = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
       await weekBtn.click();
-      await page.waitForTimeout(1_000);
+      await weekReload;
 
       // Table must still be inside the card after the filter is applied
       const tableInCardAfter = await page.evaluate(() => {
@@ -1153,11 +1166,14 @@ test.describe('BUG-20: Devices tab on device-request record shows assigned kits'
     const devicesTab = page.locator('ul.nav-tabs .nav-link', { hasText: /\d+ Device.*Assigned/i });
     await expect(devicesTab).toBeVisible({ timeout: 15_000 });
 
+    const kitsResp = page.waitForResponse(
+      r => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('findAllKits') && r.status() === 200,
+      { timeout: 15_000 },
+    ).catch(() => null);
     await devicesTab.click();
     await expect(devicesTab).toHaveClass(/active/, { timeout: 5_000 });
-
     // Wait for kit-component's DataTable to finish its AJAX
-    await page.waitForTimeout(3_000);
+    await kitsResp;
 
     // The kit-component table must be visible
     await expect(page.locator('kit-component table.dataTable')).toBeVisible({ timeout: 10_000 });
@@ -1194,7 +1210,13 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
     }
     // If GraphQL is failing (expired token / network error), dt-info will show 0 entries.
     // Skip early so we don't spend 60s iterating empty rows.
-    await page.waitForTimeout(2_000);
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('div.dt-info, .dataTables_info');
+        return el && /of \d[\d,]* entr/i.test(el.textContent ?? '');
+      },
+      { timeout: 15_000 },
+    ).catch(() => {});
     const infoText = await page.locator('div.dt-info, .dataTables_info').first().textContent().catch(() => '');
     if (/0 to 0 of 0/.test(infoText)) {
       test.skip(true, 'Devices list returned 0 entries — GraphQL may be unavailable (expired token?), skipping');
@@ -1205,8 +1227,9 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
     // kits (default page size) on UAT rarely include one with a linked request.
     const pageSizeSelect = page.locator('select[name$="_length"]').first();
     if (await pageSizeSelect.count() > 0) {
+      const pageSizeReload = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
       await pageSizeSelect.selectOption('100').catch(() => {});
-      await page.waitForTimeout(2_000);
+      await pageSizeReload;
     }
 
     // Collect all kit hrefs from the current page up-front. Iterating with
@@ -1249,11 +1272,14 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
 
     // We are already on the kit page with the Device Requests tab visible.
     const requestsTab = page.locator('ul.nav-tabs .nav-link', { hasText: 'Device Requests' });
+    const deviceRequestsResp = page.waitForResponse(
+      r => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('deviceRequestConnection') && r.status() === 200,
+      { timeout: 15_000 },
+    ).catch(() => null);
     await requestsTab.click();
     await expect(requestsTab).toHaveClass(/active/, { timeout: 5_000 });
-
     // Wait for device-request-component's AJAX to complete
-    await page.waitForTimeout(3_000);
+    await deviceRequestsResp;
 
     // The device-request-component table must be visible
     await expect(page.locator('device-request-component table.dataTable')).toBeVisible({ timeout: 10_000 });
@@ -1344,24 +1370,35 @@ test.describe('ORG-B2: Find Email with unknown email shows not-found prompt', ()
       }));
     });
 
-    await page.waitForTimeout(800);
+    // After the ward bypass, the form either shows the Lambeth/Southwark radio question
+    // or goes straight to the org autocomplete — wait for whichever appears.
+    await page.locator('input[type=radio][value="true"], ng-select input').first()
+      .waitFor({ state: 'visible', timeout: 10_000 });
 
     // Answer Yes to the Lambeth/Southwark question if present
     const yesRadio = page.locator('input[type=radio][value="true"]').first();
     if (await yesRadio.count() > 0) {
       await yesRadio.check({ force: true });
-      await page.waitForTimeout(300);
     }
 
-    // Type into the org autocomplete
+    // Type into the org autocomplete — wait for the autocomplete query response so the
+    // option list reflects real (mocked) data before we look for it.
     const orgInput = page.locator('ng-select input').first();
     await orgInput.waitFor({ state: 'visible', timeout: 10_000 });
+    const orgSearchResp = page.waitForResponse(
+      r => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('findAutocompleteReferringOrgs'),
+      { timeout: 10_000 },
+    ).catch(() => null);
     await orgInput.fill('Tes');
-    await page.waitForTimeout(800);
+    await orgSearchResp;
 
     // Select the first matched option
     const option = page.locator('.ng-option').first();
     await option.waitFor({ state: 'visible', timeout: 5_000 });
+    // ng-select's CDK-backed option list can reflow briefly right after the data
+    // arrives; a short capped settle avoids the click landing before the option's
+    // position stabilises (no DOM signal distinguishes "rendered" from "stable").
+    await page.waitForTimeout(500);
     await option.click();
 
     // Wait for the About you section
@@ -1372,11 +1409,14 @@ test.describe('ORG-B2: Find Email with unknown email shows not-found prompt', ()
     await emailInput.waitFor({ state: 'visible', timeout: 5_000 });
     await emailInput.fill('unknown-email@example.com');
 
-    // Click Find Email
+    // Click Find Email — wait for the lookup response the click triggers.
     const findEmailBtn = page.locator('button', { hasText: 'Find Email' });
+    const lookupResp = page.waitForResponse(
+      r => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('referringOrganisationContactsPublic'),
+      { timeout: 10_000 },
+    ).catch(() => null);
     await findEmailBtn.click();
-
-    await page.waitForTimeout(2_000);
+    await lookupResp;
 
     // The not-found prompt must be visible
     // Pre-fix: hideExpression mutation was not reactive; field stayed hidden.
