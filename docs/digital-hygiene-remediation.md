@@ -11,11 +11,15 @@ Time = estimated agent wall-clock.
 
 ## Current status
 
-- **Active batch:** 2 (CSP) — PR open from `claude/hygiene-batch2`; Batch 1 merged (PR #89)
-- **Next action:** after Batch 2 merges + UAT deploy, run the deployed-UAT suite
-  (`npx playwright test --config playwright.config.uat.ts`) and check the browser console for CSP
-  violations across login, dashboard, and the public referral form; then Batch 3
-- **Last updated:** 2026-07-03 (afternoon)
+- **Batches 1 & 2 complete and verified on UAT** (PRs #89, #90, #91, #92 merged; deploys green).
+  Deployed-UAT suite: 51 passed / 9 data-skips / 1 known pre-existing failure (DEVREQ-B1 data
+  drift). CSP live with zero violations across dashboard, devices, kit-info interactions, and
+  the public referral form.
+- **Next action:** Batch 3 (correctness sweep, 3.1–3.4) on a fresh branch off dev. Note 3.2's
+  scope shrinks slightly: `map-view` is deleted by 3.3. Remember: **branch fresh from dev for
+  every PR** — stacking follow-ups on a squash-merged branch causes self-conflicts.
+- **UAT is clean for manual UI testing** as of 2026-07-03 ~15:30.
+- **Last updated:** 2026-07-03 (late afternoon)
 
 ### E2E harness notes (2026-07-03)
 
@@ -88,7 +92,7 @@ Pause point: PR open, this tracker committed.
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
 | [x] | 2.1 | CSP + nosniff/Referrer-Policy/Permissions-Policy in existing `src/staticwebapp.config.json`. Origins beyond the obvious: ward-lookup iframe (`communitytechaid.github.io`), Places proxy worker (`cta-places-proxy.community-techaid.workers.dev`), Apps Script PDF fetch (`script.google.com` + `*.googleusercontent.com` redirect), Wix logos (img). No `unsafe-inline`/`unsafe-eval` in script-src; `unsafe-inline` required for style-src (Angular runtime style injection) | M | 45–60m | Opus |
-| [ ] | 2.2 | Post-merge on UAT: deployed-UAT suite + verify Auth0 round-trip, GraphQL load, Typeform widget, ward iframe, no CSP console violations | S | 20m | Sonnet |
+| [x] | 2.2 | Verified on UAT 2026-07-03: deployed suite 51P/9S/1F(known), zero CSP violations incl. kit-info Save interaction; two soak rounds fixed Typeform CORS, fonts, NGXS eval, formly string-expression eval (see notes below) | S | 20m | Sonnet |
 
 **Second UAT soak finding (2026-07-03, caught by the deployed-UAT suite, fixed in follow-up #2):**
 - ngx-formly evaluates STRING-valued expressions (`hideExpression`, `expressionProperties`
