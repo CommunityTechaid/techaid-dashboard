@@ -360,7 +360,7 @@ export class OrgRequestComponent implements AfterViewChecked {
           show: false
         },
         expressionProperties: {
-          'validation.show': 'model.showErrorState',
+          'validation.show': (model) => !!model?.showErrorState,
         }
       },
       {
@@ -377,7 +377,7 @@ export class OrgRequestComponent implements AfterViewChecked {
           show: false
         },
         expressionProperties: {
-          'validation.show': 'model.showErrorState',
+          'validation.show': (model) => !!model?.showErrorState,
         }
       },
       {
@@ -426,7 +426,7 @@ export class OrgRequestComponent implements AfterViewChecked {
       show: false
     },
     expressionProperties: {
-      'validation.show': 'model.showErrorState',
+      'validation.show': (model) => !!model?.showErrorState,
     }
   }
   emailField: FormlyFieldConfig = {
@@ -456,7 +456,7 @@ export class OrgRequestComponent implements AfterViewChecked {
       show: false
     },
     expressionProperties: {
-      'validation.show': 'model.showErrorState',
+      'validation.show': (model) => !!model?.showErrorState,
     }
   }
 

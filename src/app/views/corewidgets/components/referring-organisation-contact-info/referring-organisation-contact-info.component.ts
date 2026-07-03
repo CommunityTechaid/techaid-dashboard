@@ -170,8 +170,8 @@ export class ReferringOrganisationContactInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         },
         this.referringOrganisationField
@@ -196,8 +196,8 @@ export class ReferringOrganisationContactInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         },
         {
@@ -213,8 +213,8 @@ export class ReferringOrganisationContactInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         }
       ]
@@ -236,7 +236,7 @@ export class ReferringOrganisationContactInfoComponent {
             show: false
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
+            'validation.show': (model) => !!model?.showErrorState,
           }
         }
       ]

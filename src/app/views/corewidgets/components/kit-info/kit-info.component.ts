@@ -360,7 +360,7 @@ export class KitInfoComponent {
         const s = model?.subStatus || {};
         return !!(s.needsFurtherInvestigation || s.needsSparePart || s.installationOfOSFailed || s.wipeFailed || s.lockedToUser);
       },
-      'validation.show': 'model.showErrorState'
+      'validation.show': (model) => !!model?.showErrorState
     }
   }
 
@@ -599,7 +599,7 @@ export class KitInfoComponent {
                 ],
                 required: true
               },
-              hideExpression: 'model.type != \'SMARTPHONE\''
+              hideExpression: (model) => model?.type !== 'SMARTPHONE'
             },
             {
               key: 'subStatus.network',
@@ -624,7 +624,7 @@ export class KitInfoComponent {
                 ],
                 required: true
               },
-              hideExpression: 'model.type != \'COMMSDEVICE\''
+              hideExpression: (model) => model?.type !== 'COMMSDEVICE'
             },
             {
                 key: 'subStatus.installedOSName',

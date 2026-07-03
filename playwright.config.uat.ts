@@ -16,10 +16,13 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e/tests',
+  // File-level parallelism — see the note in playwright.config.ts. This config
+  // has no local dev-server bottleneck (tests hit the deployed SWA host), so it
+  // sustains 4 workers cleanly (calibrated 2026-07-03: 4.3m serial → 3.4m).
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  workers: process.env.CI ? 2 : 4,
   reporter: 'html',
   timeout: 60_000,
   use: {

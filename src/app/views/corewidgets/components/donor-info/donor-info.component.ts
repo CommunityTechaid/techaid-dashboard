@@ -180,8 +180,8 @@ export class DonorInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         },
         this.donorParentField
@@ -206,9 +206,9 @@ export class DonorInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'templateOptions.required': 'model.phoneNumber.length == 0',
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'templateOptions.required': (model) => !model?.phoneNumber?.length,
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         },
         {
@@ -225,9 +225,9 @@ export class DonorInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'templateOptions.required': 'model.email.length == 0',
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'templateOptions.required': (model) => !model?.email?.length,
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         }
 
@@ -251,8 +251,8 @@ export class DonorInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         },
         {
