@@ -121,7 +121,7 @@ Pause point: PR open, this tracker committed.
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
 | [x] | 3.1 | Done 2026-07-03: `resetOnHide: false` on 8 fields (incl. `ramCapacity`, missed by the review) + red-first `kit-resetonhide.spec.ts` (@mocked). Red evidence: type toggle scrubbed `typeOfStorage` SSD→'' in the Save payload | M | 1–1.5h | Opus |
-| [ ] | 3.2 | Migrate 24 buttons / 15 templates off `[disabled]="form.invalid"` → `warnIfFormInvalid()`; extend `save-button-clickable.spec.ts` | M | 1–2h | Sonnet |
+| [x] | 3.2 | Done 2026-07-03: 23 buttons / 14 templates → `warnIfFormInvalid()` + 2 red-first spec extensions. **New findings:** (a) several buttons guarded the WRONG FormGroup — kit-index quick-create silently fired with invalid data (fixed: guards now use the actually-bound form); (b) two never-openable `createApi` modals reference nonexistent handlers (`kit-component.html`, `user-index.html`) — dead template code, flagged for a follow-up delete; (c) components where `applyFilter()` has multiple internal callers got a guarded `applyFilterFromModal()` wrapper so quick-filter buttons aren't blocked | M | 1–2h | Sonnet |
 | [x] | 3.3 | Done 2026-07-03: deleted `reports/`, `map/`, `map-view/` (393 lines) + route imports + commented blocks. Bonus finding for 6.4: `ngx-google-places-autocomplete` was already fully unreferenced (place field uses the proxy worker), and `@types/googlemaps` + `tsconfig.app.json` `"types": ["googlemaps"]` are now orphaned — remove all three together in 6.4 | S | 30m | Haiku |
 | [ ] | 3.4 | Apps Script URL → environment config; error toasts on lookup `watchQuery` subs; standardize `date:'medium'` outliers; native `confirm()` → modal in 3 `custom-notes.ts` | M | 1h | Sonnet |
 

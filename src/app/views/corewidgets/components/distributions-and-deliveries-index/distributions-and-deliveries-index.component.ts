@@ -11,7 +11,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
-import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, warnIfFormInvalid } from '@app/shared/utils';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
@@ -316,6 +316,14 @@ export class DistributionsAndDeliveriesIndexComponent {
     delete filterData['collectionDateEnd'];
     delete filterData['status'];
     this.applyFilter(filterData);
+  }
+
+  // Guards the Filter-modal submit button specifically; applyFilter itself stays
+  // unguarded because it's also called internally by the week/status quick-filter
+  // buttons and on initial load, which don't go through filterForm.
+  applyFilterFromModal(data) {
+    if (warnIfFormInvalid(this.filterForm, this.filterFields, this.toastr)) return;
+    this.applyFilter(data);
   }
 
   applyFilter(data) {

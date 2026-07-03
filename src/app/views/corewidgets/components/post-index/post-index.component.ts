@@ -17,6 +17,7 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllPosts($page: PaginationInput,, $term: String) {
@@ -277,6 +278,7 @@ export class PostIndexComponent {
   }
 
   createEntity(data: any) {
+    if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     data.content = '';
     this.apollo.mutate({
       mutation: CREATE_ENTITY,

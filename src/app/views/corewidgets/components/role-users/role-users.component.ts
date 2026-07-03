@@ -12,6 +12,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from '
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 import { AppInitialComponent } from '../../../../shared/components/app-initial/app-initial.component';
 import { RouterLink } from '@angular/router';
@@ -299,6 +300,7 @@ export class RoleUsersComponent {
   }
 
   assignRoles(data: any) {
+    if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     this.apollo.mutate({
       mutation: CREATE_USER_ROLES,
       variables: {

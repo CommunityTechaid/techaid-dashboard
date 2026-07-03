@@ -12,6 +12,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from '
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 
 const QUERY_PERMISSIONS = gql`
@@ -419,6 +420,7 @@ export class UserPermissionsComponent {
   }
 
   assignPermissions(data: any) {
+    if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     data.users = [this._userId];
     this.apollo.mutate({
       mutation: CREATE_PERMISSION,

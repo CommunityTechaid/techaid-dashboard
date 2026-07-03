@@ -8,7 +8,7 @@ import {
   from,
 } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { KIT_TYPES } from '@app/shared/utils';
+import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -370,6 +370,14 @@ export class KitComponent {
   _donorParentId = -1;
   _where = {};
   _whereSerialized = '{}';
+
+  // Guards the Filter-modal submit button specifically; applyFilter itself stays
+  // unguarded because it's also called internally from the `where` @Input setter
+  // and on initial load, which don't go through filterForm.
+  applyFilterFromModal(data) {
+    if (warnIfFormInvalid(this.filterForm, this.filterFields, this.toastr)) return;
+    this.applyFilter(data);
+  }
 
   applyFilter(data) {
     const filter: any = {};

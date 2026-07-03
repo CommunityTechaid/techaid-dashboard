@@ -17,6 +17,7 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllDonors(
@@ -238,6 +239,14 @@ export class DonorComponent {
   _where = {};
   _donorParentId = -1;
 
+  // Guards the Filter-modal submit button specifically; applyFilter itself stays
+  // unguarded because it's also called internally from the `where` @Input setter
+  // and on initial load, which don't go through filterForm.
+  applyFilterFromModal(data) {
+    if (warnIfFormInvalid(this.filterForm, this.filterFields, this.toastr)) return;
+    this.applyFilter(data);
+  }
+
   applyFilter(data) {
     const filter = {};
     let count = 0;
@@ -397,6 +406,7 @@ export class DonorComponent {
 
 
   createEntity(data: any) {
+    if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     data.donorParentId = this._donorParentId;
 
     this.apollo.mutate({
