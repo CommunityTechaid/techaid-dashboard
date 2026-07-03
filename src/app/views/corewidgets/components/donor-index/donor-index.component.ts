@@ -169,7 +169,7 @@ export class DonorIndexComponent {
             required: true
           },
           expressionProperties: {
-            'templateOptions.required': 'model.phoneNumber.length == 0',
+            'templateOptions.required': (model) => !model?.phoneNumber?.length,
           },
         },
         {
@@ -183,7 +183,7 @@ export class DonorIndexComponent {
             required: true
           },
           expressionProperties: {
-            'templateOptions.required': 'model.email.length == 0',
+            'templateOptions.required': (model) => !model?.email?.length,
           },
         }
       ]
@@ -206,8 +206,8 @@ export class DonorIndexComponent {
             show: false,
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         },
         {

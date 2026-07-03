@@ -114,7 +114,7 @@ export class DistributionsAndDeliveriesIndexComponent {
         show: false
       },
       expressionProperties: {
-        'validation.show': 'model.showErrorState',
+        'validation.show': (model) => !!model?.showErrorState,
       }
     },
     {
@@ -131,7 +131,7 @@ export class DistributionsAndDeliveriesIndexComponent {
             required: true
           },
           expressionProperties: {
-            'templateOptions.required': '!model.phoneNumber.length'
+            'templateOptions.required': (model) => !model?.phoneNumber?.length
           }
         },
         {
@@ -147,7 +147,7 @@ export class DistributionsAndDeliveriesIndexComponent {
             required: true
           },
           expressionProperties: {
-            'templateOptions.required': '!model.address.length'
+            'templateOptions.required': (model) => !model?.address?.length
           }
         }
       ]

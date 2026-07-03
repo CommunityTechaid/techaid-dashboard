@@ -101,7 +101,7 @@ export class ReferringOrganisationIndexComponent {
         show: false
       },
       expressionProperties: {
-        'validation.show': 'model.showErrorState',
+        'validation.show': (model) => !!model?.showErrorState,
       }
     },
     {
@@ -118,7 +118,7 @@ export class ReferringOrganisationIndexComponent {
             required: true
           },
           expressionProperties: {
-            'templateOptions.required': '!model.website.length'
+            'templateOptions.required': (model) => !model?.website?.length
           }
         }
       ]
@@ -137,7 +137,7 @@ export class ReferringOrganisationIndexComponent {
             required: true
           },
           expressionProperties: {
-            'templateOptions.required': '!model.phoneNumber.length'
+            'templateOptions.required': (model) => !model?.phoneNumber?.length
           }
         }
       ]

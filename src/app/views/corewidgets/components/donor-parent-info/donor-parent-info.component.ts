@@ -141,7 +141,7 @@ export class DonorParentInfoComponent {
             required: true
           },
           expressionProperties: {
-            'templateOptions.required': '!model.website.length'
+            'templateOptions.required': (model) => !model?.website?.length
           }
         },
         {

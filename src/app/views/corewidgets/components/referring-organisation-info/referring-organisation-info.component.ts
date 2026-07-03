@@ -89,8 +89,8 @@ export class ReferringOrganisationInfoComponent {
         show: false,
       },
       expressionProperties: {
-        'validation.show': 'model.showErrorState',
-        'templateOptions.disabled': 'formState.disabled',
+        'validation.show': (model) => !!model?.showErrorState,
+        'templateOptions.disabled': (model, formState) => !!formState?.disabled,
       },
     },
     {
@@ -109,8 +109,8 @@ export class ReferringOrganisationInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         },
         {
@@ -126,8 +126,8 @@ export class ReferringOrganisationInfoComponent {
             show: false,
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
-            'templateOptions.disabled': 'formState.disabled',
+            'validation.show': (model) => !!model?.showErrorState,
+            'templateOptions.disabled': (model, formState) => !!formState?.disabled,
           },
         },
       ],

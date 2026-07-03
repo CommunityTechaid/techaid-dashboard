@@ -328,7 +328,7 @@ export class KitComponent {
             show: false
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
+            'validation.show': (model) => !!model?.showErrorState,
           }
             },
         {
@@ -343,7 +343,7 @@ export class KitComponent {
             show: false
           },
           expressionProperties: {
-            'validation.show': 'model.showErrorState',
+            'validation.show': (model) => !!model?.showErrorState,
           }
         },
       ]
