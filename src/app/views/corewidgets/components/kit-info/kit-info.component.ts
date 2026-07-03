@@ -387,6 +387,7 @@ export class KitInfoComponent {
           key: 'ramCapacity',
           type: 'kit-info-input',
           className: 'px-1',
+          resetOnHide: false,
           defaultValue: '',
           templateOptions: {
             label: "RAM",
@@ -403,6 +404,7 @@ export class KitInfoComponent {
           key: 'typeOfStorage',
           type: 'kit-info-input',
           className: 'px-1',
+          resetOnHide: false,
           defaultValue: '',
           templateOptions: {
             label: "Storage Type",
@@ -424,6 +426,7 @@ export class KitInfoComponent {
           key: 'storageCapacity',
           type: 'kit-info-input',
           className: 'px-1',
+          resetOnHide: false,
           defaultValue: '',
           templateOptions: {
             label: "Capacity",
@@ -440,6 +443,7 @@ export class KitInfoComponent {
           key: 'tpmVersion',
           type: 'kit-info-input',
           className: 'px-1',
+          resetOnHide: false,
           defaultValue: '',
           templateOptions: {
             label: "TPM Version",
@@ -456,6 +460,7 @@ export class KitInfoComponent {
           key: 'batteryHealth',
           type: 'kit-info-input',
           className: 'px-1',
+          resetOnHide: false,
           defaultValue: '',
           templateOptions: {
             label: "Battery Health",
@@ -599,6 +604,7 @@ export class KitInfoComponent {
                 ],
                 required: true
               },
+              resetOnHide: false,
               hideExpression: (model) => model?.type !== 'SMARTPHONE'
             },
             {
@@ -624,12 +630,14 @@ export class KitInfoComponent {
                 ],
                 required: true
               },
+              resetOnHide: false,
               hideExpression: (model) => model?.type !== 'COMMSDEVICE'
             },
             {
                 key: 'subStatus.installedOSName',
                 type: 'choice',
                 className: 'text-left',
+                resetOnHide: false,
                 templateOptions: {
                   label: 'Installed OS',
                   description: 'What OS is installed on this device?',

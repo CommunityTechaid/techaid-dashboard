@@ -120,7 +120,7 @@ Pause point: PR open, this tracker committed.
 
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
-| [ ] | 3.1 | kit-info resetOnHide completion (6 fields) + red-first spec (extend `kit-locked-status.spec.ts` mocked pattern) | M | 1–1.5h | Opus |
+| [x] | 3.1 | Done 2026-07-03: `resetOnHide: false` on 8 fields (incl. `ramCapacity`, missed by the review) + red-first `kit-resetonhide.spec.ts` (@mocked). Red evidence: type toggle scrubbed `typeOfStorage` SSD→'' in the Save payload | M | 1–1.5h | Opus |
 | [ ] | 3.2 | Migrate 24 buttons / 15 templates off `[disabled]="form.invalid"` → `warnIfFormInvalid()`; extend `save-button-clickable.spec.ts` | M | 1–2h | Sonnet |
 | [x] | 3.3 | Done 2026-07-03: deleted `reports/`, `map/`, `map-view/` (393 lines) + route imports + commented blocks. Bonus finding for 6.4: `ngx-google-places-autocomplete` was already fully unreferenced (place field uses the proxy worker), and `@types/googlemaps` + `tsconfig.app.json` `"types": ["googlemaps"]` are now orphaned — remove all three together in 6.4 | S | 30m | Haiku |
 | [ ] | 3.4 | Apps Script URL → environment config; error toasts on lookup `watchQuery` subs; standardize `date:'medium'` outliers; native `confirm()` → modal in 3 `custom-notes.ts` | M | 1h | Sonnet |
