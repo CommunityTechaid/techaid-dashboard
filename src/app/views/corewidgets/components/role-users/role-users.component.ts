@@ -198,7 +198,10 @@ export class RoleUsersComponent {
 
           }
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load users for filter');
+            return of([]);
+          }),
           tap(() => this.apiLoading = false),
           switchMap(res => {
             const data = res['data']['users']['content'].map(v => {

@@ -184,7 +184,10 @@ export class UserRolesComponent {
           term: term,
           userId: this._userId,
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load roles for filter');
+            return of([]);
+          }),
           tap(() => this.apiLoading = false),
           switchMap(res => {
             const data = res['data']['roles']['content'].map(v => {

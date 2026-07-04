@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, TemplateRef } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { DatePipe } from '@angular/common';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 
 const UPDATE_NOTE = gql`
@@ -36,10 +37,10 @@ mutation deleteNote($id: ID!) {
           <div class="d-flex row justify-content-between">
             <div class="d-flex col-9 flex-row align-items-center">
               <span style="max-width:40%" class="small text-muted text-truncate  mb-0 ms-2"><em>{{ note.volunteer }}</em></span>
-              <span class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date : "dd/MM/yy HH:mm" }})</em></span>
+              <span class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date:'medium' }})</em></span>
             </div>
             <div class="d-flex col-2 flex-row">
-              <button (click)="deleteNote(note.id)" class="btn rounded-0" type="button" title="Delete"><i style="color: #c51616" class="fas fa-window-close fa-lg"></i></button>
+              <button (click)="confirmDeleteNote(note.id, confirmDelete)" class="btn rounded-0" type="button" title="Delete"><i style="color: #c51616" class="fas fa-window-close fa-lg"></i></button>
             </div>
           </div>
         </div>
@@ -47,15 +48,31 @@ mutation deleteNote($id: ID!) {
     </div>
   }
 </div>
+<ng-template #confirmDelete let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title">Are you absolutely sure?</h4>
+  </div>
+  <div class="modal-body">
+    <small>
+      <p>Are you really sure you want to delete this note? This cannot be undone!</p>
+    </small>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+    <button type="button" class="btn btn-danger btn-sm" (click)="deleteNote(pendingDeleteId); c('Close click')">YES, DELETE</button>
+  </div>
+</ng-template>
 `,
     imports: [DatePipe]
 })
 export class FormlyCustomNote extends FieldType {
 
+    pendingDeleteId: any;
 
     constructor(
         private toastr: ToastrService,
-        private apollo: Apollo
+        private apollo: Apollo,
+        private modalService: NgbModal
     ) {
         super();
     }
@@ -89,10 +106,12 @@ export class FormlyCustomNote extends FieldType {
  */
     /* Delete note calls the delete mutation directly and reloads the page to refresh the listings. There might be a way to prevent reload but it's too complicated. Also KISS/YAGNI 
      */
+    confirmDeleteNote(id: any, content: TemplateRef<any>) {
+        this.pendingDeleteId = id;
+        this.modalService.open(content, { centered: true });
+    }
+
     deleteNote(id: any) {
-        if(!confirm('Are you sure you want to delete this entry?')){
-            return
-        }
         this.apollo.mutate<any>({
             mutation: DELETE_NOTE,
             variables: { id: id }

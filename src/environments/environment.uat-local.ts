@@ -16,4 +16,5 @@ export const environment: ConfigParams = {
   auth_audience: 'https://api.communitytechaid.org.uk',
   auth_enabled: true,
   remote_config: false,
+  pdf_generator_url: 'https://script.google.com/macros/s/AKfycbwvsi92ddWWf_LDn6rJdY3b9eTU0UfqIWwZsSpUCy8xrtdW1R6HsKwFECqbMMZRH-J1/exec',
 };

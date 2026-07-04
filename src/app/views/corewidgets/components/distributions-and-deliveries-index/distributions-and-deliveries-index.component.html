@@ -246,7 +246,7 @@
       <td>{{dt.clientRef}}</td>
       <td>{{ dt.collectionMethod === 'COLLECTION' ? 'Collection' : (dt.collectionMethod === 'DELIVERY' ? 'Delivery' : '') }}</td>
       <td [title]="dt.collectionDate" class="cursor-hand" placement="left" ngbTooltip="{{dt.collectionDate | date:'full'}}" triggers="click:blur">
-        {{ dt.collectionDate ? (dt.collectionDate | date:'mediumDate') : '-' }}
+        {{ dt.collectionDate ? (dt.collectionDate | date:'medium') : '-' }}
       </td>
       <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
         {{ dt.createdAt | date:'medium' }}
