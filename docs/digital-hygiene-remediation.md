@@ -11,15 +11,17 @@ Time = estimated agent wall-clock.
 
 ## Current status
 
-- **Batches 1 & 2 complete and verified on UAT** (PRs #89, #90, #91, #92 merged; deploys green).
-  Deployed-UAT suite: 51 passed / 9 data-skips / 1 known pre-existing failure (DEVREQ-B1 data
-  drift). CSP live with zero violations across dashboard, devices, kit-info interactions, and
-  the public referral form.
-- **Next action:** Batch 3 (correctness sweep, 3.1–3.4) on a fresh branch off dev. Note 3.2's
-  scope shrinks slightly: `map-view` is deleted by 3.3. Remember: **branch fresh from dev for
-  every PR** — stacking follow-ups on a squash-merged branch causes self-conflicts.
-- **UAT is clean for manual UI testing** as of 2026-07-03 ~15:30.
-- **Last updated:** 2026-07-03 (late afternoon)
+- **Batches 1–3 complete and verified on UAT** (PRs #89–#98 merged). Latest deployed-UAT suite:
+  54 passed / 9 data-skips / 1 known pre-existing failure (DEVREQ-B1 data drift). E2E speed
+  levers also done (#94): full suite ~3-4m, `npm run e2e:fast` mocked subset ~30s.
+- **In progress:** Batch 4 — CI gate PR carries this tracker update; ESLint (4.3) and skip
+  hygiene (4.4) follow. Then Batch 5 (write-flow specs) and Batch 6 (perf).
+- **Follow-up queue (flagged, not yet scheduled):** dead `createApi` modals in
+  `kit-component.html` / `user-index.html` (nonexistent handlers, see 3.2 notes); googlemaps
+  trio removal in 6.4; self-hosting the Poppins font (6.x candidate).
+- Remember: **branch fresh from dev for every PR** — stacking follow-ups on a squash-merged
+  branch causes self-conflicts.
+- **Last updated:** 2026-07-04 (morning)
 
 ### E2E harness notes (2026-07-03)
 
@@ -129,8 +131,8 @@ Pause point: PR open, this tracker committed.
 
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
-| [ ] | 4.1 | Read `e2e/auth.setup.ts`; decide CI auth strategy (creds secrets vs mocked-subset + nightly UAT job) | S | 15m | Sonnet |
-| [ ] | 4.2 | `.github/workflows/ci.yml`: PR→dev gate, prod build + Playwright per 4.1 | M | 1h | Sonnet |
+| [x] | 4.1 | Decided + proven 2026-07-04: **mocked-subset + self-minted token, zero secrets** — auth0-spa-js never verifies cached-token signatures and @mocked specs stub all GraphQL, so a fake JWT passes `e2e:fast` 12/12 (verified locally). UAT-data specs stay local/pre-merge; nightly UAT job deferred until a token-refresh secret strategy exists | S | 15m | Sonnet |
+| [x] | 4.2 | Done 2026-07-04: `.github/workflows/ci.yml` — PR→dev gate with `build` (prod compile) + `e2e-mocked` (fake token → `e2e:fast`) jobs, report artifact on failure. The PR introducing it proves the gate fires | M | 1h | Sonnet |
 | [ ] | 4.3 | ESLint via `ng add @angular-eslint/schematics`; fix auto-fixables; gate errors in CI | M | 1–2h | Sonnet |
 | [ ] | 4.4 | Skip hygiene: reasons on every `test.skip(true,…)`, skip-count in CI summary, fail if >40% skipped | S | 30m | Haiku |
 
