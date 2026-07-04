@@ -13,6 +13,7 @@ import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
 import { getKitTypeLabel, warnIfFormInvalid } from '@app/shared/utils';
+import { environment } from '@env/environment';
 
 import { KitComponent } from '../kit-component/kit-component.component';
 import { DeviceRequestAuditComponent } from '../device-request-audit-component/device-request-audit-component.component';
@@ -873,7 +874,10 @@ export class DeviceRequestInfoComponent {
         switchMap(term => from(referringOrganisationContactRef.refetch({
           term: term, referringOrganisationId: this.referringOrganisationId
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load referring organisation contacts for filter');
+            return of([]);
+          }),
           tap(() => this.referringOrganisationContactLoading = false),
           switchMap(res => {
             const data = res['data']['referringOrganisationContactsConnection']['content'].map(v => {
@@ -1148,8 +1152,7 @@ export class DeviceRequestInfoComponent {
         isDelivery: this.model.collectionMethod === 'DELIVERY' ? 'X' : '',
       };
 
-      // TODO: Replace with your actual Google Apps Script URL
-      const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbwvsi92ddWWf_LDn6rJdY3b9eTU0UfqIWwZsSpUCy8xrtdW1R6HsKwFECqbMMZRH-J1/exec';
+      const appsScriptUrl = environment.pdf_generator_url;
 
       const response = await fetch(appsScriptUrl, {
         redirect: 'follow',

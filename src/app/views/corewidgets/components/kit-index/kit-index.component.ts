@@ -750,7 +750,10 @@ export class KitIndexComponent {
           term: term,
           ids: this.filterModel.deviceRequestIds || [],
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load device requests for filter');
+            return of([]);
+          }),
           tap(() => this.deviceRequestLoading = false),
           switchMap(res => {
             const data = res['data']['deviceRequestConnection']['content'].map(v => {
@@ -784,7 +787,10 @@ export class KitIndexComponent {
         switchMap(term => from(donorRef.refetch({
           term: term
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load donors for filter');
+            return of([]);
+          }),
           tap(() => this.donorLoading = false),
           switchMap(res => {
             const data = res['data']['donorsConnection']['content'].map(v => {
@@ -819,7 +825,10 @@ export class KitIndexComponent {
           term: term,
           id: this.filterModel.donorParentId || null
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load donor parents for filter');
+            return of([]);
+          }),
           tap(() => this.donorParentLoading = false),
           switchMap(res => {
             const data = res['data']['donorParentsConnection']['content'].map(v => {
@@ -854,7 +863,10 @@ export class KitIndexComponent {
           term: term,
           ids: this.filterModel.lotIds || [],
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load lot IDs for filter');
+            return of([]);
+          }),
           tap(() => this.lotIdLoading = false),
           switchMap(res => {
             const data = [...new Set(

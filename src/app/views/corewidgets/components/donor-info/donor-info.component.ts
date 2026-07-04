@@ -362,7 +362,10 @@ export class DonorInfoComponent {
         switchMap(term => from(donorParentRef.refetch({
           term: term
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load donor parents for filter');
+            return of([]);
+          }),
           tap(() => this.donorParentLoading = false),
           switchMap(res => {
             const data = res['data']['donorParentsConnection']['content'].map(v => {

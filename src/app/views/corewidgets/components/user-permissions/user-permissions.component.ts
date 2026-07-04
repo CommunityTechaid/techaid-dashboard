@@ -259,7 +259,10 @@ export class UserPermissionsComponent {
         switchMap(term => from(apiRef.refetch({
           term: term,
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load APIs for filter');
+            return of([]);
+          }),
           tap(() => this.apiLoading = false),
           switchMap(res => {
             const data = res['data']['allApisConnection']['content'].map(v => {

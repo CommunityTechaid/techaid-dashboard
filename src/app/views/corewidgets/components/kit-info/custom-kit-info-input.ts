@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
 
 import { ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 /*
 This component is a custom made formly type. This is probably not the cleanest way to do things but I could not figure out quite a bit of things needed to make it work 
@@ -66,12 +67,26 @@ Ideally, the input field should be dynamically rendered using custom selector bu
     <div>
       @if (!to.readonly) {
         <div>
-          <i (click)="editField()" class="fas fa-edit fa-xs align-self-end"></i>
+          <i (click)="confirmEditField(confirmEdit)" class="fas fa-edit fa-xs align-self-end"></i>
         </div>
       }
-  
-  
+
+
     </div>
+  <ng-template #confirmEdit let-c="close" let-d="dismiss">
+    <div class="modal-header">
+      <h4 class="modal-title">Are you absolutely sure?</h4>
+    </div>
+    <div class="modal-body">
+      <small>
+        <p>Are you sure you want to edit this device information?</p>
+      </small>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+      <button type="button" class="btn btn-primary btn-sm" (click)="toggleEdit(); c('Close click')">YES, EDIT</button>
+    </div>
+  </ng-template>
   `,
     imports: [ReactiveFormsModule, FormlyModule]
 })
@@ -80,14 +95,16 @@ export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> implemen
     choice: boolean = false;
     private destroy$ = new Subject<void>();
 
+    constructor(private modalService: NgbModal) {
+      super();
+    }
+
     toggleEdit(){
       this.editable = !this.editable
     }
 
-    editField(){
-      if (confirm("Are you sure you want to edit device information?")){
-        this.editable = !this.editable
-      }
+    confirmEditField(content: TemplateRef<any>){
+      this.modalService.open(content, { centered: true });
     }
 
     ngOnInit(){

@@ -495,7 +495,10 @@ export class KitComponent {
               ids: this.filterModel.deviceRequestIds || [],
             })
           ).pipe(
-            catchError(() => of([])),
+            catchError(() => {
+              this.toastr.error('Failed to load device requests for filter');
+              return of([]);
+            }),
             tap(() => (this.deviceRequestLoading = false)),
             switchMap((res) => {
               const data = res['data']['deviceRequestConnection'][

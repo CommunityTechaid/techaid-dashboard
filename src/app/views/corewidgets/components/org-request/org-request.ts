@@ -965,7 +965,10 @@ export class OrgRequestComponent implements AfterViewChecked {
             return from(orgRef.refetch({
               term: term
             })).pipe(
-              catchError(() => of([])),
+              catchError(() => {
+                this.toastr.error('Failed to load referring organisations for filter');
+                return of([]);
+              }),
               tap(() => this.referringOrgLoading = false),
               switchMap(res => {
                 var data = res['data']['referringOrganisationsPublic'].map(v => {

@@ -960,7 +960,10 @@ export class KitInfoComponent {
         switchMap(term => from(donorRef.refetch({
           term: term
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load donors for filter');
+            return of([]);
+          }),
           tap(() => this.donorLoading = false),
           switchMap(res => {
             const data = res['data']['donorsConnection']['content'].map(v => {
@@ -991,7 +994,10 @@ export class KitInfoComponent {
           term: term,
           numericterm: isNaN(Number(term)) ? -1 : Number(term)
           })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load device requests for filter');
+            return of([]);
+          }),
           tap(() => this.deviceRequestLoading = false),
           switchMap(res => {
             const data = res['data']['deviceRequestConnection']['content'].map(v => {

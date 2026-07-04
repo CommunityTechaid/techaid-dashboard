@@ -359,7 +359,10 @@ export class ReferringOrganisationContactInfoComponent {
         switchMap(term => from(referringOrganisationRef.refetch({
           term: term
         })).pipe(
-          catchError(() => of([])),
+          catchError(() => {
+            this.toastr.error('Failed to load referring organisations for filter');
+            return of([]);
+          }),
           tap(() => this.referringOrganisationLoading = false),
           switchMap(res => {
             const data = res['data']['referringOrganisationsConnection']['content'].map(v => {

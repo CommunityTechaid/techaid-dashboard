@@ -8,4 +8,5 @@ export interface ConfigParams {
     auth_audience: string;
     version: any;
     pusher?: any;
+    pdf_generator_url: string;
 }
