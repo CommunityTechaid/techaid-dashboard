@@ -1,0 +1,92 @@
+name: CI
+
+# PR gate for dev: production build + the fully-mocked e2e subset.
+#
+# The e2e job needs NO secrets: the @mocked specs stub every GraphQL call via
+# page.route, and auth0-spa-js never verifies the signature of cached tokens,
+# so a self-minted JWT satisfies the SDK. Specs that need live UAT data are
+# excluded here (they self-skip or fail without a real bearer token) — they
+# run locally pre-merge per docs/digital-hygiene-remediation.md.
+
+on:
+  pull_request:
+    branches:
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        # npm install, not npm ci: the Windows-maintained lockfile lacks some
+        # platform-optional entries, so npm ci rejects it on Linux ("Missing:
+        # @emnapi/core from lock file"). Deploy workflows use npm install for
+        # the same reason. Revisit if the lock is regenerated cross-platform.
+        run: npm install
+
+      - name: Production build
+        run: npx ng build --configuration production
+
+  e2e-mocked:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        # npm install, not npm ci: the Windows-maintained lockfile lacks some
+        # platform-optional entries, so npm ci rejects it on Linux ("Missing:
+        # @emnapi/core from lock file"). Deploy workflows use npm install for
+        # the same reason. Revisit if the lock is regenerated cross-platform.
+        run: npm install
+
+      - name: Install Playwright chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Mint fake token for the mocked subset
+        # Fake credentials, real format: the SDK only checks structure and
+        # expiry of cached tokens, and all GraphQL is page.route-stubbed.
+        run: |
+          TOKEN=$(node -e "
+            const b64url = o => Buffer.from(JSON.stringify(o)).toString('base64url');
+            const now = Math.floor(Date.now()/1000);
+            const payload = {
+              iss: 'https://techaid-auth.eu.auth0.com/',
+              sub: 'auth0|ci-fake-user',
+              aud: ['https://api.communitytechaid.org.uk'],
+              iat: now, exp: now + 7200,
+              scope: 'openid profile email offline_access',
+              'https://communitytechaid.org.uk/email': 'ci@example.com',
+              'https://communitytechaid.org.uk/name': 'CI Fake User',
+              permissions: []
+            };
+            console.log(b64url({alg:'RS256',typ:'JWT',kid:'ci-fake'}) + '.' + b64url(payload) + '.ci_fake_signature');
+          ")
+          E2E_BEARER_TOKEN="$TOKEN" node e2e/save-token.mjs
+
+      - name: Run mocked e2e subset
+        run: npm run e2e:fast
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
