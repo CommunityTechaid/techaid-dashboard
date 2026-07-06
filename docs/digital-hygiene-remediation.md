@@ -11,15 +11,17 @@ Time = estimated agent wall-clock.
 
 ## Current status
 
-- **Batches 1–3 complete** (PRs #89–#98 merged). Deployed-UAT suite green modulo the known
-  DEVREQ-B1 data drift; CSP live with zero violations.
-- **Batch 4 in progress:** 4.3 (ESLint) done on `claude/hygiene-batch4-eslint` — flat config
-  with a documented legacy-debt baseline (0 errors / ~1.1k baseline warnings), auto-fixes
-  applied across ~50 files, dead `typings.d.ts` + `declare require` shims removed. The CI
-  error gate itself lands with 4.2's `ci.yml`.
-- **Next action:** 4.1 (auth strategy decision) + 4.2 (`ci.yml`) + 4.4 (skip hygiene) on a
-  fresh branch off dev once the 4.3 PR merges. Remember: **branch fresh from dev for every
-  PR** — stacking follow-ups on a squash-merged branch causes self-conflicts.
+- **Batches 1–3 complete and verified on UAT** (PRs #89–#98 merged). Latest deployed-UAT suite:
+  54 passed / 9 data-skips / 1 known pre-existing failure (DEVREQ-B1 data drift). E2E speed
+  levers also done (#94): full suite ~3-4m, `npm run e2e:fast` mocked subset ~30s.
+- **Batch 4 nearly done:** 4.1+4.2 (CI gate, #99) and 4.3 (ESLint, #100 — 0 errors /
+  ~1.1k documented warn-baseline; `lint` job added to `ci.yml` in the same PR) merged.
+  Remaining: 4.4 (skip hygiene). Then Batch 5 (write-flow specs) and Batch 6 (perf).
+- **Follow-up queue (flagged, not yet scheduled):** dead `createApi` modals in
+  `kit-component.html` / `user-index.html` (nonexistent handlers, see 3.2 notes); googlemaps
+  trio removal in 6.4; self-hosting the Poppins font (6.x candidate).
+- Remember: **branch fresh from dev for every PR** — stacking follow-ups on a squash-merged
+  branch causes self-conflicts.
 - **Last updated:** 2026-07-06
 
 ### E2E harness notes (2026-07-03)
@@ -130,9 +132,9 @@ Pause point: PR open, this tracker committed.
 
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
-| [ ] | 4.1 | Read `e2e/auth.setup.ts`; decide CI auth strategy (creds secrets vs mocked-subset + nightly UAT job) | S | 15m | Sonnet |
-| [ ] | 4.2 | `.github/workflows/ci.yml`: PR→dev gate, prod build + Playwright per 4.1 | M | 1h | Sonnet |
-| [x] | 4.3 | Done 2026-07-06: angular-eslint flat config + `npm run lint`; recommended TS/template rule sets with bulk legacy rules (`no-unused-vars`, `no-explicit-any`, `prefer-inject`, `template/eqeqeq`, a11y…) downgraded to a documented warn-baseline (~1.1k warnings, 0 errors); auto-fixables fixed (~50 files, incl. 96 `implements` lifecycle interfaces); hand-fixed the remainder; deleted dead `typings.d.ts`, `declare require` shims, stray `String;` stmt. CI gate = `ng lint` step in 4.2 | M | 1–2h | Sonnet |
+| [x] | 4.1 | Decided + proven 2026-07-04: **mocked-subset + self-minted token, zero secrets** — auth0-spa-js never verifies cached-token signatures and @mocked specs stub all GraphQL, so a fake JWT passes `e2e:fast` 12/12 (verified locally). UAT-data specs stay local/pre-merge; nightly UAT job deferred until a token-refresh secret strategy exists | S | 15m | Sonnet |
+| [x] | 4.2 | Done 2026-07-04: `.github/workflows/ci.yml` — PR→dev gate with `build` (prod compile) + `e2e-mocked` (fake token → `e2e:fast`) jobs, report artifact on failure. The PR introducing it proves the gate fires | M | 1h | Sonnet |
+| [x] | 4.3 | Done 2026-07-06 (#100): angular-eslint flat config + `npm run lint`; recommended TS/template rule sets with bulk legacy rules (`no-unused-vars`, `no-explicit-any`, `prefer-inject`, `template/eqeqeq`, a11y…) downgraded to a documented warn-baseline (~1.1k warnings, 0 errors); auto-fixables fixed (~50 files, incl. 96 `implements` lifecycle interfaces); hand-fixed the remainder; deleted dead `typings.d.ts`, `declare require` shims, stray `String;` stmt; `lint` job added to `ci.yml` | M | 1–2h | Sonnet |
 | [ ] | 4.4 | Skip hygiene: reasons on every `test.skip(true,…)`, skip-count in CI summary, fail if >40% skipped | S | 30m | Haiku |
 
 ## Batch 5 — E2E write-flow coverage (`test:` PRs, one per flow)
