@@ -15,7 +15,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 2,
-  reporter: 'html',
+  // JSON output feeds e2e/check-skips.mjs (skip-hygiene gate in CI, also
+  // runnable after any local suite run).
+  reporter: [
+    ['html'],
+    ['json', { outputFile: 'test-results/results.json' }],
+  ],
   timeout: 60_000,
   use: {
     baseURL: 'http://localhost:4200',

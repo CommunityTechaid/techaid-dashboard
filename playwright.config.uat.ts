@@ -23,7 +23,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : 4,
-  reporter: 'html',
+  // JSON output feeds e2e/check-skips.mjs (same skip-hygiene check as the
+  // local config).
+  reporter: [
+    ['html'],
+    ['json', { outputFile: 'test-results/results.json' }],
+  ],
   timeout: 60_000,
   use: {
     baseURL: 'https://app-testing.communitytechaid.org.uk',
