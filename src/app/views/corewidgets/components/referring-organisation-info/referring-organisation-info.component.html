@@ -31,7 +31,7 @@
                   [form]="form" [model]="model" [fields]="fields">
                 </formly-form>
                 @if (!options.formState.disabled) {
-                  <button style="width: 150px" (click)="updateEntity(form.value)"
+                  <button data-testid="org-save" style="width: 150px" (click)="updateEntity(form.value)"
                     type="submit" class="btn btn-primary btn-sm p-2">
                     <small>Save</small>
                   </button>
@@ -49,7 +49,7 @@
                           <p class="text-muted">The referring organisation will be removed, this action is not reversable</p>
                         </div>
                         <div>
-                          <button type="submit" (click)="modal(confirmDelete);"
+                          <button data-testid="org-delete-open" type="submit" (click)="modal(confirmDelete);"
                             class="btn btn-danger btn-sm">
                             <small>DELETE</small>
                           </button>
@@ -105,6 +105,6 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
+    <button data-testid="org-delete-confirm" type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
   </div>
 </ng-template>

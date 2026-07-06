@@ -19,7 +19,7 @@
                 <span class="badge badge-danger">{{filterCount}}</span>
               }</span>
             </a>
-            <a href="#" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm mb-1">
+            <a href="#" data-testid="org-create-open" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm mb-1">
               <span class="icon text-white-50">
                 <i class="far fa-address-card"></i>
               </span>
@@ -99,7 +99,7 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button type="button" class="btn btn-primary btn-sm"
+    <button data-testid="org-create-submit" type="button" class="btn btn-primary btn-sm"
       (click)="createEntity(form.value); c('Close click')">
       CREATE
     </button>
