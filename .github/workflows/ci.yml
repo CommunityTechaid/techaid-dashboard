@@ -103,6 +103,12 @@ jobs:
       - name: Run mocked e2e subset
         run: npm run e2e:fast
 
+      - name: Skip hygiene — summary and >40% ceiling
+        # Runs even when tests fail so the summary still lands; its own exit
+        # code only reflects the skip ratio, never masks the test result.
+        if: always()
+        run: node e2e/check-skips.mjs test-results/results.json
+
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
