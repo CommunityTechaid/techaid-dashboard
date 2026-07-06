@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
@@ -106,7 +106,7 @@ query findAutocompleteDonorParents($term: String) {
     templateUrl: './donor-info.html',
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, NgbNavOutlet]
 })
-export class DonorInfoComponent {
+export class DonorInfoComponent implements OnInit, OnDestroy {
 
 
   constructor(
@@ -162,7 +162,7 @@ export class DonorInfoComponent {
   };
 
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'd-flex gap-3',
       fieldGroup: [

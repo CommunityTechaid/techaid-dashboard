@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -125,7 +125,7 @@ query findAutocompletePermissions($appId: String!, $userId: Int) {
     templateUrl: './user-permissions.html',
     imports: [AppGridDirective_1, NgbPopover, ReactiveFormsModule, FormlyModule]
 })
-export class UserPermissionsComponent {
+export class UserPermissionsComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -181,7 +181,7 @@ export class UserPermissionsComponent {
   };
 
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     this.appField,
     this.permissionField
   ];
@@ -371,7 +371,7 @@ export class UserPermissionsComponent {
     };
   }
 
-  private trimString(str: String, length: number) {
+  private trimString(str: string, length: number) {
     return str.length > length ? str.substring(0, length) + '...' : str;
   }
 

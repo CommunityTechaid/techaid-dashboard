@@ -34,9 +34,7 @@ export function escapeRegExp(string) {
     return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
 }
 
-export interface HashProcessor {
-    [key: string]: (args: string[], options?: any) => any;
-}
+export type HashProcessor = Record<string, (args: string[], options?: any) => any>;
 
 export function flattenDeep(arr1) {
     return arr1.reduce((acc, val) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
@@ -134,7 +132,7 @@ export class HashUtils {
 
     static mapToProperties(properties: any, hash: any, prefix = '') {
         for (const key in hash) {
-            if (hash.hasOwnProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(hash, key)) {
                 const value = hash[key];
                 if (Array.isArray(value)) {
                     const data = {};
@@ -243,7 +241,7 @@ export class HashUtils {
             } else if (isObject(data)) {
                 const results = [];
                 for (const k in data) {
-                    if (data.hasOwnProperty(k)) {
+                    if (Object.prototype.hasOwnProperty.call(data, k)) {
                         results.push(data[k]);
                     }
                 }
@@ -279,7 +277,7 @@ export class HashUtils {
                     if (isObject(value)) {
                         const results = [];
                         for (const k in value) {
-                            if (value.hasOwnProperty(k)) {
+                            if (Object.prototype.hasOwnProperty.call(value, k)) {
                                 results.push(value[k]);
                             }
                         }
@@ -323,7 +321,7 @@ export class HashUtils {
                     if (isObject(value)) {
                         const results = [];
                         for (const k in value) {
-                            if (value.hasOwnProperty(k)) {
+                            if (Object.prototype.hasOwnProperty.call(value, k)) {
                                 results.push(value[k]);
                             }
                         }
@@ -637,8 +635,7 @@ export class HashUtils {
             const proc = (options.processors || {})[token.name] || HashUtils.processors[token.name];
             let args = [];
 
-            for (let i = 0; i < token.args.length; i++) {
-                let arg = token.args[i];
+            for (let arg of token.args) {
                 if (isObject(arg) && ['variable', 'function'].indexOf(arg.type) > -1) {
                     arg = HashUtils.tokenValue(arg, variables, options);
                     if (isNull(arg)) {
@@ -649,8 +646,7 @@ export class HashUtils {
 
                 const matches = `${arg}`.match(/\$([a-z0-9A-Z_.-]+)/g);
                 if (matches && matches.length) {
-                    for (let j = 0; j < matches.length; j++) {
-                        const m = matches[j];
+                    for (const m of matches) {
                         const [t, prop] = m.match(/\$([a-z0-9A-Z_.-]+)/) || [null, null];
                         const propVal = HashUtils.dotNotation(variables, prop) || HashUtils.dotNotation(options.env, prop);
                         if (isNull(propVal)) {
@@ -686,7 +682,7 @@ export class HashUtils {
         if (!options.ignoreDefaults) {
             if (isBlank(val) && !isNull(token.default)) {
                 if (isObject(token.default)) {
-                    val = HashUtils.tokenValue(<Token>token.default, variables, options);
+                    val = HashUtils.tokenValue((token.default as Token), variables, options);
                 } else {
                     val = token.default;
                 }
@@ -715,8 +711,7 @@ export class HashUtils {
                     } else {
                         const matches = `${arg}`.match(/\$([a-z0-9A-Z_.-]+)/g);
                         if (matches && matches.length) {
-                            for (let j = 0; j < matches.length; j++) {
-                                const m = matches[j];
+                            for (const m of matches) {
                                 const [token, prop] = m.match(/\$([a-z0-9A-Z_.-]+)/) || [null, null];
                                 if (prop) {
                                     vars.push(prop);

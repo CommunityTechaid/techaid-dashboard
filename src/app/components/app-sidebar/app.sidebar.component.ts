@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
@@ -19,8 +19,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     imports: [RouterLink, RouterLinkActive]
 })
 
-export class AppSidebar {
-    sidebar: Boolean = true;
+export class AppSidebar implements OnInit, OnDestroy {
+    sidebar = true;
     public user: User;
     private sub: Subscription;
     @Select(UserState.user) user$: Observable<User>;

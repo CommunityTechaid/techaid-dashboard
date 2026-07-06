@@ -1,4 +1,4 @@
-import { Component, Injectable,  Input, forwardRef, ViewChild } from '@angular/core';
+import { Component, Injectable,  Input, forwardRef, ViewChild, OnInit } from '@angular/core';
 import { NgbDateAdapter, NgbDateStruct, NgbTimeStruct, NgbInputDatepicker, NgbDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ReactiveFormsModule } from '@angular/forms';
 import { FieldType, FormlyModule } from '@ngx-formly/core';
@@ -87,7 +87,7 @@ export class DateTimeInput extends FieldType {
 `,
     imports: [NgbInputDatepicker, ReactiveFormsModule, NgbDatepicker, NgbTimepicker, NgStyle]
 })
-export class DateTimeInputWidget implements ControlValueAccessor {
+export class DateTimeInputWidget implements ControlValueAccessor, OnInit {
   @ViewChild('dp') dp;
   date = new UntypedFormControl();
   time = new UntypedFormControl();
@@ -251,7 +251,7 @@ export class DateTimeInputWidget implements ControlValueAccessor {
           date = {month: null, year: null, day: null};
       }
 
-      this.setModel(<NgbDateTimeStruct>{month: date.month, year: date.year, day: date.day, ...time});
+      this.setModel(({month: date.month, year: date.year, day: date.day, ...time} as NgbDateTimeStruct));
   }
 
   onTimeChange(time: NgbTimeStruct) {
@@ -266,7 +266,7 @@ export class DateTimeInputWidget implements ControlValueAccessor {
           time = {hour: null, minute: null, second: null};
       }
 
-      this.setModel(<NgbDateTimeStruct>{...date, hour: time.hour, minute: time.minute, second: time.second});
+      this.setModel(({...date, hour: time.hour, minute: time.minute, second: time.second} as NgbDateTimeStruct));
   }
 
   private getTime(model: NgbDateTimeStruct): any {

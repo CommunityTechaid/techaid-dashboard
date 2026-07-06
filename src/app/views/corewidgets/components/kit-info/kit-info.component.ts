@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
@@ -261,7 +261,7 @@ query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
     templateUrl: './kit-info.html',
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, KitAuditComponent, NgbNavOutlet]
 })
-export class KitInfoComponent {
+export class KitInfoComponent implements OnInit, OnDestroy {
 
 
   constructor(
@@ -285,7 +285,7 @@ export class KitInfoComponent {
   deviceModel = {};
   entityName: string;
   entityId: number;
-  disabledStatuses: boolean = false;
+  disabledStatuses = false;
 
   donors$: Observable<any>;
   donorInput$ = new Subject<string>();
@@ -368,7 +368,7 @@ export class KitInfoComponent {
     kit-info-input type is slightly complicated/unintuitive
     Check the custom-kit-info-input.ts file for the documentation on how to use and the underlying template.
    */
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'd-flex flex-wrap gap-2 align-items-start py-2 border-top border-info',
       fieldGroup: [
@@ -673,7 +673,7 @@ export class KitInfoComponent {
                       'ALLINONE': desktopOS,
                       'DESKTOP': desktopOS,
                     };
-                    let values = props[model['type']];
+                    const values = props[model['type']];
 
                     return values;
                     },
@@ -824,7 +824,7 @@ export class KitInfoComponent {
     this.disabledStatuses = data['subStatus']['needsFurtherInvestigation'] || data['subStatus']['needsSparePart'] || data['subStatus']['installationOfOSFailed'] || data['subStatus']['wipeFailed'] || data['subStatus']['lockedToUser'];
 
     const disabledStatusGroup = ['ALLOCATION_DELIVERY_ARRANGED','ALLOCATION_QC_COMPLETED','ALLOCATION_READY','DISTRIBUTION_DELIVERED'];
-    var currentStatus = data['status'];
+    const currentStatus = data['status'];
 
     if(this.disabledStatuses && disabledStatusGroup.includes(currentStatus)) {
       console.log('Invalidating');
@@ -890,7 +890,7 @@ export class KitInfoComponent {
 
   private displayNotes(data) {
     if (data.notes) {
-      var notes = []
+      const notes = []
       data.notes.forEach(n => {
         notes.push({ content: n.content, id: n.id, volunteer: n.volunteer, updated_at: n.updatedAt });
 

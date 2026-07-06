@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -42,7 +42,7 @@ query findPost($slug: String) {
     templateUrl: './post-data.html',
     imports: [RouterLink]
 })
-export class PostDataComponent {
+export class PostDataComponent implements OnInit, OnDestroy {
   sub: Subscription;
   model: any;
   user: User;

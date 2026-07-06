@@ -107,7 +107,7 @@ export class AppInitialComponent {
 
     private lightOrDark(color) {
         // Variables for red, green, blue values
-        let r, g, b, hsp;
+        let r, g, b;
 
         // Check the format of the color, HEX or RGB?
         if (color.match(/^rgb/)) {
@@ -130,7 +130,7 @@ export class AppInitialComponent {
         }
 
         // HSP (Highly Sensitive Poo) equation from http://alienryderflex.com/hsp.html
-        hsp = Math.sqrt(
+        const hsp = Math.sqrt(
             0.299 * (r * r) +
             0.587 * (g * g) +
             0.114 * (b * b)

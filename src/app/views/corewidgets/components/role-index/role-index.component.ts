@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
@@ -35,7 +35,7 @@ query findAllRoles($page: PaginationInput!, $term: String) {
     templateUrl: './role-index.html',
     imports: [RouterLink, AppGridDirective_1, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu]
 })
-export class RoleIndexComponent {
+export class RoleIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;

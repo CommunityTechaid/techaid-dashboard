@@ -40,7 +40,7 @@ Ideally, the input field should be dynamically rendered using custom selector bu
   <div class="kit-info-input d-flex w-100 align-items-center justify-content-between" style="background-color: {{ to.bgcolor || 'white' }}">
     <div style="font-size:smaller" class="d-flex">
   
-      @if (to.type=='select') {
+      @if (to.type==='select') {
         <select [hidden]="!editable" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field">
           @for (val of to.options; track val) {
             <option
@@ -51,7 +51,7 @@ Ideally, the input field should be dynamically rendered using custom selector bu
         </select>
       }
 
-      @if (to.type!='select') {
+      @if (to.type!=='select') {
         <input [hidden]="!editable" (focusout)="toggleEdit()" [type]="to.type" [formControl]="formControl" [formlyAttributes]="field">
       }
       @if (formControl.value != null && formControl.value !== '') {
@@ -91,8 +91,8 @@ Ideally, the input field should be dynamically rendered using custom selector bu
     imports: [ReactiveFormsModule, FormlyModule]
 })
 export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> implements OnInit, OnDestroy {
-    editable: boolean = false;
-    choice: boolean = false;
+    editable = false;
+    choice = false;
     private destroy$ = new Subject<void>();
 
     constructor(private modalService: NgbModal) {

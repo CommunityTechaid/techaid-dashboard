@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -56,7 +56,7 @@ mutation deletePost($id: ID!) {
     templateUrl: './post-info.html',
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, NgbNavOutlet]
 })
-export class PostInfoComponent {
+export class PostInfoComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: NgbModal,
@@ -73,7 +73,7 @@ export class PostInfoComponent {
   model = {};
   entityName: string;
   entityId: number;
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       key: 'title',
       type: 'input',

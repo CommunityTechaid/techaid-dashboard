@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input } from '@angular/core';
+import { Component, ViewChild, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -244,7 +244,7 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
     templateUrl: './kit-index.html',
     imports: [RouterLink, AppGridDirective_1, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class KitIndexComponent {
+export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
@@ -259,7 +259,7 @@ export class KitIndexComponent {
   sub: Subscription;
   table: any;
   total: number;
-  selections: {[id: string]: any} = {};
+  selections: Record<string, any> = {};
   selected: any[] = [];
   entities: any[] = [];
   options: FormlyFormOptions = {
@@ -286,7 +286,7 @@ export class KitIndexComponent {
 
   bulkUpdateForm: FormGroup = new FormGroup({});
   bulkUpdateModel: any = {};
-  bulkUpdateFields: Array<FormlyFieldConfig> = [
+  bulkUpdateFields: FormlyFieldConfig[] = [
     {
       key: 'status',
       type: 'choice',
@@ -387,7 +387,7 @@ export class KitIndexComponent {
   filterModel: any = {archived: [false]};
   filterOptions: FormlyFormOptions = {};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
-  filterFields: Array<FormlyFieldConfig> = [
+  filterFields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
@@ -548,7 +548,7 @@ export class KitIndexComponent {
   };
 
   quickForm: UntypedFormGroup = new UntypedFormGroup({});
-  quickFields: Array<FormlyFieldConfig> = [
+  quickFields: FormlyFieldConfig[] = [
     {
       key: 'type',
       type: 'radio',
@@ -623,7 +623,7 @@ export class KitIndexComponent {
     if(data.subStatus) {
       const subStatusItems = { };
 
-      for (let key in data.subStatus) {
+      for (const key in data.subStatus) {
         if(data.subStatus[key]) {
           count++;
           subStatusItems[key] = { _in: data.subStatus[key] };

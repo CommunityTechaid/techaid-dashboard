@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -72,7 +72,7 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
     styleUrls: ['./referring-organisation-contact-component.component.scss'],
     imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class ReferringOrganisationContactComponent {
+export class ReferringOrganisationContactComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
@@ -110,7 +110,7 @@ export class ReferringOrganisationContactComponent {
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       key: 'fullName',
       type: 'input',
@@ -189,7 +189,7 @@ export class ReferringOrganisationContactComponent {
   filterCount = 0;
   filterModel: any = {archived: [false]};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
-  filterFields: Array<FormlyFieldConfig> = [
+  filterFields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [

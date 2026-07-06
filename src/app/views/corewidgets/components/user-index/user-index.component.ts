@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -41,7 +41,7 @@ query findAllUsers($page: PaginationInput!, $term: String) {
     templateUrl: './user-index.html',
     imports: [RouterLink, AppGridDirective_1, AppInitialComponent, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class UserIndexComponent {
+export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;

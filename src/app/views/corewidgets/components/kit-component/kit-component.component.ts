@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input } from '@angular/core';
+import { Component, ViewChild, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import {
   concat,
   Subject,
@@ -154,7 +154,7 @@ const FIND_USERS = gql`
     templateUrl: './kit-component.html',
     imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class KitComponent {
+export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
@@ -247,7 +247,7 @@ export class KitComponent {
   filterModel: any = {};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterOptions: FormlyFormOptions = {};
-  filterFields: Array<FormlyFieldConfig> = [
+  filterFields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [

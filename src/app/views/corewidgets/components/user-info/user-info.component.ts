@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -30,7 +30,7 @@ query findUser($id: String!) {
     templateUrl: './user-info.html',
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, UserRolesComponent, UserPermissionsComponent, NgbNavOutlet]
 })
-export class UserInfoComponent {
+export class UserInfoComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: NgbModal,

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -211,7 +211,7 @@ export interface DeviceAssignmentResult {
     styleUrls: ['./device-request-info.component.scss'],
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, DeviceRequestAuditComponent, NgbNavOutlet]
 })
-export class DeviceRequestInfoComponent {
+export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
   @ViewChild('kitWarning') kitWarningModal: any;
   @ViewChild('assignDevicesModal') assignDevicesModal: any;
 
@@ -242,12 +242,12 @@ export class DeviceRequestInfoComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
   showAllDeviceTypes = false;
-  deviceCount: number = 0;
+  deviceCount = 0;
 
-  assignDeviceIds: string = '';
+  assignDeviceIds = '';
   assignmentResults: DeviceAssignmentResult[] = [];
-  isAssigning: boolean = false;
-  showAssignConfirmation: boolean = false;
+  isAssigning = false;
+  showAssignConfirmation = false;
   parsedDeviceIds: string[] = [];
 
   deviceTypes = [
@@ -314,7 +314,7 @@ export class DeviceRequestInfoComponent {
     },
   };
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
@@ -785,7 +785,7 @@ export class DeviceRequestInfoComponent {
   private displayNotes(data) {
     if (data.deviceRequestNotes) {
 
-      var notes = []
+      const notes = []
       data.deviceRequestNotes.forEach(n => {
         notes.push({ content: n.content, id: n.id, volunteer: n.volunteer, updated_at: n.updatedAt });
 

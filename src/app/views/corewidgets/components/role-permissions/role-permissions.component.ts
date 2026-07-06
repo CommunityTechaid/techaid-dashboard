@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -57,7 +57,7 @@ query findAutocompletePermissions($appId: String!, $roleId: Int) {
     templateUrl: './role-permissions.html',
     imports: [AppGridDirective_1]
 })
-export class RolePermissionsComponent {
+export class RolePermissionsComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;

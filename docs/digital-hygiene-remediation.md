@@ -11,15 +11,16 @@ Time = estimated agent wall-clock.
 
 ## Current status
 
-- **Batches 1 & 2 complete and verified on UAT** (PRs #89, #90, #91, #92 merged; deploys green).
-  Deployed-UAT suite: 51 passed / 9 data-skips / 1 known pre-existing failure (DEVREQ-B1 data
-  drift). CSP live with zero violations across dashboard, devices, kit-info interactions, and
-  the public referral form.
-- **Next action:** Batch 3 (correctness sweep, 3.1–3.4) on a fresh branch off dev. Note 3.2's
-  scope shrinks slightly: `map-view` is deleted by 3.3. Remember: **branch fresh from dev for
-  every PR** — stacking follow-ups on a squash-merged branch causes self-conflicts.
-- **UAT is clean for manual UI testing** as of 2026-07-03 ~15:30.
-- **Last updated:** 2026-07-03 (late afternoon)
+- **Batches 1–3 complete** (PRs #89–#98 merged). Deployed-UAT suite green modulo the known
+  DEVREQ-B1 data drift; CSP live with zero violations.
+- **Batch 4 in progress:** 4.3 (ESLint) done on `claude/hygiene-batch4-eslint` — flat config
+  with a documented legacy-debt baseline (0 errors / ~1.1k baseline warnings), auto-fixes
+  applied across ~50 files, dead `typings.d.ts` + `declare require` shims removed. The CI
+  error gate itself lands with 4.2's `ci.yml`.
+- **Next action:** 4.1 (auth strategy decision) + 4.2 (`ci.yml`) + 4.4 (skip hygiene) on a
+  fresh branch off dev once the 4.3 PR merges. Remember: **branch fresh from dev for every
+  PR** — stacking follow-ups on a squash-merged branch causes self-conflicts.
+- **Last updated:** 2026-07-06
 
 ### E2E harness notes (2026-07-03)
 
@@ -131,7 +132,7 @@ Pause point: PR open, this tracker committed.
 |------|----|------|----|------|-------|
 | [ ] | 4.1 | Read `e2e/auth.setup.ts`; decide CI auth strategy (creds secrets vs mocked-subset + nightly UAT job) | S | 15m | Sonnet |
 | [ ] | 4.2 | `.github/workflows/ci.yml`: PR→dev gate, prod build + Playwright per 4.1 | M | 1h | Sonnet |
-| [ ] | 4.3 | ESLint via `ng add @angular-eslint/schematics`; fix auto-fixables; gate errors in CI | M | 1–2h | Sonnet |
+| [x] | 4.3 | Done 2026-07-06: angular-eslint flat config + `npm run lint`; recommended TS/template rule sets with bulk legacy rules (`no-unused-vars`, `no-explicit-any`, `prefer-inject`, `template/eqeqeq`, a11y…) downgraded to a documented warn-baseline (~1.1k warnings, 0 errors); auto-fixables fixed (~50 files, incl. 96 `implements` lifecycle interfaces); hand-fixed the remainder; deleted dead `typings.d.ts`, `declare require` shims, stray `String;` stmt. CI gate = `ng lint` step in 4.2 | M | 1–2h | Sonnet |
 | [ ] | 4.4 | Skip hygiene: reasons on every `test.skip(true,…)`, skip-count in CI summary, fail if >40% skipped | S | 30m | Haiku |
 
 ## Batch 5 — E2E write-flow coverage (`test:` PRs, one per flow)

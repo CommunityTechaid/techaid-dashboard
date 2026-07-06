@@ -20,10 +20,10 @@ export class AppLocalCSS implements OnInit {
   safeString: SafeHtml;
   ngOnInit() {
     if (this.scriptURL) {
-      let string = '<link rel="stylesheet" type="text/css" href="' + this.scriptURL + '">';
+      const string = '<link rel="stylesheet" type="text/css" href="' + this.scriptURL + '">';
       this.safeString = this.sanitizer.bypassSecurityTrustHtml(string);
     } else if (this.style) {
-      let string = '<style type="text/css">' + this.style + "</style>";
+      const string = '<style type="text/css">' + this.style + "</style>";
       this.safeString = this.sanitizer.bypassSecurityTrustHtml(string);
     }
   }

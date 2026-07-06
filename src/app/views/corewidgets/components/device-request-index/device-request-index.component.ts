@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -75,7 +75,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
     styleUrls: ['./device-request-index.component.scss'],
     imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class DeviceRequestIndexComponent {
+export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
@@ -102,7 +102,7 @@ export class DeviceRequestIndexComponent {
   filterModel: any = {is_sales: [false]};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterDeviceTypes = DEVICE_TYPES;
-  filterFields: Array<FormlyFieldConfig> = [
+  filterFields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [

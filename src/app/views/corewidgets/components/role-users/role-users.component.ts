@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -75,7 +75,7 @@ query typeaheadFindAllUsers($page: PaginationInput!, $term: String) {
     templateUrl: './role-users.html',
     imports: [AppGridDirective_1, AppInitialComponent, RouterLink, ReactiveFormsModule, FormlyModule]
 })
-export class RoleUsersComponent {
+export class RoleUsersComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -109,7 +109,7 @@ export class RoleUsersComponent {
     },
   };
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     this.appField
   ];
 

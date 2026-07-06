@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -85,7 +85,7 @@ mutation createDonor($data: CreateDonorInput!) {
     templateUrl: './donor-component.html',
     imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class DonorComponent {
+export class DonorComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
@@ -120,7 +120,7 @@ export class DonorComponent {
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       key: 'name',
       type: 'input',
@@ -211,7 +211,7 @@ export class DonorComponent {
   filterCount = 0;
   filterModel: any = {};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
-  filterFields: Array<FormlyFieldConfig> = [
+  filterFields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [

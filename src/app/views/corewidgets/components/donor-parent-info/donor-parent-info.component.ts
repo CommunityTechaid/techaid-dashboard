@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -71,7 +71,7 @@ mutation deleteDonorParent($id: ID!) {
     templateUrl: './donor-parent-info.html',
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DonorComponent, KitComponent, NgbNavOutlet]
 })
-export class DonorParentInfoComponent {
+export class DonorParentInfoComponent implements OnInit, OnDestroy {
 
 
   constructor(
@@ -96,7 +96,7 @@ export class DonorParentInfoComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
