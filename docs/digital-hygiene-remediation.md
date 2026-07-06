@@ -26,7 +26,17 @@ Time = estimated agent wall-clock.
   constructors require EVERY field present (nullable ones included) — partial payloads throw
   "Failed to instantiate". 5.2 done 2026-07-06 (`device-intake.spec.ts` — create→index→edit→
   persist through the UI; full suite 57P/9S/1 known-fail DEVREQ-B1; zero active residue, created
-  kits archived). **Next:** 5.3 (device-request lifecycle spec) on a fresh branch off dev.
+  kits archived). 5.4 done 2026-07-06 (`donor-crud.spec.ts` — create (incl. selecting a required
+  Parent Donor via the ng-select typeahead, a real form constraint) → index → edit Full
+  Name/Phone → persist → UI delete). **Delete outcome UAT actually produced: a THIRD case beyond
+  "succeeds" / "backend denies"** — the `donor-delete-open` control never renders at all, because
+  this token's JWT `permissions` carry no `delete:donors` claim and `donor-info.html` gates the
+  whole Danger Zone on `user.authorities['delete:donors']`. The spec detects and asserts this
+  (annotation `delete-outcome: donor-delete-open not rendered...`) and falls through to the
+  helper's archive-fallback teardown, same as 5.1/5.2. Full suite 58P/9S/1 known-fail DEVREQ-B1;
+  ran donor-crud twice back-to-back (green both times) plus once inside the full-suite run — all
+  4 created donors verified archived, zero active residue. **Next:** 5.5 (referring-org + referee
+  CRUD spec) on a fresh branch off dev; 5.3 remains pending the permissions decision below.
   **5.3 blocker:** device requests have NO archive path and the UAT token can't `deleteDeviceRequest`
   (Access Denied) — so a lifecycle spec cannot auto-clean its records. 5.3 needs either a
   delete-capable token or an accepted manual-cleanup/residue policy before it can own its writes.
@@ -35,7 +45,7 @@ Time = estimated agent wall-clock.
   trio removal in 6.4; self-hosting the Poppins font (6.x candidate).
 - Remember: **branch fresh from dev for every PR** — stacking follow-ups on a squash-merged
   branch causes self-conflicts.
-- **Last updated:** 2026-07-06
+- **Last updated:** 2026-07-06 (5.4)
 
 ### E2E harness notes (2026-07-03)
 
@@ -157,7 +167,7 @@ Pause point: PR open, this tracker committed.
 | [x] | 5.1 | Done 2026-07-06: `e2e/helpers/graphql.ts` (`UatGraphQLClient` — direct UAT API access, id tracking, delete-with-archive-fallback teardown) + `teardown-helper.spec.ts` round-trip smoke (self-skips on expired/fake token) + `data-testid`s on kit/donor/org/contact/device-request/user-roles create/save/delete controls. UAT token cannot hard-delete (Access Denied on all `delete*`) — teardown archives instead; deviceRequest is the exception (no archive path) | M | 1h | Opus |
 | [x] | 5.2 | Done 2026-07-06: `device-intake.spec.ts` — real-UAT UI write-flow (quick-create modal → find by unique model in index → edit make/model on kit-info → Save → reload-persist), owns its record via `UatGraphQLClient.track`/archive teardown. **Findings:** create modal fires `quickCreateKit` (not `createKit`), captures only type/make/model — no serialNo, so identity = unique model string; DataTables search input is `input[aria-controls="kit-index"]`; UAT backend cold-starts ("Server is starting up" overlay) so specs must warm the API before driving the UI (added a beforeAll poll); a create that fires server-side but whose client `waitForResponse` misses leaks an untracked active record (track only after capture) — warm-up closes that race | M | 1–1.5h | Opus |
 | [ ] | 5.3 | Device-request lifecycle spec: create → assign → transitions → complete | L | 1.5–2h | Opus |
-| [ ] | 5.4 | Donor CRUD spec | M | 1h | Sonnet |
+| [x] | 5.4 | Done 2026-07-06: `donor-crud.spec.ts` — create (incl. required Parent Donor ng-select) → index → edit → persist → UI delete. Delete outcome: `donor-delete-open` not rendered (token lacks `delete:donors`) — archive fallback cleans up | M | 1h | Sonnet |
 | [ ] | 5.5 | Referring-org + referee CRUD spec | M | 1–1.5h | Sonnet |
 | [ ] | 5.6 | User role assign/remove spec | M | 1h | Sonnet |
 
