@@ -7,7 +7,7 @@ import { DateUtils } from '@app/shared/utils/date_utils';
 import { ReactiveFormsModule } from '@angular/forms';
 
 
-class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
+class NgbDateNativeAdapter extends NgbDateAdapter<any> {
   private input_formats: string[];
   private output_format: string;
 
@@ -58,7 +58,7 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
     return null;
   }
 
-  fromModel(dt: Object): NgbDateStruct {
+  fromModel(dt: any): NgbDateStruct {
     let model = null;
     try {
       const date: Date = this.parseDate(dt);
@@ -70,7 +70,7 @@ class NgbDateNativeAdapter extends NgbDateAdapter<Object> {
     return model;
   }
 
-  toModel(date: NgbDateStruct): Object {
+  toModel(date: NgbDateStruct): any {
     let dt: any = '';
     if (date) {
       dt = new Date(date.year, date.month - 1, date.day);

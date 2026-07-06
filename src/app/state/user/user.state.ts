@@ -9,11 +9,11 @@ export interface UserStateModel {
 }
 
 export class User {
-    name: String;
-    picture: String;
-    authenticated: Boolean;
-    permissions: Array<string> = [];
-    authorities: {[key: string]: boolean} = {};
+    name: string;
+    picture: string;
+    authenticated: boolean;
+    permissions: string[] = [];
+    authorities: Record<string, boolean> = {};
 
     constructor(init?: Partial<User>) {
         Object.assign(this, init);

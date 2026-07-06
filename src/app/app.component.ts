@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd, RouterOutlet, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
@@ -21,7 +21,7 @@ import { AuthenticationService } from '@app/shared/services/authentication.servi
     styleUrls: ['./app.component.css'],
     imports: [NgProgressComponent, AppSidebar, AppHeader, RouterOutlet, RouterLink]
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   private actionSub: Subscription;
   version = APP_VERSION;
   apiVersion = '';

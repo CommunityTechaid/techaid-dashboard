@@ -6,7 +6,7 @@ import {
   HostListener,
   NgZone,
   Renderer2,
-  ViewChild
+  ViewChild, OnInit, AfterViewInit, OnDestroy
 } from '@angular/core';
 import { concat, from, Observable, of, Subject, Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -23,7 +23,7 @@ import { User } from '@app/state/user/user.state';
 
 import { AppLocalCSS } from './app-local-css.component';
 
-declare var window: any;
+declare let window: any;
 
 const CREATE_ENTITY = gql`
   mutation createOrganisation($data: CreateOrganisationInput!) {
@@ -114,7 +114,7 @@ const QUERY_ADMIN_CONFIG = gql`
     imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule]
 })
 
-export class OrgRequestComponent implements AfterViewChecked {
+export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewInit, OnDestroy {
   sub: Subscription;
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
@@ -140,8 +140,8 @@ export class OrgRequestComponent implements AfterViewChecked {
   isContactExists = true;
   newOrganisationName = ""
   showTypeform = false;
-  borough: string = "";
-  ward: string = "";
+  borough = "";
+  ward = "";
   unsupported = false;
   pendingCorrelationId: null;
   deviceRequestId: any;
@@ -862,7 +862,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   }
 
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       fieldGroup: [
         this.refOrganisationPage,
@@ -915,7 +915,7 @@ export class OrgRequestComponent implements AfterViewChecked {
     // clients' needs as a list of needs rather than yes/know/don't know for each
     // item (mainly because of the don't know), but at the same time we want to
     // make it a mandatory field. So we transform the individual items:
-    var needs = [];
+    const needs = [];
     if (data.hasInternetHome == 'no') {
       needs.push('internet');
     }
@@ -971,7 +971,7 @@ export class OrgRequestComponent implements AfterViewChecked {
               }),
               tap(() => this.referringOrgLoading = false),
               switchMap(res => {
-                var data = res['data']['referringOrganisationsPublic'].map(v => {
+                const data = res['data']['referringOrganisationsPublic'].map(v => {
                   return {
                     label: v.name, value: v.id
                   };
@@ -1099,10 +1099,10 @@ export class OrgRequestComponent implements AfterViewChecked {
 
   async saveNewReferringOrganisationContact(): Promise<boolean> {
 
-    var contactFormControl = this.referringOrganisationContactDetailFormGroup.formControl;
+    const contactFormControl = this.referringOrganisationContactDetailFormGroup.formControl;
 
-    var isValid: boolean = true
-    for (var field of this.referringOrganisationContactDetailFormGroup.fieldGroup) {
+    let isValid = true
+    for (const field of this.referringOrganisationContactDetailFormGroup.fieldGroup) {
       if (field.formControl.errors) {
         isValid = false;
         field.validation.show = true
@@ -1114,16 +1114,16 @@ export class OrgRequestComponent implements AfterViewChecked {
 
     }
 
-    var contactDetails: any = contactFormControl.value.referringOrganisationContact;
+    const contactDetails: any = contactFormControl.value.referringOrganisationContact;
     contactDetails.referringOrganisation = this.referringOrgIdField.formControl.value
-    var data = contactDetails;
+    const data = contactDetails;
     Object.keys(data).forEach(k => data[k] = typeof data[k] == 'string' ? data[k].trim() : data[k]);
     return this.apollo.mutate({
       mutation: CREATE_REFERRING_ORGANISATION_CONTACT,
       variables: { data }
     }).toPromise().then(res => {
 
-      var data = res["data"]["createReferringOrganisationContact"]["id"];
+      const data = res["data"]["createReferringOrganisationContact"]["id"];
       if (data) {
         this.toastr.info("Your contact details were saved.")
         this.referringContactIdField.formControl.setValue(data);
@@ -1161,7 +1161,7 @@ export class OrgRequestComponent implements AfterViewChecked {
       }
     }).toPromise().then(res => {
 
-      var data = res["data"]["referringOrganisationContactsPublic"];
+      const data = res["data"]["referringOrganisationContactsPublic"];
 
       if (data && data.length > 1) {
         const contacts = data.map((r) => {
@@ -1278,7 +1278,7 @@ export class OrgRequestComponent implements AfterViewChecked {
   setDeviceRequestItems(deviceRequestItem: any, isSimNeeded: any, isBroadbandHubNeeded: any) {
 
 
-    var payload: any = {};
+    const payload: any = {};
 
 
     if (deviceRequestItem) {
@@ -1368,8 +1368,8 @@ export class OrgRequestComponent implements AfterViewChecked {
     this.deviceRequestCreateButton.templateOptions.disabled = true;
     const deviceRequest: any = this.requestPage.formControl.value;
 
-    var isValid = true
-    for (var field of this.requestPage.fieldGroup) {
+    let isValid = true
+    for (const field of this.requestPage.fieldGroup) {
       if (field.formControl.errors) {
         isValid = false;
         field.validation.show = true
@@ -1381,7 +1381,7 @@ export class OrgRequestComponent implements AfterViewChecked {
       return false;
     }
 
-    var requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded, deviceRequest.isBroadbandHubNeeded)
+    const requestItems = this.setDeviceRequestItems(deviceRequest.deviceRequestItems, deviceRequest.isSimNeeded, deviceRequest.isBroadbandHubNeeded)
 
     if (Object.keys(requestItems).length === 0) {
       this.toastr.error("Please select the item your client needs");

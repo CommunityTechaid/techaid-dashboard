@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -76,7 +76,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
     styleUrls: ['./distributions-and-deliveries-index.component.scss'],
     imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class DistributionsAndDeliveriesIndexComponent {
+export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
@@ -99,7 +99,7 @@ export class DistributionsAndDeliveriesIndexComponent {
 
   statusTypes: any = DEVICE_REQUEST_STATUS;
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       key: 'name',
       type: 'input',
@@ -159,7 +159,7 @@ export class DistributionsAndDeliveriesIndexComponent {
   filterModel: any = {is_sales: [false]};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterDeviceTypes = DEVICE_TYPES.filter(t => t.value !== 'BROADBANDHUBS');
-  filterFields: Array<FormlyFieldConfig> = [
+  filterFields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [
@@ -235,8 +235,8 @@ export class DistributionsAndDeliveriesIndexComponent {
   @Input()
   tableId = 'distributions-and-deliveries-index';
 
-  weekButtons: Array<{label: string, startDate: Date, endDate: Date, type: 'week'}> = [];
-  statusButtons: Array<{label: string, statuses: string[], type: 'status'}> = [];
+  weekButtons: {label: string, startDate: Date, endDate: Date, type: 'week'}[] = [];
+  statusButtons: {label: string, statuses: string[], type: 'status'}[] = [];
   activeFilter: string | null = null;
 
   generateWeekButtons() {

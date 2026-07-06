@@ -188,6 +188,18 @@
           "options": {
             "buildTarget": "angular-template:build"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html",
+              "e2e/**/*.ts",
+              "playwright.config.ts",
+              "playwright.config.uat.ts"
+            ]
+          }
         }
       }
     }

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, Observable, Subscription } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -52,7 +52,7 @@ const UPDATE_CONFIG = gql`
     templateUrl: './admin-panel.component.html',
     imports: [RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class AdminPanelComponent {
+export class AdminPanelComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: NgbModal,
@@ -75,7 +75,7 @@ export class AdminPanelComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -94,7 +94,7 @@ query findAutocompleteReferringOrganisations($term: String) {
     styleUrls: ['./referring-organisation-contact-info.component.scss'],
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, NgbNavOutlet]
 })
-export class ReferringOrganisationContactInfoComponent {
+export class ReferringOrganisationContactInfoComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: NgbModal,
@@ -152,7 +152,7 @@ export class ReferringOrganisationContactInfoComponent {
     },
   };
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'd-flex gap-3',
       fieldGroup: [
@@ -297,7 +297,7 @@ export class ReferringOrganisationContactInfoComponent {
 
   private displayNotes(data) {
     if (data.notes) {
-      var notes = [];
+      const notes = [];
       data.notes.forEach(n => {
         notes.push({ content: n.content, id: n.id, volunteer: n.volunteer, updated_at: n.updatedAt });
       });

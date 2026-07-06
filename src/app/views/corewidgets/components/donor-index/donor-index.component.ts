@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -98,7 +98,7 @@ query findAutocompleteDonorParents($term: String) {
     templateUrl: './donor-index.html',
     imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
 })
-export class DonorIndexComponent {
+export class DonorIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
@@ -142,7 +142,7 @@ export class DonorIndexComponent {
     },
   };
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       key: 'name',
       type: 'input',
@@ -235,7 +235,7 @@ export class DonorIndexComponent {
   filterCount = 0;
   filterModel: any = {};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
-  filterFields: Array<FormlyFieldConfig> = [
+  filterFields: FormlyFieldConfig[] = [
     {
       fieldGroupClassName: 'row',
       fieldGroup: [

@@ -1,8 +1,7 @@
-import { forwardRef, Component, ViewChild, ElementRef, HostListener, Input, Output, Renderer2, SimpleChanges } from '@angular/core';
+import { forwardRef, Component, ViewChild, ElementRef, HostListener, Input, Output, Renderer2, SimpleChanges, OnChanges } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, COMPOSITION_BUFFER_MODE, FormControl } from '@angular/forms';
 import { createNumberMask } from './createNumberMask';
 
-String;
 import {
     getSafeRawValue,
     processCaretTraps,
@@ -40,7 +39,7 @@ export interface MaskOptions {
         '(input)': '_handleInput($event.target.value)'
     }
 })
-export class InputMaskComponent implements ControlValueAccessor {
+export class InputMaskComponent implements ControlValueAccessor, OnChanges {
     @Input()
     public set mask(value: any) {
         if (Array.isArray(value)) {

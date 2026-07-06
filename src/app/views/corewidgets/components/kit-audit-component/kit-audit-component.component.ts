@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input } from '@angular/core';
+import { Component, ViewChild, Input, OnInit, OnDestroy } from '@angular/core';
 import {
   concat,
   Subject,
@@ -64,7 +64,7 @@ const QUERY_ENTITY = gql`
     templateUrl: './kit-audit-component.html',
     imports: [AppGridDirective_1, DatePipe]
 })
-export class KitAuditComponent {
+export class KitAuditComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: NgbModal,
@@ -232,9 +232,6 @@ export class KitAuditComponent {
     if (this.sub) {
       this.sub.unsubscribe();
     }
-  }
-
-  ngAfterViewInit() {
   }
 
   select(row?: any) {

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -52,7 +52,7 @@ const DELETE_ENTITY = gql`
     styleUrls: ['./referring-organisation-info.component.scss'],
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet]
 })
-export class ReferringOrganisationInfoComponent {
+export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: NgbModal,
@@ -74,7 +74,7 @@ export class ReferringOrganisationInfoComponent {
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
 
-  fields: Array<FormlyFieldConfig> = [
+  fields: FormlyFieldConfig[] = [
     {
       key: 'name',
       type: 'input',

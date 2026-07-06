@@ -90,8 +90,7 @@ export class GalleryInput extends FieldType implements OnInit {
   }
 
   fileChange(event: any) {
-    for (let i = 0; i < event.target.files.length; i++) {
-      const file = event.target.files[i];
+    for (const file of event.target.files) {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.resizeImage(e.target['result'], 640, (data) => {

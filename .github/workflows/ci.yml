@@ -19,6 +19,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        # npm install, not npm ci: the Windows-maintained lockfile lacks some
+        # platform-optional entries, so npm ci rejects it on Linux ("Missing:
+        # @emnapi/core from lock file"). Deploy workflows use npm install for
+        # the same reason. Revisit if the lock is regenerated cross-platform.
+        run: npm install
+
+      - name: Lint (errors gate; warnings are the documented legacy baseline)
+        run: npx eslint . --quiet
+
   build:
     runs-on: ubuntu-latest
     steps:

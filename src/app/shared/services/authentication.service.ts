@@ -44,7 +44,7 @@ export class AuthenticationService {
     return this.authService.getAccessTokenSilently();
   }
 
-  login(redirectPath: string = '/') {
+  login(redirectPath = '/') {
     this.authService.loginWithRedirect({
       appState: { target: redirectPath }
     });

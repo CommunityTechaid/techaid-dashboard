@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
@@ -53,7 +53,7 @@ query findAll {
     templateUrl: './dashboard-index.html',
     imports: [NgbProgressbar, AppGridDirective_1, PostIndexComponent]
 })
-export class DashboardIndexComponent {
+export class DashboardIndexComponent implements OnInit, OnDestroy {
   sub: Subscription;
   model: any;
   user: User;
