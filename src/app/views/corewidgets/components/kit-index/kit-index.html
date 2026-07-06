@@ -44,7 +44,7 @@
                 <span class="badge badge-danger">{{filterCount}}</span>
               }</span>
             </a>
-            <a href="#" (click)="model={}; modal(quickCreateApi); false;" class="btn btn-primary btn-icon-split btn-sm me-1 mb-1">
+            <a href="#" data-testid="kit-create-open" (click)="model={}; modal(quickCreateApi); false;" class="btn btn-primary btn-icon-split btn-sm me-1 mb-1">
               <span class="icon text-white-50">
                 <i class="fas fa-laptop"></i>
               </span>
@@ -160,7 +160,7 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button type="button" class="btn btn-primary btn-sm"
+    <button data-testid="kit-create-submit" type="button" class="btn btn-primary btn-sm"
       (click)="quickCreateEntity(quickForm.value); c('Close click')">
       CREATE
     </button>

@@ -11,7 +11,7 @@
             <h6 class="m-0 font-weight-bold text-primary">Roles</h6>
           </div>
           <div>
-            <a href="#" (click)="modal(addPermissions); false;" class="btn btn-primary btn-icon-split btn-sm">
+            <a href="#" data-testid="role-assign-open" (click)="modal(addPermissions); false;" class="btn btn-primary btn-icon-split btn-sm">
               <span class="icon text-white-50">
                 <i class="fas fa-user-plus"></i>
               </span>
@@ -44,7 +44,7 @@
                       </td>
                       <td>{{dt.description}}</td>
                       <td>
-                        <button (click)="selectedRole = dt; modal(confirmDelete)"
+                        <button data-testid="role-unassign" (click)="selectedRole = dt; modal(confirmDelete)"
                           class="btn btn-sm btn-outline-secondary">
                           <i class="fas fa-trash-alt"></i>
                         </button>
@@ -81,7 +81,7 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button type="button" class="btn btn-info btn-sm"
+    <button data-testid="role-assign-submit" type="button" class="btn btn-info btn-sm"
       (click)="assignRoles(form.value); c('Close click')">
       ASSIGN
     </button>
@@ -99,7 +99,7 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button type="button" class="btn btn-danger btn-sm" (click)="deleteRole(selectedRole); c('Close click')">YES, DELETE
+    <button data-testid="role-unassign-confirm" type="button" class="btn btn-danger btn-sm" (click)="deleteRole(selectedRole); c('Close click')">YES, DELETE
     IT</button>
   </div>
 </ng-template>

@@ -16,7 +16,15 @@ Time = estimated agent wall-clock.
   levers also done (#94): full suite ~3-4m, `npm run e2e:fast` mocked subset ~30s.
 - **Batch 4 complete:** 4.1+4.2 (CI gate, #99), 4.3 (ESLint, #100 — 0 errors / ~1.1k
   documented warn-baseline; `lint` job added to `ci.yml` in the same PR), 4.4 (skip
-  hygiene) merged. **Next:** Batch 5 (write-flow specs) on a fresh branch off dev.
+  hygiene) merged.
+- **Batch 5 started:** 5.1 done (`e2e/helpers/graphql.ts` teardown helper + smoke spec +
+  data-testids on create/save/delete controls, PR open). **Key finding:** the UAT test token
+  gets "Access Denied" on ALL `delete*` mutations — the helper hard-deletes first and falls
+  back to archiving (donor/kit/org/contact have `archived`; deviceRequest has neither an
+  archived flag nor a minimal-update path, so it is hard-delete-only → spec 5.3 must plan for
+  manual cleanup or a delete-capable token). Also: the Kotlin `Create*/Update*Input`
+  constructors require EVERY field present (nullable ones included) — partial payloads throw
+  "Failed to instantiate". **Next:** 5.2 (device intake spec) on a fresh branch off dev.
 - **Follow-up queue (flagged, not yet scheduled):** dead `createApi` modals in
   `kit-component.html` / `user-index.html` (nonexistent handlers, see 3.2 notes); googlemaps
   trio removal in 6.4; self-hosting the Poppins font (6.x candidate).
@@ -141,7 +149,7 @@ Pause point: PR open, this tracker committed.
 
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
-| [ ] | 5.1 | GraphQL-mutation teardown helper; `data-testid`s on needed controls | M | 1h | Opus |
+| [x] | 5.1 | Done 2026-07-06: `e2e/helpers/graphql.ts` (`UatGraphQLClient` — direct UAT API access, id tracking, delete-with-archive-fallback teardown) + `teardown-helper.spec.ts` round-trip smoke (self-skips on expired/fake token) + `data-testid`s on kit/donor/org/contact/device-request/user-roles create/save/delete controls. UAT token cannot hard-delete (Access Denied on all `delete*`) — teardown archives instead; deviceRequest is the exception (no archive path) | M | 1h | Opus |
 | [ ] | 5.2 | Device intake spec: create → in index → edit → persist | M | 1–1.5h | Opus |
 | [ ] | 5.3 | Device-request lifecycle spec: create → assign → transitions → complete | L | 1.5–2h | Opus |
 | [ ] | 5.4 | Donor CRUD spec | M | 1h | Sonnet |

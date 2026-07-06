@@ -45,7 +45,7 @@
                       {{ generatingPdf ? 'Generating...' : 'Generate PDF' }}
                     </small>
                   </button>
-                  <button (click)="updateEntity(form.value)"
+                  <button data-testid="devreq-save" (click)="updateEntity(form.value)"
                     type="submit" class="btn btn-sm"
                     [class.btn-primary]="!form.invalid" [class.btn-warning]="form.invalid">
                     <small>Save</small>
@@ -75,7 +75,7 @@
                         <p class="text-muted">The device request will be removed, this action is not reversable</p>
                       </div>
                       <div>
-                        <button type="submit" (click)="modal(confirmDelete);"
+                        <button data-testid="devreq-delete-open" type="submit" (click)="modal(confirmDelete);"
                           class="btn btn-danger btn-sm">
                           <small>DELETE</small>
                         </button>
@@ -146,7 +146,7 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
+    <button data-testid="devreq-delete-confirm" type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
   </div>
 </ng-template>
 

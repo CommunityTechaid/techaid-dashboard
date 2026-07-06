@@ -28,7 +28,7 @@
                   </h6>
                 </div>
                 <div>
-                  <button [class.btn-warning]="form.invalid" [class.btn-primary]="!form.invalid"
+                  <button data-testid="kit-save" [class.btn-warning]="form.invalid" [class.btn-primary]="!form.invalid"
                     (click)="updateEntity(getFormData())"
                     type="submit" class="btn btn-sm">
                     <small>Save</small>
@@ -61,7 +61,7 @@
                           <p class="text-muted">The device will be removed, this action is not reversable</p>
                         </div>
                         <div>
-                          <button type="submit" (click)="modal(confirmDelete);"
+                          <button data-testid="kit-delete-open" type="submit" (click)="modal(confirmDelete);"
                             class="btn btn-danger btn-sm">
                             <small>DELETE</small>
                           </button>
@@ -111,6 +111,6 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
+    <button data-testid="kit-delete-confirm" type="button" class="btn btn-danger btn-sm" (click)="deleteEntity(); c('Close click')">YES, DELETE</button>
   </div>
 </ng-template>
