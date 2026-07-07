@@ -21,7 +21,6 @@
               "src/polyfills.ts"
             ],
             "allowedCommonJsDependencies": [
-              "ngx-google-places-autocomplete",
               "graphql-tag",
               "datatables.net-responsive",
               "datatables.net-rowreorder",
