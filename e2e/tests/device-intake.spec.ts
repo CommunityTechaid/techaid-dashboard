@@ -101,6 +101,9 @@ test.describe('Device intake write-flow (kit create → index → edit → persi
   let uat: UatGraphQLClient;
 
   test.beforeAll(async () => {
+    // The warm-up below may legitimately take ~2 min on an Azure cold start —
+    // outlive the default 60s hook timeout or the hook dies before the loop.
+    test.setTimeout(150_000);
     uat = await UatGraphQLClient.create();
     // The UAT backend (Azure App Service) cold-starts and the app shows a
     // "Server is starting up" overlay until it responds. Warm it up before
