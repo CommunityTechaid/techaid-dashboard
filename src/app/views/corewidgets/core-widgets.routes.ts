@@ -2,71 +2,42 @@ import { Routes } from '@angular/router';
 import { provideStates } from '@ngxs/store';
 import { AuthGuard } from '@app/shared/services/auth.guard';
 import { CoreWidgetState } from './state/corewidgets.state';
-import { KitIndexComponent } from './components/kit-index/kit-index.component';
-import { UserPermissionsComponent } from './components/user-permissions/user-permissions.component';
-import { RoleIndexComponent } from './components/role-index/role-index.component';
-import { RoleInfoComponent } from './components/role-info/role-info.component';
-import { RolePermissionsComponent } from './components/role-permissions/role-permissions.component';
-import { RoleUsersComponent } from './components/role-users/role-users.component';
-import { UserRolesComponent } from './components/user-roles/user-roles.component';
-import { KitInfoComponent } from './components/kit-info/kit-info.component';
-import { DonorIndexComponent } from './components/donor-index/donor-index.component';
-import { DonorInfoComponent } from './components/donor-info/donor-info.component';
-import { UserIndexComponent } from './components/user-index/user-index.component';
-import { UserInfoComponent } from './components/user-info/user-info.component';
-import { PostIndexComponent } from './components/post-index/post-index.component';
-import { PostInfoComponent } from './components/post-info/post-info.component';
-import { PostDataComponent } from './components/post-data/post-data.component';
-import { DashboardIndexComponent } from './components/dashboard-index/dashboard-index.component';
-import { OrgRequestComponent } from './components/org-request/org-request';
-import { KitComponent } from './components/kit-component/kit-component.component';
-import { DeviceRequestIndexComponent } from './components/device-request-index/device-request-index.component';
-import { DeviceRequestInfoComponent } from './components/device-request-info/device-request-info.component';
-import { ReferringOrganisationIndexComponent } from './components/referring-organisation-index/referring-organisation-index.component';
-import { ReferringOrganisationInfoComponent } from './components/referring-organisation-info/referring-organisation-info.component';
-import { ReferringOrganisationContactIndexComponent } from './components/referring-organisation-contact-index/referring-organisation-contact-index.component';
-import { ReferringOrganisationContactInfoComponent } from './components/referring-organisation-contact-info/referring-organisation-contact-info.component';
-import { ReferringOrganisationContactComponent } from './components/referring-organisation-contact-component/referring-organisation-contact-component.component';
-import { DeviceRequestComponent } from './components/device-request-component/device-request-component.component';
-import { DonorParentIndexComponent } from './components/donor-parent-index/donor-parent-index.component';
-import { DonorParentInfoComponent } from './components/donor-parent-info/donor-parent-info.component';
-import { DonorComponent } from './components/donor-component/donor-component.component';
-import { KitAuditComponent } from './components/kit-audit-component/kit-audit-component.component';
-import { DeviceRequestAuditComponent } from './components/device-request-audit-component/device-request-audit-component.component';
-import { AdminPanelComponent } from './components/admin-panel/admin-panel.component';
-import { DistributionsAndDeliveriesIndexComponent } from './components/distributions-and-deliveries-index/distributions-and-deliveries-index.component';
+
+// Every route lazy-loads its component so esbuild emits one chunk per route
+// (shared dependencies are hoisted into common chunks automatically) instead
+// of bundling all ~30 feature components into a single core-widgets chunk.
 
 export const CORE_WIDGET_ROUTES: Routes = [
   {
     path: '',
     providers: [provideStates([CoreWidgetState])],
     children: [
-      { path: '', component: DashboardIndexComponent, data: { title: '' } },
-      { path: 'device-request-admin', component: OrgRequestComponent, data: { title: 'Device Request' }, canActivate: [AuthGuard] },
-      { path: 'organisation-device-request', component: OrgRequestComponent, data: { title: 'Device Request' } },
-      { path: 'dashboard/admin-panel', component: AdminPanelComponent, data: { title: 'Admin Panel' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/devices', component: KitIndexComponent, data: { title: 'Devices' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/devices/:kitId', component: KitInfoComponent, canActivate: [AuthGuard] },
-      { path: 'dashboard/donors', component: DonorIndexComponent, data: { title: 'Donors' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/donors/:donorId', component: DonorInfoComponent, data: { title: 'Donor' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/donor-parents', component: DonorParentIndexComponent, data: { title: 'Parent Donors' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/donor-parents/:donorParentId', component: DonorParentInfoComponent, data: { title: 'Parent Donor' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/roles', component: RoleIndexComponent, data: { title: 'Roles' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/roles/:roleId', component: RoleInfoComponent, data: { title: 'Role' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/users', component: UserIndexComponent, data: { title: 'Users' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/users/:userId', component: UserInfoComponent, data: { title: 'User' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/posts', component: PostIndexComponent, data: { title: 'Posts' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/posts/:postId', component: PostInfoComponent, data: { title: 'Post' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/device-requests', component: DeviceRequestIndexComponent, data: { title: 'Device Requests' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/device-requests/:requestId', component: DeviceRequestInfoComponent, canActivate: [AuthGuard] },
-      { path: 'dashboard/distributions-and-deliveries', component: DistributionsAndDeliveriesIndexComponent, data: { title: 'Distributions and Deliveries' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/distributions-and-deliveries/:requestId', component: DeviceRequestInfoComponent, canActivate: [AuthGuard] },
-      { path: 'dashboard/referring-organisations', component: ReferringOrganisationIndexComponent, data: { title: 'Organisations' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/referring-organisations/:orgId', component: ReferringOrganisationInfoComponent, data: { title: 'Organisation' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/referring-organisation-contacts', component: ReferringOrganisationContactIndexComponent, data: { title: 'Referees' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/referring-organisation-contacts/:refereeId', component: ReferringOrganisationContactInfoComponent, data: { title: 'Referee' }, canActivate: [AuthGuard] },
-      { path: 'dashboard', component: DashboardIndexComponent, data: { title: 'Dashboard' }, canActivate: [AuthGuard] },
-      { path: '**', component: PostDataComponent },
+      { path: '', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: '' } },
+      { path: 'device-request-admin', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' }, canActivate: [AuthGuard] },
+      { path: 'organisation-device-request', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' } },
+      { path: 'dashboard/admin-panel', loadComponent: () => import('./components/admin-panel/admin-panel.component').then(m => m.AdminPanelComponent), data: { title: 'Admin Panel' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/devices', loadComponent: () => import('./components/kit-index/kit-index.component').then(m => m.KitIndexComponent), data: { title: 'Devices' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/devices/:kitId', loadComponent: () => import('./components/kit-info/kit-info.component').then(m => m.KitInfoComponent), canActivate: [AuthGuard] },
+      { path: 'dashboard/donors', loadComponent: () => import('./components/donor-index/donor-index.component').then(m => m.DonorIndexComponent), data: { title: 'Donors' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/donors/:donorId', loadComponent: () => import('./components/donor-info/donor-info.component').then(m => m.DonorInfoComponent), data: { title: 'Donor' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/donor-parents', loadComponent: () => import('./components/donor-parent-index/donor-parent-index.component').then(m => m.DonorParentIndexComponent), data: { title: 'Parent Donors' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/donor-parents/:donorParentId', loadComponent: () => import('./components/donor-parent-info/donor-parent-info.component').then(m => m.DonorParentInfoComponent), data: { title: 'Parent Donor' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/roles', loadComponent: () => import('./components/role-index/role-index.component').then(m => m.RoleIndexComponent), data: { title: 'Roles' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/roles/:roleId', loadComponent: () => import('./components/role-info/role-info.component').then(m => m.RoleInfoComponent), data: { title: 'Role' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/users', loadComponent: () => import('./components/user-index/user-index.component').then(m => m.UserIndexComponent), data: { title: 'Users' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/users/:userId', loadComponent: () => import('./components/user-info/user-info.component').then(m => m.UserInfoComponent), data: { title: 'User' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/posts', loadComponent: () => import('./components/post-index/post-index.component').then(m => m.PostIndexComponent), data: { title: 'Posts' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/posts/:postId', loadComponent: () => import('./components/post-info/post-info.component').then(m => m.PostInfoComponent), data: { title: 'Post' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/device-requests', loadComponent: () => import('./components/device-request-index/device-request-index.component').then(m => m.DeviceRequestIndexComponent), data: { title: 'Device Requests' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/device-requests/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
+      { path: 'dashboard/distributions-and-deliveries', loadComponent: () => import('./components/distributions-and-deliveries-index/distributions-and-deliveries-index.component').then(m => m.DistributionsAndDeliveriesIndexComponent), data: { title: 'Distributions and Deliveries' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/distributions-and-deliveries/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
+      { path: 'dashboard/referring-organisations', loadComponent: () => import('./components/referring-organisation-index/referring-organisation-index.component').then(m => m.ReferringOrganisationIndexComponent), data: { title: 'Organisations' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/referring-organisations/:orgId', loadComponent: () => import('./components/referring-organisation-info/referring-organisation-info.component').then(m => m.ReferringOrganisationInfoComponent), data: { title: 'Organisation' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/referring-organisation-contacts', loadComponent: () => import('./components/referring-organisation-contact-index/referring-organisation-contact-index.component').then(m => m.ReferringOrganisationContactIndexComponent), data: { title: 'Referees' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/referring-organisation-contacts/:refereeId', loadComponent: () => import('./components/referring-organisation-contact-info/referring-organisation-contact-info.component').then(m => m.ReferringOrganisationContactInfoComponent), data: { title: 'Referee' }, canActivate: [AuthGuard] },
+      { path: 'dashboard', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: 'Dashboard' }, canActivate: [AuthGuard] },
+      { path: '**', loadComponent: () => import('./components/post-data/post-data.component').then(m => m.PostDataComponent) },
     ]
   }
 ];
