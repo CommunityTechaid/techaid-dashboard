@@ -1,4 +1,7 @@
-import * as _ from 'lodash';
+// Per-function imports keep the whole of lodash out of the initial bundle;
+// this file is pulled in eagerly via the shared utils barrel.
+import merge from 'lodash/merge';
+import isEmpty from 'lodash/isEmpty';
 import { isValid, parse, format as fnsFormat, startOfDay } from 'date-fns';
 import { DateUtils, toFnsFormat } from './date_utils';
 
@@ -186,9 +189,9 @@ export class HashUtils {
                 } else {
                     if (isLast) {
                         if (isObject(hashMap[k]) && isObject(value)) {
-                            _.merge(hashMap[k], value);
+                            merge(hashMap[k], value);
                         } else {
-                            if (!_.isEmpty(hashMap[k]) && _.isEmpty(value)) {
+                            if (!isEmpty(hashMap[k]) && isEmpty(value)) {
                                 // do nothing
                             } else {
                                 hashMap[k] = value;
@@ -255,7 +258,7 @@ export class HashUtils {
         if (isObject(data) && (key in data)) {
             let value = data[key];
             if (isObject(value)) {
-                const children = _.keys(data).filter(k => k.startsWith(`${key}.`));
+                const children = Object.keys(data).filter(k => k.startsWith(`${key}.`));
                 if (children.length) {
                     const val = {};
                     children.forEach(k => {
@@ -348,7 +351,7 @@ export class HashUtils {
             }
 
             if (isObject(value)) {
-                const children = _.keys(data).filter(k => k.startsWith(`${key}.`));
+                const children = Object.keys(data).filter(k => k.startsWith(`${key}.`));
                 if (children.length) {
                     const val = {};
                     children.forEach(k => {
@@ -360,7 +363,7 @@ export class HashUtils {
             }
         } else {
             if (isObject(data)) {
-                const children = _.keys(data).filter(k => k.startsWith(`${key}.`));
+                const children = Object.keys(data).filter(k => k.startsWith(`${key}.`));
                 if (children.length) {
                     const val = {};
                     children.forEach(k => {
@@ -608,7 +611,7 @@ export class HashUtils {
             const currentKey = options.key;
             const data = {};
 
-            for (const key of _.keys(expression)) {
+            for (const key of Object.keys(expression)) {
                 const value = expression[key];
                 options.key = (isBlank(currentKey)) ? key : `${currentKey}.${key}`;
                 const val = HashUtils.interpolate(value, variables, options);
