@@ -50,7 +50,7 @@ mutation removeRoles($userId: String!, $roleIds: [String!]!) {
 `;
 
 const AUTOCOMPLETE_ROLES = gql`
-query findAutocompleteRoles($term: String, $term: String) {
+query findAutocompleteRoles($term: String) {
   roles(page: {
     size: 50
   }, filter: $term){

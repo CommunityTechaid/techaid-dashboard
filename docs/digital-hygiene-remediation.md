@@ -54,7 +54,9 @@ Time = estimated agent wall-clock.
   trio removal in 6.4; self-hosting the Poppins font (6.x candidate).
 - Remember: **branch fresh from dev for every PR** — stacking follow-ups on a squash-merged
   branch causes self-conflicts.
-- **Last updated:** 2026-07-07 (5.3 + 5.5; Batch 5 remaining: 5.6 user-role assign spec)
+- **Batch 5 complete 2026-07-07** (5.1 #102, 5.2 #103, 5.4 #104, 5.3 #105, 5.5 #106, 5.6). Suite:
+  60 passed / 9–10 reasoned data-skips / 1 known pre-existing failure (DEVREQ-B1). Next: Batch 6.
+- **Last updated:** 2026-07-07 (5.6 — Batch 5 complete)
 
 ### E2E harness notes (2026-07-03)
 
@@ -178,7 +180,7 @@ Pause point: PR open, this tracker committed.
 | [x] | 5.3 | Done 2026-07-07: `device-request-lifecycle.spec.ts` — GraphQL-owned org/referee/request/kit fixtures → UI drives status transitions + bulk-assign modal to REQUEST_COMPLETED. Found+fixed stale Devices-tab count (cache-first `fetchDeviceCount`); request residue accepted per 2026-07-06 policy | L | 1.5–2h | Opus |
 | [x] | 5.4 | Done 2026-07-06: `donor-crud.spec.ts` — create (incl. required Parent Donor ng-select) → index → edit → persist → UI delete. Delete outcome: `donor-delete-open` not rendered (token lacks `delete:donors`) — archive fallback cleans up | M | 1h | Sonnet |
 | [x] | 5.5 | Done 2026-07-07: `org-referee-crud.spec.ts` — org create modal → index → edit → persist; referee created from the org's Referees tab (embedded referee-component injects the org id; `place` address field targeted via `form-place input` — its inner input has no id so labels aren't associated) → edit → persist; both archived THROUGH THE UI via the forms' "Archived?" radio (token lacks `delete:organisations`, Danger Zone never renders) and org verified gone from the default index. Also fixed a latent all-spec bug: the ~2min cold-start warm-up loops ran inside Playwright's 60s default hook timeout — beforeAll now sets 150s | M | 1–1.5h | Sonnet |
-| [ ] | 5.6 | User role assign/remove spec | M | 1h | Sonnet |
+| [x] | 5.6 | Done 2026-07-07: `user-role-assign.spec.ts` — targets ONLY the e2e account; assigns METRICS_USER (least-priv, subset of held METRICS_ADMIN) via the modal, unassigns via the row control, asserts final role set == initial. **Real bug found+fixed (red on dev): the Assign Roles typeahead was completely broken** — `AUTOCOMPLETE_ROLES` declared `$term` twice, a GraphQL validation error on every keystroke → dropdown always "No items found", no role assignable through the UI | M | 1h | Sonnet |
 
 Pitfalls: button textContent whitespace, ng-select overlay, device-request-index default
 `is_sales` filter. New specs use `expect`-polling/`waitForResponse`, never `waitForTimeout`.
