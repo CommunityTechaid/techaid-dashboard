@@ -54,7 +54,7 @@ Time = estimated agent wall-clock.
   trio removal in 6.4; self-hosting the Poppins font (6.x candidate).
 - Remember: **branch fresh from dev for every PR** — stacking follow-ups on a squash-merged
   branch causes self-conflicts.
-- **Last updated:** 2026-07-07 (5.3)
+- **Last updated:** 2026-07-07 (5.3 + 5.5; Batch 5 remaining: 5.6 user-role assign spec)
 
 ### E2E harness notes (2026-07-03)
 
@@ -177,7 +177,7 @@ Pause point: PR open, this tracker committed.
 | [x] | 5.2 | Done 2026-07-06: `device-intake.spec.ts` — real-UAT UI write-flow (quick-create modal → find by unique model in index → edit make/model on kit-info → Save → reload-persist), owns its record via `UatGraphQLClient.track`/archive teardown. **Findings:** create modal fires `quickCreateKit` (not `createKit`), captures only type/make/model — no serialNo, so identity = unique model string; DataTables search input is `input[aria-controls="kit-index"]`; UAT backend cold-starts ("Server is starting up" overlay) so specs must warm the API before driving the UI (added a beforeAll poll); a create that fires server-side but whose client `waitForResponse` misses leaks an untracked active record (track only after capture) — warm-up closes that race | M | 1–1.5h | Opus |
 | [x] | 5.3 | Done 2026-07-07: `device-request-lifecycle.spec.ts` — GraphQL-owned org/referee/request/kit fixtures → UI drives status transitions + bulk-assign modal to REQUEST_COMPLETED. Found+fixed stale Devices-tab count (cache-first `fetchDeviceCount`); request residue accepted per 2026-07-06 policy | L | 1.5–2h | Opus |
 | [x] | 5.4 | Done 2026-07-06: `donor-crud.spec.ts` — create (incl. required Parent Donor ng-select) → index → edit → persist → UI delete. Delete outcome: `donor-delete-open` not rendered (token lacks `delete:donors`) — archive fallback cleans up | M | 1h | Sonnet |
-| [ ] | 5.5 | Referring-org + referee CRUD spec | M | 1–1.5h | Sonnet |
+| [x] | 5.5 | Done 2026-07-07: `org-referee-crud.spec.ts` — org create modal → index → edit → persist; referee created from the org's Referees tab (embedded referee-component injects the org id; `place` address field targeted via `form-place input` — its inner input has no id so labels aren't associated) → edit → persist; both archived THROUGH THE UI via the forms' "Archived?" radio (token lacks `delete:organisations`, Danger Zone never renders) and org verified gone from the default index. Also fixed a latent all-spec bug: the ~2min cold-start warm-up loops ran inside Playwright's 60s default hook timeout — beforeAll now sets 150s | M | 1–1.5h | Sonnet |
 | [ ] | 5.6 | User role assign/remove spec | M | 1h | Sonnet |
 
 Pitfalls: button textContent whitespace, ng-select overlay, device-request-index default
