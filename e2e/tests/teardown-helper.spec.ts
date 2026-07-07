@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { getBearerToken, UatGraphQLClient } from '../helpers/graphql';
+import { sampleName } from '../helpers/sample-data';
 
 /**
  * Real-UAT writes need a genuine, unexpired bearer token. Self-skip when the
@@ -61,7 +62,7 @@ test.describe('GraphQL teardown helper', () => {
   });
 
   test('creates a donor, finds it, and teardown removes it from active views', async () => {
-    const marker = `E2E teardown probe ${Date.now()}`;
+    const marker = sampleName('Donor');
 
     // Create (auto-tracked by the helper).
     const donor = await uat.createDonor({

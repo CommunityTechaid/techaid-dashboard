@@ -43,6 +43,7 @@
  */
 import { test, expect, Page } from '@playwright/test';
 import { getBearerToken, UatGraphQLClient } from '../helpers/graphql';
+import { sampleName } from '../helpers/sample-data';
 
 /**
  * Real-UAT writes need a genuine, unexpired bearer token. Self-skip when the
@@ -142,10 +143,10 @@ test.describe('Donor CRUD write-flow (create → index → edit → persist → 
     await withAuthInterceptor(page);
 
     const stamp = Date.now();
-    const uniqueName = `E2E-5.4-${stamp}`;
+    const uniqueName = sampleName('Donor', stamp);
     const email = `e2e-5.4-${stamp}@example.com`;
     const phone = `0770090${stamp % 10000}`;
-    const editedName = `${uniqueName}-EDITED`;
+    const editedName = `${uniqueName} edited`;
     const editedPhone = `${phone}9`;
 
     // A real Parent Donor to satisfy `donorParentField`'s `required: true` (no

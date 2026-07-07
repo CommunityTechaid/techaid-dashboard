@@ -31,13 +31,14 @@
  * see helpers/graphql.ts). The DEVICE REQUEST ITSELF CANNOT BE REMOVED with
  * this token (no archive path, delete denied); per the accepted residue policy
  * (2026-07-06) it is tracked anyway — so a future delete-capable token cleans
- * it — and otherwise left in UAT, labelled `E2E-5.3-<timestamp>` in clientRef,
- * and reported via a test annotation.
+ * it — and otherwise left in UAT, labelled `Request E2E Sample <timestamp>` in
+ * clientRef (see helpers/sample-data.ts), and reported via a test annotation.
  *
  * Not tagged @mocked: it needs the real UAT backend and a valid bearer token.
  */
 import { test, expect, Page } from '@playwright/test';
 import { getBearerToken, UatGraphQLClient } from '../helpers/graphql';
+import { sampleName } from '../helpers/sample-data';
 
 /**
  * Real-UAT writes need a genuine, unexpired bearer token. Self-skip when the
@@ -137,9 +138,9 @@ test.describe('Device-request lifecycle (create → assign → transitions → c
     await withAuthInterceptor(page);
 
     const stamp = Date.now();
-    const label = `E2E-5.3-${stamp}`;
-    const contactName = `${label}-REFEREE`;
-    const collectionContact = `${label}-COLLECTOR`;
+    const label = sampleName('Request', stamp);
+    const contactName = sampleName('Referee', stamp);
+    const collectionContact = `${label} collector`;
 
     // ── 0. FIXTURES via GraphQL (all owned by this spec) ────────────────────
     // Org + referee first: CreateDeviceRequestInput's only required field is
@@ -185,7 +186,7 @@ test.describe('Device-request lifecycle (create → assign → transitions → c
       {
         data: {
           clientRef: label,
-          details: 'E2E 5.3 lifecycle spec — safe to remove',
+          details: 'E2E Sample device-request lifecycle spec — safe to remove',
           referringOrganisationContact: contact.id,
           deviceRequestItems: { laptops: 1 },
           borough: 'Lambeth',
