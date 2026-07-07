@@ -56,9 +56,11 @@ Time = estimated agent wall-clock.
   branch causes self-conflicts.
 - **Batch 5 complete 2026-07-07** (5.1 #102, 5.2 #103, 5.4 #104, 5.3 #105, 5.5 #106, 5.6 #107). Suite:
   61 passed / 9–10 reasoned data-skips / 1 known pre-existing failure (DEVREQ-B1).
-- **Batch 6: 6.1–6.5 done 2026-07-07** (6.3+6.4 #108, 6.2 #109, 6.1 #110, 6.5 pilot). Remaining:
-  6.6 (file backlog issues — add: OnPush fan-out after pilot soak).
-- **Last updated:** 2026-07-07 (6.5 pilot)
+- **Batch 6 complete 2026-07-07** (6.3+6.4 #108, 6.2 #109, 6.1 #110, 6.5 pilot #111, 6.6 issues
+  #112–#121). **ALL SIX BATCHES OF THE REMEDIATION ARE COMPLETE.** Everything deferred now lives
+  as a `tech-debt`-labelled GitHub issue; the first follow-up to schedule is #114 (OnPush fan-out)
+  once the donor-index pilot has soaked on UAT.
+- **Last updated:** 2026-07-07 (remediation complete)
 
 ### E2E harness notes (2026-07-03)
 
@@ -196,7 +198,7 @@ Pitfalls: button textContent whitespace, ng-select overlay, device-request-index
 | [x] | 6.3 | Done 2026-07-07 (#108): `lodash/merge` + `lodash/isEmpty` per-function imports, `_.keys` → `Object.keys`. Size win negligible (merge pulls most internals) — import hygiene only | S | 15m | Haiku |
 | [x] | 6.4 | Done 2026-07-07 (#108): removed tablesaw (4 unused imports), ngx-google-places-autocomplete (+angular.json allowlist entry), @types/googlemaps (+tsconfig types entry), @types/jasminewd2. datatables.net* audit: actively used (grid directive + ~12 components) — kept, migration stays in 6.6 backlog | S | 30m | Haiku |
 | [x] | 6.5 | Pilot done 2026-07-07: `donor-index` → OnPush; `markForCheck()` in the DataTables ajax callback (rows) and `applyFilter` (badge — called from the NgbModal-hosted filter modal view). New `donor-onpush.spec.ts` @mocked in the CI gate; red-verified (removing the ajax markForCheck → rows never paint). **Fan-out to the other ~11 index components deliberately deferred** — pilot needs a UAT soak first; schedule as a follow-up sweep | L | 2–4h | Opus |
-| [ ] | 6.6 | File backlog issues: DataTables→native tables, zoneless, FA5→7, apollo-angular 14/graphql 17/NGXS 22/TS 6, Auth0 in-memory cache | S | 30m | Haiku |
+| [x] | 6.6 | Done 2026-07-07: 10 backlog issues filed under the new `tech-debt` label — #112 upgrade train (Ng22/apollo14/NGXS22/TS6), #113 DataTables→native tables, #114 OnPush fan-out after pilot soak, #115 zoneless, #116 FA5→7, #117 Auth0 in-memory token cache, #118 quill XSS advisory watch, #119 self-host Poppins, #120 dead createApi modals, #121 Linux lockfile → `npm ci` | S | 30m | Haiku |
 
 ## Verification (every batch)
 
