@@ -71,6 +71,16 @@
             "production": {
               "budgets": [
                 {
+                  "type": "initial",
+                  "maximumWarning": "2.7mb",
+                  "maximumError": "3mb"
+                },
+                {
+                  "type": "allScript",
+                  "maximumWarning": "3mb",
+                  "maximumError": "3.5mb"
+                },
+                {
                   "type": "anyComponentStyle",
                   "maximumWarning": "6kb"
                 }
@@ -127,6 +137,16 @@
             "uat": {
               "budgets": [
                 {
+                  "type": "initial",
+                  "maximumWarning": "2.7mb",
+                  "maximumError": "3mb"
+                },
+                {
+                  "type": "allScript",
+                  "maximumWarning": "3mb",
+                  "maximumError": "3.5mb"
+                },
+                {
                   "type": "anyComponentStyle",
                   "maximumWarning": "6kb"
                 }
@@ -137,7 +157,16 @@
                   "with": "src/environments/environment.uat.ts"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
+              "extractLicenses": true
             },
             "uat-local": {
               "budgets": [
