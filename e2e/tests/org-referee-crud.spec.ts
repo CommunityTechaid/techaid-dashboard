@@ -43,6 +43,7 @@
  */
 import { test, expect, Page } from '@playwright/test';
 import { getBearerToken, UatGraphQLClient } from '../helpers/graphql';
+import { sampleName } from '../helpers/sample-data';
 
 /**
  * Real-UAT writes need a genuine, unexpired bearer token. Self-skip when the
@@ -141,13 +142,13 @@ test.describe('Referring-org + referee CRUD write-flow', () => {
     await withAuthInterceptor(page);
 
     const stamp = Date.now();
-    const orgName = `E2E-5.5-${stamp}`;
-    const editedOrgName = `${orgName}-EDITED`;
+    const orgName = sampleName('Org', stamp);
+    const editedOrgName = `${orgName} edited`;
     const orgPhone = `0770091${stamp % 10000}`;
     const editedOrgPhone = `${orgPhone}9`;
-    const refereeName = `${orgName}-REFEREE`;
-    const editedRefereeName = `${refereeName}-EDITED`;
-    const refereeEmail = `e2e-5.5-${stamp}@example.org`;
+    const refereeName = sampleName('Referee', stamp);
+    const editedRefereeName = `${refereeName} edited`;
+    const refereeEmail = `e2e-sample-${stamp}@example.org`;
     const refereePhone = `0770092${stamp % 10000}`;
     const editedRefereePhone = `${refereePhone}9`;
 

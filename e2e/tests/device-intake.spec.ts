@@ -23,14 +23,15 @@
  *
  * Identity: the quick-create modal only captures type/make/model (no serialNo),
  * so the unique, searchable identifier for a run is the MODEL string
- * (`E2E-5.2-<timestamp>`). Two runs never collide because the timestamp differs,
- * and the suite runs fullyParallel:false, so this file has the backend to itself
- * while it writes.
+ * (`Kit E2E Sample <timestamp>`, see helpers/sample-data.ts). Two runs never
+ * collide because the timestamp differs, and the suite runs fullyParallel:false,
+ * so this file has the backend to itself while it writes.
  *
  * Not tagged @mocked: it needs the real UAT backend and a valid bearer token.
  */
 import { test, expect, Page } from '@playwright/test';
 import { getBearerToken, UatGraphQLClient } from '../helpers/graphql';
+import { E2E_SAMPLE_MARKER, sampleName } from '../helpers/sample-data';
 
 /**
  * Real-UAT writes need a genuine, unexpired bearer token. Self-skip when the
@@ -136,10 +137,10 @@ test.describe('Device intake write-flow (kit create → index → edit → persi
     await withAuthInterceptor(page);
 
     const stamp = Date.now();
-    const uniqueModel = `E2E-5.2-${stamp}`;
-    const createMake = `E2E-MAKE-${stamp}`;
-    const editedMake = `E2E-EDIT-MAKE-${stamp}`;
-    const editedModel = `${uniqueModel}-EDITED`;
+    const uniqueModel = sampleName('Kit', stamp);
+    const createMake = `Kit ${E2E_SAMPLE_MARKER} make ${stamp}`;
+    const editedMake = `Kit ${E2E_SAMPLE_MARKER} make ${stamp} edited`;
+    const editedModel = `${uniqueModel} edited`;
 
     // ── 1. CREATE via the kit-index quick-create modal ─────────────────────────
     await page.goto('/dashboard/devices');

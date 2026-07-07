@@ -13,6 +13,7 @@
     "e2e": "playwright test",
     "e2e:auth": "playwright test --project=setup",
     "e2e:save-token": "node e2e/save-token.mjs",
+    "e2e:cleanup": "node e2e/cleanup-residue.mjs",
     "e2e:headed": "playwright test --headed",
     "e2e:report": "playwright show-report",
     "e2e:fast": "playwright test --grep @mocked",
