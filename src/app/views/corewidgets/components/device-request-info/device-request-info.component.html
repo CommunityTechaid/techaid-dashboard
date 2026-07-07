@@ -28,7 +28,7 @@
                 </div>
                 <div>
                   @if (user?.authorities['app:bulkedit']) {
-                    <button (click)="openAssignDevicesModal()"
+                    <button data-testid="devreq-assign-open" (click)="openAssignDevicesModal()"
                       type="button" class="btn btn-success btn-sm me-2">
                       <small><i class="fas fa-link"></i> Assign Devices</small>
                     </button>
@@ -226,7 +226,7 @@
 
     <!-- Phase 1 footer: Assign button -->
     @if (!showAssignConfirmation && !isAssigning && assignmentResults.length === 0) {
-      <button type="button" class="btn btn-success btn-sm"
+      <button data-testid="devreq-assign-prepare" type="button" class="btn btn-success btn-sm"
         [disabled]="!assignDeviceIds.trim()"
         (click)="prepareAssignment()">
         <i class="fas fa-link"></i> Assign
@@ -238,7 +238,7 @@
       <button type="button" class="btn btn-secondary btn-sm" (click)="showAssignConfirmation = false">
         <i class="fas fa-arrow-left"></i> Back
       </button>
-      <button type="button" class="btn btn-success btn-sm" (click)="executeAssignment()">
+      <button data-testid="devreq-assign-confirm" type="button" class="btn btn-success btn-sm" (click)="executeAssignment()">
         <i class="fas fa-check"></i> Confirm
       </button>
     }

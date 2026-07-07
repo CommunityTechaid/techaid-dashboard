@@ -73,9 +73,13 @@ test.describe('Referee notes UI', () => {
       page.locator('label', { hasText: 'Add a new note for this referee' })
     ).toBeVisible({ timeout: 15_000 });
 
-    // Assert the notes list container is present
+    // Assert the notes list container is present. Attached, not visible: a
+    // referee with zero notes renders an EMPTY .notes-list (zero-height =
+    // "hidden" to Playwright), and the first index row can legitimately be a
+    // brand-new referee — e.g. while a write-flow spec's fixture contact is
+    // alive in another worker. The notes UI being wired up is what matters.
     await expect(
       page.locator('.notes-list')
-    ).toBeVisible({ timeout: 15_000 });
+    ).toBeAttached({ timeout: 15_000 });
   });
 });

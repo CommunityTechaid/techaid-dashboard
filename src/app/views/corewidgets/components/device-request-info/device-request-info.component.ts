@@ -844,6 +844,9 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
         variables: {
           deviceRequestId: this.requestId,
         },
+        // cache-first would replay the page-load count (0) after assigning
+        // devices — the tab label must reflect the post-assignment total.
+        fetchPolicy: 'network-only',
       })
       .subscribe(
         (res) => {
