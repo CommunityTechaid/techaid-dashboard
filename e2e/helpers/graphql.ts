@@ -24,9 +24,12 @@
  *   - deviceRequest has no `archived` flag and its update constructor rejects a
  *       minimal status-only payload (it requires the nested items/needs inputs),
  *       so there is no safe generic soft-delete — it is hard-delete-only. With
- *       the current token a device-request record cannot be auto-removed; the
- *       teardown logs a loud warning so it can be cleaned up by hand (or by a
- *       delete-capable token). See spec 5.3 notes.
+ *       the current token a device-request record cannot be auto-removed.
+ *       ACCEPTED POLICY (2026-07-06): test-created device requests may be left
+ *       in UAT — teardown logs the residue as an informational note, not a
+ *       failure. Specs label them identifiably (clientRef `E2E-…`) so a human
+ *       (or a future delete-capable token) can find them. If such a token is
+ *       ever provided, the hard-delete path just works and no residue remains.
  *
  * If a delete-capable token is ever provided, the hard-delete path just works
  * and the archive fallback never runs.
@@ -384,6 +387,7 @@ export class UatGraphQLClient {
    */
   async cleanup(): Promise<void> {
     const failures: string[] = [];
+    const acceptedResidue: string[] = [];
     for (const rec of [...this.tracked].reverse()) {
       const teardown = ENTITY_TEARDOWN[rec.kind];
       try {
@@ -399,12 +403,22 @@ export class UatGraphQLClient {
                 `${(archiveErr as Error).message}`,
             );
           }
+        } else if (isAccessDenied(err) && rec.kind === 'deviceRequest') {
+          // No archive path and the token can't hard-delete: accepted residue
+          // (policy of 2026-07-06, see file header) — note it, don't alarm.
+          acceptedResidue.push(`${rec.kind}#${rec.id}`);
         } else {
           failures.push(`${rec.kind}#${rec.id}: ${(err as Error).message}`);
         }
       }
     }
     this.tracked = [];
+    if (acceptedResidue.length) {
+      console.info(
+        `[uat-teardown] left in UAT per accepted device-request residue policy: ` +
+          acceptedResidue.join(', '),
+      );
+    }
     if (failures.length) {
       console.warn(
         `[uat-teardown] ${failures.length} record(s) could not be removed — ` +

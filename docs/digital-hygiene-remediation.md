@@ -35,17 +35,26 @@ Time = estimated agent wall-clock.
   (annotation `delete-outcome: donor-delete-open not rendered...`) and falls through to the
   helper's archive-fallback teardown, same as 5.1/5.2. Full suite 58P/9S/1 known-fail DEVREQ-B1;
   ran donor-crud twice back-to-back (green both times) plus once inside the full-suite run — all
-  4 created donors verified archived, zero active residue. **Next:** 5.5 (referring-org + referee
-  CRUD spec) on a fresh branch off dev; 5.3 remains pending the permissions decision below.
-  **5.3 blocker:** device requests have NO archive path and the UAT token can't `deleteDeviceRequest`
-  (Access Denied) — so a lifecycle spec cannot auto-clean its records. 5.3 needs either a
-  delete-capable token or an accepted manual-cleanup/residue policy before it can own its writes.
+  4 created donors verified archived, zero active residue. 5.3 done 2026-07-07
+  (`device-request-lifecycle.spec.ts` — owns org+referee+request+kit fixtures via GraphQL,
+  drives NEW → equalities → bulk-assign modal → collection arranged → REQUEST_COMPLETED through
+  the UI). **Residue policy resolved 2026-07-06: Tony accepted that test-created device requests
+  stay in UAT** (no archive path, no delete authority) — the teardown helper now reports them as
+  an informational accepted-residue note instead of a manual-cleanup warning; org/referee/kit are
+  archived as usual. **Real bug found+fixed by the spec (red on dev):** the Devices-tab count
+  (`fetchDeviceCount`) uses `apollo.query` cache-first, so after assigning devices the tab kept
+  showing the page-load count ("No Devices Assigned") until a full reload — fixed with
+  `fetchPolicy: 'network-only'`. Also hardened `referee-notes.spec.ts`: it asserted `.notes-list`
+  *visible* on the newest referee in the index, but a zero-note referee renders an empty
+  (zero-height = hidden) list — now asserts attached; the newest referee can legitimately be a
+  write-flow fixture alive in a parallel worker. Full suite 59P/9S/1 known-fail DEVREQ-B1.
+  **Next:** 5.5 (referring-org + referee CRUD spec) on a fresh branch off dev.
 - **Follow-up queue (flagged, not yet scheduled):** dead `createApi` modals in
   `kit-component.html` / `user-index.html` (nonexistent handlers, see 3.2 notes); googlemaps
   trio removal in 6.4; self-hosting the Poppins font (6.x candidate).
 - Remember: **branch fresh from dev for every PR** — stacking follow-ups on a squash-merged
   branch causes self-conflicts.
-- **Last updated:** 2026-07-06 (5.4)
+- **Last updated:** 2026-07-07 (5.3)
 
 ### E2E harness notes (2026-07-03)
 
@@ -166,7 +175,7 @@ Pause point: PR open, this tracker committed.
 |------|----|------|----|------|-------|
 | [x] | 5.1 | Done 2026-07-06: `e2e/helpers/graphql.ts` (`UatGraphQLClient` — direct UAT API access, id tracking, delete-with-archive-fallback teardown) + `teardown-helper.spec.ts` round-trip smoke (self-skips on expired/fake token) + `data-testid`s on kit/donor/org/contact/device-request/user-roles create/save/delete controls. UAT token cannot hard-delete (Access Denied on all `delete*`) — teardown archives instead; deviceRequest is the exception (no archive path) | M | 1h | Opus |
 | [x] | 5.2 | Done 2026-07-06: `device-intake.spec.ts` — real-UAT UI write-flow (quick-create modal → find by unique model in index → edit make/model on kit-info → Save → reload-persist), owns its record via `UatGraphQLClient.track`/archive teardown. **Findings:** create modal fires `quickCreateKit` (not `createKit`), captures only type/make/model — no serialNo, so identity = unique model string; DataTables search input is `input[aria-controls="kit-index"]`; UAT backend cold-starts ("Server is starting up" overlay) so specs must warm the API before driving the UI (added a beforeAll poll); a create that fires server-side but whose client `waitForResponse` misses leaks an untracked active record (track only after capture) — warm-up closes that race | M | 1–1.5h | Opus |
-| [ ] | 5.3 | Device-request lifecycle spec: create → assign → transitions → complete | L | 1.5–2h | Opus |
+| [x] | 5.3 | Done 2026-07-07: `device-request-lifecycle.spec.ts` — GraphQL-owned org/referee/request/kit fixtures → UI drives status transitions + bulk-assign modal to REQUEST_COMPLETED. Found+fixed stale Devices-tab count (cache-first `fetchDeviceCount`); request residue accepted per 2026-07-06 policy | L | 1.5–2h | Opus |
 | [x] | 5.4 | Done 2026-07-06: `donor-crud.spec.ts` — create (incl. required Parent Donor ng-select) → index → edit → persist → UI delete. Delete outcome: `donor-delete-open` not rendered (token lacks `delete:donors`) — archive fallback cleans up | M | 1h | Sonnet |
 | [ ] | 5.5 | Referring-org + referee CRUD spec | M | 1–1.5h | Sonnet |
 | [ ] | 5.6 | User role assign/remove spec | M | 1h | Sonnet |
