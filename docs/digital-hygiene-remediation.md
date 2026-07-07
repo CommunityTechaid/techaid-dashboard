@@ -54,9 +54,11 @@ Time = estimated agent wall-clock.
   trio removal in 6.4; self-hosting the Poppins font (6.x candidate).
 - Remember: **branch fresh from dev for every PR** — stacking follow-ups on a squash-merged
   branch causes self-conflicts.
-- **Batch 5 complete 2026-07-07** (5.1 #102, 5.2 #103, 5.4 #104, 5.3 #105, 5.5 #106, 5.6). Suite:
-  60 passed / 9–10 reasoned data-skips / 1 known pre-existing failure (DEVREQ-B1). Next: Batch 6.
-- **Last updated:** 2026-07-07 (5.6 — Batch 5 complete)
+- **Batch 5 complete 2026-07-07** (5.1 #102, 5.2 #103, 5.4 #104, 5.3 #105, 5.5 #106, 5.6 #107). Suite:
+  61 passed / 9–10 reasoned data-skips / 1 known pre-existing failure (DEVREQ-B1).
+- **Batch 6: 6.1–6.5 done 2026-07-07** (6.3+6.4 #108, 6.2 #109, 6.1 #110, 6.5 pilot). Remaining:
+  6.6 (file backlog issues — add: OnPush fan-out after pilot soak).
+- **Last updated:** 2026-07-07 (6.5 pilot)
 
 ### E2E harness notes (2026-07-03)
 
@@ -189,11 +191,11 @@ Pitfalls: button textContent whitespace, ng-select overlay, device-request-index
 
 | Done | ID | Task | Cx | Time | Model |
 |------|----|------|----|------|-------|
-| [ ] | 6.1 | Measure initial chunk; add `initial`+`allScript` budgets; script optimization for `uat` config | S | 30m | Sonnet |
-| [ ] | 6.2 | Route-level code splitting: `component:` → `loadComponent:` throughout `core-widgets.routes.ts` | M | 1h | Sonnet |
-| [ ] | 6.3 | Lodash per-function imports in `hash_utils.ts` | S | 15m | Haiku |
-| [ ] | 6.4 | Remove dead deps: `tablesaw`, `@types/jasminewd2`, `@types/googlemaps`; audit `datatables.net*` usage | S | 30m | Haiku |
-| [ ] | 6.5 | OnPush pilot on `donor-index` (`markForCheck()` in DataTables ajax callbacks) → fan out if green | L | 2–4h | Opus |
+| [x] | 6.1 | Done 2026-07-07 (#110): **UAT deploys were shipping a 6.90 MB unminified bundle** — top-level options set `optimization:false` and only production overrode it; uat now mirrors prod optimization (2.55 MB, sourcemaps/namedChunks kept for debuggability). Budgets locked to post-split sizes: initial warn 2.7mb/err 3mb, allScript warn 3mb/err 3.5mb, on production+uat | S | 30m | Sonnet |
+| [x] | 6.2 | Done 2026-07-07 (#109): all routes → `loadComponent` dynamic imports; per-route chunks 4–8 kB transfer + 2 shared lazy commons (~38+18 kB) replacing the single 609 kB (106 kB gz) core-widgets chunk. Initial raw unchanged; +10 kB initial transfer (gzip boundaries) accepted | M | 1h | Sonnet |
+| [x] | 6.3 | Done 2026-07-07 (#108): `lodash/merge` + `lodash/isEmpty` per-function imports, `_.keys` → `Object.keys`. Size win negligible (merge pulls most internals) — import hygiene only | S | 15m | Haiku |
+| [x] | 6.4 | Done 2026-07-07 (#108): removed tablesaw (4 unused imports), ngx-google-places-autocomplete (+angular.json allowlist entry), @types/googlemaps (+tsconfig types entry), @types/jasminewd2. datatables.net* audit: actively used (grid directive + ~12 components) — kept, migration stays in 6.6 backlog | S | 30m | Haiku |
+| [x] | 6.5 | Pilot done 2026-07-07: `donor-index` → OnPush; `markForCheck()` in the DataTables ajax callback (rows) and `applyFilter` (badge — called from the NgbModal-hosted filter modal view). New `donor-onpush.spec.ts` @mocked in the CI gate; red-verified (removing the ajax markForCheck → rows never paint). **Fan-out to the other ~11 index components deliberately deferred** — pilot needs a UAT soak first; schedule as a follow-up sweep | L | 2–4h | Opus |
 | [ ] | 6.6 | File backlog issues: DataTables→native tables, zoneless, FA5→7, apollo-angular 14/graphql 17/NGXS 22/TS 6, Auth0 in-memory cache | S | 30m | Haiku |
 
 ## Verification (every batch)
