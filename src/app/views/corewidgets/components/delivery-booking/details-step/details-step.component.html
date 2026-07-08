@@ -1,0 +1,88 @@
+<div class="step">
+  <div class="summary">
+    <div class="summary__text">
+      <div class="summary__day">{{ day?.dayLabel }}</div>
+      <div class="summary__slot">{{ summarySlot }}</div>
+    </div>
+    <div class="summary__change" (click)="back.emit()">Change</div>
+  </div>
+
+  <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()">
+    @if (submitError) {
+      <div class="form-error form-error--banner">{{ submitError }}</div>
+    }
+
+    <div class="form-row form-row--split">
+      <div class="field">
+        <label>First name</label>
+        <input formControlName="firstName" placeholder="Sofia" [class.field--invalid]="invalid('firstName')" />
+        @if (invalid('firstName')) {
+          <div class="form-error">Enter a first name.</div>
+        }
+      </div>
+      <div class="field">
+        <label>Surname</label>
+        <input formControlName="surname" placeholder="Martino" [class.field--invalid]="invalid('surname')" />
+        @if (invalid('surname')) {
+          <div class="form-error">Enter a surname.</div>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email address</label>
+      <input formControlName="email" placeholder="you&#64;example.org" [class.field--invalid]="invalid('email')" />
+      @if (invalid('email')) {
+        <div class="form-error">Enter a valid email address.</div>
+      }
+    </div>
+
+    <div class="field">
+      <label>Phone number <span class="field__hint">— the driver may call on the day</span></label>
+      <input formControlName="phone" placeholder="07…" [class.field--invalid]="invalid('phone')" />
+      @if (invalid('phone')) {
+        <div class="form-error">Enter a valid phone number.</div>
+      }
+    </div>
+
+    <div class="field">
+      <label>Delivery address &amp; postcode</label>
+      <textarea
+        formControlName="address"
+        placeholder="Flat, street, postcode"
+        [class.field--invalid]="invalid('address')"
+      ></textarea>
+      @if (invalid('address')) {
+        <div class="form-error">Enter the delivery address.</div>
+      }
+    </div>
+
+    <div class="field">
+      <label>Access notes <span class="field__hint">(optional)</span></label>
+      <input formControlName="accessNotes" placeholder="Buzzer 3, second floor…" />
+    </div>
+
+    <div class="field">
+      <label>Your Community TechAid ID reference number</label>
+      <div class="field__note">
+        This is in the email we sent to you or the person who referred you. Without it we can't get your device ready.
+      </div>
+      <input
+        formControlName="ctaReference"
+        placeholder="e.g. 4298"
+        class="field--narrow"
+        [class.field--invalid]="invalid('ctaReference')"
+      />
+      @if (invalid('ctaReference')) {
+        <div class="form-error">Enter your CTA ID reference number.</div>
+      }
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn--ghost" (click)="back.emit()">Back</button>
+      <button type="submit" class="btn btn--primary" [disabled]="submitting">
+        {{ submitting ? 'Booking…' : 'Book delivery' }}
+      </button>
+    </div>
+  </form>
+</div>

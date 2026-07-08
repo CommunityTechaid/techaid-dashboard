@@ -1,0 +1,35 @@
+// Design tokens for the public booking UI. Scoped to :host so the whole booking-flow
+// subtree inherits them (CSS custom properties pierce Angular's view encapsulation),
+// without redefining --cta-* globally across the dashboard.
+:host {
+  --cta-primary: #16269c;
+  --cta-primary-hover: #2b3fd4;
+  --cta-accent: #2b53e0;
+  --cta-tint: #ebf0ff;
+  --cta-page-bg: #f5f7fe;
+  --cta-border: #dce3f5;
+  --cta-muted: #7a85a8;
+  --cta-dark-text: #1a2f96;
+  --cta-body-text: #333333;
+  --cta-disabled-text: #c3cadf;
+  --cta-placeholder: #a6b0cc;
+
+  display: block;
+  background: var(--cta-page-bg);
+  font-family: 'Poppins', system-ui, sans-serif;
+  color: var(--cta-body-text);
+}
+
+.page-shell {
+  min-height: 70vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+@media (max-width: 480px) {
+  .page-shell {
+    padding: 0;
+  }
+}
