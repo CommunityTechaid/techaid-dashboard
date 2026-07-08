@@ -13,6 +13,7 @@ import { environment } from '@env/environment';
 import { AppInitialComponent } from '../../shared/components/app-initial/app-initial.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 
 
 @Component({
@@ -32,12 +33,14 @@ export class AppHeader implements OnInit, OnDestroy {
     readonly isTestEnvironment =
         environment.environment !== 'production' ||
         window.location.hostname === 'app-testing.communitytechaid.org.uk';
+    deliveryBookingVisible = false;
     @Select(UserState.user) user$: Observable<User>;
     constructor(
         private store: Store,
         private toastr: ToastrService,
         private modalService: NgbModal,
-        private apollo: Apollo) { }
+        private apollo: Apollo,
+        private featureFlags: FeatureFlagService) { }
 
     modal(content) {
         this.modalService.open(content, { centered: true });
@@ -50,6 +53,9 @@ export class AppHeader implements OnInit, OnDestroy {
     ngOnInit() {
         this.sub = this.user$.subscribe(user => {
             this.user = user;
+        });
+        this.featureFlags.deliveryBookingVisibility().subscribe(state => {
+            this.deliveryBookingVisible = state.visible;
         });
     }
 

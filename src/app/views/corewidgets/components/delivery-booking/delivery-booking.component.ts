@@ -1,21 +1,18 @@
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
-import { Select } from '@ngxs/store';
-import { Observable, Subscription } from 'rxjs';
-import { UserState } from '@app/state/state.module';
-import { User } from '@app/state/user/user.state';
+import { Subscription } from 'rxjs';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { AppLocalCSS } from '../org-request/app-local-css.component';
 import { BookingFlowComponent } from './booking-flow.component';
 
 /**
- * Public device-delivery booking page, hosted inside the dashboard.
+ * Public device-delivery booking page. Presented as a standalone public page: the app
+ * chrome (sidebar/header) is always hidden here via AppLocalCSS, so the "Delivery Booking
+ * (Public-facing)" header link — which opens this in a new tab — shows just the booking
+ * flow with no top/side nav, for staff and the public alike.
  *
- * - For anonymous visitors the app chrome (sidebar/header) is hidden via AppLocalCSS —
- *   the same trick the public org-request page uses — so the public link is clean.
- *   Logged-in staff previewing it keep the chrome.
- * - When the delivery-booking feature flag is off, a banner makes clear the page is a
- *   UAT preview and not live on production (the route guard already blocks it on prod).
- * - The `--cta-*` design tokens are scoped to :host so they don't leak into the dashboard.
+ * When the delivery-booking feature flag is off, a banner marks it as a UAT-only preview
+ * (the route guard already blocks it on production). The `--cta-*` design tokens are
+ * scoped to :host so they don't leak into the dashboard.
  */
 @Component({
   selector: 'app-delivery-booking',
@@ -25,16 +22,12 @@ import { BookingFlowComponent } from './booking-flow.component';
   styleUrl: './delivery-booking.component.scss',
 })
 export class DeliveryBookingComponent implements OnInit, OnDestroy {
-  readonly hideChrome = signal(true);
   readonly showUatBanner = signal(false);
-
-  @Select(UserState.user) user$: Observable<User>;
   private readonly sub = new Subscription();
 
   constructor(private readonly featureFlags: FeatureFlagService) {}
 
   ngOnInit(): void {
-    this.sub.add(this.user$.subscribe((user) => this.hideChrome.set(!(user && user.authenticated))));
     this.sub.add(
       this.featureFlags.deliveryBookingVisibility().subscribe((state) => this.showUatBanner.set(!state.live)),
     );
