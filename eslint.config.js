@@ -16,6 +16,8 @@ module.exports = defineConfig([
       "build/**",
       "workers/**",
       "server.js",
+      // Design-reference artifacts (Claude Design .dc.html prototypes etc.), not source.
+      "docs/**",
     ],
   },
   {
