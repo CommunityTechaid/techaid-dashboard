@@ -3,6 +3,22 @@
 
   <!-- Content Column -->
   <div class="col-lg-12 mb-4">
+
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'requests'" href="#"
+           (click)="activeTab = 'requests'; $event.preventDefault()">Device Requests</a>
+      </li>
+      @if (deliveryBookingVisible) {
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab === 'slots'" href="#"
+             (click)="activeTab = 'slots'; $event.preventDefault()">Delivery Slots</a>
+        </li>
+      }
+    </ul>
+
+    <!-- Device Requests tab -->
+    <div [hidden]="activeTab !== 'requests'">
     <!-- Project Card Example -->
     <div class="card shadow mb-4">
       <div class="card-header py-3">
@@ -265,6 +281,14 @@
 </div>
 </div>
 </div>
+    </div><!-- /Device Requests tab -->
+
+    @if (deliveryBookingVisible) {
+      <!-- Delivery Slots tab -->
+      <div [hidden]="activeTab !== 'slots'">
+        <app-delivery-slots></app-delivery-slots>
+      </div>
+    }
 </div>
 </div>
 

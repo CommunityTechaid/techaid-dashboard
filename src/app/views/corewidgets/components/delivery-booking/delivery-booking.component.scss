@@ -28,6 +28,24 @@
   padding: 40px 16px;
 }
 
+.booking-column {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.uat-banner {
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  color: #664d03;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
 @media (max-width: 480px) {
   .page-shell {
     padding: 0;

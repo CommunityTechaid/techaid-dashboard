@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { provideStates } from '@ngxs/store';
 import { AuthGuard } from '@app/shared/services/auth.guard';
+import { deliveryBookingVisibleGuard } from '@app/shared/services/delivery-booking-visible.guard';
 import { CoreWidgetState } from './state/corewidgets.state';
 
 // Every route lazy-loads its component so esbuild emits one chunk per route
@@ -16,8 +17,10 @@ export const CORE_WIDGET_ROUTES: Routes = [
       { path: 'device-request-admin', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' }, canActivate: [AuthGuard] },
       { path: 'organisation-device-request', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' } },
       // Public device-delivery booking page — no AuthGuard so members of the public can book without a login.
-      { path: 'delivery-booking', loadComponent: () => import('./components/delivery-booking/delivery-booking.component').then(m => m.DeliveryBookingComponent), data: { title: 'Book a delivery' } },
+      // deliveryBookingVisibleGuard hides it on production until the delivery-booking feature flag is on.
+      { path: 'delivery-booking', loadComponent: () => import('./components/delivery-booking/delivery-booking.component').then(m => m.DeliveryBookingComponent), data: { title: 'Book a delivery' }, canActivate: [deliveryBookingVisibleGuard] },
       { path: 'dashboard/admin-panel', loadComponent: () => import('./components/admin-panel/admin-panel.component').then(m => m.AdminPanelComponent), data: { title: 'Admin Panel' }, canActivate: [AuthGuard] },
+      { path: 'dashboard/feature-flags', loadComponent: () => import('./components/feature-flags/feature-flags.component').then(m => m.FeatureFlagsComponent), data: { title: 'Feature Flags' }, canActivate: [AuthGuard] },
       { path: 'dashboard/devices', loadComponent: () => import('./components/kit-index/kit-index.component').then(m => m.KitIndexComponent), data: { title: 'Devices' }, canActivate: [AuthGuard] },
       { path: 'dashboard/devices/:kitId', loadComponent: () => import('./components/kit-info/kit-info.component').then(m => m.KitInfoComponent), canActivate: [AuthGuard] },
       { path: 'dashboard/donors', loadComponent: () => import('./components/donor-index/donor-index.component').then(m => m.DonorIndexComponent), data: { title: 'Donors' }, canActivate: [AuthGuard] },

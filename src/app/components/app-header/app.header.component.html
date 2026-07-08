@@ -44,6 +44,12 @@
             </a>
           }
           @if (user?.authorities['app:admin']) {
+            <a class="dropdown-item" routerLink="/dashboard/feature-flags">
+              <i class="fas fa-flag fa-sm fa-fw me-2 text-gray-400"></i>
+              Feature Flags
+            </a>
+          }
+          @if (user?.authorities['app:admin']) {
             <div class="dropdown-divider"></div>
           }
           @if (user?.authorities['read:users']) {
