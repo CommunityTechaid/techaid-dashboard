@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"><style>body{margin:0;background:#fff;font-family:Poppins,system-ui,sans-serif}input::placeholder{color:#A6B0CC}</style></helmet>
+<div style="display:flex;min-height:100vh">
+  <!-- Sidebar -->
+  <div style="width:104px;flex:none;background:linear-gradient(180deg,#141F86 0%,#2B3FD4 100%);display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:4px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:16px">
+      <div style="width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;color:#16269C;font-size:10px">CTA</div>
+      <div style="color:#fff;font-size:10.5px;font-weight:600;text-align:center;line-height:1.25">Community<br>TechAid</div>
+    </div>
+    <sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+      <div style="{{ n.style }}">
+        <div style="font-size:15px">{{ n.icon }}</div>
+        <div style="font-size:9.5px;font-weight:500;text-align:center;line-height:1.3;text-decoration:underline">{{ n.label }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- Main -->
+  <div style="flex:1;display:flex;flex-direction:column;padding:18px 26px 0;min-width:0">
+    <div style="display:flex;gap:26px;align-items:center;padding-bottom:14px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:#333;border-bottom:2.5px solid #333;padding-bottom:4px;cursor:pointer"><span>⊕</span>Dashboard</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:#7A85A8;cursor:pointer;padding-bottom:6px"><span>⛬</span><span style="text-decoration:underline">Request Devices (Admin)</span></div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:#7A85A8;cursor:pointer;padding-bottom:6px"><span>⛬</span><span style="text-decoration:underline">Request Devices (Public-facing)</span></div>
+    </div>
+    <div style="border:1px solid #BBC7EF;border-radius:8px;padding:13px 20px;font-size:14px;color:#7A85A8;display:flex;gap:8px"><span style="color:#2B53E0;text-decoration:underline;cursor:pointer">Dashboard</span><span>/</span><span>Delivery Booking Configuration</span></div>
+
+    <div style="border:1px solid #BBC7EF;border-radius:8px;margin-top:14px;padding:22px 26px 28px;box-shadow:0 2px 6px rgba(22,38,156,.06)">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:20px">
+        <div style="font-size:16px;font-weight:600;color:#1A2F96">Delivery Booking Settings <span style="font-weight:500;color:#5A6AB0">(Last updated: {{ lastUpdated }})</span></div>
+        <div onClick="{{ save }}" style="background:#16269C;color:#fff;font-size:13px;font-weight:600;padding:10px 22px;border-radius:7px;cursor:pointer" style-hover="background:#2B3FD4">{{ saveLabel }}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start">
+        <!-- Left column -->
+        <div style="display:flex;flex-direction:column;gap:26px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:13.5px;font-weight:600;color:#333">Delivery days</div>
+            <div style="font-size:12px;color:#7A85A8;margin-top:-6px">The public can only book deliveries on these days of the week</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ days }}" as="d" hint-placeholder-count="6">
+                <div style="{{ d.style }}" onClick="{{ d.onClick }}">{{ d.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:13.5px;font-weight:600;color:#333">Delivery windows</div>
+            <div style="font-size:12px;color:#7A85A8;margin-top:-6px">Each window can be booked by multiple people, up to its capacity. A window disappears from the public page when full.</div>
+            <sc-for list="{{ slots }}" as="s" hint-placeholder-count="2">
+              <div style="border:1px solid #DCE3F5;border-radius:9px;padding:14px 18px;display:flex;align-items:center;gap:16px">
+                <div style="display:flex;flex-direction:column;gap:3px;flex:1">
+                  <div style="font-size:13px;font-weight:600;color:#333">{{ s.name }}</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <input value="{{ s.start }}" onChange="{{ s.onStart }}" style="border:1px solid #DCE3F5;border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:Poppins,sans-serif;color:#333;width:74px;outline:none;text-align:center"></input>
+                    <span style="font-size:12px;color:#7A85A8">to</span>
+                    <input value="{{ s.end }}" onChange="{{ s.onEnd }}" style="border:1px solid #DCE3F5;border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:Poppins,sans-serif;color:#333;width:74px;outline:none;text-align:center"></input>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:3px;align-items:center">
+                  <div style="font-size:11px;font-weight:600;color:#7A85A8;letter-spacing:.3px">CAPACITY</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div onClick="{{ s.dec }}" style="width:26px;height:26px;border:1px solid #DCE3F5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#2B53E0;font-weight:600;cursor:pointer;font-size:14px">−</div>
+                    <div style="font-size:15px;font-weight:600;color:#1A2F96;width:20px;text-align:center">{{ s.cap }}</div>
+                    <div onClick="{{ s.inc }}" style="width:26px;height:26px;border:1px solid #DCE3F5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#2B53E0;font-weight:600;cursor:pointer;font-size:14px">+</div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px">
+            <div onClick="{{ toggleEnabled }}" style="{{ enabledBoxStyle }}">{{ enabledTick }}</div>
+            <div style="display:flex;flex-direction:column">
+              <div style="font-size:13px;font-weight:500;color:#333">Delivery Bookings – {{ enabledLabel }}</div>
+              <div style="font-size:11.5px;color:#7A85A8">When enabled, the public can book delivery slots</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:13.5px;font-weight:600;color:#333">Blocked dates</div>
+          <div style="font-size:12px;color:#7A85A8;margin-top:-6px">No delivery bookings can be made on these dates (holidays, van unavailable, etc.)</div>
+          <div style="display:flex;gap:8px">
+            <input value="{{ newDate }}" onChange="{{ onNewDate }}" placeholder="e.g. 27 Aug 2026" style="border:1px solid #DCE3F5;border-radius:7px;padding:9px 12px;font-size:12.5px;font-family:Poppins,sans-serif;color:#333;outline:none;flex:1"></input>
+            <input value="{{ newReason }}" onChange="{{ onNewReason }}" placeholder="Reason (optional)" style="border:1px solid #DCE3F5;border-radius:7px;padding:9px 12px;font-size:12.5px;font-family:Poppins,sans-serif;color:#333;outline:none;flex:1"></input>
+            <div onClick="{{ addBlocked }}" style="border:1px solid #2B53E0;color:#2B53E0;font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:7px;cursor:pointer" style-hover="background:#EBF0FF">Block date</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            <sc-for list="{{ blocked }}" as="b" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;background:#F5F7FE;border:1px solid #DCE3F5;border-radius:8px;padding:9px 14px">
+                <div style="display:flex;align-items:baseline;gap:10px"><div style="font-size:12.5px;font-weight:600;color:#333">{{ b.date }}</div><div style="font-size:11.5px;color:#7A85A8">{{ b.reason }}</div></div>
+                <div onClick="{{ b.remove }}" style="font-size:12px;color:#C0392B;cursor:pointer;font-weight:500">Remove</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:12.5px;color:#333;padding:40px 0 24px;margin-top:auto">Copyright © Community TechAid</div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    enabled: true,
+    days: { Mon: false, Tue: true, Wed: false, Thu: true, Fri: false, Sat: false },
+    slots: [
+      { name: 'Morning window', start: '10:00am', end: '1:00pm', cap: 4 },
+      { name: 'Afternoon window', start: '2:00pm', end: '5:00pm', cap: 4 },
+    ],
+    blocked: [
+      { date: '27 Aug 2026', reason: 'Bank holiday week — no van' },
+      { date: '28 Aug 2026', reason: 'Bank holiday' },
+    ],
+    newDate: '', newReason: '',
+    saved: false,
+  };
+
+  renderVals() {
+    const st = this.state;
+    const nav = ['💻 Devices', '👤 Individual Donors', '🏛 Parent Donors', '🏢 Orgs', '👥 Referees', '📋 Requests', '🚚 Distributions & Deliveries', '⏻ Logout'].map((s, i) => {
+      const [icon, ...rest] = s.split(' ');
+      const active = i === 6;
+      return {
+        icon, label: rest.join(' '),
+        style: 'display:flex;flex-direction:column;align-items:center;gap:3px;color:#fff;padding:10px 6px;width:92px;cursor:pointer;border-radius:8px;' + (active ? 'background:rgba(255,255,255,.14)' : 'opacity:.85'),
+      };
+    });
+
+    const days = Object.keys(st.days).map(d => {
+      const on = st.days[d];
+      return {
+        label: d,
+        style: 'padding:8px 16px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid ' + (on ? '#16269C' : '#DCE3F5') + ';' + (on ? 'background:#16269C;color:#fff' : 'color:#7A85A8'),
+        onClick: () => this.setState(s => ({ days: { ...s.days, [d]: !s.days[d] }, saved: false })),
+      };
+    });
+
+    const slots = st.slots.map((sl, i) => ({
+      ...sl,
+      onStart: (e) => this.updSlot(i, { start: e.target.value }),
+      onEnd: (e) => this.updSlot(i, { end: e.target.value }),
+      inc: () => this.updSlot(i, { cap: Math.min(12, sl.cap + 1) }),
+      dec: () => this.updSlot(i, { cap: Math.max(1, sl.cap - 1) }),
+    }));
+
+    const blocked = st.blocked.map((b, i) => ({
+      ...b,
+      remove: () => this.setState(s => ({ blocked: s.blocked.filter((_, j) => j !== i), saved: false })),
+    }));
+
+    return {
+      nav, days, slots, blocked,
+      lastUpdated: '7/6/26, 9:41 AM',
+      enabledLabel: st.enabled ? 'Enabled' : 'Disabled',
+      enabledTick: st.enabled ? '✓' : '',
+      enabledBoxStyle: 'width:20px;height:20px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex:none;' + (st.enabled ? 'background:#2B53E0' : 'border:1.5px solid #C3CADF'),
+      toggleEnabled: () => this.setState(s => ({ enabled: !s.enabled, saved: false })),
+      newDate: st.newDate, newReason: st.newReason,
+      onNewDate: (e) => this.setState({ newDate: e.target.value }),
+      onNewReason: (e) => this.setState({ newReason: e.target.value }),
+      addBlocked: () => {
+        if (!st.newDate.trim()) return;
+        this.setState(s => ({ blocked: [...s.blocked, { date: s.newDate, reason: s.newReason }], newDate: '', newReason: '', saved: false }));
+      },
+      save: () => this.setState({ saved: true }),
+      saveLabel: st.saved ? '✓ Saved' : 'Save Configuration',
+    };
+  }
+
+  updSlot(i, patch) {
+    this.setState(s => ({ slots: s.slots.map((sl, j) => j === i ? { ...sl, ...patch } : sl), saved: false }));
+  }
+}
+</script>
+</body>
+</html>

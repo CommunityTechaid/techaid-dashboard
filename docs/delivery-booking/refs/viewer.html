@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html><body style="margin:0">
+<canvas id="c"></canvas>
+<script type="module">
+import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+window.renderPdf = async (url) => {
+  const doc = await pdfjsLib.getDocument(url).promise;
+  const page = await doc.getPage(1);
+  const vp = page.getViewport({ scale: 1.3 });
+  const c = document.getElementById('c');
+  c.width = vp.width; c.height = vp.height;
+  await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+  document.title = 'rendered';
+  return 'ok';
+};
+window.renderPdf('../uploads/CTA Device Collection Booking-Admin.pdf');
+</script>
+</body></html>

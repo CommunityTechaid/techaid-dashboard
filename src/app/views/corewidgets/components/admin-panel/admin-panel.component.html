@@ -9,10 +9,23 @@
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="#" [routerLink]="['/dashboard']">Dashboard</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Application Configuration</li>
+        <li class="breadcrumb-item active" aria-current="page">Admin Panel</li>
       </ol>
     </nav>
 
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'config'" href="#"
+           (click)="activeTab = 'config'; $event.preventDefault()">Application Configuration</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'flags'" href="#"
+           (click)="activeTab = 'flags'; $event.preventDefault()">Feature Flags</a>
+      </li>
+    </ul>
+
+    <!-- Application Configuration tab -->
+    <div [hidden]="activeTab !== 'config'">
     <div class="card shadow mb-4 mt-1">
       <div class="card-header py-3">
         <div class="d-flex justify-content-between">
@@ -39,6 +52,12 @@
 
 
       </div>
+    </div>
+    </div><!-- /Application Configuration tab -->
+
+    <!-- Feature Flags tab -->
+    <div [hidden]="activeTab !== 'flags'">
+      <app-feature-flags></app-feature-flags>
     </div>
   </div>
 </div>
