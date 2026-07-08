@@ -1,53 +1,42 @@
-<div class="row">
-  <div class="col-lg-12 mb-4">
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#" [routerLink]="['/dashboard']">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="#" [routerLink]="['/dashboard/admin-panel']">Admin Panel</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Feature Flags</li>
-      </ol>
-    </nav>
+<!-- Rendered as a tab inside the Admin Panel, so no breadcrumb/layout wrapper of its own. -->
+<div class="card shadow mb-4 mt-1">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Feature Flags</h6>
+  </div>
+  <div class="card-body">
+    <p class="text-muted small mb-4">
+      Switches for optional functionality. Changes take effect immediately across the site.
+    </p>
 
-    <div class="card shadow mb-4 mt-1">
-      <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Feature Flags</h6>
-      </div>
-      <div class="card-body">
-        <p class="text-muted small mb-4">
-          Switches for optional functionality. Changes take effect immediately across the site.
-        </p>
-
-        @if (loading) {
-          <div class="text-muted small">Loading feature flags…</div>
-        } @else if (flags.length === 0) {
-          <div class="text-muted small">No feature flags are defined.</div>
-        } @else {
-          @for (flag of flags; track flag.key) {
-            <div class="d-flex justify-content-between align-items-start py-3 border-bottom">
-              <div class="me-3">
-                <div class="font-weight-bold">{{ flag.label }}</div>
-                @if (flag.description) {
-                  <div class="text-muted small mt-1">{{ flag.description }}</div>
-                }
-                @if (flag.updatedAt) {
-                  <div class="text-muted small mt-1"><em>Last changed: {{ flag.updatedAt | date: 'medium' }}</em></div>
-                }
-              </div>
-              <div class="form-check form-switch flex-shrink-0 pt-1">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  role="switch"
-                  [checked]="flag.enabled"
-                  [disabled]="flag.saving"
-                  (change)="toggle(flag)"
-                />
-                <label class="form-check-label small">{{ flag.enabled ? 'On' : 'Off' }}</label>
-              </div>
-            </div>
-          }
-        }
-      </div>
-    </div>
+    @if (loading) {
+      <div class="text-muted small">Loading feature flags…</div>
+    } @else if (flags.length === 0) {
+      <div class="text-muted small">No feature flags are defined.</div>
+    } @else {
+      @for (flag of flags; track flag.key) {
+        <div class="d-flex justify-content-between align-items-start py-3 border-bottom">
+          <div class="me-3">
+            <div class="font-weight-bold">{{ flag.label }}</div>
+            @if (flag.description) {
+              <div class="text-muted small mt-1">{{ flag.description }}</div>
+            }
+            @if (flag.updatedAt) {
+              <div class="text-muted small mt-1"><em>Last changed: {{ flag.updatedAt | date: 'medium' }}</em></div>
+            }
+          </div>
+          <div class="form-check form-switch flex-shrink-0 pt-1">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              [checked]="flag.enabled"
+              [disabled]="flag.saving"
+              (change)="toggle(flag)"
+            />
+            <label class="form-check-label small">{{ flag.enabled ? 'On' : 'Off' }}</label>
+          </div>
+        </div>
+      }
+    }
   </div>
 </div>

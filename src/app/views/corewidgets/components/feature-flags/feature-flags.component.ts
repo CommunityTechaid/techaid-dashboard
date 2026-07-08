@@ -1,12 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { Title } from '@angular/platform-browser';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+
+// Embedded as the "Feature Flags" tab of the Admin Panel.
 
 const FLAGS_QUERY = gql`
   query featureFlags {
@@ -42,7 +42,7 @@ interface FlagRow {
 @Component({
   selector: 'app-feature-flags',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [DatePipe],
   templateUrl: './feature-flags.component.html',
   styleUrl: './feature-flags.component.scss',
 })
@@ -54,11 +54,8 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
   constructor(
     private readonly apollo: Apollo,
     private readonly toastr: ToastrService,
-    private readonly title: Title,
     private readonly featureFlags: FeatureFlagService,
-  ) {
-    this.title.setTitle('TaDa - Feature Flags');
-  }
+  ) {}
 
   ngOnInit(): void {
     this.load();
