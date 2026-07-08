@@ -1,0 +1,39 @@
+<div class="step">
+  <div class="heading">Your delivery is booked ✓</div>
+  <div class="intro">
+    Thanks for booking a device delivery with Community TechAid. We've emailed the details below to
+    <b>{{ confirmation.confirmationSentTo }}</b>.
+  </div>
+
+  <div class="summary">
+    <div class="summary-row">
+      <div class="summary-row__label">When</div>
+      <div class="summary-row__value">
+        <b>{{ dayLabelWithYear }}</b><br />
+        {{ confirmation.window.name }} · {{ confirmation.window.startTime }} – {{ confirmation.window.endTime }}
+      </div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-row__label">Deliver to</div>
+      <div class="summary-row__value">{{ confirmation.address }}</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-row__label">Your CTA ID</div>
+      <div class="summary-row__value">{{ confirmation.ctaReference }}</div>
+    </div>
+  </div>
+
+  <div class="expect">
+    <b>What to expect on the day</b>
+    <ul>
+      <li>Our driver will arrive at any point during your window — please make sure <b>someone is home for the whole window</b>.</li>
+      <li>The driver may call the phone number you gave us if they can't get in.</li>
+      <li>Have your <b>CTA ID reference number</b> ready — the driver will check it before handing over the device.</li>
+    </ul>
+  </div>
+
+  <div class="contact">
+    Need to change or cancel? Reply to your confirmation email or call us on <b>020 3488 2912</b> — please give us
+    at least 24 hours' notice so we can offer your slot to someone else.
+  </div>
+</div>

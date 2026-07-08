@@ -1,0 +1,21 @@
+<div class="step">
+  <div class="intro">We deliver on these upcoming days. Pick the one that suits you.</div>
+
+  @if (loading) {
+    <div class="status">Loading available days…</div>
+  } @else if (error) {
+    <div class="status status--error">{{ error }}</div>
+  } @else if (rows.length === 0) {
+    <div class="status">No delivery slots are available right now — please check back soon.</div>
+  } @else {
+    @for (row of rows; track row.date) {
+      <div class="day-row" (click)="daySelected.emit(row.date)">
+        <div class="day-row__text">
+          <div class="day-row__label">{{ row.label }}</div>
+          <div class="day-row__sub">{{ row.sub }}</div>
+        </div>
+        <div class="day-row__chevron">›</div>
+      </div>
+    }
+  }
+</div>

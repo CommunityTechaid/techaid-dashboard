@@ -1,0 +1,81 @@
+:host {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(22, 38, 156, 0.12);
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .card {
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+  }
+}
+
+.card-header {
+  background: var(--cta-primary);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--cta-primary);
+  font-size: 10px;
+  flex: none;
+}
+
+.brand-title {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.progress {
+  display: flex;
+  gap: 6px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+
+  &--on {
+    background: #fff;
+  }
+}
+
+.step-label {
+  color: #b9c4f5;
+  font-size: 11.5px;
+  font-weight: 500;
+
+  &--done {
+    color: #fff;
+    font-weight: 600;
+  }
+}

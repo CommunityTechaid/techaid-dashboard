@@ -1,0 +1,50 @@
+<div class="card">
+  <div class="card-header">
+    <div class="brand">
+      <div class="brand-badge">CTA</div>
+      <div class="brand-title">Book a device delivery</div>
+    </div>
+
+    @if (step() !== 'confirmation') {
+      <div class="progress">
+        <div class="progress-bar progress-bar--on"></div>
+        <div class="progress-bar" [class.progress-bar--on]="stepIndex() >= 2"></div>
+        <div class="progress-bar" [class.progress-bar--on]="stepIndex() >= 3"></div>
+      </div>
+      <div class="step-label">{{ stepLabel() }}</div>
+    } @else {
+      <div class="step-label step-label--done">Booking confirmed ✓</div>
+    }
+  </div>
+
+  <div class="card-body">
+    @switch (step()) {
+      @case ('day') {
+        <app-day-step
+          [days]="availability()"
+          [loading]="loadingAvailability()"
+          [error]="availabilityError()"
+          (daySelected)="selectDay($event)"
+        />
+      }
+      @case ('window') {
+        <app-window-step [day]="selectedDay()" (windowSelected)="selectWindow($event)" (back)="backToDay()" />
+      }
+      @case ('details') {
+        <app-details-step
+          [day]="selectedDay()"
+          [window]="selectedWindow()"
+          [submitting]="submitting()"
+          [submitError]="submitError()"
+          (back)="backToWindow()"
+          (submitted)="submit($event)"
+        />
+      }
+      @case ('confirmation') {
+        @if (confirmation(); as c) {
+          <app-confirmation-step [confirmation]="c" />
+        }
+      }
+    }
+  </div>
+</div>

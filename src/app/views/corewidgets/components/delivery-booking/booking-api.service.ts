@@ -1,0 +1,85 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { map, Observable } from 'rxjs';
+import { ConfigService } from '@app/shared/services/config.service';
+import {
+  DeliveryBookingConfirmation,
+  DeliveryBookingInput,
+  DeliveryDayAvailability,
+} from './models';
+
+/**
+ * Talks to techaid-server's public delivery-booking operations. These are the
+ * unauthenticated `*Public` surface (no @PreAuthorize server-side), so we POST plain
+ * GraphQL with HttpClient and send no Authorization header — deliberately NOT the
+ * shared Apollo client, whose auth link would bounce an anonymous visitor to Auth0.
+ */
+const AVAILABILITY_QUERY = `
+  query DeliveryAvailabilityPublic {
+    deliveryAvailabilityPublic {
+      date
+      dayOfWeek
+      dayLabel
+      windows {
+        spotsRemaining
+        window { id name startTime endTime icon }
+      }
+    }
+  }
+`;
+
+const SUBMIT_MUTATION = `
+  mutation SubmitDeliveryBookingPublic($input: DeliveryBookingInput!) {
+    submitDeliveryBookingPublic(input: $input) {
+      id
+      date
+      dayLabel
+      window { id name startTime endTime icon }
+      address
+      ctaReference
+      confirmationSentTo
+    }
+  }
+`;
+
+interface GraphQlResponse<T> {
+  data?: T;
+  errors?: { message: string }[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class BookingApiService {
+  constructor(
+    private readonly http: HttpClient,
+    private readonly config: ConfigService,
+  ) {}
+
+  private request<T>(query: string, variables?: Record<string, unknown>): Observable<T> {
+    return this.http
+      .post<GraphQlResponse<T>>(this.config.environment.graphql_endpoint, { query, variables })
+      .pipe(
+        map((response) => {
+          if (response.errors && response.errors.length) {
+            throw new Error(response.errors[0].message);
+          }
+          if (!response.data) {
+            throw new Error('No data returned from the server.');
+          }
+          return response.data;
+        }),
+      );
+  }
+
+  getAvailability(): Observable<DeliveryDayAvailability[]> {
+    return this.request<{ deliveryAvailabilityPublic: DeliveryDayAvailability[] }>(
+      AVAILABILITY_QUERY,
+    ).pipe(map((data) => data.deliveryAvailabilityPublic));
+  }
+
+  submitBooking(input: DeliveryBookingInput): Observable<DeliveryBookingConfirmation> {
+    return this.request<{ submitDeliveryBookingPublic: DeliveryBookingConfirmation }>(
+      SUBMIT_MUTATION,
+      { input },
+    ).pipe(map((data) => data.submitDeliveryBookingPublic));
+  }
+}

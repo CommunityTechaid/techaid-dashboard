@@ -15,6 +15,8 @@ export const CORE_WIDGET_ROUTES: Routes = [
       { path: '', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: '' } },
       { path: 'device-request-admin', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' }, canActivate: [AuthGuard] },
       { path: 'organisation-device-request', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' } },
+      // Public device-delivery booking page — no AuthGuard so members of the public can book without a login.
+      { path: 'delivery-booking', loadComponent: () => import('./components/delivery-booking/delivery-booking.component').then(m => m.DeliveryBookingComponent), data: { title: 'Book a delivery' } },
       { path: 'dashboard/admin-panel', loadComponent: () => import('./components/admin-panel/admin-panel.component').then(m => m.AdminPanelComponent), data: { title: 'Admin Panel' }, canActivate: [AuthGuard] },
       { path: 'dashboard/devices', loadComponent: () => import('./components/kit-index/kit-index.component').then(m => m.KitIndexComponent), data: { title: 'Devices' }, canActivate: [AuthGuard] },
       { path: 'dashboard/devices/:kitId', loadComponent: () => import('./components/kit-info/kit-info.component').then(m => m.KitInfoComponent), canActivate: [AuthGuard] },

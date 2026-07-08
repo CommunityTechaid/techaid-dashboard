@@ -1,0 +1,55 @@
+.step {
+  padding: 22px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.intro {
+  font-size: 12.5px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.status {
+  font-size: 12.5px;
+  color: var(--cta-muted);
+  line-height: 1.5;
+
+  &--error {
+    color: #c0392b;
+  }
+}
+
+.day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.5px solid var(--cta-border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  color: var(--cta-body-text);
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--cta-primary);
+  }
+}
+
+.day-row__label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.day-row__sub {
+  font-size: 11.5px;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+
+.day-row__chevron {
+  font-size: 16px;
+  opacity: 0.5;
+}
