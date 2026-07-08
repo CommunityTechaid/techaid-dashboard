@@ -15,6 +15,8 @@ import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, warnIfFormInvalid } from '@app/shared
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
+import { DeliverySlotsComponent } from '../delivery-slots/delivery-slots.component';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -74,16 +76,22 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
     selector: 'distributions-and-deliveries-index',
     templateUrl: './distributions-and-deliveries-index.component.html',
     styleUrls: ['./distributions-and-deliveries-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, DeliverySlotsComponent]
 })
 export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestroy, AfterViewInit {
+
+  activeTab: 'requests' | 'slots' = 'requests';
+  deliveryBookingVisible = false;
 
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private featureFlags: FeatureFlagService
   ) {
-
+    this.featureFlags.deliveryBookingVisibility().subscribe(state => {
+      this.deliveryBookingVisible = state.visible;
+    });
   }
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};

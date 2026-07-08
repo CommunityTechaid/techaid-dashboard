@@ -75,7 +75,7 @@
               </a>
             </li>
           }
-          @if (user?.authorities['read:organisations']) {
+          @if (user?.authorities['read:organisations'] && deliveryBookingVisible) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/delivery-booking">
                 <i class="fas fa-truck"></i>

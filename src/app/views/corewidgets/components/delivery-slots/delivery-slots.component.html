@@ -1,0 +1,187 @@
+@if (loading) {
+  <div class="text-muted small p-3">Loading delivery slot settings…</div>
+} @else {
+  <!-- Settings -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+      <span class="font-weight-bold text-primary">Booking settings</span>
+      <button class="btn btn-sm btn-primary" [disabled]="savingSettings" (click)="saveSettings()">
+        {{ savingSettings ? 'Saving…' : 'Save settings' }}
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" role="switch" id="dsEnabled" [(ngModel)]="enabled" />
+        <label class="form-check-label" for="dsEnabled">
+          <strong>Delivery bookings {{ enabled ? 'enabled' : 'disabled' }}</strong>
+          <span class="text-muted small"> — when off, the public page shows nothing bookable</span>
+        </label>
+      </div>
+
+      <label class="small font-weight-bold mb-1">Delivery days</label>
+      <div class="text-muted small mb-2">The public can only book deliveries on these days of the week.</div>
+      <div class="mb-3">
+        @for (d of dayDefs; track d.n) {
+          <button
+            type="button"
+            class="btn btn-sm me-2 mb-2"
+            [class.btn-primary]="days[d.n]"
+            [class.btn-outline-secondary]="!days[d.n]"
+            (click)="toggleDay(d.n)"
+          >
+            {{ d.label }}
+          </button>
+        }
+      </div>
+
+      <div class="row">
+        <div class="col-sm-6 col-md-4 mb-2">
+          <label class="small font-weight-bold mb-1">Lead time (days)</label>
+          <input type="number" min="0" class="form-control form-control-sm" [(ngModel)]="leadTimeDays" />
+          <div class="text-muted small">Earliest bookable day is this many days from today.</div>
+        </div>
+        <div class="col-sm-6 col-md-4 mb-2">
+          <label class="small font-weight-bold mb-1">Upcoming days to show</label>
+          <input type="number" min="1" class="form-control form-control-sm" [(ngModel)]="advanceDays" />
+          <div class="text-muted small">How many upcoming delivery days to offer.</div>
+        </div>
+      </div>
+      @if (configUpdatedAt) {
+        <div class="text-muted small mt-2"><em>Last updated: {{ configUpdatedAt | date: 'medium' }}</em></div>
+      }
+    </div>
+  </div>
+
+  <!-- Windows -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+      <span class="font-weight-bold text-primary">Delivery windows</span>
+      <button class="btn btn-sm btn-outline-primary" (click)="addWindow()"><i class="fas fa-plus"></i> Add window</button>
+    </div>
+    <div class="card-body">
+      <div class="text-muted small mb-3">
+        Each window can be booked by multiple people up to its capacity. A window disappears from the public page when full or inactive.
+      </div>
+      @if (windows.length === 0) {
+        <div class="text-muted small">No windows yet — add one.</div>
+      }
+      @for (w of windows; track $index) {
+        <div class="row g-2 align-items-end mb-3 pb-3 border-bottom">
+          <div class="col-6 col-md-3">
+            <label class="small text-muted">Name</label>
+            <input class="form-control form-control-sm" [(ngModel)]="w.name" placeholder="Morning window" />
+          </div>
+          <div class="col-3 col-md-2">
+            <label class="small text-muted">Icon</label>
+            <input class="form-control form-control-sm" [(ngModel)]="w.icon" placeholder="☀️" />
+          </div>
+          <div class="col-3 col-md-2">
+            <label class="small text-muted">Start</label>
+            <input class="form-control form-control-sm" [(ngModel)]="w.startTime" placeholder="10:00am" />
+          </div>
+          <div class="col-3 col-md-2">
+            <label class="small text-muted">End</label>
+            <input class="form-control form-control-sm" [(ngModel)]="w.endTime" placeholder="1:00pm" />
+          </div>
+          <div class="col-5 col-md-2">
+            <label class="small text-muted">Capacity</label>
+            <div class="input-group input-group-sm">
+              <button class="btn btn-outline-secondary" type="button" (click)="adjustCapacity(w, -1)">−</button>
+              <input type="number" min="0" class="form-control text-center" [(ngModel)]="w.capacity" />
+              <button class="btn btn-outline-secondary" type="button" (click)="adjustCapacity(w, 1)">+</button>
+            </div>
+          </div>
+          <div class="col-12 col-md-1 d-flex align-items-center">
+            <div class="form-check form-switch mt-2">
+              <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="w.active" [id]="'act' + $index" />
+              <label class="form-check-label small" [for]="'act' + $index">{{ w.active ? 'Active' : 'Off' }}</label>
+            </div>
+          </div>
+          <div class="col-12 d-flex gap-2 mt-1">
+            <button class="btn btn-sm btn-primary" [disabled]="w.saving" (click)="saveWindow(w)">
+              {{ w.saving ? 'Saving…' : (w.id ? 'Save' : 'Create') }}
+            </button>
+            <button class="btn btn-sm btn-outline-danger" (click)="deleteWindow(w, $index)">Delete</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Blocked dates -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header py-2"><span class="font-weight-bold text-primary">Blocked dates</span></div>
+    <div class="card-body">
+      <div class="text-muted small mb-3">No delivery bookings can be made on these dates (holidays, van unavailable, etc.).</div>
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-6 col-md-3">
+          <label class="small text-muted">Date</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="newBlockedDate" />
+        </div>
+        <div class="col-6 col-md-6">
+          <label class="small text-muted">Reason (optional)</label>
+          <input class="form-control form-control-sm" [(ngModel)]="newBlockedReason" placeholder="Bank holiday — no van" />
+        </div>
+        <div class="col-12 col-md-3">
+          <button class="btn btn-sm btn-outline-primary" (click)="addBlocked()"><i class="fas fa-plus"></i> Block date</button>
+        </div>
+      </div>
+      @if (blocked.length === 0) {
+        <div class="text-muted small">No blocked dates.</div>
+      } @else {
+        <ul class="list-group list-group-flush">
+          @for (b of blocked; track b.id) {
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span><strong>{{ b.date }}</strong> @if (b.reason) { <span class="text-muted small">— {{ b.reason }}</span> }</span>
+              <button class="btn btn-sm btn-outline-danger" (click)="removeBlocked(b, $index)">Remove</button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+
+  <!-- Bookings -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+      <span class="font-weight-bold text-primary">Who's booked</span>
+      <span class="badge badge-secondary">{{ totalBookings }} booking{{ totalBookings === 1 ? '' : 's' }}</span>
+    </div>
+    <div class="card-body">
+      @if (bookingGroups.length === 0) {
+        <div class="text-muted small">No bookings yet.</div>
+      } @else {
+        @for (group of bookingGroups; track group.key) {
+          <div class="mb-4">
+            <div class="font-weight-bold mb-2">
+              {{ group.dayLabel }} · {{ group.windowName }}
+              <span class="badge badge-primary ms-1">{{ group.bookings.length }}</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-striped mb-0">
+                <thead>
+                  <tr>
+                    <th>Name</th><th>CTA ref</th><th>Email</th><th>Phone</th><th>Address</th><th>Access notes</th><th>Booked</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (bk of group.bookings; track bk.id) {
+                    <tr>
+                      <td>{{ bk.firstName }} {{ bk.surname }}</td>
+                      <td>{{ bk.ctaReference }}</td>
+                      <td>{{ bk.email }}</td>
+                      <td>{{ bk.phone }}</td>
+                      <td>{{ bk.address }}</td>
+                      <td>{{ bk.accessNotes }}</td>
+                      <td>{{ bk.createdAt | date: 'short' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+}

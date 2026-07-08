@@ -1,3 +1,17 @@
+@if (hideChrome()) {
+  <app-local-css
+    [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}'"
+  ></app-local-css>
+}
+
 <div class="page-shell">
-  <app-booking-flow></app-booking-flow>
+  <div class="booking-column">
+    @if (showUatBanner()) {
+      <div class="uat-banner">
+        <strong>UAT preview.</strong> This delivery-booking page is only visible on the testing site — it is
+        <strong>not live</strong> on the public/production site.
+      </div>
+    }
+    <app-booking-flow></app-booking-flow>
+  </div>
 </div>
