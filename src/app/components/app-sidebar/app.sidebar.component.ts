@@ -5,7 +5,6 @@ import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
 import { Observable, Subscription } from 'rxjs';
 
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 
 @Component({
     selector: 'app-sidebar',
@@ -23,18 +22,14 @@ import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 export class AppSidebar implements OnInit, OnDestroy {
     sidebar = true;
     public user: User;
-    deliveryBookingVisible = false;
     private sub: Subscription;
     @Select(UserState.user) user$: Observable<User>;
 
 
-    constructor(private store: Store, private featureFlags: FeatureFlagService) { }
+    constructor(private store: Store) { }
     ngOnInit() {
         this.sub = this.user$.subscribe(user => {
             this.user = user;
-        });
-        this.featureFlags.deliveryBookingVisibility().subscribe(state => {
-            this.deliveryBookingVisible = state.visible;
         });
     }
 
