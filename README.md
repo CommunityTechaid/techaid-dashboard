@@ -1,62 +1,48 @@
-# TLDR
+# Community TechAid Dashboard
 
 This repo is the source for the UI provided at https://app.communitytechaid.org.uk/
 
-```bash
-# Ensure you have installed nodejs and NPM locally
-# Install Node Version Manager / Install Node Version >= 12
-# Install angular-cli
-npm install -g @angular/cli
-nvm install 14
-nvm use 14
-# You will need to have the api running locally on localhost 
-ng serve 
-```
+Angular admin dashboard for the charity's device pipeline. See [`CLAUDE.md`](CLAUDE.md) for the
+release workflow, e2e testing, and issue-triage process.
 
-# Upgrade Angular CLI
-## Upgrade NPM
-    Download updated package from https://registry.npmjs.org/npm/-/npm-${version}.tgz
-    Unpack and copy to the original npm location. 
-    run npm -v to verify its updated
+## Run locally
 
-## Upgrade Angular CLI
-View update site to ensure the steps match the ones outlined below https://update.angular.io/
+Requires **Node 20**. Angular **21** — the CLI is a devDependency, so use `npx ng` (no global
+install needed).
 
 ```bash
-    npm uninstall -g angular-cli
-    npm cache verify
-    # In your current directory with node_modules
-    rm -rf node_modules
-    npm uninstall --save-dev angular-cli
-    npm install --save-dev @angular/cli@latest
-    npm install
-    # Use ng update to show possible app updates
-    ng update 
-    ng update --all --force 
-    # Verify update
-    ng update
-    # Update this readme
+npm install        # NOT `npm ci` — the lockfile is Windows-maintained; `npm ci` fails on Linux
+npx ng serve       # http://localhost:4200
 ```
-## Development server
 
-_See below for setting up the dev environment_
+`/api` is proxied to the backend Docker container (`techaid-server-web-1:8080`) — see "Setting up
+the Dev environment" below. Without the API running, Auth0 login still works (real
+`techaid-auth.eu.auth0.com` tenant, no API needed) but all GraphQL queries error and tables show
+empty.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+## If the dashboard shows no data
 
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+The dashboard is static (Azure Static Web Apps) and rarely "down" itself. Empty or errored tables
+almost always mean **the API is down or cold-starting** — check
+[`techaid-server/SITE-IS-DOWN.md`](https://github.com/CommunityTechaid/techaid-server/blob/dev/SITE-IS-DOWN.md)
+first, not the frontend.
 
 ## Build
 
-Run `npm run build` to build the project. The build artifacts will be stored in the `dist/` directory.
+`npm run build` produces a production build in `dist/`. `npx ng build --configuration production`
+is the primary structural signal — if it compiles cleanly, the code is sound.
 
-## Further help
+## Upgrading Angular
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+Follow https://update.angular.io/ for the current major-to-major steps, then run `npx ng update`
+to see available updates and `npx ng update <package>` to apply them. (Do **not** globally
+uninstall/reinstall the CLI — it is a project devDependency.) Update this README's version numbers
+when you bump a major.
 
-Force deploy 
+## Code scaffolding
 
+Run `npx ng generate component component-name` to generate a new component. You can also use
+`ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
 ## Setting up the Dev environment
 
