@@ -123,6 +123,7 @@ export class BookingFlowComponent implements OnInit {
       address: form.address,
       accessNotes: form.accessNotes || undefined,
       ctaReference: form.ctaReference,
+      turnstileToken: form.turnstileToken || undefined,
     };
 
     this.submitting.set(true);

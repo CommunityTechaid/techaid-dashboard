@@ -78,6 +78,15 @@
       }
     </div>
 
+    @if (siteKey) {
+      <div class="field turnstile">
+        <div #turnstileHost class="turnstile__widget"></div>
+        @if (verificationPending()) {
+          <div class="form-error">Please wait a moment while we verify your browser.</div>
+        }
+      </div>
+    }
+
     <div class="actions">
       <button type="button" class="btn btn--ghost" (click)="back.emit()">Back</button>
       <button type="submit" class="btn btn--primary" [disabled]="submitting">

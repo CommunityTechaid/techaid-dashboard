@@ -35,6 +35,7 @@ export interface DeliveryBookingInput {
   address: string;
   accessNotes?: string;
   ctaReference: string;
+  turnstileToken?: string;
 }
 
 export interface DeliveryBookingConfirmation {

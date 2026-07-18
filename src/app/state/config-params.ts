@@ -9,4 +9,5 @@ export interface ConfigParams {
     version: any;
     pusher?: any;
     pdf_generator_url: string;
+    turnstile_site_key?: string;
 }
