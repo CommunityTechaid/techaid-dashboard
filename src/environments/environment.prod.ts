@@ -16,5 +16,8 @@ export const environment: ConfigParams = {
   auth_enabled: true,
   remote_config: false,
   pdf_generator_url: 'https://script.google.com/macros/s/AKfycbwvsi92ddWWf_LDn6rJdY3b9eTU0UfqIWwZsSpUCy8xrtdW1R6HsKwFECqbMMZRH-J1/exec',
-  turnstile_site_key: '',
+  // Managed-mode widget "techaid-dashboard delivery booking (prod)", scoped to
+  // app.communitytechaid.org.uk. Site keys are public; the secret lives only in the
+  // API container app's TURNSTILE_SECRET env var.
+  turnstile_site_key: '0x4AAAAAAD4riZDYoj1hJfUF',
 };
