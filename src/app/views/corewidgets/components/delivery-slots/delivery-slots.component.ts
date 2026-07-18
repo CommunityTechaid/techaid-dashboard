@@ -11,7 +11,7 @@ const DATA_QUERY = gql`
     deliveryConfig { id enabled daysOfWeek leadTimeDays advanceDays updatedAt }
     deliveryWindowsAdmin { id name startTime endTime icon capacity sortOrder active }
     deliveryBlockedDates { id date reason }
-    deliveryBookingsAdmin { id date dayLabel window { id name } firstName surname email phone address accessNotes ctaReference createdAt }
+    deliveryBookingsAdmin { id date dayLabel window { id name } firstName surname email phone address accessNotes ctaReference createdAt matchedRequestId matchedRequestStatus matchedRequestOpen }
   }
 `;
 
@@ -68,6 +68,9 @@ interface BookingRow {
   accessNotes?: string;
   ctaReference: string;
   createdAt?: string;
+  matchedRequestId?: string;
+  matchedRequestStatus?: string;
+  matchedRequestOpen?: boolean;
 }
 
 interface BookingGroup {
