@@ -40,6 +40,9 @@ export class ConfigService {
         if (runtimeEnv.graphql_endpoint) {
             overrides['graphql_endpoint'] = runtimeEnv.graphql_endpoint;
         }
+        if (runtimeEnv.turnstile_site_key !== undefined) {
+            overrides['turnstile_site_key'] = runtimeEnv.turnstile_site_key;
+        }
         Object.assign(this.environment, environment, data, overrides);
     }
 }
