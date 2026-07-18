@@ -1,1 +1,1 @@
-export const APP_VERSION = {version: '1.0.2', build: '26.04.09-1133', date: '2026-04-09T11:33:26.154Z', commit: 'e50b71f'};
+export const APP_VERSION = {version: '1.1.0', build: '26.07.18-0941', date: '2026-07-18T08:41:31.788Z', commit: 'e134f28'};

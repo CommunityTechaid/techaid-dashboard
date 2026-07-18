@@ -25,6 +25,7 @@
           [loading]="loadingAvailability()"
           [error]="availabilityError()"
           (daySelected)="selectDay($event)"
+          (retry)="loadAvailability()"
         />
       }
       @case ('window') {

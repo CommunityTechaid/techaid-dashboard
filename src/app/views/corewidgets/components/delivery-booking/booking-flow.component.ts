@@ -69,6 +69,12 @@ export class BookingFlowComponent implements OnInit {
   constructor(private readonly api: BookingApiService) {}
 
   ngOnInit(): void {
+    this.loadAvailability();
+  }
+
+  loadAvailability(): void {
+    this.loadingAvailability.set(true);
+    this.availabilityError.set(null);
     this.api.getAvailability().subscribe({
       next: (days) => {
         this.availability.set(days);
