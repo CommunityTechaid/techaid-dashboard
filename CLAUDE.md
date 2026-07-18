@@ -114,6 +114,18 @@ avoids CORS issues. The Playwright tests additionally inject an `Authorization` 
 `ng build --configuration production` remains the primary structural signal — if it compiles
 cleanly, the code is sound.
 
+### Getting a bearer token for live-UAT e2e
+
+The live suite needs a real token in `e2e/.auth/user.json`. Get one by logging in at the running
+dashboard, then DevTools → Application → Local Storage → copy the Auth0 access token, then:
+
+```bash
+E2E_BEARER_TOKEN=<token> node e2e/save-token.mjs
+```
+
+Tokens expire in ~2h. The `@mocked` subset (`npm run e2e:fast`) needs **no** token — it stubs all
+GraphQL and mints a fake JWT (this is what CI runs). Never commit anything under `e2e/.auth/`.
+
 ## Issue Triage Workflow
 
 When asked to triage open GitHub issues (manually or via a scheduled task), follow this loop for
