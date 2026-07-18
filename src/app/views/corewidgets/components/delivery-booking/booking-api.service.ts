@@ -44,7 +44,22 @@ const SUBMIT_MUTATION = `
 
 interface GraphQlResponse<T> {
   data?: T;
-  errors?: { message: string }[];
+  errors?: { message: string; extensions?: { classification?: string } }[];
+}
+
+/**
+ * Thrown when the GraphQL response contains an error. `classification` mirrors
+ * `extensions.classification` from the server — `'BAD_REQUEST'` for deliberate
+ * rejections (duplicate booking, rate limit, Turnstile, validation, etc.) whose
+ * message is safe to show verbatim; anything else is an unexpected failure.
+ */
+export class BookingApiError extends Error {
+  constructor(
+    message: string,
+    readonly classification?: string,
+  ) {
+    super(message);
+  }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -60,7 +75,8 @@ export class BookingApiService {
       .pipe(
         map((response) => {
           if (response.errors && response.errors.length) {
-            throw new Error(response.errors[0].message);
+            const error = response.errors[0];
+            throw new BookingApiError(error.message, error.extensions?.classification);
           }
           if (!response.data) {
             throw new Error('No data returned from the server.');
