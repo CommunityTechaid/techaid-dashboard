@@ -168,7 +168,17 @@
                   @for (bk of group.bookings; track bk.id) {
                     <tr>
                       <td>{{ bk.firstName }} {{ bk.surname }}</td>
-                      <td>{{ bk.ctaReference }}</td>
+                      <td>
+                        {{ bk.ctaReference }}
+                        @if (!bk.matchedRequestId) {
+                          <span class="badge badge-warning ms-1" title="No device request found with this id">unmatched</span>
+                        } @else if (bk.matchedRequestOpen === false) {
+                          <span
+                            class="badge badge-secondary ms-1"
+                            [title]="'Matched device request #' + bk.matchedRequestId + ' (' + bk.matchedRequestStatus + ')'"
+                          >closed</span>
+                        }
+                      </td>
                       <td>{{ bk.email }}</td>
                       <td>{{ bk.phone }}</td>
                       <td>{{ bk.address }}</td>
