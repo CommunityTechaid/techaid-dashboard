@@ -2,9 +2,15 @@
   <div class="intro">We deliver on these upcoming days. Pick the one that suits you.</div>
 
   @if (loading) {
-    <div class="status">Loading available days…</div>
+    <div class="status status--loading">
+      <span class="spinner" aria-hidden="true"></span>
+      Loading available days…
+    </div>
   } @else if (error) {
-    <div class="status status--error">{{ error }}</div>
+    <div class="status status--error">
+      {{ error }}
+      <button type="button" class="retry-btn" (click)="retry.emit()">Try again</button>
+    </div>
   } @else if (rows.length === 0) {
     <div class="status">No delivery slots are available right now — please check back soon.</div>
   } @else {

@@ -20,6 +20,7 @@ export class DayStepComponent {
   @Input() error: string | null = null;
 
   @Output() daySelected = new EventEmitter<string>();
+  @Output() retry = new EventEmitter<void>();
 
   get rows(): DayRow[] {
     return (this.days ?? [])
