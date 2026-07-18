@@ -1,5 +1,5 @@
 import { Component, computed, OnInit, signal } from '@angular/core';
-import { BookingApiService } from './booking-api.service';
+import { BookingApiError, BookingApiService } from './booking-api.service';
 import {
   DeliveryBookingConfirmation,
   DeliveryBookingInput,
@@ -135,9 +135,13 @@ export class BookingFlowComponent implements OnInit {
         this.confirmation.set(confirmation);
         this.step.set('confirmation');
       },
-      error: () => {
+      error: (err: unknown) => {
         this.submitting.set(false);
-        this.submitError.set('Something went wrong booking your delivery. Please try again.');
+        if (err instanceof BookingApiError && err.classification === 'BAD_REQUEST') {
+          this.submitError.set(err.message);
+        } else {
+          this.submitError.set('Something went wrong booking your delivery. Please try again.');
+        }
       },
     });
   }
