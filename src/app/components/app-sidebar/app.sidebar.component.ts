@@ -5,6 +5,7 @@ import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
 import { Observable, Subscription } from 'rxjs';
 
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { environment } from '@env/environment';
 
 @Component({
     selector: 'app-sidebar',
@@ -21,6 +22,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
 export class AppSidebar implements OnInit, OnDestroy {
     sidebar = true;
+    /** Prototype prep-mode UI is gated by the per-env feature flag (off in prod). */
+    prepModeEnabled = !!environment.feature_prep_mode;
     public user: User;
     private sub: Subscription;
     @Select(UserState.user) user$: Observable<User>;

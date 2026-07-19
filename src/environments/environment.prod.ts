@@ -20,4 +20,5 @@ export const environment: ConfigParams = {
   // app.communitytechaid.org.uk. Site keys are public; the secret lives only in the
   // API container app's TURNSTILE_SECRET env var.
   turnstile_site_key: '0x4AAAAAAD4riZDYoj1hJfUF',
+  feature_prep_mode: false,
 };
