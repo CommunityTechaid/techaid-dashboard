@@ -67,23 +67,33 @@ async function main() {
     }
   });
 
+  // Match on the parsed hostname, not a substring — a substring check would also
+  // match e.g. https://evil.example/challenges.cloudflare.com (CodeQL
+  // js/incomplete-url-substring-sanitization).
+  const isTurnstileUrl = (u) => {
+    try {
+      return new URL(u).hostname === 'challenges.cloudflare.com';
+    } catch {
+      return false;
+    }
+  };
+
   page.on('response', (res) => {
-    if (res.url().includes('challenges.cloudflare.com/turnstile/v0/api.js')) {
+    if (isTurnstileUrl(res.url()) && new URL(res.url()).pathname === '/turnstile/v0/api.js') {
       turnstileApiResponse = res;
     }
   });
 
   page.on('frameattached', (frame) => {
-    const frameUrl = frame.url();
     // Turnstile's challenge iframe is served from challenges.cloudflare.com — the
     // frame's url is often blank at attach time and resolves once it navigates, so
     // check both the immediate url and (later) the frame's eventual url.
-    if (frameUrl.includes('challenges.cloudflare.com')) {
+    if (isTurnstileUrl(frame.url())) {
       turnstileIframeAttached = true;
     }
   });
   page.on('framenavigated', (frame) => {
-    if (frame.url().includes('challenges.cloudflare.com')) {
+    if (isTurnstileUrl(frame.url())) {
       turnstileIframeAttached = true;
     }
   });
