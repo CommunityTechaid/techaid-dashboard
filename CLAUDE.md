@@ -36,6 +36,8 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 
 Environment configs live in `src/environments/` (dev, prod, uat, local).
 
+`workers/cta-places-proxy/` is the source of truth for the Cloudflare Worker that proxies Google Places for the address fields — it is deployed **manually** (`npx wrangler deploy` from that directory), so keep repo and deployed state in sync when editing it.
+
 ## Release Workflow
 
 `master` represents the latest state deployed to production. Releases are

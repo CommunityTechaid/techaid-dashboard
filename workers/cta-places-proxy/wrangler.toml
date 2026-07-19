@@ -5,3 +5,17 @@ account_id = "b54c483820627f3bc0532564ac159369"
 
 # GOOGLE_API_KEY is stored as a secret:
 #   wrangler secret put GOOGLE_API_KEY --name cta-places-proxy
+# Keep dashboard-set vars/secrets across deploys.
+keep_vars = true
+
+[observability]
+enabled = true
+
+# Per-IP rate limit (must be top-level `ratelimits` — the older unsafe.bindings
+# shape deploys without error but never enforces; verified 2026-07-19).
+# 60/min per IP: a debounced autocomplete session is ~10-20 req/min, with
+# headroom for several users behind the shared office NAT.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }
