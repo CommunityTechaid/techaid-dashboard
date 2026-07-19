@@ -37,6 +37,8 @@ const ADD_BLOCKED = gql`
 
 const DELETE_BLOCKED = gql`mutation deleteDeliveryBlockedDate($id: ID!) { deleteDeliveryBlockedDate(id: $id) }`;
 
+const DELETE_BOOKING = gql`mutation deleteDeliveryBooking($id: ID!) { deleteDeliveryBooking(id: $id) }`;
+
 interface WindowRow {
   id?: string;
   name: string;
@@ -324,6 +326,29 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
         this.toastr.success('Date unblocked');
       },
       error: () => this.toastr.error('Could not remove that date'),
+    });
+  }
+
+  deleteBooking(bk: BookingRow, group: BookingGroup): void {
+    if (
+      !confirm(
+        `Delete the booking for ${bk.firstName} ${bk.surname} (${bk.ctaReference}) on ${group.dayLabel}? This can't be undone and frees the slot.`,
+      )
+    ) {
+      return;
+    }
+    this.apollo.mutate<any>({ mutation: DELETE_BOOKING, variables: { id: bk.id } }).subscribe({
+      next: () => {
+        group.bookings = group.bookings.filter((b) => b.id !== bk.id);
+        this.totalBookings = Math.max(0, this.totalBookings - 1);
+        if (group.bookings.length === 0) {
+          this.bookingGroups = this.bookingGroups.filter((g) => g.key !== group.key);
+        }
+        this.toastr.success('Booking deleted');
+      },
+      error: (err) => {
+        this.toastr.error(err?.message || 'Could not delete booking');
+      },
     });
   }
 
