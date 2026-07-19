@@ -1,0 +1,167 @@
+#!/usr/bin/env node
+/**
+ * Deployed-origin CSP probe for the public delivery-booking page.
+ *
+ * WHY THIS EXISTS: CSP is enforced by response headers (staticwebapp.config.json's
+ * globalHeaders.Content-Security-Policy), which `ng serve` never sends — the whole
+ * Playwright suite runs against a dev server with no CSP at all, so a directive typo
+ * (e.g. forgetting `frame-src https://challenges.cloudflare.com`) is invisible to every
+ * other e2e spec. It only shows up once a build is actually deployed. This script is the
+ * check for that: point it at a real deployed origin and it reports whether the browser
+ * is honouring the intended CSP without silently breaking Cloudflare Turnstile.
+ *
+ * NOT part of CI or the default e2e run. Run it on demand:
+ *   - after any change to staticwebapp.config.json (CSP headers) or the Turnstile
+ *     integration (turnstile.service.ts, index.html, environment turnstile_site_key)
+ *   - after any deploy that touches those, once the deploy has finished rolling out
+ *
+ * Usage:
+ *   node e2e/csp-probe.mjs                                   # UAT (default)
+ *   node e2e/csp-probe.mjs https://app.communitytechaid.org.uk   # production
+ *
+ * Exit code 0 = clean (Turnstile loaded, challenge iframe attached, zero CSP violations).
+ * Exit code 1 = something failed; the printed report says what.
+ */
+
+import { chromium } from 'playwright';
+
+const DEFAULT_ORIGIN = 'https://app-testing.communitytechaid.org.uk';
+const BOOKING_PATH = '/delivery-booking';
+const origin = (process.argv[2] ?? DEFAULT_ORIGIN).replace(/\/+$/, '');
+const url = `${origin}${BOOKING_PATH}`;
+
+/** CSP-violation records collected via both the securitypolicyviolation event and console text. */
+const violations = [];
+let turnstileApiResponse = null; // network Response for challenges.cloudflare.com/turnstile/v0/api.js
+let turnstileIframeAttached = false;
+
+function report(ok, lines) {
+  console.log('\n=== CSP probe report ===');
+  console.log(`Target: ${url}`);
+  for (const line of lines) console.log(line);
+  console.log(ok ? '\nRESULT: PASS' : '\nRESULT: FAIL');
+}
+
+async function main() {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  // Installed BEFORE navigation so it catches violations fired during initial page load,
+  // not just ones that happen to occur after our own JS has attached listeners.
+  await page.addInitScript(() => {
+    window.__cspViolations = [];
+    document.addEventListener('securitypolicyviolation', (e) => {
+      window.__cspViolations.push({
+        violatedDirective: e.violatedDirective,
+        blockedURI: e.blockedURI,
+        sourceFile: e.sourceFile,
+        lineNumber: e.lineNumber,
+      });
+    });
+  });
+
+  page.on('console', (msg) => {
+    const text = msg.text();
+    if (/content security policy/i.test(text)) {
+      violations.push({ source: 'console', detail: text });
+    }
+  });
+
+  page.on('response', (res) => {
+    if (res.url().includes('challenges.cloudflare.com/turnstile/v0/api.js')) {
+      turnstileApiResponse = res;
+    }
+  });
+
+  page.on('frameattached', (frame) => {
+    const frameUrl = frame.url();
+    // Turnstile's challenge iframe is served from challenges.cloudflare.com — the
+    // frame's url is often blank at attach time and resolves once it navigates, so
+    // check both the immediate url and (later) the frame's eventual url.
+    if (frameUrl.includes('challenges.cloudflare.com')) {
+      turnstileIframeAttached = true;
+    }
+  });
+  page.on('framenavigated', (frame) => {
+    if (frame.url().includes('challenges.cloudflare.com')) {
+      turnstileIframeAttached = true;
+    }
+  });
+
+  let navigationError = null;
+  try {
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 30_000 });
+
+    // Turnstile is lazily loaded by the details-step component (see
+    // turnstile.service.ts) — it never loads on the day-picker step. Click through
+    // day → window to reach details, same path a real visitor takes.
+    await page.locator('.day-row').first().click({ timeout: 15_000 });
+    await page.locator('.window-row').first().click({ timeout: 15_000 });
+    // The widget host only appears once the details form has a siteKey configured.
+    await page.locator('.turnstile__widget').waitFor({ state: 'attached', timeout: 15_000 });
+  } catch (err) {
+    navigationError = err;
+  }
+
+  // Give Turnstile's async render + iframe attach a moment to complete even if
+  // networkidle fired first (Cloudflare's script does follow-up XHRs).
+  await page.waitForTimeout(5_000);
+
+  const pageViolations = await page.evaluate(() => window.__cspViolations ?? []);
+  for (const v of pageViolations) {
+    violations.push({
+      source: 'securitypolicyviolation',
+      detail: `${v.violatedDirective} blocked ${v.blockedURI} (${v.sourceFile}:${v.lineNumber})`,
+    });
+  }
+
+  await browser.close();
+
+  const lines = [];
+  let ok = true;
+
+  if (navigationError) {
+    ok = false;
+    lines.push(`✗ Failed to reach the details step (day → window → form): ${navigationError.message}`);
+  } else {
+    lines.push('✓ Reached the details step (day → window selected).');
+  }
+
+  if (turnstileApiResponse) {
+    const status = turnstileApiResponse.status();
+    if (status >= 200 && status < 400) {
+      lines.push(`✓ Turnstile api.js loaded (HTTP ${status}).`);
+    } else {
+      ok = false;
+      lines.push(`✗ Turnstile api.js request returned HTTP ${status}.`);
+    }
+  } else {
+    ok = false;
+    lines.push('✗ Turnstile api.js never loaded — no network response from challenges.cloudflare.com/turnstile/v0/api.js.');
+  }
+
+  if (turnstileIframeAttached) {
+    lines.push('✓ Turnstile challenge iframe attached.');
+  } else {
+    ok = false;
+    lines.push('✗ No Turnstile challenge iframe attached (challenges.cloudflare.com frame never appeared).');
+  }
+
+  if (violations.length === 0) {
+    lines.push('✓ Zero CSP violations.');
+  } else {
+    ok = false;
+    lines.push(`✗ ${violations.length} CSP violation(s):`);
+    for (const v of violations) {
+      lines.push(`    [${v.source}] ${v.detail}`);
+    }
+  }
+
+  report(ok, lines);
+  process.exit(ok ? 0 : 1);
+}
+
+main().catch((err) => {
+  console.error('csp-probe: unexpected error —', err);
+  process.exit(1);
+});

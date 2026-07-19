@@ -1,6 +1,36 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// The live-booking-smoke spec (@live-smoke) drives the FULL public booking flow
+// against the deployed UAT origin and creates a real booking there — it must never
+// run as a side effect of a plain `npx playwright test` / `npm run e2e:fast` / CI
+// invocation. `grep`/`grepInvert` set here in the config and `--grep`/`--grep-invert`
+// passed on the CLI are two INDEPENDENT filters that AND together (Playwright applies
+// the config's project-level grep during test collection, then applies the CLI's grep
+// again afterwards) — so a static `grepInvert: /@live-smoke/` here would permanently
+// exclude it even from `npx playwright test live-booking-smoke --grep @live-smoke`,
+// making the tag impossible to opt into. Instead we inspect argv ourselves: only
+// install the default exclusion when the invocation did NOT already explicitly ask
+// for @live-smoke via --grep/-g. See e2e/tests/live-booking-smoke.spec.ts header for
+// the exact opt-in invocation.
+function isLiveSmokeExplicitlyRequested(): boolean {
+  const argv = process.argv;
+  for (let i = 0; i < argv.length; i++) {
+    if ((argv[i] === '--grep' || argv[i] === '-g') && argv[i + 1]?.includes('@live-smoke')) {
+      return true;
+    }
+    const eq = argv[i].match(/^(?:--grep|-g)=(.*)$/);
+    if (eq && eq[1].includes('@live-smoke')) {
+      return true;
+    }
+  }
+  return false;
+}
+const excludeLiveSmokeByDefault = !isLiveSmokeExplicitlyRequested();
+
 export default defineConfig({
+  // Excluded by default (see isLiveSmokeExplicitlyRequested above); explicitly
+  // requesting @live-smoke via --grep lifts this so the CLI's own grep can select it.
+  grepInvert: excludeLiveSmokeByDefault ? /@live-smoke/ : undefined,
   testDir: './e2e/tests',
   // File-level parallelism: fullyParallel stays false so tests inside a spec
   // file run in order, but separate files run on parallel workers. Safe today
