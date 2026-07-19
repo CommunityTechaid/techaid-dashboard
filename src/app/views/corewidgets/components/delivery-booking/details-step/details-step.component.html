@@ -45,13 +45,23 @@
       }
     </div>
 
-    <div class="field">
+    <div class="field field--autocomplete">
       <label>Delivery address &amp; postcode</label>
       <textarea
         formControlName="address"
         placeholder="Flat, street, postcode"
+        autocomplete="off"
         [class.field--invalid]="invalid('address')"
+        appPlaceAutocomplete
+        #addressAutocomplete="appPlaceAutocomplete"
       ></textarea>
+      @if (addressAutocomplete.suggestions.length > 0) {
+        <ul class="address-suggestions">
+          @for (suggestion of addressAutocomplete.suggestions; track suggestion.description) {
+            <li (mousedown)="addressAutocomplete.select(suggestion)">{{ suggestion.description }}</li>
+          }
+        </ul>
+      }
       @if (invalid('address')) {
         <div class="form-error">Enter the delivery address.</div>
       }

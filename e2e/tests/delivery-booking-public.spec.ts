@@ -22,9 +22,17 @@
  * addInitScript BEFORE navigation, so no request to challenges.cloudflare.com ever fires:
  * turnstile.service.ts load() resolves immediately when window.turnstile already exists.
  *
+ * The address field now has assistive Google Places autocomplete
+ * (place-autocomplete.directive.ts), which fires debounced GETs to
+ * cta-places-proxy.community-techaid.workers.dev as soon as the field is typed into.
+ * reachDetailsStepAndFill installs a route stub for that host so this mocked suite never
+ * leaves the machine; dedicated coverage for the autocomplete behaviour itself lives in
+ * delivery-booking-address-autocomplete.spec.ts.
+ *
  * @mocked — no token, all GraphQL stubbed.
  */
 import { test, expect, Page } from '@playwright/test';
+import { stubPlacesProxy } from '../helpers/places-proxy';
 
 /** The exact duplicate-booking copy the server returns as a BAD_REQUEST. */
 const DUPLICATE_MESSAGE =
@@ -137,6 +145,9 @@ async function installBookingMocks(
 
 /** Walks day → window → details and fills the required fields (no submit). */
 async function reachDetailsStepAndFill(page: Page): Promise<void> {
+  // The address field fires autocomplete requests to the Places proxy as soon as it's
+  // typed into (see file header) — stub it so this @mocked suite stays hermetic.
+  await stubPlacesProxy(page);
   await page.goto('/delivery-booking');
   await page.locator('.day-row').first().click();
   await page.locator('.window-row').first().click();
