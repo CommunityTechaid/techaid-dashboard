@@ -14,6 +14,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConfigService } from '@app/shared/services/config.service';
 import { DeliveryDayAvailability, DeliveryWindow } from '../models';
+import { PlaceAutocompleteDirective } from '../place-autocomplete.directive';
 import { TurnstileService } from '../turnstile.service';
 
 export interface DetailsFormValue {
@@ -32,7 +33,7 @@ const UK_PHONE_PATTERN = /^[0-9 +()-]{7,20}$/;
 @Component({
   selector: 'app-details-step',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PlaceAutocompleteDirective],
   templateUrl: './details-step.component.html',
   styleUrl: './details-step.component.scss',
 })

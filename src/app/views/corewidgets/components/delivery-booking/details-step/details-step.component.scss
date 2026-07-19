@@ -82,6 +82,39 @@
   width: 120px !important;
 }
 
+.field--autocomplete {
+  position: relative;
+}
+
+.address-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 2px 0 0;
+  padding: 4px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--cta-border);
+  border-radius: 7px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  max-height: 180px;
+  overflow-y: auto;
+
+  li {
+    padding: 8px 9px;
+    font-size: 12.5px;
+    color: var(--cta-body-text);
+    border-radius: 5px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--cta-tint);
+    }
+  }
+}
+
 .field--invalid {
   border-color: #c0392b !important;
 }
