@@ -48,6 +48,7 @@ import { ScanSession } from './scan-session';
         #field
         type="text"
         class="form-control scan-input__field"
+        data-testid="scan-input-field"
         [attr.aria-label]="label()"
         [placeholder]="placeholder()"
         autocomplete="off"
