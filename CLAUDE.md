@@ -79,6 +79,30 @@ How it works:
    git push origin master
    ```
 
+### Release cut runbook (cross-repo order of operations)
+
+The release-please PR is pure paperwork — merging it never deploys anything.
+Deploys only happen when a workflow is dispatched manually. Paperwork first,
+then ship; API before UI:
+
+1. **Server** ([techaid-server](https://github.com/CommunityTechaid/techaid-server)):
+   merge its open release-please PR into `dev`. release-please tags the release;
+   the merge push triggers CI/CD which builds the new image and deploys it to
+   api-testing (~6 min). Wait for green.
+2. **Server**: run the `promote.yml` workflow (`workflow_dispatch`), leaving
+   `image_tag` blank — blank promotes the image UAT is currently running, i.e.
+   the freshly tagged build. This is the prod API deploy.
+3. **Dashboard** (this repo): merge its open release-please PR into `dev`.
+   release-please tags; `deploy-dev.yml` redeploys UAT with the bumped version.
+4. **Dashboard**: run `Deploy to Production SWA` (`deploy-prod.yml`,
+   `workflow_dispatch`). On success it fast-forwards `master` itself.
+5. Post-deploy: `node e2e/csp-probe.mjs https://app.communitytechaid.org.uk`
+   verifies the booking page's Turnstile/CSP on the prod origin.
+
+Why this order: deploying before merging the release PR ships a build stamped
+with the old version, and the tag lands on a commit that isn't what's deployed.
+Server before dashboard because UI features depend on API mutations.
+
 Conventional commits matter here: release-please reads them to pick the
 version bump and to build the changelog. When squash-merging a PR, give
 it a conventional title (`fix: …`, `feat: …`, `chore: …`, `docs: …`,
