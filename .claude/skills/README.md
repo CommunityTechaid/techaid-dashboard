@@ -1,7 +1,7 @@
 # techaid-dashboard skill library
 
-Five skills carrying this repo's operational knowledge — how to design, debug,
-test, and ship the dashboard. AI sessions load them automatically by
+Six skills carrying this repo's operational knowledge — how to design, debug,
+test, ship, and advance the dashboard. AI sessions load them automatically by
 description; humans: start with the routing table below. Each skill ends with a
 **Provenance and maintenance** section — re-verify volatile facts there before
 relying on them.
@@ -24,6 +24,7 @@ and the skill needs fixing.
 | Writing/changing code or tests; what evidence is needed; a spec failed | `dashboard-testing-and-e2e` |
 | Releasing, deploying, rolling back, "is the right build live?" | `dashboard-release-and-deploy` |
 | Sweeping open GitHub issues (the weekly triage loop) | `triage-issues` |
+| "What should we work on next?" — vetted open candidates | `dashboard-roadmap-and-frontier` |
 
 ## Inventory
 
@@ -34,6 +35,7 @@ and the skill needs fixing.
 | `dashboard-testing-and-e2e` | Red/green rule, the @mocked/live-UAT Playwright split, the certified 30-spec inventory, hygiene tooling, known flakes, acceptance ladder |
 | `dashboard-release-and-deploy` | Pipeline anatomy, release-please, the cross-repo release cut, master fast-forward failure branches, rollback reality, the out-of-band Worker deploy |
 | `triage-issues` | The structured GitHub issue-triage loop (replicate on UAT, red/green fix or needs-info, adjacent-pattern flagging) |
+| `dashboard-roadmap-and-frontier` | Vetted open improvement candidates under the maintainer's advancement definition (platform health + staff efficiency UX), with dependencies, statuses, and falsifiable milestones |
 
 ## Suggested onboarding order (humans, new to the project)
 
