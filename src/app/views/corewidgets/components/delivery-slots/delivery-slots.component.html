@@ -161,7 +161,7 @@
               <table class="table table-sm table-striped mb-0">
                 <thead>
                   <tr>
-                    <th>Name</th><th>CTA ref</th><th>Email</th><th>Phone</th><th>Address</th><th>Access notes</th><th>Booked</th>
+                    <th>Name</th><th>CTA ref</th><th>Email</th><th>Phone</th><th>Address</th><th>Access notes</th><th>Booked</th><th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -184,6 +184,15 @@
                       <td>{{ bk.address }}</td>
                       <td>{{ bk.accessNotes }}</td>
                       <td>{{ bk.createdAt | date: 'short' }}</td>
+                      <td>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger"
+                          data-testid="delete-booking"
+                          [attr.data-booking-id]="bk.id"
+                          (click)="deleteBooking(bk, group)"
+                        >Delete</button>
+                      </td>
                     </tr>
                   }
                 </tbody>
