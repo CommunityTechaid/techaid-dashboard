@@ -1,5 +1,23 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// See playwright.config.ts for why this can't be a static grepInvert: config-level
+// grep/grepInvert and CLI --grep are independent filters that AND together, so a
+// blanket exclusion here would also block the documented opt-in invocation.
+function isLiveSmokeExplicitlyRequested(): boolean {
+  const argv = process.argv;
+  for (let i = 0; i < argv.length; i++) {
+    if ((argv[i] === '--grep' || argv[i] === '-g') && argv[i + 1]?.includes('@live-smoke')) {
+      return true;
+    }
+    const eq = argv[i].match(/^(?:--grep|-g)=(.*)$/);
+    if (eq && eq[1].includes('@live-smoke')) {
+      return true;
+    }
+  }
+  return false;
+}
+const excludeLiveSmokeByDefault = !isLiveSmokeExplicitlyRequested();
+
 /**
  * Playwright config for running tests against the deployed UAT front-end at
  * app-testing.communitytechaid.org.uk — Option B, as opposed to the default
@@ -16,6 +34,8 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e/tests',
+  // Excluded by default — see the comment above isLiveSmokeExplicitlyRequested.
+  grepInvert: excludeLiveSmokeByDefault ? /@live-smoke/ : undefined,
   // File-level parallelism — see the note in playwright.config.ts. This config
   // has no local dev-server bottleneck (tests hit the deployed SWA host), so it
   // sustains 4 workers cleanly (calibrated 2026-07-03: 4.3m serial → 3.4m).
