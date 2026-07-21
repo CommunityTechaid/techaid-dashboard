@@ -28,6 +28,13 @@ const FLAG_LABELS: Record<string, { label: string; description: string }> = {
       'Show the public delivery-booking page and the Delivery Slots admin tab on the live/production site. ' +
       'When off, these are visible on UAT only (with a banner) and hidden on production.',
   },
+  'update-scanner': {
+    label: 'Update Scanner',
+    description:
+      'Widen access to the bench Update Scanner page. When off, the page and its button on the ' +
+      'Devices list are available to staff with the bulk-edit permission. When on, any signed-in ' +
+      'staff member can use it — the feature itself stays available either way.',
+  },
 };
 
 interface FlagRow {

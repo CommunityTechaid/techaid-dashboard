@@ -5,6 +5,14 @@ import { ConfigService } from './config.service';
 
 export const DELIVERY_BOOKING_FLAG = 'delivery-booking';
 
+/**
+ * Update Scanner (bench scanning page). Unlike delivery-booking this flag
+ * WIDENS access rather than switching the feature on: off → the page is
+ * reachable only by `app:bulkedit` holders; on → any authenticated staff
+ * member. See update-scanner-visible.guard.ts.
+ */
+export const UPDATE_SCANNER_FLAG = 'update-scanner';
+
 const PUBLIC_FLAGS_QUERY = `query FeatureFlagsPublic { featureFlagsPublic { key enabled } }`;
 
 export interface DeliveryBookingVisibility {
