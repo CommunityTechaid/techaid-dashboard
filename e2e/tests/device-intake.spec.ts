@@ -174,12 +174,27 @@ test.describe('Device intake write-flow (kit create → index → edit → persi
     // matches against model/serialNo/id/notes.
     const searchInput = page.locator('input[aria-controls="kit-index"]');
     await searchInput.waitFor({ state: 'visible', timeout: 15_000 });
-    await searchInput.fill(uniqueModel);
 
     const row = page.locator('#kit-index tbody tr', { hasText: uniqueModel });
-    await expect(row, 'the created device should be findable in the index by its model').toBeVisible({
-      timeout: 20_000,
-    });
+
+    // The UAT search index can lag slightly behind a just-created record: the
+    // device exists, but a single search fired immediately after create can
+    // still return zero rows because the index hasn't caught up yet. A plain
+    // `toBeVisible({timeout})` only re-polls the *already-rendered* DOM — it
+    // never re-issues the search — so a stale first response would hang until
+    // timeout even though a later search would succeed. Retry the whole
+    // round-trip (re-fill the search box, which re-triggers DataTables' own
+    // debounced ajax call, then re-check) until the row appears or we give up.
+    await expect(async () => {
+      // Clear first so re-filling the same string is a genuine value change —
+      // DataTables only re-searches when the input's value actually changes.
+      await searchInput.fill('');
+      await searchInput.fill(uniqueModel);
+      await expect(row, 'the created device should be findable in the index by its model').toBeVisible({
+        timeout: 5_000,
+      });
+    }).toPass({ timeout: 30_000, intervals: [1_000, 2_000, 3_000, 5_000] });
+
     // The Make column shows the make that was entered; the Model column shows the model.
     await expect(row).toContainText(createMake);
     await expect(row).toContainText(uniqueModel);

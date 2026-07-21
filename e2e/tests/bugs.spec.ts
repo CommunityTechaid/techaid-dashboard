@@ -850,7 +850,7 @@ test.describe('ORG-B4: CMS injected highlighted spans have word-break: keep-all'
 });
 
 // ─── DEVREQ-B1: Show/hide device types toggle actually works (formly flush) ───
-test.describe('DEVREQ-B1: Show/hide device types toggle reveals zero-count fields', () => {
+test.describe('DEVREQ-B1: Show/hide device types toggle reveals zero-count fields @mocked', () => {
   test.afterEach(async ({ page }) => {
     await page.unrouteAll({ behavior: 'ignoreErrors' });
   });
@@ -948,6 +948,17 @@ test.describe('DEVREQ-B1: Show/hide device types toggle reveals zero-count field
       });
     });
 
+    // Fail loudly on an uncaught page error (e.g. a RangeError from a change-detection
+    // recursion) instead of letting the test time out on an unrelated assertion below —
+    // this is exactly the failure mode this test exists to catch.
+    const pageErrors: string[] = [];
+    page.on('pageerror', err => pageErrors.push(err.message));
+    page.on('console', msg => {
+      if (msg.type() === 'error' && /Maximum call stack size exceeded/.test(msg.text())) {
+        pageErrors.push(msg.text());
+      }
+    });
+
     await page.goto(`/dashboard/device-requests/${FAKE_ID}`);
 
     // Wait for formly to render the device-request form
@@ -968,58 +979,19 @@ test.describe('DEVREQ-B1: Show/hide device types toggle reveals zero-count field
     }
     // If count is 0, the element is removed from DOM — also correctly hidden
 
-    // --- TOGGLE ON: Trigger the toggle via the Angular component context ---
-    //
-    // Background: the toggle button renders via formly's [innerHTML] binding, which
-    // strips the id="toggleDeviceTypesBtn" attribute (Angular DomSanitizer removes
-    // ids from innerHTML-bound content). The document-level click delegation using
-    // target.closest('#toggleDeviceTypesBtn') therefore never fires — the button is
-    // visually present but unreachable via that path. We call toggleDeviceTypes()
-    // directly on the Angular component instance to test the fix.
-    //
-    // Note: Apollo InMemoryCache freezes results in dev mode. This causes formly's
-    // changeHideState to throw "Cannot delete property" when it tries to clean up
-    // the model for hidden fields. This is a latent bug (see sweep section below)
-    // that only surfaces in dev mode — production builds set freezeResults=false.
-    // We catch and ignore that specific error so the test can proceed.
-    await page.evaluate(() => {
-      const infoEl = document.querySelector('app-device-request-info');
-      if (!infoEl) throw new Error('app-device-request-info not found');
-      const ng = (window as any).ng;
-      if (!ng?.getComponent) throw new Error('ng.getComponent not available');
-      const comp = ng.getComponent(infoEl);
-      if (!comp) throw new Error('Component instance not found');
-      // Manually set the flag and call options.detectChanges — same as what
-      // toggleDeviceTypes() does after the fix.
-      comp.showAllDeviceTypes = true;
-      try {
-        comp.options.detectChanges?.(comp.fields[0]);
-      } catch (e) {
-        // Apollo freeze error: "Cannot delete property 'x'" — only in dev mode.
-        // Ignore: the hideExpression re-evaluation happens before this throw.
-      }
-    });
+    // --- TOGGLE ON: click the real button ---
+    // The button's id survives Angular's [innerHTML] sanitization (Angular's default
+    // HTML sanitizer does not strip plain `id` attributes), so it's reachable by the
+    // document-level click-delegation handler wired up in ngOnInit — drive it exactly
+    // as a real user would, via Playwright's own click.
+    await page.locator('#toggleDeviceTypesBtn').click();
 
     // After toggle: Phones label must now be visible.
-    // Pre-fix: options.detectChanges was not called so formly never re-evaluated
-    //          hideExpression and the Phones field stayed hidden.
     const phonesLabelAfterToggle = page.locator('label', { hasText: 'Phones' }).first();
     await expect(phonesLabelAfterToggle).toBeVisible({ timeout: 5_000 });
 
-    // --- TOGGLE OFF: Set showAllDeviceTypes=false and flush again ---
-    await page.evaluate(() => {
-      const infoEl = document.querySelector('app-device-request-info');
-      const ng = (window as any).ng;
-      if (infoEl && ng?.getComponent) {
-        const comp = ng.getComponent(infoEl);
-        if (comp) {
-          comp.showAllDeviceTypes = false;
-          try {
-            comp.options.detectChanges?.(comp.fields[0]);
-          } catch (e) { /* Apollo freeze in dev — ignore */ }
-        }
-      }
-    });
+    // --- TOGGLE OFF: click the real button again ---
+    await page.locator('#toggleDeviceTypesBtn').click();
 
     // After toggling off, Phones field should be hidden again (either not in DOM or display:none)
     await expect.poll(async () => {
@@ -1033,6 +1005,16 @@ test.describe('DEVREQ-B1: Show/hide device types toggle reveals zero-count field
       await expect(phonesLabelAfterToggleOff).not.toBeVisible();
     }
     // If count is 0, the field was removed from the DOM — also correct hidden state
+
+    // The second toggle (re-hiding) previously drove Formly into an infinite
+    // oscillation: resetOnHide (default true) reset a hidden field's model value
+    // to `undefined`, which made hideExpression's `=== 0` check evaluate false on
+    // the very next pass (undefined !== 0), un-hiding the field again; Formly's
+    // resetOnHide "restore defaultValue" branch then set it back to 0, hiding it
+    // again, forever — synchronously, until "RangeError: Maximum call stack size
+    // exceeded". Fixed via resetOnHide: false on the device-type fields (see
+    // device-request-info.component.ts). Assert no such error occurred.
+    expect(pageErrors).toEqual([]);
   });
 });
 

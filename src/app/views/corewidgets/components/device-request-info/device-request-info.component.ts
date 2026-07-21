@@ -427,6 +427,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  resetOnHide: false,
                   hideExpression: (model: any) => {
                     return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.laptops === 0);
                   },
@@ -454,6 +455,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  resetOnHide: false,
                   hideExpression: (model: any) => {
                     return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.phones === 0);
                   },
@@ -481,6 +483,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  resetOnHide: false,
                   hideExpression: (model: any) => {
                     return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.tablets === 0);
                   },
@@ -508,6 +511,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  resetOnHide: false,
                   hideExpression: (model: any) => {
                     return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.allInOnes === 0);
                   },
@@ -535,6 +539,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  resetOnHide: false,
                   hideExpression: (model: any) => {
                     return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.desktops === 0);
                   },
@@ -562,6 +567,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  resetOnHide: false,
                   hideExpression: (model: any) => {
                     return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.commsDevices === 0);
                   },
@@ -589,6 +595,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  resetOnHide: false,
                   hideExpression: (model: any) => {
                     return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.broadbandHubs === 0);
                   },
@@ -616,6 +623,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                   type: 'input',
                   className: '',
                   defaultValue: 0,
+                  resetOnHide: false,
                   hideExpression: (model: any) => {
                     return !this.showAllDeviceTypes && (!model.deviceRequestItems || model.deviceRequestItems.other === 0);
                   },
