@@ -188,8 +188,13 @@ test.describe('Device intake write-flow (kit create → index → edit → persi
     await expect(async () => {
       // Clear first so re-filling the same string is a genuine value change —
       // DataTables only re-searches when the input's value actually changes.
+      // Then press Enter: clearing alone leaves the table showing the UNFILTERED
+      // result set, and the refill's input event does not reliably re-trigger the
+      // server-side query, so without this the retry can leave the term sitting
+      // in the box against unfiltered rows and never recover.
       await searchInput.fill('');
       await searchInput.fill(uniqueModel);
+      await searchInput.press('Enter');
       await expect(row, 'the created device should be findable in the index by its model').toBeVisible({
         timeout: 5_000,
       });
