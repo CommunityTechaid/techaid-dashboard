@@ -1,8 +1,8 @@
 /**
  * Update Scanner — bench scanning page for device status updates (roadmap SE2).
  *
- * An operator arms a mode once (scan a printed `CTA*…` card, or pick from the
- * dropdown) then rapid-scans device barcodes; each scan sets the armed status
+ * An operator picks a mode once (scan a printed `CTA*…` card, or use the
+ * dropdown) then rapid-scans device barcodes; each scan sets the active status
  * with no further clicks.
  *
  * The important tests here are the REFUSALS. `updateKits` performs no
@@ -129,7 +129,7 @@ async function openScanner(page: Page): Promise<void> {
 }
 
 const banner = (page: Page) => page.getByTestId('scanner-banner');
-const armBanner = (page: Page) => page.getByTestId('scanner-arm-banner');
+const modeBanner = (page: Page) => page.getByTestId('scanner-mode-banner');
 
 test.describe('update scanner access gating @mocked', () => {
   test('without app:bulkedit and with the flag off, the page is not reachable', async ({ page }) => {
@@ -154,12 +154,12 @@ test.describe('update scanner access gating @mocked', () => {
   });
 });
 
-test.describe('update scanner arm and apply @mocked', () => {
+test.describe('update scanner mode and apply @mocked', () => {
   test.beforeEach(async ({ page }) => {
     await authenticateWithPermissions(page, ['app:bulkedit', 'read:kits', 'write:kits']);
   });
 
-  test('scanning a mode card arms the mode; a device scan then applies it', async ({ page }) => {
+  test('scanning a mode card activates it; a device scan then applies it', async ({ page }) => {
     test.setTimeout(60_000);
     const capturedUpdates: any[] = [];
     await installMocks(page, {
@@ -168,14 +168,14 @@ test.describe('update scanner arm and apply @mocked', () => {
     });
 
     await openScanner(page);
-    await expect(armBanner(page)).toContainText('NOT ARMED');
-    await expect(banner(page)).toContainText('Not armed. Scan a mode card or choose a mode to start.');
+    await expect(modeBanner(page)).toContainText('INACTIVE');
+    await expect(banner(page)).toContainText('Not active. Scan a mode card or choose a mode to start.');
 
     await scan(page, 'CTA*OS-INSTALLED');
-    await expect(armBanner(page)).toContainText('ARMED');
-    await expect(armBanner(page)).toContainText('OS installed');
+    await expect(modeBanner(page)).toContainText('ACTIVE');
+    await expect(modeBanner(page)).toContainText('OS installed');
     await expect(banner(page)).toContainText(
-      'Armed: OS installed. Scan devices now — each is set to OS installed.',
+      'Active: OS installed. Scan devices now — each is set to OS installed.',
     );
 
     await scan(page, '19245');
@@ -333,7 +333,7 @@ test.describe('update scanner arm and apply @mocked', () => {
     expect(capturedUpdates).toHaveLength(1);
   });
 
-  test('disarming pauses the loop and device scans stop applying', async ({ page }) => {
+  test('pausing stops the loop and device scans stop applying', async ({ page }) => {
     test.setTimeout(60_000);
     const capturedUpdates: any[] = [];
     await installMocks(page, {
@@ -343,18 +343,18 @@ test.describe('update scanner arm and apply @mocked', () => {
 
     await openScanner(page);
     await scan(page, 'CTA*OS-INSTALLED');
-    await expect(armBanner(page)).toContainText('ARMED');
+    await expect(modeBanner(page)).toContainText('ACTIVE');
 
-    await scan(page, 'CTA*DISARM');
-    await expect(armBanner(page)).toContainText('NOT ARMED');
-    await expect(banner(page)).toContainText('Disarmed. Scanning paused until you arm a mode.');
+    await scan(page, 'CTA*PAUSED');
+    await expect(modeBanner(page)).toContainText('INACTIVE');
+    await expect(banner(page)).toContainText('Paused. Scanning is inactive until you choose a mode.');
 
     await scan(page, '19250');
-    await expect(banner(page)).toContainText('Not armed. Scan a mode card or choose a mode to start.');
+    await expect(banner(page)).toContainText('Not active. Scan a mode card or choose a mode to start.');
     expect(capturedUpdates).toHaveLength(0);
   });
 
-  test('the session summary appears on disarm, not mid-session', async ({ page }) => {
+  test('the session summary appears on pause, not mid-session', async ({ page }) => {
     test.setTimeout(60_000);
     await installMocks(page, { kits: { '19253': kitFixture(19253) } });
 
@@ -366,7 +366,7 @@ test.describe('update scanner arm and apply @mocked', () => {
     // "Session complete" would read wrong while scans are still coming in.
     await expect(page.getByTestId('scanner-session-summary')).toHaveCount(0);
 
-    await scan(page, 'CTA*DISARM');
+    await scan(page, 'CTA*PAUSED');
     await expect(page.getByTestId('scanner-session-summary')).toHaveText(
       'Session complete — 1 updated. 1 OS · 0 QC · 0 assessment.',
     );
@@ -388,14 +388,14 @@ test.describe('update scanner arm and apply @mocked', () => {
     await expect(banner(page)).toContainText('no wipe certificate reference recorded', { timeout: 15_000 });
   });
 
-  test('the mode dropdown arms without a printed card', async ({ page }) => {
+  test('the mode dropdown activates a mode without a printed card', async ({ page }) => {
     test.setTimeout(60_000);
     await installMocks(page, { kits: { '19252': kitFixture(19252) } });
 
     await openScanner(page);
     await page.getByTestId('scanner-mode-select').selectOption('ALLOCATION_READY');
 
-    await expect(armBanner(page)).toContainText('Assessment check completed');
-    await expect(banner(page)).toContainText('Armed: Assessment check completed.');
+    await expect(modeBanner(page)).toContainText('Assessment check completed');
+    await expect(banner(page)).toContainText('Active: Assessment check completed.');
   });
 });

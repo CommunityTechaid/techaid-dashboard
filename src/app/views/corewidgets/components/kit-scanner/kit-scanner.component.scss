@@ -32,41 +32,41 @@ $mode-idle-text: #475569;
 // properties and the shared rules read them — the children inherit through the
 // DOM. Emitting a full rule block per mode instead pushed the compiled sheet
 // past the 6 kB anyComponentStyle budget.
-.scanner-arm {
-  --arm-accent: #{$mode-idle-accent};
-  --arm-bg: #{$mode-idle-bg};
-  --arm-border: #{$mode-idle-border};
-  --arm-text: #{$mode-idle-text};
+.scanner-mode {
+  --mode-accent: #{$mode-idle-accent};
+  --mode-bg: #{$mode-idle-bg};
+  --mode-border: #{$mode-idle-border};
+  --mode-text: #{$mode-idle-text};
 
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 1.125rem 1.25rem;
   border-radius: 0.625rem;
-  border: 1px solid var(--arm-border);
+  border: 1px solid var(--mode-border);
   border-left-width: 7px;
-  border-left-color: var(--arm-accent);
-  background: var(--arm-bg);
+  border-left-color: var(--mode-accent);
+  background: var(--mode-bg);
 
   &--os {
-    --arm-accent: #{$mode-os-accent};
-    --arm-bg: #{$mode-os-bg};
-    --arm-border: #{$mode-os-border};
-    --arm-text: #{$mode-os-text};
+    --mode-accent: #{$mode-os-accent};
+    --mode-bg: #{$mode-os-bg};
+    --mode-border: #{$mode-os-border};
+    --mode-text: #{$mode-os-text};
   }
 
   &--qc {
-    --arm-accent: #{$mode-qc-accent};
-    --arm-bg: #{$mode-qc-bg};
-    --arm-border: #{$mode-qc-border};
-    --arm-text: #{$mode-qc-text};
+    --mode-accent: #{$mode-qc-accent};
+    --mode-bg: #{$mode-qc-bg};
+    --mode-border: #{$mode-qc-border};
+    --mode-text: #{$mode-qc-text};
   }
 
   &--assess {
-    --arm-accent: #{$mode-assess-accent};
-    --arm-bg: #{$mode-assess-bg};
-    --arm-border: #{$mode-assess-border};
-    --arm-text: #{$mode-assess-text};
+    --mode-accent: #{$mode-assess-accent};
+    --mode-bg: #{$mode-assess-bg};
+    --mode-border: #{$mode-assess-border};
+    --mode-text: #{$mode-assess-text};
   }
 
   &__badge {
@@ -79,7 +79,7 @@ $mode-idle-text: #475569;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: var(--arm-accent);
+    color: var(--mode-accent);
   }
 
   &__body {
@@ -91,19 +91,19 @@ $mode-idle-text: #475569;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.075em;
-    color: var(--arm-accent);
+    color: var(--mode-accent);
   }
 
   &__mode {
     font-size: 1.375rem;
     font-weight: 700;
     line-height: 1.2;
-    color: var(--arm-text);
+    color: var(--mode-text);
   }
 
   &__hint {
     font-size: 0.8125rem;
-    color: var(--arm-text);
+    color: var(--mode-text);
     opacity: 0.85;
     margin-top: 0.125rem;
   }

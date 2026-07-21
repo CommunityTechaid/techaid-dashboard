@@ -8,7 +8,7 @@ import { KIT_STATUS } from '../kit-info/kit-info.component';
 import { KitScannerApiService, ScannerKit } from './kit-scanner-api.service';
 
 /**
- * A mode the scanner can be armed with. `code` is the payload on the printed
+ * A mode the scanner can be set to. `code` is the payload on the printed
  * Code 128 mode card (`CTA*` + code), `key` the `KitStatus` enum applied to each
  * scanned device, `label` the operator-facing name — taken from KIT_STATUS so
  * the scanner can never drift from the rest of the app's status vocabulary.
@@ -29,12 +29,12 @@ export const SCANNER_MODES: ScannerMode[] = [
   { key: 'ALLOCATION_READY', code: 'ASSESS-CHECK', label: KIT_STATUS['ALLOCATION_READY'], short: 'assessment', tone: 'assess' },
 ];
 
-/** Mode-card payload that clears the armed mode. */
-const DISARM_CODE = 'DISARM';
+/** Mode-card payload that clears the active mode and pauses scanning. */
+export const PAUSE_CODE = 'PAUSED';
 
 /**
  * Statuses `kit-info` refuses to let a flagged device hold. The scanner honours
- * the same rule for the two it can arm — and it is the ONLY thing enforcing it:
+ * the same rule for the two modes it offers — and it is the ONLY thing enforcing it:
  * `updateKits` applies the status server-side with no sub-status validation
  * (techaid-server KitMutations.kt). Removing this check silently re-opens the
  * hole for every scan.
@@ -75,14 +75,15 @@ interface LastResult {
 })
 export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrategy {
   readonly modes = SCANNER_MODES;
+  readonly pauseCode = PAUSE_CODE;
 
-  /** The armed mode, or null when idle. Idle is a valid resting state. */
-  readonly armed = signal<ScannerMode | null>(null);
+  /** The active mode, or null when paused. Paused is a valid resting state. */
+  readonly activeMode = signal<ScannerMode | null>(null);
 
   /** In-flight guard: while true, incoming SCANS are refused (not clicks). */
   readonly busy = signal(false);
 
-  readonly banner = signal<Banner>(IDLE_BANNER);
+  readonly banner = signal<Banner>(INACTIVE_BANNER);
 
   /** Confirming context for the device currently being (or last) applied. */
   readonly lastResult = signal<LastResult | null>(null);
@@ -125,7 +126,7 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
   }
 
   /**
-   * Arm the cursor as soon as the page renders, so an operator can walk up and
+   * Focus the field as soon as the page renders, so an operator can walk up and
    * scan without touching the mouse. Done here rather than with the `autofocus`
    * attribute, which the template a11y lint rejects.
    */
@@ -169,36 +170,36 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
     this.field()?.nativeElement.focus();
   }
 
-  // ── Arming ─────────────────────────────────────────────────────────────────
+  // ── Choosing a mode ────────────────────────────────────────────────────────
 
-  /** Dropdown change. `''` (the Disarm option) clears the armed mode. */
+  /** Dropdown change. `''` (the Inactive option) clears the active mode. */
   onModeSelect(key: string): void {
     const mode = this.modes.find(m => m.key === key) ?? null;
     this.setMode(mode);
-    // A deliberate arm from the dropdown hands the cursor back to the scanner.
+    // A deliberate pick from the dropdown hands the cursor back to the scanner.
     this.focusField();
   }
 
-  armFromCard(mode: ScannerMode): void {
+  selectMode(mode: ScannerMode): void {
     this.setMode(mode);
     this.focusField();
   }
 
-  disarm(): void {
+  pause(): void {
     this.setMode(null);
     this.focusField();
   }
 
   private setMode(mode: ScannerMode | null): void {
-    this.armed.set(mode);
+    this.activeMode.set(mode);
     this.banner.set(
       mode
         ? {
             kind: 'info',
-            kicker: 'Armed',
-            text: `Armed: ${mode.label}. Scan devices now — each is set to ${mode.label}.`,
+            kicker: 'Active',
+            text: `Active: ${mode.label}. Scan devices now — each is set to ${mode.label}.`,
           }
-        : { kind: 'neutral', kicker: 'Disarmed', text: 'Disarmed. Scanning paused until you arm a mode.' },
+        : { kind: 'neutral', kicker: 'Paused', text: 'Paused. Scanning is inactive until you choose a mode.' },
     );
   }
 
@@ -208,7 +209,7 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
     if (this.rejectedAsBusy()) {
       return;
     }
-    if (code === DISARM_CODE) {
+    if (code === PAUSE_CODE) {
       this.setMode(null);
       return;
     }
@@ -226,9 +227,9 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
     if (this.rejectedAsBusy()) {
       return;
     }
-    const mode = this.armed();
+    const mode = this.activeMode();
     if (!mode) {
-      this.banner.set(IDLE_BANNER);
+      this.banner.set(INACTIVE_BANNER);
       return;
     }
     this.busy.set(true);
@@ -386,10 +387,10 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
   }
 }
 
-const IDLE_BANNER: Banner = {
+const INACTIVE_BANNER: Banner = {
   kind: 'neutral',
-  kicker: 'Idle',
-  text: 'Not armed. Scan a mode card or choose a mode to start.',
+  kicker: 'Inactive',
+  text: 'Not active. Scan a mode card or choose a mode to start.',
 };
 
 /** True when the element accepts typing and must not have focus stolen from it. */

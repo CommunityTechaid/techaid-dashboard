@@ -27,31 +27,31 @@
       <div class="card-body">
         <div class="row g-4">
 
-          <!-- ── Left: arm state, scan field, feedback ─────────────────────── -->
+          <!-- ── Left: mode state, scan field, feedback ────────────────────── -->
           <div class="col-lg-8">
 
             <div
-              class="scanner-arm mb-4"
-              [class]="'scanner-arm scanner-arm--' + (armed()?.tone ?? 'idle')"
-              data-testid="scanner-arm-banner"
+              class="mb-4"
+              [class]="'scanner-mode scanner-mode--' + (activeMode()?.tone ?? 'idle')"
+              data-testid="scanner-mode-banner"
             >
-              <div class="scanner-arm__badge">
+              <div class="scanner-mode__badge">
                 <i class="fas fa-crosshairs"></i>
               </div>
-              <div class="scanner-arm__body">
-                <div class="scanner-arm__state">{{ armed() ? 'ARMED' : 'NOT ARMED' }}</div>
-                <div class="scanner-arm__mode">{{ armed()?.label ?? 'No mode armed' }}</div>
-                <div class="scanner-arm__hint">
-                  @if (armed(); as mode) {
+              <div class="scanner-mode__body">
+                <div class="scanner-mode__state">{{ activeMode() ? 'ACTIVE' : 'INACTIVE' }}</div>
+                <div class="scanner-mode__mode">{{ activeMode()?.label ?? 'No mode selected' }}</div>
+                <div class="scanner-mode__hint">
+                  @if (activeMode(); as mode) {
                     Every device you scan is set to {{ mode.label }}.
                   } @else {
                     Scan a mode card or choose a mode to start.
                   }
                 </div>
               </div>
-              @if (armed()) {
-                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="disarm()">
-                  Disarm
+              @if (activeMode()) {
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="pause()">
+                  Pause
                 </button>
               }
             </div>
@@ -110,24 +110,24 @@
             </div>
           </div>
 
-          <!-- ── Right: arm a mode, session tally ──────────────────────────── -->
+          <!-- ── Right: choose a mode, session tally ───────────────────────── -->
           <div class="col-lg-4">
 
             <div class="card mb-3">
               <div class="card-body">
-                <h6 class="font-weight-bold mb-1">Arm a mode</h6>
+                <h6 class="font-weight-bold mb-1">Choose a mode</h6>
                 <p class="small text-muted mb-2">Scan a printed mode card, or pick one here:</p>
                 <select
                   class="form-select mb-3"
                   data-testid="scanner-mode-select"
-                  aria-label="Arm a mode"
-                  [value]="armed()?.key ?? ''"
+                  aria-label="Choose a mode"
+                  [value]="activeMode()?.key ?? ''"
                   (change)="onModeSelect($any($event.target).value)"
                 >
                   @for (mode of modes; track mode.key) {
                     <option [value]="mode.key">{{ mode.label }}</option>
                   }
-                  <option value="">— Disarm (pause) —</option>
+                  <option value="">— Inactive / Paused —</option>
                 </select>
 
                 <div class="scanner-label mb-2">Printed mode cards</div>
@@ -136,9 +136,9 @@
                     <button
                       type="button"
                       class="scanner-card"
-                      [class.scanner-card--active]="armed()?.key === mode.key"
+                      [class.scanner-card--active]="activeMode()?.key === mode.key"
                       [attr.data-testid]="'scanner-mode-card-' + mode.code"
-                      (click)="armFromCard(mode)"
+                      (click)="selectMode(mode)"
                     >
                       <span class="scanner-card__head">
                         <span [class]="'scanner-card__name scanner-card__name--' + mode.tone">{{ mode.label }}</span>
@@ -149,6 +149,9 @@
                     </button>
                   }
                 </div>
+                <p class="small text-muted mt-2 mb-0">
+                  A fourth card, <code>CTA*{{ pauseCode }}</code>, pauses scanning.
+                </p>
               </div>
             </div>
 
@@ -173,8 +176,8 @@
                 </div>
                 <!-- Only once the operator has stepped away from the loop: the
                      copy says "Session complete", which reads wrong while scans
-                     are still coming in. Disarming is the end-of-session moment. -->
-                @if (total() > 0 && !armed()) {
+                     are still coming in. Pausing is the end-of-session moment. -->
+                @if (total() > 0 && !activeMode()) {
                   <hr class="my-3" />
                   <p class="small text-muted m-0" data-testid="scanner-session-summary">
                     {{ sessionSummary() }}
