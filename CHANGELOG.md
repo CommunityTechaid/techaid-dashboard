@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.3.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.0...v1.3.1) (2026-07-21)
+
+
+### Bug Fixes
+
+* DEVREQ-B1 toggle crash + device-intake search-index flake ([#150](https://github.com/CommunityTechaid/techaid-dashboard/issues/150)) ([dde9856](https://github.com/CommunityTechaid/techaid-dashboard/commit/dde985615ce88c7543275460043ef92faf0211da))
+* **e2e:** drop inferrable type annotation on sampleEmail domain param ([#149](https://github.com/CommunityTechaid/techaid-dashboard/issues/149)) ([08923a3](https://github.com/CommunityTechaid/techaid-dashboard/commit/08923a3da39e9f2daa33814b5f185c5c48a1b8e6))
+* **e2e:** force the index search to re-run when retrying after create ([#152](https://github.com/CommunityTechaid/techaid-dashboard/issues/152)) ([b62e7cd](https://github.com/CommunityTechaid/techaid-dashboard/commit/b62e7cdfcd5b6025672d0062f2b18ecdfb561b55))
+
 ## [1.3.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.2.0...v1.3.0) (2026-07-21)
 
 
