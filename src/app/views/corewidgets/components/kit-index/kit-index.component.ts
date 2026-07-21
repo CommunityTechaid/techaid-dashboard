@@ -90,6 +90,21 @@ const QUERY_ENTITY = gql`
   }
 `;
 
+// Lightweight companion to QUERY_ENTITY used only while an ID-list search is
+// active: it fetches the whole matched set in one page (id + status only) so we
+// can report unmatched IDs and select every match without visiting each page.
+const QUERY_ID_LIST_LOOKUP = gql`
+  query findKitsByIdList($page: PaginationInput, $where: KitWhereInput!) {
+    kitsConnection(page: $page, where: $where) {
+      totalElements
+      content {
+        id
+        status
+      }
+    }
+  }
+`;
+
 const CREATE_ENTITY = gql`
 mutation createKits($data: CreateKitInput!) {
   createKit(data: $data){
@@ -283,6 +298,19 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   canBulkEdit = false;
   bulkMode = false;
   allPageSelected = false;
+
+  // ID-list search state. Deliberately kept out of `this.filter`: applyFilter()
+  // rebuilds that object wholesale and persists it to localStorage, so an ID list
+  // parked there would survive a filter change and outlive the search box.
+  idListIds: number[] = [];
+  idListMatched: { id: any, status: string }[] = [];
+  idListMissingIds: number[] = [];
+  idListLookupFailed = false;
+  idListShowAllMissing = false;
+  private idListTerm: string = null;
+  readonly idListMissingPreview = 20;
+
+  bulkStatusBreakdown: { status: string, label: string, count: number }[] = [];
 
   bulkUpdateForm: FormGroup = new FormGroup({});
   bulkUpdateModel: any = {};
@@ -675,7 +703,187 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    // The matched set is filter-dependent (archived especially), so re-check it.
+    if (this.idListIds.length) {
+      this.lookupIdList();
+    }
     this.table.ajax.reload(null, false);
+  }
+
+  /** True when the active filter restricts the list to non-archived devices. */
+  get archivedExcluded(): boolean {
+    const archived = (this.filterModel && this.filterModel.archived) || [];
+    return archived.length > 0 && archived.indexOf(true) === -1;
+  }
+
+  get idListMissingVisible(): number[] {
+    return this.idListShowAllMissing
+      ? this.idListMissingIds
+      : this.idListMissingIds.slice(0, this.idListMissingPreview);
+  }
+
+  /**
+   * Recognises a pasted list of device IDs in the search box. Returns null when
+   * the term isn't ID-list shaped (no comma) so the caller falls back to the
+   * ordinary free-text search.
+   */
+  private parseIdList(term: string): { ids: number[], invalid: string[] } {
+    if (!term || term.indexOf(',') === -1) {
+      return null;
+    }
+    const ids: number[] = [];
+    const seen = {};
+    const invalid: string[] = [];
+    term.split(',').forEach(raw => {
+      const token = raw.trim();
+      if (!token.length) {
+        return;
+      }
+      const match = /^(?:CTA-?)?(\d+)$/i.exec(token);
+      if (!match) {
+        invalid.push(token);
+        return;
+      }
+      const id = parseInt(match[1], 10);
+      if (!seen[id]) {
+        seen[id] = true;
+        ids.push(id);
+      }
+    });
+    return { ids, invalid };
+  }
+
+  /**
+   * Drops the selection whenever the pasted ID list changes, because the selected
+   * devices stop being visible in the table the moment the list they came from goes
+   * away — leaving a count on the Bulk Update badge for a set nobody can see.
+   */
+  private clearSelectionOnIdListChange() {
+    const count = this.selected.length;
+    if (!count) {
+      return;
+    }
+    this.clearSelection();
+    this.allPageSelected = false;
+    this.toastr.info(
+      `<small>Cleared the <strong>${count}</strong> device(s) you had selected, because they are
+      no longer shown.</small>`,
+      'Selection cleared',
+      { enableHtml: true, timeOut: 6000 });
+  }
+
+  /** Re-evaluates ID-list mode when the search term changes. */
+  private syncIdListMode(term: string) {
+    if (term === this.idListTerm) {
+      return;
+    }
+    const hadIdList = this.idListIds.length > 0;
+    this.idListTerm = term;
+    this.resetIdListState();
+
+    const parsed = this.parseIdList(term);
+    if (!parsed) {
+      if (hadIdList) {
+        this.clearSelectionOnIdListChange();
+      }
+      return;
+    }
+    if (hadIdList || parsed.ids.length) {
+      this.clearSelectionOnIdListChange();
+    }
+
+    if (parsed.invalid.length) {
+      const shown = parsed.invalid.slice(0, 5).join(', ');
+      const extra = parsed.invalid.length > 5 ? ` (and ${parsed.invalid.length - 5} more)` : '';
+      this.toastr.warning(`
+        <small>We couldn't read <strong>${shown}</strong>${extra} as a device ID, so your search was
+        run as ordinary text instead. Device IDs look like <strong>1234</strong> or
+        <strong>CTA-1234</strong>.</small>`,
+        'Not a list of device IDs',
+        { enableHtml: true, timeOut: 12000 });
+      return;
+    }
+
+    if (!parsed.ids.length) {
+      return;
+    }
+
+    this.idListIds = parsed.ids;
+    this.lookupIdList();
+  }
+
+  private resetIdListState() {
+    this.idListIds = [];
+    this.idListMatched = [];
+    this.idListMissingIds = [];
+    this.idListLookupFailed = false;
+    this.idListShowAllMissing = false;
+  }
+
+  /** The where-clause the table and the lookup share while an ID list is active. */
+  private idListWhere() {
+    return { AND: [this.filter, { id: { _in: this.idListIds } }] };
+  }
+
+  /**
+   * One extra query per ID list: it tells the user which IDs didn't match and
+   * backs "select all matched" without paging through the table.
+   */
+  private lookupIdList() {
+    const requested = this.idListIds;
+    this.apollo.query({
+      query: QUERY_ID_LIST_LOOKUP,
+      fetchPolicy: 'network-only',
+      variables: {
+        page: { size: Math.max(requested.length, 1), page: 0 },
+        where: this.idListWhere()
+      }
+    }).toPromise().then(res => {
+      if (this.idListIds !== requested) {
+        return; // a newer search superseded this one
+      }
+      const content = (res && res.data && res.data['kitsConnection']
+        && res.data['kitsConnection']['content']) || [];
+      // Apollo v4 freezes results — clone rather than reusing the frozen rows,
+      // since these objects end up in `selections`.
+      this.idListMatched = content.map(k => ({ id: k.id, status: k.status }));
+      const found = {};
+      this.idListMatched.forEach(k => { found[k.id] = true; });
+      this.idListMissingIds = requested.filter(id => !found[id]);
+      this.idListLookupFailed = false;
+    }, () => {
+      if (this.idListIds !== requested) {
+        return;
+      }
+      this.idListMatched = [];
+      this.idListMissingIds = [];
+      this.idListLookupFailed = true;
+    });
+  }
+
+  clearIdListSearch() {
+    this.resetIdListState();
+    this.clearSelectionOnIdListChange();
+    this.idListTerm = '';
+    this.table.search('');
+    this.table.ajax.reload(null, false);
+  }
+
+  selectAllMatched() {
+    if (!this.idListMatched.length) {
+      return;
+    }
+    // Prefer the fully-populated row when the device happens to be on screen.
+    const onPage = {};
+    this.entities.forEach(e => { onPage[e.id] = e; });
+    this.selections = {};
+    this.idListMatched.forEach(k => { this.selections[k.id] = onPage[k.id] || k; });
+    this.select();
+    this.toastr.info(
+      `<small>Selected all <strong>${this.idListMatched.length}</strong> matched device(s), including
+      those on other pages.</small>`,
+      'Selection',
+      { enableHtml: true, timeOut: 6000 });
   }
 
   resetFilterForm() {
@@ -689,6 +897,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   clearSelection() {
     this.selections = {};
     this.selected = [];
+    this.bulkStatusBreakdown = [];
   }
 
   query(evt?: any, filter?: string) {
@@ -908,14 +1117,18 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
           };
         });
 
+        const term = params['search']['value'] || '';
+        this.syncIdListMode(term);
+        const idListActive = this.idListIds.length > 0;
+
         const vars = {
           page: {
             sort: sort,
             size: params.length,
             page: Math.round(params.start / params.length),
           },
-          where: this.filter,
-          term: params['search']['value']
+          where: idListActive ? this.idListWhere() : this.filter,
+          term: idListActive ? '' : term
         };
 
         queryRef.refetch(vars).then(res => {
@@ -1103,7 +1316,20 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     event.stopPropagation();
     this.bulkUpdateModel = {};
     this.bulkUpdateForm.reset();
+    this.bulkStatusBreakdown = this.tallyStatuses(this.selected);
     this.modalService.open(this.bulkUpdateModalTpl, { centered: true, size: 'lg' });
+  }
+
+  /** Every selected row already carries `status`, so no extra query is needed. */
+  private tallyStatuses(rows: any[]): { status: string, label: string, count: number }[] {
+    const counts = {};
+    rows.forEach(r => {
+      const status = r && r.status ? r.status : 'UNKNOWN';
+      counts[status] = (counts[status] || 0) + 1;
+    });
+    return Object.keys(counts)
+      .map(status => ({ status, label: this.statusTypes[status] || status, count: counts[status] }))
+      .sort((a, b) => b.count - a.count);
   }
 
   toggleBulkMode() {

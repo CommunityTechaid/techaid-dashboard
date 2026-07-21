@@ -54,6 +54,56 @@
         </div>
       </div>
       <div class="card-body">
+        @if (idListIds.length) {
+          <div class="alert alert-info d-flex flex-wrap align-items-center gap-2 py-2"
+            data-testid="id-list-banner">
+            <span>
+              <i class="fas fa-list-ol me-1"></i>
+              @if (idListLookupFailed) {
+                Searching for the <strong>{{idListIds.length}}</strong> device IDs you pasted.
+                We couldn't check which of them exist just now, so some may be missing from the list below.
+              } @else {
+                Showing <strong data-testid="id-list-matched-count">{{idListMatched.length}}</strong>
+                of <strong data-testid="id-list-requested-count">{{idListIds.length}}</strong> pasted device IDs.
+              }
+            </span>
+            @if (bulkMode && idListMatched.length) {
+              <button type="button" class="btn btn-sm btn-outline-primary"
+                data-testid="id-list-select-all" (click)="selectAllMatched()">
+                <i class="fas fa-check-double me-1"></i>Select all {{idListMatched.length}} matched
+              </button>
+            }
+            <button type="button" class="btn-close ms-auto" data-testid="id-list-clear"
+              aria-label="Clear the pasted ID search" title="Back to a normal search"
+              (click)="clearIdListSearch()"></button>
+          </div>
+        }
+        @if (idListIds.length && idListMissingIds.length) {
+          <div class="alert alert-warning py-2" data-testid="id-list-missing">
+            <p class="mb-1">
+              <i class="fas fa-exclamation-triangle me-1"></i>
+              <strong>{{idListMissingIds.length}}</strong> of the <strong>{{idListIds.length}}</strong>
+              device IDs you pasted are not in the list below.
+            </p>
+            @if (archivedExcluded) {
+              <p class="mb-1">
+                This list is currently showing <strong>Active devices only</strong>. If any of these
+                devices have been archived they won't show up here. Click <strong>Filter</strong> and
+                tick <strong>Archived Devices</strong> to include them, then search again.
+              </p>
+            }
+            <p class="mb-0">
+              Missing IDs:
+              <span data-testid="id-list-missing-ids">{{idListMissingVisible.join(', ')}}</span>
+              @if (!idListShowAllMissing && idListMissingIds.length > idListMissingPreview) {
+                <a href="#" data-testid="id-list-missing-more"
+                  (click)="idListShowAllMissing = true; false;">
+                  +{{idListMissingIds.length - idListMissingPreview}} more
+                </a>
+              }
+            </p>
+          </div>
+        }
         <div class="w-100">
           <div class="table-responsive">
             <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable
@@ -195,6 +245,25 @@
         <p class="mb-3">
             Updating <strong>{{selected.length}}</strong> selected device(s).
         </p>
+        @if (bulkStatusBreakdown.length > 1) {
+            <div class="alert alert-warning py-2" data-testid="bulk-mixed-status">
+                <p class="mb-2">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <strong>These devices are not all at the same stage.</strong>
+                </p>
+                <ul class="mb-2 ps-3">
+                    @for (b of bulkStatusBreakdown; track b.status) {
+                        <li>
+                            <strong>{{b.count}}</strong> device{{b.count === 1 ? '' : 's'}}
+                            {{b.count === 1 ? 'is' : 'are'}} <strong>{{b.label}}</strong>
+                        </li>
+                    }
+                </ul>
+                <p class="mb-0">
+                    Are you sure you want to move all {{selected.length}} of them to the same new status?
+                </p>
+            </div>
+        }
         <form [formGroup]="bulkUpdateForm">
             <formly-form [form]="bulkUpdateForm" [model]="bulkUpdateModel" [fields]="bulkUpdateFields">
             </formly-form>
