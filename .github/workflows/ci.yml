@@ -1,15 +1,23 @@
 name: CI
 
-# PR gate for dev: production build + the fully-mocked e2e subset.
+# Gate for dev: lint, production build, and the fully-mocked e2e subset.
 #
 # The e2e job needs NO secrets: the @mocked specs stub every GraphQL call via
 # page.route, and auth0-spa-js never verifies the signature of cached tokens,
 # so a self-minted JWT satisfies the SDK. Specs that need live UAT data are
 # excluded here (they self-skip or fail without a real bearer token) — they
 # run locally pre-merge per docs/digital-hygiene-remediation.md.
+#
+# Runs on push to dev as well as on PRs. PR-only was not enough: #147 merged
+# with a red lint job, which then failed on dev and made every later PR inherit
+# a red gate its author had not caused (#148). A post-merge run makes a broken
+# dev visible on dev itself rather than in the next person's PR.
 
 on:
   pull_request:
+    branches:
+      - dev
+  push:
     branches:
       - dev
   workflow_dispatch:
