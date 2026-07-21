@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.2.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.1.0...v1.2.0) (2026-07-21)
+
+
+### Features
+
+* admin delete button for delivery bookings ([0487b1f](https://github.com/CommunityTechaid/techaid-dashboard/commit/0487b1fbb0358a8dc43ac615e9f9ddacd0646395))
+* admin delete button for delivery bookings ([c9ad0a2](https://github.com/CommunityTechaid/techaid-dashboard/commit/c9ad0a2b0500e7306e3c505d0cbaa89600b11f61))
+* Feature Flags as an Admin Panel tab + preserve delivery-booking design refs ([#127](https://github.com/CommunityTechaid/techaid-dashboard/issues/127)) ([d60f82e](https://github.com/CommunityTechaid/techaid-dashboard/commit/d60f82e26bcb6cc36358a539515c2b30abe08196))
+* feature-flag gating, delivery-slots admin tab, UAT banner & clean public link ([#126](https://github.com/CommunityTechaid/techaid-dashboard/issues/126)) ([8c1ad5d](https://github.com/CommunityTechaid/techaid-dashboard/commit/8c1ad5d96d95441e63a6eae98e1d01f090023bcb))
+* host public device-delivery booking page ([#124](https://github.com/CommunityTechaid/techaid-dashboard/issues/124)) ([31d5bba](https://github.com/CommunityTechaid/techaid-dashboard/commit/31d5bba44c286fcf9c62b14378dcac829df3f1f2))
+* loading spinner + retry on delivery-booking availability ([a5aa9cb](https://github.com/CommunityTechaid/techaid-dashboard/commit/a5aa9cb6aba1ed722f1a368e25a77bbc4604449f))
+* loading spinner + retry on delivery-booking availability ([#130](https://github.com/CommunityTechaid/techaid-dashboard/issues/130)) ([8dcee83](https://github.com/CommunityTechaid/techaid-dashboard/commit/8dcee8383e24462812174dda981d2e1e8706b43b))
+* Places autocomplete on the delivery booking address ([7b29f8b](https://github.com/CommunityTechaid/techaid-dashboard/commit/7b29f8b38fd327296284c1991991f69e4720668a))
+* Places autocomplete on the delivery booking address ([1916469](https://github.com/CommunityTechaid/techaid-dashboard/commit/19164697f01f27898ebf9e3cb88fd47e64dbf474))
+* promote Delivery Booking to a top-level "(Public-facing)" header link ([#128](https://github.com/CommunityTechaid/techaid-dashboard/issues/128)) ([e134f28](https://github.com/CommunityTechaid/techaid-dashboard/commit/e134f28ceee1cfdfdb3b9a66aa529b0e0ae6224e))
+* scan-driven device prep mode prototype (behind feature flag) ([#143](https://github.com/CommunityTechaid/techaid-dashboard/issues/143)) ([e966446](https://github.com/CommunityTechaid/techaid-dashboard/commit/e966446b3f4fd89cb8f2f8a61a683d48e016e6f3))
+* search devices by a pasted list of CTA IDs and guard bulk updates ([#144](https://github.com/CommunityTechaid/techaid-dashboard/issues/144)) ([69cb221](https://github.com/CommunityTechaid/techaid-dashboard/commit/69cb22179e1975b6fd06a4a3494ff2a287703edf))
+* set production Turnstile site key ([21f5760](https://github.com/CommunityTechaid/techaid-dashboard/commit/21f57603346fa62a525afeb49983ef38d082bf9f))
+* set production Turnstile site key ([1e10074](https://github.com/CommunityTechaid/techaid-dashboard/commit/1e100749e905eb3847d0af6d7f25f87be9059343))
+* Turnstile widget on the delivery booking form ([96dcf73](https://github.com/CommunityTechaid/techaid-dashboard/commit/96dcf73a31346b363cc58710fc130260f972c680))
+* Turnstile widget on the delivery booking form ([e305675](https://github.com/CommunityTechaid/techaid-dashboard/commit/e305675c771cebbb98e22fd8c48e05e1c96b4a56))
+* unmatched CTA reference badge on Delivery Slots ([2793009](https://github.com/CommunityTechaid/techaid-dashboard/commit/27930098d5af346271782f72fedf3cc85095a35d))
+* unmatched CTA reference badge on Delivery Slots ([02f3264](https://github.com/CommunityTechaid/techaid-dashboard/commit/02f326402e04f6cb4438133bf2f00b0e6cc63ba3))
+
+
+### Bug Fixes
+
+* surface real booking errors for expected failures ([7d169af](https://github.com/CommunityTechaid/techaid-dashboard/commit/7d169af64b6e18ec93ca294d65cabf915181466e))
+* surface real booking errors for expected failures ([1dfdf1d](https://github.com/CommunityTechaid/techaid-dashboard/commit/1dfdf1d13e8aa5a8853c11d0ff59251604ef0d2d))
+
 ## [1.1.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.0.28...v1.1.0) (2026-07-07)
 
 
