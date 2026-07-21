@@ -76,7 +76,7 @@ async function authenticateWithPermissions(page: Page, permissions: string[]): P
     decodedToken,
   };
 
-  const entries: Array<[string, string]> = [
+  const entries: [string, string][] = [
     [`@@auth0spajs@@::${CLIENT_ID}::${AUDIENCE}::${SCOPE}`, JSON.stringify({ body, expiresAt: exp })],
     [
       `@@auth0spajs@@::${CLIENT_ID}::${AUDIENCE}::${LEGACY_SCOPE}`,
@@ -99,7 +99,7 @@ async function authenticateWithPermissions(page: Page, permissions: string[]): P
   ]);
 
   await page.addInitScript(pairs => {
-    for (const [key, value] of pairs as Array<[string, string]>) {
+    for (const [key, value] of pairs as [string, string][]) {
       window.localStorage.setItem(key, value);
     }
     // Devices default to Active-only; pin it so the archived callout is deterministic.

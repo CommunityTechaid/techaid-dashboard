@@ -303,14 +303,14 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   // rebuilds that object wholesale and persists it to localStorage, so an ID list
   // parked there would survive a filter change and outlive the search box.
   idListIds: number[] = [];
-  idListMatched: Array<{ id: any, status: string }> = [];
+  idListMatched: { id: any, status: string }[] = [];
   idListMissingIds: number[] = [];
   idListLookupFailed = false;
   idListShowAllMissing = false;
   private idListTerm: string = null;
   readonly idListMissingPreview = 20;
 
-  bulkStatusBreakdown: Array<{ status: string, label: string, count: number }> = [];
+  bulkStatusBreakdown: { status: string, label: string, count: number }[] = [];
 
   bulkUpdateForm: FormGroup = new FormGroup({});
   bulkUpdateModel: any = {};
@@ -1321,7 +1321,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /** Every selected row already carries `status`, so no extra query is needed. */
-  private tallyStatuses(rows: any[]): Array<{ status: string, label: string, count: number }> {
+  private tallyStatuses(rows: any[]): { status: string, label: string, count: number }[] {
     const counts = {};
     rows.forEach(r => {
       const status = r && r.status ? r.status : 'UNKNOWN';
