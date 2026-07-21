@@ -16,6 +16,7 @@ import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
+import { FeatureFlagService, UPDATE_SCANNER_FLAG } from '@app/shared/services/feature-flag.service';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
@@ -264,7 +265,8 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private featureFlags: FeatureFlagService
   ) {
 
   }
@@ -296,6 +298,14 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   @Select(UserState.user) user$: Observable<User>;
   isDonorParentAdmin = false;
   canBulkEdit = false;
+  /**
+   * Update Scanner entry button. Same rule as the route guard: the
+   * `update-scanner` flag WIDENS access, so `flagOn || canBulkEdit` — never
+   * `flagOn && …`, which would hide it from bulk editors in the normal
+   * flag-off state. See update-scanner-visible.guard.ts.
+   */
+  canUseScanner = false;
+  private updateScannerFlagOn = false;
   bulkMode = false;
   allPageSelected = false;
 
@@ -932,10 +942,18 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
     this.sub.add(
+      this.featureFlags.isEnabled(UPDATE_SCANNER_FLAG).subscribe((enabled) => {
+        this.updateScannerFlagOn = enabled;
+        this.canUseScanner = enabled || this.canBulkEdit;
+      })
+    );
+
+    this.sub.add(
       this.user$.subscribe((user) => {
         this.user = user;
         this.isDonorParentAdmin = (user && user.authorities && user.authorities['read:donorParents']);
         this.canBulkEdit = !!(user && user.authorities && user.authorities['app:bulkedit']);
+        this.canUseScanner = this.updateScannerFlagOn || this.canBulkEdit;
         this.donorParentField.hide = !this.isDonorParentAdmin;
         this.donorParentTypeField.hide = !this.isDonorParentAdmin;
         this.filterOptions.detectChanges?.(this.filterFields[0]);

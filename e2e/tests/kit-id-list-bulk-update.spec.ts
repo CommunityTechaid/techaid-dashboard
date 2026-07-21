@@ -17,94 +17,19 @@
  * authority which the CI fake token deliberately does not carry.
  */
 import { test, expect, Page } from '@playwright/test';
-
-const CLIENT_ID = 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX';
-const AUDIENCE = 'https://api.communitytechaid.org.uk';
-const SCOPE = 'openid profile email offline_access';
-const LEGACY_SCOPE = 'openid profile email';
-
-const b64url = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
+import { authenticateWithPermissions as seedAuth0Cache } from '../helpers/auth0-cache';
 
 /**
- * Writes an auth0-spa-js v2 cache entry carrying the given permissions. The SDK
- * never re-verifies the signature of a *cached* token, only its shape/expiry —
- * see e2e/save-token.mjs for the derivation of this structure.
+ * Auth0 cache + the Devices Active-only filter pinned, so the archived callout
+ * is deterministic. The cache-shape details live in the shared helper.
  */
 async function authenticateWithPermissions(page: Page, permissions: string[]): Promise<void> {
-  const now = Math.floor(Date.now() / 1000);
-  const exp = now + 7200;
-  const accessToken = [
-    b64url({ alg: 'RS256', typ: 'JWT', kid: 'e2e-synthetic' }),
-    b64url({
-      iss: 'https://techaid-auth.eu.auth0.com/',
-      sub: 'auth0|e2e-bulk-edit',
-      aud: [AUDIENCE],
-      iat: now,
-      exp,
-      scope: SCOPE,
-      permissions,
-    }),
-    'e2e_placeholder_sig',
-  ].join('.');
-
-  const idTokenClaims = {
-    sub: 'auth0|e2e-bulk-edit',
-    aud: CLIENT_ID,
-    iss: 'https://techaid-auth.eu.auth0.com/',
-    iat: now,
-    exp,
-    email: 'e2e@example.com',
-    name: 'E2E Bulk Editor',
-  };
-  const idToken = [
-    b64url({ alg: 'RS256', typ: 'JWT', kid: 'e2e-synthetic' }),
-    b64url(idTokenClaims),
-    'e2e_placeholder_sig',
-  ].join('.');
-  const decodedToken = {
-    claims: idTokenClaims,
-    user: { sub: idTokenClaims.sub, email: idTokenClaims.email, name: idTokenClaims.name },
-  };
-  const body = {
-    access_token: accessToken,
-    id_token: idToken,
-    scope: SCOPE,
-    expires_in: 7200,
-    token_type: 'Bearer',
-    audience: AUDIENCE,
-    client_id: CLIENT_ID,
-    decodedToken,
-  };
-
-  const entries: [string, string][] = [
-    [`@@auth0spajs@@::${CLIENT_ID}::${AUDIENCE}::${SCOPE}`, JSON.stringify({ body, expiresAt: exp })],
-    [
-      `@@auth0spajs@@::${CLIENT_ID}::${AUDIENCE}::${LEGACY_SCOPE}`,
-      JSON.stringify({ body: { ...body, scope: LEGACY_SCOPE }, expiresAt: exp }),
-    ],
-    [`@@auth0spajs@@::${CLIENT_ID}::@@user@@`, JSON.stringify({ id_token: idToken, decodedToken })],
-  ];
-
-  await page.context().addCookies([
-    {
-      name: `auth0.${CLIENT_ID}.is.authenticated`,
-      value: 'true',
-      domain: 'localhost',
-      path: '/',
-      expires: exp,
-      httpOnly: false,
-      secure: false,
-      sameSite: 'Lax',
+  await seedAuth0Cache(page, permissions, {
+    subject: 'auth0|e2e-bulk-edit',
+    localStorage: {
+      'kitFilters-kit-index': JSON.stringify({ archived: [false] }),
     },
-  ]);
-
-  await page.addInitScript(pairs => {
-    for (const [key, value] of pairs as [string, string][]) {
-      window.localStorage.setItem(key, value);
-    }
-    // Devices default to Active-only; pin it so the archived callout is deterministic.
-    window.localStorage.setItem('kitFilters-kit-index', JSON.stringify({ archived: [false] }));
-  }, entries);
+  });
 }
 
 // 14 pasted IDs; 1001–1012 exist, 1013–1014 do not (the "archived trap" case).

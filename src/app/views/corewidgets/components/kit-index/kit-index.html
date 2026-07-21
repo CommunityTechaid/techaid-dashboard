@@ -11,6 +11,14 @@
             <h6 class="m-0 font-weight-bold text-primary pe-1">Devices</h6>
           </div>
           <div class="d-flex align-items-center flex-wrap">
+            @if (canUseScanner) {
+              <a routerLink="/dashboard/devices/update-scanner"
+                class="btn btn-primary btn-icon-split btn-sm me-1 mb-1"
+                data-testid="update-scanner-link">
+                <span class="icon text-white-50"><i class="fas fa-barcode"></i></span>
+                <span class="text">Update Scanner</span>
+              </a>
+            }
             @if (canBulkEdit) {
               <div class="custom-control custom-switch me-1 mb-1">
                 <input type="checkbox" class="custom-control-input" id="bulkToggle"
