@@ -38,7 +38,7 @@
  */
 import { test, expect, Page } from '@playwright/test';
 import { getBearerToken, UatGraphQLClient } from '../helpers/graphql';
-import { sampleName } from '../helpers/sample-data';
+import { sampleEmail, sampleName } from '../helpers/sample-data';
 
 /**
  * Real-UAT writes need a genuine, unexpired bearer token. Self-skip when the
@@ -165,7 +165,7 @@ test.describe('Device-request lifecycle (create → assign → transitions → c
       {
         data: {
           fullName: contactName,
-          email: `${label.toLowerCase()}@example.org`,
+          email: sampleEmail('Request', stamp),
           phoneNumber: '07700900000',
           address: '1 Test Street, London',
           referringOrganisation: org.id,

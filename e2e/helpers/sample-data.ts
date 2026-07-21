@@ -25,3 +25,21 @@ export const E2E_SAMPLE_MARKER = 'E2E Sample';
 export function sampleName(entity: string, stamp: number = Date.now()): string {
   return `${entity} ${E2E_SAMPLE_MARKER} ${stamp}`;
 }
+
+/**
+ * e.g. sampleEmail('Request') -> "request-e2e-sample-<timestamp>@example.org".
+ *
+ * Same entity + marker + stamp as sampleName, but slugified. Do NOT build an address by
+ * lowercasing sampleName() directly: that leaves spaces in the local part, which
+ * jakarta.mail's InternetAddress rejects. Until techaid-server added @Email validation the
+ * API stored such addresses verbatim, and they then made the server's stale-intake sweeper
+ * throw mid-batch — re-sending "Device Request Declined" emails to a real referee once per
+ * sweep for 13 days (techaid-server PR #83).
+ */
+export function sampleEmail(
+  entity: string,
+  stamp: number = Date.now(),
+  domain: string = 'example.org',
+): string {
+  return `${sampleName(entity, stamp).toLowerCase().replace(/\s+/g, '-')}@${domain}`;
+}
