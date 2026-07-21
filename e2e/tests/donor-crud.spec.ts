@@ -208,12 +208,27 @@ test.describe('Donor CRUD write-flow (create → index → edit → persist → 
     // ── 2. FIND it in the index by its unique name ─────────────────────────
     const searchInput = page.locator('input[aria-controls="donor-index"]');
     await searchInput.waitFor({ state: 'visible', timeout: 15_000 });
-    await searchInput.fill(uniqueName);
 
     const row = page.locator('#donor-index tbody tr', { hasText: uniqueName });
-    await expect(row, 'the created donor should be findable in the index by its name').toBeVisible({
-      timeout: 20_000,
-    });
+
+    // Same UAT search-index lag as device-intake.spec.ts: a search fired straight
+    // after create can return zero rows before the index catches up, and a plain
+    // `toBeVisible({timeout})` only re-polls the already-rendered DOM — it never
+    // re-issues the search, so a stale first response hangs until timeout even
+    // though a later search would find the row. Retry the whole round-trip.
+    await expect(async () => {
+      // Clear first: DataTables only re-searches when the input value actually
+      // changes, so re-filling the same string is otherwise a no-op. Then press
+      // Enter to force the query — the refill's input event alone does not
+      // reliably re-trigger the server-side search, which would leave the term
+      // sitting in the box against the UNFILTERED result set.
+      await searchInput.fill('');
+      await searchInput.fill(uniqueName);
+      await searchInput.press('Enter');
+      await expect(row, 'the created donor should be findable in the index by its name').toBeVisible({
+        timeout: 5_000,
+      });
+    }).toPass({ timeout: 30_000, intervals: [1_000, 2_000, 3_000, 5_000] });
     await expect(row).toContainText(uniqueName);
     await expect(row).toContainText(email);
     await expect(row).toContainText(parentDonor.name.trim());
