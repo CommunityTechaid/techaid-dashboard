@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { provideStates } from '@ngxs/store';
 import { AuthGuard } from '@app/shared/services/auth.guard';
 import { deliveryBookingVisibleGuard } from '@app/shared/services/delivery-booking-visible.guard';
+import { prepModeEnabledGuard } from './components/prep-mode/prep-mode-enabled.guard';
 import { CoreWidgetState } from './state/corewidgets.state';
 
 // Every route lazy-loads its component so esbuild emits one chunk per route
@@ -34,6 +35,7 @@ export const CORE_WIDGET_ROUTES: Routes = [
       { path: 'dashboard/posts/:postId', loadComponent: () => import('./components/post-info/post-info.component').then(m => m.PostInfoComponent), data: { title: 'Post' }, canActivate: [AuthGuard] },
       { path: 'dashboard/device-requests', loadComponent: () => import('./components/device-request-index/device-request-index.component').then(m => m.DeviceRequestIndexComponent), data: { title: 'Device Requests' }, canActivate: [AuthGuard] },
       { path: 'dashboard/device-requests/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
+      { path: 'dashboard/prep-mode', loadComponent: () => import('./components/prep-mode/prep-mode.component').then(m => m.PrepModeComponent), data: { title: 'Prep Mode' }, canActivate: [AuthGuard, prepModeEnabledGuard] },
       { path: 'dashboard/distributions-and-deliveries', loadComponent: () => import('./components/distributions-and-deliveries-index/distributions-and-deliveries-index.component').then(m => m.DistributionsAndDeliveriesIndexComponent), data: { title: 'Distributions and Deliveries' }, canActivate: [AuthGuard] },
       { path: 'dashboard/distributions-and-deliveries/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
       { path: 'dashboard/referring-organisations', loadComponent: () => import('./components/referring-organisation-index/referring-organisation-index.component').then(m => m.ReferringOrganisationIndexComponent), data: { title: 'Organisations' }, canActivate: [AuthGuard] },

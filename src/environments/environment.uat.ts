@@ -17,4 +17,5 @@ export const environment: ConfigParams = {
   remote_config: false,
   pdf_generator_url: 'https://script.google.com/macros/s/AKfycbwvsi92ddWWf_LDn6rJdY3b9eTU0UfqIWwZsSpUCy8xrtdW1R6HsKwFECqbMMZRH-J1/exec',
   turnstile_site_key: '1x00000000000000000000AA',
+  feature_prep_mode: true,
 };

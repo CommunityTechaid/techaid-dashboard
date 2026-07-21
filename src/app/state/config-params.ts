@@ -10,4 +10,6 @@ export interface ConfigParams {
     pusher?: any;
     pdf_generator_url: string;
     turnstile_site_key?: string;
+    /** Prototype flag: gates the scan-driven device prep-mode UI + route (off in prod). */
+    feature_prep_mode?: boolean;
 }
