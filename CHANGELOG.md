@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.3.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.2.0...v1.3.0) (2026-07-21)
+
+
+### Features
+
+* bench Update Scanner for scan-driven device status updates ([#145](https://github.com/CommunityTechaid/techaid-dashboard/issues/145)) ([ffcb7c4](https://github.com/CommunityTechaid/techaid-dashboard/commit/ffcb7c460a1897a2aacc9cfad05fd64aaceac672))
+
+
+### Bug Fixes
+
+* **e2e:** generate valid referee emails for device-request fixtures ([#147](https://github.com/CommunityTechaid/techaid-dashboard/issues/147)) ([0c497b9](https://github.com/CommunityTechaid/techaid-dashboard/commit/0c497b97a88bef6314d1268e82d7a02582f5d660))
+
 ## [1.2.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.1.0...v1.2.0) (2026-07-21)
 
 
