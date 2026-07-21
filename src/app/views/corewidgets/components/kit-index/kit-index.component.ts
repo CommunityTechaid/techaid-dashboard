@@ -753,17 +753,43 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     return { ids, invalid };
   }
 
+  /**
+   * Drops the selection whenever the pasted ID list changes, because the selected
+   * devices stop being visible in the table the moment the list they came from goes
+   * away — leaving a count on the Bulk Update badge for a set nobody can see.
+   */
+  private clearSelectionOnIdListChange() {
+    const count = this.selected.length;
+    if (!count) {
+      return;
+    }
+    this.clearSelection();
+    this.allPageSelected = false;
+    this.toastr.info(
+      `<small>Cleared the <strong>${count}</strong> device(s) you had selected, because they are
+      no longer shown.</small>`,
+      'Selection cleared',
+      { enableHtml: true, timeOut: 6000 });
+  }
+
   /** Re-evaluates ID-list mode when the search term changes. */
   private syncIdListMode(term: string) {
     if (term === this.idListTerm) {
       return;
     }
+    const hadIdList = this.idListIds.length > 0;
     this.idListTerm = term;
     this.resetIdListState();
 
     const parsed = this.parseIdList(term);
     if (!parsed) {
+      if (hadIdList) {
+        this.clearSelectionOnIdListChange();
+      }
       return;
+    }
+    if (hadIdList || parsed.ids.length) {
+      this.clearSelectionOnIdListChange();
     }
 
     if (parsed.invalid.length) {
@@ -837,6 +863,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
   clearIdListSearch() {
     this.resetIdListState();
+    this.clearSelectionOnIdListChange();
     this.idListTerm = '';
     this.table.search('');
     this.table.ajax.reload(null, false);

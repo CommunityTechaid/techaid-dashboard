@@ -301,6 +301,14 @@ test.describe('kit-index pasted ID list + bulk update safeguards @mocked', () =>
     await expect(warning.locator('li').nth(1)).toContainText('Device received into CTA');
     // Advisory only — the update button stays reachable behind the normal form validity gate.
     await expect(page.locator('.modal-footer .btn-warning', { hasText: 'UPDATE' })).toBeVisible();
+
+    // ── 5. clearing the ID list drops the selection with it ──────────────────
+    // Otherwise the badge keeps a count for devices the table no longer shows, and
+    // the next bulk update silently includes them.
+    await page.locator('.modal-footer .btn-light', { hasText: 'CANCEL' }).click();
+    await expect(page.locator('.modal-content')).toHaveCount(0, { timeout: 10_000 });
+    await page.locator('[data-testid="id-list-clear"]').click();
+    await expect(bulkButton.locator('.badge')).toHaveCount(0, { timeout: 10_000 });
   });
 
   test('a term that is not a valid ID list falls back to a normal text search @mocked', async ({ page }) => {
