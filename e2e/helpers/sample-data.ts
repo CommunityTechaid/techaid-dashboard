@@ -39,7 +39,7 @@ export function sampleName(entity: string, stamp: number = Date.now()): string {
 export function sampleEmail(
   entity: string,
   stamp: number = Date.now(),
-  domain: string = 'example.org',
+  domain = 'example.org',
 ): string {
   return `${sampleName(entity, stamp).toLowerCase().replace(/\s+/g, '-')}@${domain}`;
 }
