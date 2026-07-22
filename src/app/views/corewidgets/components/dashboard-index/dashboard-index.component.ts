@@ -1,15 +1,17 @@
 import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
-import { Apollo } from 'apollo-angular';
+import { Apollo, QueryRef } from 'apollo-angular';
 import { FormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
+import { AuthenticationService } from '@app/shared/services/authentication.service';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
@@ -62,7 +64,8 @@ export class DashboardIndexComponent implements OnInit, OnDestroy {
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private auth: AuthenticationService
   ) { }
 
   styles = {
@@ -85,11 +88,9 @@ export class DashboardIndexComponent implements OnInit, OnDestroy {
 
   kitStatus = KIT_STATUS;
 
-  private queryRef = this.apollo
-    .watchQuery({
-      query: QUERY_ENTITY,
-      variables: {}
-    });
+  // Created lazily: four of findAll's five fields are @PreAuthorize'd server-side, so building
+  // the query before a token exists just buys an Access Denied round trip and a server WARN.
+  private queryRef: QueryRef<any>;
 
   private normalizeData(data: any) {
     (data.typeCount || []).forEach(s => {
@@ -103,6 +104,12 @@ export class DashboardIndexComponent implements OnInit, OnDestroy {
   }
 
   private fetchData(vars) {
+    if (!this.queryRef) {
+      this.queryRef = this.apollo.watchQuery({
+        query: QUERY_ENTITY,
+        variables: vars
+      });
+    }
     this.queryRef.refetch(vars).then(res => {
       if (res.data) {
         this.model = this.normalizeData(res.data);
@@ -116,7 +123,21 @@ export class DashboardIndexComponent implements OnInit, OnDestroy {
     this.sub = this.user$.subscribe(user => {
         this.user = user;
     });
-    this.fetchData({});
+
+    // Hold findAll until a token exists — four of its five fields are @PreAuthorize'd and
+    // throw Access Denied without one. Waiting for the first *authenticated* emission rather
+    // than sampling isAuthenticated$ is the whole trick.
+    //
+    // No isLoading$ gate is needed here: @auth0/auth0-angular v2 derives isAuthenticated$
+    // from isLoading$ internally ("there is no need to manually check the loading state of
+    // the SDK" — auth.state.ts), so it cannot emit before the cached session has been read.
+    // The gate in auth.guard.ts predates the v2 migration and is a no-op; don't copy it.
+    this.sub.add(
+      this.auth.isAuthenticated$.pipe(
+        filter(isAuthenticated => isAuthenticated),
+        take(1)
+      ).subscribe(() => this.fetchData({}))
+    );
   }
 
   ngOnDestroy() {

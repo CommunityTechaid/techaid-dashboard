@@ -15,7 +15,14 @@ export const CORE_WIDGET_ROUTES: Routes = [
     path: '',
     providers: [provideStates([CoreWidgetState])],
     children: [
-      { path: '', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: '' } },
+      // Guarded like its '/dashboard' alias below — same component, so the same lock.
+      // Until this was added, an anonymous visitor reached the dashboard and was bounced to
+      // Auth0 only as a side effect of the findAll query failing to get a token
+      // (graphql.module.ts REAUTH_ERROR_CODES). That query now waits for authentication, so
+      // the redirect has to be intentional or the landing page renders blank.
+      // NB Auth0 returns every user to this route (main.ts sets redirect_uri to the origin);
+      // AuthGuard's isLoading$ gate is what stops that callback from looping.
+      { path: '', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: '' }, canActivate: [AuthGuard] },
       { path: 'device-request-admin', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' }, canActivate: [AuthGuard] },
       { path: 'organisation-device-request', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' } },
       // Public device-delivery booking page — no AuthGuard so members of the public can book without a login.
