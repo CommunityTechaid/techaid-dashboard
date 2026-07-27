@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.3.2](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.1...v1.3.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* stop the landing page firing findAll before a token exists ([#153](https://github.com/CommunityTechaid/techaid-dashboard/issues/153)) ([590c630](https://github.com/CommunityTechaid/techaid-dashboard/commit/590c630aa476b69b4913cd4a305e15e63b7a296e))
+
 ## [1.3.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.0...v1.3.1) (2026-07-21)
 
 
