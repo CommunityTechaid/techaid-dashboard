@@ -24,7 +24,13 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        # npm install, not npm ci: the Windows-maintained lockfile lacks some
+        # platform-optional entries, so npm ci rejects it on Linux ("Missing:
+        # @emnapi/core from lock file"). ci.yml and deploy-dev.yml already use
+        # npm install for the same reason; this workflow was missed, which broke
+        # every production deploy after the lockfile drifted. Revisit if the
+        # lock is regenerated cross-platform.
+        run: npm install
 
       - name: Generate version.ts
         run: |
