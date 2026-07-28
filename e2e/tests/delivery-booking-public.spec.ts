@@ -29,6 +29,13 @@
  * leaves the machine; dedicated coverage for the autocomplete behaviour itself lives in
  * delivery-booking-address-autocomplete.spec.ts.
  *
+ * ANONYMOUS BY CONTRACT. This describe overrides storageState to an empty context. Without
+ * that override the chromium project's `storageState: 'e2e/.auth/user.json'` applies and these
+ * tests run as a logged-in staff member — which is not who uses this page, and would hide an
+ * anonymous-visitor regression. The dedicated test at the end of this file pins the property
+ * the page depends on: nothing here may contact the Auth0 tenant. See the 2026-07-28 incident
+ * (#159) for what happens on a public page that reaches Apollo's auth link without a session.
+ *
  * @mocked — no token, all GraphQL stubbed.
  */
 import { test, expect, Page } from '@playwright/test';
@@ -174,6 +181,9 @@ const resetCount = (page: Page) =>
   page.evaluate(() => (window as unknown as { __turnstile: { resets: string[] } }).__turnstile.resets.length);
 
 test.describe('public delivery-booking flow @mocked', () => {
+  // A genuine member of the public: no Auth0 cache, no cookies. See the file header.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('blocks submit until Turnstile issues a token', async ({ page }) => {
     test.setTimeout(60_000);
     const outcome = { current: { kind: 'success' } as SubmitOutcome };
@@ -247,5 +257,44 @@ test.describe('public delivery-booking flow @mocked', () => {
     const banner = page.locator('.form-error--banner');
     await expect(banner).toHaveText('Something went wrong booking your delivery. Please try again.', { timeout: 10_000 });
     await expect(banner, 'the raw internal error must never be shown to the public').not.toContainText('NullPointerException');
+  });
+
+  test('completes a booking without ever contacting Auth0', async ({ page }) => {
+    test.setTimeout(60_000);
+    // booking-api.service.ts POSTs GraphQL via plain HttpClient specifically so this page
+    // never touches the shared Apollo client, whose auth link calls getAccessTokenSilently()
+    // and — for a visitor with no session — redirects to the Auth0 login. That was the
+    // 2026-07-28 production incident on /organisation-device-request. The property is
+    // currently structural, but nothing pinned it: a future refactor onto Apollo would take
+    // this page down for the public with the whole suite still green.
+    //
+    // Any request reaching the tenant fails this test, so it also catches a redirect that
+    // happens to land somewhere other than /authorize.
+    let auth0Hits = 0;
+    await page.route('**://techaid-auth.eu.auth0.com/**', route => {
+      auth0Hits++;
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<html><body>stub auth0 login</body></html>',
+      });
+    });
+
+    const outcome = { current: { kind: 'success' } as SubmitOutcome };
+    const submits: unknown[] = [];
+    await stubTurnstile(page);
+    await installBookingMocks(page, outcome, submits);
+
+    await reachDetailsStepAndFill(page);
+    await issueToken(page, 'fake-token-anon');
+    await page.locator('button[type="submit"]').click();
+
+    // The booking must actually go through — otherwise "never contacted Auth0" would pass
+    // trivially on a page that failed to load at all.
+    await expect(page.getByText('Your delivery is booked ✓')).toBeVisible({ timeout: 10_000 });
+    expect(submits).toHaveLength(1);
+
+    await expect(page).toHaveURL(/delivery-booking/);
+    expect(auth0Hits, 'the public booking page must never contact the Auth0 tenant').toBe(0);
   });
 });
