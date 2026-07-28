@@ -15,6 +15,7 @@ successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 ### Bug Fixes
 
 * **ci:** use npm install in deploy-prod so production deploys can run ([#155](https://github.com/CommunityTechaid/techaid-dashboard/issues/155)) ([195b6e5](https://github.com/CommunityTechaid/techaid-dashboard/commit/195b6e578930fbe4aa9372c477c311fd648c1f2e))
+* stop bouncing anonymous visitors to Auth0 on the public request form ([#159](https://github.com/CommunityTechaid/techaid-dashboard/issues/159)) ([709835b](https://github.com/CommunityTechaid/techaid-dashboard/commit/709835bc94233884fd6b510057a3e36d7ad70e10))
 
 ## [1.3.2](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.1...v1.3.2) (2026-07-22)
 
