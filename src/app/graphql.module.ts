@@ -39,7 +39,17 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
       (err) => {
         // The Auth0 session has expired: send the user to log in again rather than firing an
         // unauthenticated request, which the API rejects as a confusing "Access Denied".
-        if (err && REAUTH_ERROR_CODES.includes(err.error)) {
+        //
+        // The loggedIn check is load-bearing, not redundant: Auth0 rejects with these same
+        // error codes for "never had a session" (an anonymous visitor on a public route such
+        // as /organisation-device-request) as for "session expired". loggedIn only ever
+        // becomes true after isAuthenticated$ emits true, so it distinguishes the two —
+        // without it every anonymous visitor is bounced to the Auth0 login (2026-07-28
+        // production incident). Anonymous visitors fall through to success({}) and the
+        // request goes out unauthenticated, which the public resolvers accept. An expired
+        // staff session mid-use still redirects (loggedIn is true by then); a fresh load
+        // with an expired session is handled by AuthGuard on guarded routes.
+        if (err && REAUTH_ERROR_CODES.includes(err.error) && authService.loggedIn) {
           redirectToLogin();
         }
         success({});
