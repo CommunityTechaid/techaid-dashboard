@@ -24,6 +24,17 @@ export interface AuthOptions {
   localStorage?: Record<string, string>;
   /** `sub` claim / display name, when a spec wants them distinguishable. */
   subject?: string;
+  /**
+   * Seed a *stale* session: identity still cached (isAuthenticated$ emits true, so
+   * AuthenticationService.loggedIn is true and AuthGuard lets the route activate) but the
+   * access-token entries are already expired and carry no refresh_token. The next
+   * getAccessTokenSilently() therefore rejects with `missing_refresh_token` — the real
+   * "staff session expired mid-use" shape that graphql.module.ts's redirect exists for.
+   *
+   * Both scope keys are expired together: leaving either one live would let the SDK serve a
+   * token from the other and the rejection would never happen.
+   */
+  expiredAccessToken?: boolean;
 }
 
 /** Writes an auth0-spa-js v2 cache entry carrying the given permissions. */
@@ -79,11 +90,18 @@ export async function authenticateWithPermissions(
     decodedToken,
   };
 
+  // The access-token cache expiry. auth0-spa-js treats an entry as stale 60s before its
+  // expiresAt, so "already expired" has to clear that adjustment window, not just `now`.
+  const tokenExpiresAt = options.expiredAccessToken ? now - 300 : exp;
+
   const entries: [string, string][] = [
-    [`@@auth0spajs@@::${CLIENT_ID}::${AUDIENCE}::${SCOPE}`, JSON.stringify({ body, expiresAt: exp })],
+    [
+      `@@auth0spajs@@::${CLIENT_ID}::${AUDIENCE}::${SCOPE}`,
+      JSON.stringify({ body, expiresAt: tokenExpiresAt }),
+    ],
     [
       `@@auth0spajs@@::${CLIENT_ID}::${AUDIENCE}::${LEGACY_SCOPE}`,
-      JSON.stringify({ body: { ...body, scope: LEGACY_SCOPE }, expiresAt: exp }),
+      JSON.stringify({ body: { ...body, scope: LEGACY_SCOPE }, expiresAt: tokenExpiresAt }),
     ],
     [`@@auth0spajs@@::${CLIENT_ID}::@@user@@`, JSON.stringify({ id_token: idToken, decodedToken })],
     ...Object.entries(options.localStorage ?? {}),
