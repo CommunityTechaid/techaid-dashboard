@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.3.3](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.2...v1.3.3) (2026-07-27)
+
+
+### Bug Fixes
+
+* **ci:** use npm install in deploy-prod so production deploys can run ([#155](https://github.com/CommunityTechaid/techaid-dashboard/issues/155)) ([195b6e5](https://github.com/CommunityTechaid/techaid-dashboard/commit/195b6e578930fbe4aa9372c477c311fd648c1f2e))
+
 ## [1.3.2](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.1...v1.3.2) (2026-07-22)
 
 
