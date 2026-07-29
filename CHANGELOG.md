@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.3.4](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.3...v1.3.4) (2026-07-29)
+
+
+### Bug Fixes
+
+* stop the Apollo auth link downgrading staff requests to anonymous ([#164](https://github.com/CommunityTechaid/techaid-dashboard/issues/164)) ([056cd7a](https://github.com/CommunityTechaid/techaid-dashboard/commit/056cd7a75f4a473f45ac8567c2e79fd45d1b1c34))
+
 ## [1.3.3](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.2...v1.3.3) (2026-07-27)
 
 
