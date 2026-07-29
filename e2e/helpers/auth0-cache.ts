@@ -35,14 +35,30 @@ export interface AuthOptions {
    * token from the other and the rejection would never happen.
    */
   expiredAccessToken?: boolean;
+  /**
+   * Seed a refresh_token alongside the cached access token. Only meaningful together with
+   * `expiredAccessToken`: with both, the next getAccessTokenSilently() has an expired entry
+   * *and* something to redeem, so the SDK makes a real network POST to /oauth/token instead
+   * of throwing `missing_refresh_token` locally. That lets a spec stub the token endpoint and
+   * choose the failure shape — e.g. `invalid_grant` from refresh-token rotation, or a 5xx —
+   * which is the transient class of failure that is NOT in REAUTH_ERROR_CODES.
+   */
+  refreshToken?: boolean;
 }
 
-/** Writes an auth0-spa-js v2 cache entry carrying the given permissions. */
-export async function authenticateWithPermissions(
-  page: Page,
+/**
+ * Builds the auth0-spa-js v2 localStorage entries for a session, without writing them.
+ *
+ * Exposed separately from authenticateWithPermissions so a spec can inject a *fresh* session
+ * mid-flight — the way the winner of a refresh-token race repopulates the cache while a loser is
+ * still retrying. auth0-spa-js with cacheLocation 'localstorage' re-reads localStorage on every
+ * getTokenSilently(), so writing these keys is enough to make the next attempt succeed from cache
+ * with no network call (and therefore no ID-token verification to satisfy).
+ */
+export function buildAuth0CacheEntries(
   permissions: string[],
   options: AuthOptions = {},
-): Promise<void> {
+): [string, string][] {
   const subject = options.subject ?? 'auth0|e2e-synthetic';
   const now = Math.floor(Date.now() / 1000);
   const exp = now + 7200;
@@ -82,6 +98,7 @@ export async function authenticateWithPermissions(
   const body = {
     access_token: accessToken,
     id_token: idToken,
+    ...(options.refreshToken ? { refresh_token: 'e2e-synthetic-refresh-token' } : {}),
     scope: SCOPE,
     expires_in: 7200,
     token_type: 'Bearer',
@@ -94,7 +111,7 @@ export async function authenticateWithPermissions(
   // expiresAt, so "already expired" has to clear that adjustment window, not just `now`.
   const tokenExpiresAt = options.expiredAccessToken ? now - 300 : exp;
 
-  const entries: [string, string][] = [
+  return [
     [
       `@@auth0spajs@@::${CLIENT_ID}::${AUDIENCE}::${SCOPE}`,
       JSON.stringify({ body, expiresAt: tokenExpiresAt }),
@@ -106,6 +123,16 @@ export async function authenticateWithPermissions(
     [`@@auth0spajs@@::${CLIENT_ID}::@@user@@`, JSON.stringify({ id_token: idToken, decodedToken })],
     ...Object.entries(options.localStorage ?? {}),
   ];
+}
+
+/** Writes an auth0-spa-js v2 cache entry carrying the given permissions. */
+export async function authenticateWithPermissions(
+  page: Page,
+  permissions: string[],
+  options: AuthOptions = {},
+): Promise<void> {
+  const entries = buildAuth0CacheEntries(permissions, options);
+  const exp = Math.floor(Date.now() / 1000) + 7200;
 
   await page.context().addCookies([
     {
