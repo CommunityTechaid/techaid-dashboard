@@ -35,7 +35,13 @@ jobs:
       - name: Generate version.ts
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          COMMIT=${GITHUB_SHA::7}
+          # Read the sha from the checkout, NOT $GITHUB_SHA. On workflow_dispatch
+          # $GITHUB_SHA is the sha of the ref the run was dispatched from (the
+          # default branch), while the checkout step above explicitly pulls `dev`.
+          # Because the final step fast-forwards master to each deployed commit,
+          # the dispatch ref is always the PREVIOUS deploy — so the app reported
+          # the last release's commit, every time.
+          COMMIT=$(git rev-parse --short=7 HEAD)
           DATE=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
           BUILD=$(date -u +%y.%m.%d-%H%M)
           echo "export const APP_VERSION = {version: '$VERSION', build: '$BUILD', date: '$DATE', commit: '$COMMIT'};" > src/environments/version.ts
@@ -64,13 +70,15 @@ jobs:
 
       - name: Tag deployment
         run: |
-          TAG="deploy/prod/$(date -u +%Y-%m-%d)-${GITHUB_SHA::7}"
+          # Same reason as the version.ts step: name the tag after the commit that
+          # was actually checked out and deployed, not the dispatch ref. Before this
+          # fix the tag NAME lagged one release behind the commit it pointed AT —
+          # e.g. deploy/prod/2026-08-12-dff9ab4 pointing at 9ecb6ad.
+          TAG="deploy/prod/$(date -u +%Y-%m-%d)-$(git rev-parse --short=7 HEAD)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "$TAG"
           git push origin "$TAG"
-        env:
-          GITHUB_SHA: ${{ github.sha }}
 
       - name: Label linked issues as shipped
         continue-on-error: true   # board sync must never block the master fast-forward
