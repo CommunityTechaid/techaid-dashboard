@@ -19,7 +19,17 @@
  *   node e2e/csp-probe.mjs                                   # UAT (default)
  *   node e2e/csp-probe.mjs https://app.communitytechaid.org.uk   # production
  *
- * Exit code 0 = clean (Turnstile loaded, challenge iframe attached, zero CSP violations).
+ * GATED ORIGINS: the /delivery-booking route sits behind deliveryBookingVisibleGuard,
+ * which redirects to /404 on production while the `delivery-booking` feature flag is off
+ * (feature-flag.service.ts: `visible: !isProduction || live`). That is a deliberate
+ * configuration state, not a deploy fault — so when the probe lands on /404 it skips the
+ * Turnstile assertions (nothing to assert: the widget only loads on the details step) and
+ * still verifies CSP on whatever did load. Without this the probe times out on `.day-row`
+ * and reports a misleading "Turnstile never loaded" failure, which is exactly what
+ * happened on prod 2026-08-12. Once the flag is switched on, the full path runs again
+ * with no change here.
+ *
+ * Exit code 0 = clean (zero CSP violations; Turnstile verified unless the route is gated).
  * Exit code 1 = something failed; the printed report says what.
  */
 
@@ -35,10 +45,14 @@ const violations = [];
 let turnstileApiResponse = null; // network Response for challenges.cloudflare.com/turnstile/v0/api.js
 let turnstileIframeAttached = false;
 
-function report(ok, lines) {
+function report(ok, lines, gated = false) {
   console.log('\n=== CSP probe report ===');
   console.log(`Target: ${url}`);
   for (const line of lines) console.log(line);
+  if (ok && gated) {
+    console.log('\nRESULT: PASS (booking route gated — Turnstile checks skipped)');
+    return;
+  }
   console.log(ok ? '\nRESULT: PASS' : '\nRESULT: FAIL');
 }
 
@@ -98,17 +112,42 @@ async function main() {
     }
   });
 
+  const isNotFoundUrl = (u) => {
+    try {
+      return new URL(u).pathname.replace(/\/+$/, '').endsWith('/404');
+    } catch {
+      return false;
+    }
+  };
+
   let navigationError = null;
+  let bookingGated = false;
   try {
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30_000 });
 
-    // Turnstile is lazily loaded by the details-step component (see
-    // turnstile.service.ts) — it never loads on the day-picker step. Click through
-    // day → window to reach details, same path a real visitor takes.
-    await page.locator('.day-row').first().click({ timeout: 15_000 });
-    await page.locator('.window-row').first().click({ timeout: 15_000 });
-    // The widget host only appears once the details form has a siteKey configured.
-    await page.locator('.turnstile__widget').waitFor({ state: 'attached', timeout: 15_000 });
+    // Settle into whichever state this origin is in: the booking UI rendered, or the
+    // visibility guard's /404 redirect (flag off on production). Racing the two avoids
+    // burning the full .day-row timeout on a gated origin. Both branches are legitimate
+    // outcomes, so a timeout here is not itself an error — the checks below decide.
+    await Promise.race([
+      page.locator('.day-row').first().waitFor({ state: 'visible', timeout: 15_000 }),
+      page.waitForURL(isNotFoundUrl, { timeout: 15_000 }),
+    ]).catch(() => {});
+
+    if (isNotFoundUrl(page.url())) {
+      // Route is gated off at this origin. Turnstile legitimately never loads (it is
+      // lazily loaded by the details step, which is unreachable), so asserting on it
+      // would be a false failure. CSP is still checked on the loaded page below.
+      bookingGated = true;
+    } else {
+      // Turnstile is lazily loaded by the details-step component (see
+      // turnstile.service.ts) — it never loads on the day-picker step. Click through
+      // day → window to reach details, same path a real visitor takes.
+      await page.locator('.day-row').first().click({ timeout: 15_000 });
+      await page.locator('.window-row').first().click({ timeout: 15_000 });
+      // The widget host only appears once the details form has a siteKey configured.
+      await page.locator('.turnstile__widget').waitFor({ state: 'attached', timeout: 15_000 });
+    }
   } catch (err) {
     navigationError = err;
   }
@@ -130,14 +169,21 @@ async function main() {
   const lines = [];
   let ok = true;
 
-  if (navigationError) {
+  if (bookingGated) {
+    lines.push('ℹ Booking route is gated off at this origin — redirected to /404.');
+    lines.push('    The `delivery-booking` feature flag is disabled on this environment,');
+    lines.push('    so the day picker and Turnstile never render. Turnstile checks skipped;');
+    lines.push('    CSP is still verified against the page that did load.');
+  } else if (navigationError) {
     ok = false;
     lines.push(`✗ Failed to reach the details step (day → window → form): ${navigationError.message}`);
   } else {
     lines.push('✓ Reached the details step (day → window selected).');
   }
 
-  if (turnstileApiResponse) {
+  if (bookingGated) {
+    // Deliberately no Turnstile assertions — see above.
+  } else if (turnstileApiResponse) {
     const status = turnstileApiResponse.status();
     if (status >= 200 && status < 400) {
       lines.push(`✓ Turnstile api.js loaded (HTTP ${status}).`);
@@ -150,7 +196,9 @@ async function main() {
     lines.push('✗ Turnstile api.js never loaded — no network response from challenges.cloudflare.com/turnstile/v0/api.js.');
   }
 
-  if (turnstileIframeAttached) {
+  if (bookingGated) {
+    // Deliberately no Turnstile assertions — see above.
+  } else if (turnstileIframeAttached) {
     lines.push('✓ Turnstile challenge iframe attached.');
   } else {
     ok = false;
@@ -167,7 +215,7 @@ async function main() {
     }
   }
 
-  report(ok, lines);
+  report(ok, lines, bookingGated);
   process.exit(ok ? 0 : 1);
 }
 
