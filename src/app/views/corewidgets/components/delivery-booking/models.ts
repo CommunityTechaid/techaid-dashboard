@@ -34,7 +34,8 @@ export interface DeliveryBookingInput {
   phone: string;
   address: string;
   accessNotes?: string;
-  ctaReference: string;
+  /** The client's device request id. Numeric server-side (schema type Long!). */
+  ctaReference: number;
   turnstileToken?: string;
 }
 
@@ -44,6 +45,6 @@ export interface DeliveryBookingConfirmation {
   dayLabel: string;
   window: DeliveryWindow;
   address: string;
-  ctaReference: string;
+  ctaReference: number;
   confirmationSentTo: string;
 }
