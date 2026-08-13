@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.3.5](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.4...v1.3.5) (2026-08-13)
+
+
+### Bug Fixes
+
+* allow js.monitor.azure.com in CSP connect-src ([#167](https://github.com/CommunityTechaid/techaid-dashboard/issues/167)) ([10b2b17](https://github.com/CommunityTechaid/techaid-dashboard/commit/10b2b1739e199bc392b76242722726ea3a0edbf7))
+* **delivery-booking:** send ctaReference as a numeric device request id ([#133](https://github.com/CommunityTechaid/techaid-dashboard/issues/133)) ([#170](https://github.com/CommunityTechaid/techaid-dashboard/issues/170)) ([08b7d7a](https://github.com/CommunityTechaid/techaid-dashboard/commit/08b7d7a789f9dc785eb35351dd21bcf24c5fe6da))
+
 ## [1.3.4](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.3...v1.3.4) (2026-07-29)
 
 
