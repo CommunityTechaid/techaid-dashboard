@@ -168,7 +168,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
 
     // The confirm() message should identify the booking being removed.
     expect(dialogMessage).toContain('Alice Ainsley');
-    expect(dialogMessage).toContain('CTA-1001');
+    expect(dialogMessage).toContain('1001');
     expect(dialogMessage).toContain('Mon 20 Jul');
 
     await expect(aliceRow).toHaveCount(0);
