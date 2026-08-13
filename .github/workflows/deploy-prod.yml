@@ -69,7 +69,17 @@ jobs:
           skip_app_build: true
 
       - name: Tag deployment
+        id: tag_deployment
         run: |
+          # Capture the PREVIOUS prod deploy tag before creating the new one, and
+          # hand it to the labelling step below as an output. That step cannot work
+          # it out for itself once this step has run: the tag created here points at
+          # HEAD, so it sorts first and the range collapses to `<tag-at-HEAD>..HEAD`
+          # — zero commits, silently, on every deploy. Passing it explicitly means
+          # the dependency survives any future reordering of these steps.
+          PREV_TAG=$(git tag --list "deploy/prod/*" --sort=-creatordate | head -n 1)
+          echo "prev_tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+          echo "Previous prod deploy tag: ${PREV_TAG:-<none>}"
           # Same reason as the version.ts step: name the tag after the commit that
           # was actually checked out and deployed, not the dispatch ref. Before this
           # fix the tag NAME lagged one release behind the commit it pointed AT —
@@ -83,6 +93,9 @@ jobs:
       - name: Label linked issues as shipped
         continue-on-error: true   # board sync must never block the master fast-forward
         uses: actions/github-script@v7
+        env:
+          # Read before the new deploy tag existed — see the Tag deployment step.
+          PREV_DEPLOY_TAG: ${{ steps.tag_deployment.outputs.prev_tag }}
         with:
           # PROJECTS_PAT: classic PAT (project + repo scopes). The built-in
           # GITHUB_TOKEN cannot write org-level Projects v2, so a PAT is required.
@@ -93,14 +106,19 @@ jobs:
             const PROJECT_ID = 'PVT_kwDOB1-IbM4BZvoG';
             const STATUS_FIELD = 'PVTSSF_lADOB1-IbM4BZvoGzhUsLjg';
             const OPTION_ON_LIVE_SITE = '98236657';
-            // Find the previous prod deploy tag to bound the commit range
-            const tags = execSync('git tag --list "deploy/prod/*" --sort=-creatordate')
-              .toString().trim().split('\n').filter(Boolean);
-            const prevTag = tags[0] || null; // most recent existing tag (new one not pushed yet)
+            // Previous prod deploy tag, captured by the Tag deployment step BEFORE
+            // it created this deploy's tag. Do not recompute it here — see there.
+            const prevTag = process.env.PREV_DEPLOY_TAG || null;
             const range = prevTag ? `${prevTag}..HEAD` : 'HEAD~50..HEAD';
             const commits = execSync(`git log ${range} --format=%H`)
               .toString().trim().split('\n').filter(Boolean);
             console.log(`Scanning ${commits.length} commits since ${prevTag || 'beginning'}`);
+            if (commits.length === 0) {
+              // The whole point of this step is to move issues to "On Live Site".
+              // Scanning nothing means it silently did nothing, which is how the
+              // previous ordering bug went unnoticed — say so loudly instead.
+              core.warning(`No commits in range ${range} — no issues will be labelled shipped.`);
+            }
             const seen = new Set();
             for (const sha of commits) {
               let prs;
