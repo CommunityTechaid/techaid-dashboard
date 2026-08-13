@@ -122,7 +122,8 @@ export class BookingFlowComponent implements OnInit {
       phone: form.phone,
       address: form.address,
       accessNotes: form.accessNotes || undefined,
-      ctaReference: form.ctaReference,
+      // The form control is a text input; the schema types this as Long!.
+      ctaReference: Number(form.ctaReference),
       turnstileToken: form.turnstileToken || undefined,
     };
 

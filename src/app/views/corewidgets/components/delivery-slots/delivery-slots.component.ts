@@ -68,7 +68,7 @@ interface BookingRow {
   phone: string;
   address: string;
   accessNotes?: string;
-  ctaReference: string;
+  ctaReference: number;
   createdAt?: string;
   matchedRequestId?: string;
   matchedRequestStatus?: string;

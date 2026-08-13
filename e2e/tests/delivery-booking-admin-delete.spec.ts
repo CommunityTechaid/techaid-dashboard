@@ -31,7 +31,7 @@ const BOOKING_ALICE = {
   phone: '07700000001',
   address: '1 Test Street',
   accessNotes: '',
-  ctaReference: 'CTA-1001',
+  ctaReference: 1001,
   createdAt: '2026-07-01T09:00:00Z',
   matchedRequestId: null,
   matchedRequestStatus: null,
@@ -45,7 +45,7 @@ const BOOKING_BOB = {
   surname: 'Bobson',
   email: 'bob@example.com',
   phone: '07700000002',
-  ctaReference: 'CTA-1002',
+  ctaReference: 1002,
 };
 
 const BOOKING_CAROL = {
@@ -59,7 +59,7 @@ const BOOKING_CAROL = {
   phone: '07700000003',
   address: '3 Test Street',
   accessNotes: 'Ring bell twice',
-  ctaReference: 'CTA-1003',
+  ctaReference: 1003,
   createdAt: '2026-07-02T09:00:00Z',
   matchedRequestId: null,
   matchedRequestStatus: null,
@@ -168,7 +168,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
 
     // The confirm() message should identify the booking being removed.
     expect(dialogMessage).toContain('Alice Ainsley');
-    expect(dialogMessage).toContain('CTA-1001');
+    expect(dialogMessage).toContain('1001');
     expect(dialogMessage).toContain('Mon 20 Jul');
 
     await expect(aliceRow).toHaveCount(0);

@@ -80,11 +80,13 @@
       <input
         formControlName="ctaReference"
         placeholder="e.g. 4298"
+        inputmode="numeric"
+        pattern="[0-9]*"
         class="field--narrow"
         [class.field--invalid]="invalid('ctaReference')"
       />
       @if (invalid('ctaReference')) {
-        <div class="form-error">Enter your CTA ID reference number.</div>
+        <div class="form-error">Enter your CTA ID reference number — digits only, e.g. 4298.</div>
       }
     </div>
 

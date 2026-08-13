@@ -52,23 +52,25 @@ const SMOKE_PHONE = '07700900000';
 const SMOKE_ADDRESS = 'LIVE-SMOKE TEST BOOKING — safe to ignore/delete, created by e2e/tests/live-booking-smoke.spec.ts';
 const SMOKE_ACCESS_NOTES = 'Automated live-smoke test — no delivery will actually occur.';
 
-/** e.g. "SMOKE-20260719" — one per calendar day, so repeat runs on the same day collide
- *  deliberately (surfaces a leftover-cleanup failure instead of silently piling up rows). */
-function smokeCtaReference(now = new Date()): string {
+/** e.g. 920260719 — one per calendar day, so repeat runs on the same day collide deliberately
+ *  (surfaces a leftover-cleanup failure instead of silently piling up rows). ctaReference is a
+ *  device request id (schema type Long!), so the marker is numeric; the leading 9 keeps it well
+ *  clear of real request ids, and it therefore matches no request and forwards nothing. */
+function smokeCtaReference(now = new Date()): number {
   const y = now.getUTCFullYear();
   const m = String(now.getUTCMonth() + 1).padStart(2, '0');
   const d = String(now.getUTCDate()).padStart(2, '0');
-  return `SMOKE-${y}${m}${d}`;
+  return Number(`9${y}${m}${d}`);
 }
 
 interface SmokeMarker {
-  ctaReference: string;
+  ctaReference: number;
   email: string;
 }
 
 interface AdminBookingRow {
   id: string;
-  ctaReference: string;
+  ctaReference: number;
   email: string;
 }
 
@@ -185,7 +187,7 @@ test.describe('live UAT delivery-booking smoke @live-smoke', () => {
     await form.locator('input[formControlName="phone"]').fill(SMOKE_PHONE);
     await form.locator('textarea[formControlName="address"]').fill(SMOKE_ADDRESS);
     await form.locator('input[formControlName="accessNotes"]').fill(SMOKE_ACCESS_NOTES);
-    await form.locator('input[formControlName="ctaReference"]').fill(smokeMarker.ctaReference);
+    await form.locator('input[formControlName="ctaReference"]').fill(String(smokeMarker.ctaReference));
 
     // Real Cloudflare Turnstile widget — UAT's siteKey is Cloudflare's "always passes"
     // test key, so the managed widget auto-completes without interaction, but it does
@@ -216,7 +218,7 @@ test.describe('live UAT delivery-booking smoke @live-smoke', () => {
     const summary = page.locator('.summary');
     await expect(summary).toContainText(dayLabel);
     await expect(summary).toContainText(windowName);
-    await expect(summary).toContainText(smokeMarker.ctaReference);
+    await expect(summary).toContainText(String(smokeMarker.ctaReference));
     await expect(summary).toContainText(SMOKE_ADDRESS);
   });
 });

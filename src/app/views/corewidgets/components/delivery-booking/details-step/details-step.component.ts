@@ -65,7 +65,7 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
     phone: ['', [Validators.required, Validators.pattern(UK_PHONE_PATTERN)]],
     address: ['', Validators.required],
     accessNotes: [''],
-    ctaReference: ['', Validators.required],
+    ctaReference: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
   });
 
   get summarySlot(): string {

@@ -49,7 +49,7 @@ const CONFIRMATION = {
   dayLabel: 'Monday 3 August',
   window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm', icon: '☀️' },
   address: '221B Typed Street, London SW1A 1AA',
-  ctaReference: '4298',
+  ctaReference: 4298,
   confirmationSentTo: 'sofia@example.org',
 };
 
