@@ -11,6 +11,17 @@ jobs:
       issues: write     # needed to apply status labels
 
     steps:
+      - name: Enforce dev-based deploys
+        # The checkout below is pinned to `dev`, so the BUILD is always correct.
+        # But GitHub runs the workflow FILE from the ref the run was dispatched
+        # on — dispatch from master and you run whatever copy of this pipeline
+        # master happens to carry, which is by definition the previously
+        # deployed one. Fail fast rather than deploy with a stale pipeline.
+        if: github.ref_name != 'dev'
+        run: |
+          echo "::error::Dispatched from '${{ github.ref_name }}'. Re-run with 'dev' selected in the branch dropdown — releases and deploys are always dev-based; master only records what is already live."
+          exit 1
+
       - name: Checkout dev branch
         uses: actions/checkout@v4
         with:

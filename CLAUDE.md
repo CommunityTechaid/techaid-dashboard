@@ -63,7 +63,12 @@ How it works:
    merge commit `vX.Y.Z` and creates a GitHub Release using the new
    changelog section as the body.
 4. Run the `Deploy to Production SWA` workflow (`workflow_dispatch`) to
-   deploy the new version from `dev` to production. On success the
+   deploy the new version from `dev` to production. **Select `dev` in the
+   branch dropdown** — it defaults to `master` because that is the repo's
+   default branch, and GitHub runs the workflow *file* from the ref you
+   dispatch on, which on `master` is always the previously deployed copy.
+   The workflow fails fast with an explanatory error if dispatched from
+   anything other than `dev`. On success the
    workflow itself fast-forwards `master` to the deployed commit and
    pushes — no manual step required. The push is a plain (non-force)
    push, so if `master` has somehow diverged from `dev` the workflow
@@ -95,7 +100,8 @@ then ship; API before UI:
 3. **Dashboard** (this repo): merge its open release-please PR into `dev`.
    release-please tags; `deploy-dev.yml` redeploys UAT with the bumped version.
 4. **Dashboard**: run `Deploy to Production SWA` (`deploy-prod.yml`,
-   `workflow_dispatch`). On success it fast-forwards `master` itself.
+   `workflow_dispatch`), selecting **`dev`** in the branch dropdown. On
+   success it fast-forwards `master` itself.
 5. Post-deploy: `node e2e/csp-probe.mjs https://app.communitytechaid.org.uk`
    verifies the booking page's Turnstile/CSP on the prod origin.
 

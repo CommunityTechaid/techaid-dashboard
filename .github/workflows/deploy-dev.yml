@@ -14,8 +14,16 @@ jobs:
       issues: write     # needed to apply status labels
 
     steps:
-      - name: Checkout
+      - name: Checkout dev branch
         uses: actions/checkout@v4
+        with:
+          # Always build `dev`, never the ref the run was triggered on. The push
+          # trigger only ever fires on dev, but this workflow is ALSO
+          # workflow_dispatch-able, and that dropdown defaults to the repo's
+          # default branch (master) — without this pin, "re-run the UAT deploy"
+          # from the Actions UI would build and deploy master to UAT.
+          # Deployments are always dev-based.
+          ref: dev
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -27,11 +35,17 @@ jobs:
         run: npm install
 
       - name: Generate version.ts
+        id: version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          COMMIT=${GITHUB_SHA::7}
+          # Read the sha from the checkout, not $GITHUB_SHA — the checkout above
+          # is pinned to dev, so on a workflow_dispatch from any other ref the
+          # two disagree and the app would report a commit it wasn't built from.
+          COMMIT=$(git rev-parse --short=7 HEAD)
           DATE=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
           BUILD=$(date -u +%y.%m.%d-%H%M)
+          echo "deployed_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Stamping $VERSION build $BUILD from $COMMIT"
           echo "export const APP_VERSION = {version: '$VERSION', build: '$BUILD', date: '$DATE', commit: '$COMMIT'};" > src/environments/version.ts
 
       - name: Inject runtime env
@@ -59,6 +73,10 @@ jobs:
       - name: Promote linked issues to "In UAT" (label + project board)
         continue-on-error: true   # board sync must never fail the deploy
         uses: actions/github-script@v7
+        env:
+          # The commit actually built and deployed — not context.sha, which is
+          # the trigger ref and diverges from the checkout on workflow_dispatch.
+          DEPLOYED_SHA: ${{ steps.version.outputs.deployed_sha }}
         with:
           # PROJECTS_PAT: classic PAT (project + repo scopes). The built-in
           # GITHUB_TOKEN cannot write org-level Projects v2, so a PAT is required.
@@ -71,7 +89,7 @@ jobs:
             const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              commit_sha: context.sha,
+              commit_sha: process.env.DEPLOYED_SHA,
             });
             const mergedPRs = prs.filter(pr => pr.merged_at && pr.base.ref === 'dev');
             for (const pr of mergedPRs) {
@@ -105,10 +123,10 @@ jobs:
 
       - name: Tag deployment
         run: |
-          TAG="deploy/dev/$(date -u +%Y-%m-%d)-${GITHUB_SHA::7}"
+          # Same reason as the version.ts step: name the tag after the commit
+          # that was checked out and deployed, not the ref that triggered the run.
+          TAG="deploy/dev/$(date -u +%Y-%m-%d)-$(git rev-parse --short=7 HEAD)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "$TAG"
           git push origin "$TAG"
-        env:
-          GITHUB_SHA: ${{ github.sha }}
