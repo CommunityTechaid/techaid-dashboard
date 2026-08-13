@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.3.6](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.5...v1.3.6) (2026-08-13)
+
+
+### Bug Fixes
+
+* **ci:** bound the shipped-label commit range by the previous deploy tag ([#172](https://github.com/CommunityTechaid/techaid-dashboard/issues/172)) ([3beeb64](https://github.com/CommunityTechaid/techaid-dashboard/commit/3beeb64f396877783cbd67d9c6fceb213d1f7350))
+* **ci:** make every deploy dev-based and stop shipping a stale version stamp ([#173](https://github.com/CommunityTechaid/techaid-dashboard/issues/173)) ([6f0302e](https://github.com/CommunityTechaid/techaid-dashboard/commit/6f0302ec2ef3789f86d7441baa5302e255ea5c1d))
+* **ci:** tag and version the commit that was deployed, not the dispatch ref ([#166](https://github.com/CommunityTechaid/techaid-dashboard/issues/166)) ([8f4d656](https://github.com/CommunityTechaid/techaid-dashboard/commit/8f4d65694c7674fd0a452919fdc629c5c871dfdb))
+
 ## [1.3.5](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.4...v1.3.5) (2026-08-13)
 
 
