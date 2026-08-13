@@ -5,7 +5,9 @@
   </div>
   <div class="card-body">
     <p class="text-muted small mb-4">
-      Switches for optional functionality. Changes take effect immediately across the site.
+      Named switches read by the site and the API. Changes take effect immediately.
+      <strong>&ldquo;Off&rdquo; does not mean the same thing for every switch</strong> — read the
+      note under each one before changing it.
     </p>
 
     @if (loading) {
@@ -16,9 +18,20 @@
       @for (flag of flags; track flag.key) {
         <div class="d-flex justify-content-between align-items-start py-3 border-bottom">
           <div class="me-3">
-            <div class="font-weight-bold">{{ flag.label }}</div>
-            @if (flag.description) {
-              <div class="text-muted small mt-1">{{ flag.description }}</div>
+            <div class="font-weight-bold">
+              {{ flag.label }}
+              @if (flag.critical) {
+                <span class="badge bg-warning text-dark ms-2 align-middle">Compliance control</span>
+              }
+            </div>
+            <!-- The raw key, not the friendly label, is what appears in logs and in support
+                 conversations — keep it visible so the two can be matched up. -->
+            <div class="flag-key small mt-1">{{ flag.key }}</div>
+            <div class="text-muted small mt-1">{{ flag.description }}</div>
+            @if (flag.offMeaning) {
+              <div class="small mt-1" [class.text-danger]="flag.critical" [class.text-muted]="!flag.critical">
+                <strong>{{ flag.offMeaning }}</strong>
+              </div>
             }
             @if (flag.updatedAt) {
               <div class="text-muted small mt-1"><em>Last changed: {{ flag.updatedAt | date: 'medium' }}</em></div>
@@ -31,7 +44,7 @@
               role="switch"
               [checked]="flag.enabled"
               [disabled]="flag.saving"
-              (change)="toggle(flag)"
+              (change)="toggle(flag, $event)"
             />
             <label class="form-check-label small">{{ flag.enabled ? 'On' : 'Off' }}</label>
           </div>
