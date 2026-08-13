@@ -1,3 +1,10 @@
 .form-switch {
   min-width: 70px;
 }
+
+// The raw flag key, shown under the friendly label so log lines and support
+// conversations (which use the key) can be matched to the switch.
+.flag-key {
+  font-family: var(--bs-font-monospace, monospace);
+  color: #6c757d;
+}
