@@ -39,26 +39,46 @@ export const CORE_BOROUGHS: readonly Borough[] = [LAMBETH, SOUTHWARK];
  */
 export const ALL_BOROUGHS: readonly Borough[] = [LAMBETH, SOUTHWARK, TOWER_HAMLETS];
 
-/**
- * The boroughs accepted right now.
- *
- * Tower Hamlets is gated on the `tower-hamlets-borough-support` flag. Note the gate only
- * bites on the streamlined in-app ward lookup: the legacy iframe lookup cannot resolve a
- * Tower Hamlets postcode at any setting, because its own borough list and boundary data
- * cover Lambeth and Southwark only. So with the legacy lookup selected, Tower Hamlets is
- * unsupported however this flag is set. That gap is known and accepted — see issue #177.
- */
-export function supportedBoroughs(towerHamletsEnabled: boolean): Borough[] {
-  return towerHamletsEnabled ? [...CORE_BOROUGHS, TOWER_HAMLETS] : [...CORE_BOROUGHS];
+/** The flag state the supported-borough list is derived from. */
+export interface BoroughSupportFlags {
+  /** `tower-hamlets-borough-support` — do we accept Tower Hamlets referrals at all? */
+  towerHamlets: boolean;
+  /** `streamlined-ward-lookup` — is the in-app postcode step selected over the iframe? */
+  streamlinedLookup: boolean;
 }
 
 /**
- * Renders a borough list the way the public copy reads it: "Lambeth and Southwark",
- * "Lambeth, Southwark and Tower Hamlets". Deliberately no Oxford comma — matches the
- * wording signed off in the design.
+ * The boroughs accepted right now — the effective set, not the intended one.
+ *
+ * Tower Hamlets needs BOTH flags. The borough flag is the intent, but the legacy iframe
+ * lookup cannot resolve a Tower Hamlets postcode at any setting: its borough list and its
+ * boundary data (in the communitytechaid.github.io repo) cover Lambeth and Southwark only.
+ * So while the legacy lookup is selected, Tower Hamlets is unsupported in practice however
+ * the borough flag is set.
+ *
+ * That gap is known and accepted (issue #177). It is encoded here, once, rather than left
+ * as prose for each caller to remember — a caller that asks this function what we support
+ * gets the truth, including the awkward case where the two flags disagree.
  */
-export function boroughListSentence(boroughs: readonly Borough[]): string {
+export function supportedBoroughs(flags: BoroughSupportFlags): Borough[] {
+  const towerHamletsUsable = flags.towerHamlets && flags.streamlinedLookup;
+  return towerHamletsUsable ? [...CORE_BOROUGHS, TOWER_HAMLETS] : [...CORE_BOROUGHS];
+}
+
+/**
+ * Renders a borough list as public copy reads it: "Lambeth and Southwark", or with
+ * `conjunction: 'or'`, "Lambeth, Southwark or Tower Hamlets".
+ *
+ * The conjunction is a parameter because the two places this appears are not parallel
+ * sentences — the out-of-area copy reads "…who live in Lambeth or Southwark", the covered
+ * copy reads "…Lambeth and Southwark". Deliberately no Oxford comma, matching the signed-off
+ * wording.
+ */
+export function boroughListSentence(
+  boroughs: readonly Borough[],
+  conjunction: 'and' | 'or' = 'and',
+): string {
   const names = boroughs.map((b) => b.name);
   if (names.length <= 1) return names.join('');
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  return `${names.slice(0, -1).join(', ')} ${conjunction} ${names[names.length - 1]}`;
 }

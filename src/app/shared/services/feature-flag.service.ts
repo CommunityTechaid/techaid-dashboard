@@ -106,9 +106,20 @@ export class FeatureFlagService {
    * The one place anything should ask "which boroughs do we support?" — the ward lookup,
    * the borough × device-type admin config and the device request list filter all read
    * this rather than keeping their own list.
+   *
+   * Reads both flags, because Tower Hamlets needs both: the legacy ward lookup has no
+   * Tower Hamlets data, so selecting it un-supports the borough whatever the borough flag
+   * says. supportedBoroughs() in shared/utils/boroughs.ts holds that rule.
    */
   supportedBoroughs(): Observable<Borough[]> {
-    return this.isEnabled(TOWER_HAMLETS_BOROUGH_FLAG).pipe(map(boroughsFor));
+    return this.loadPublicFlags().pipe(
+      map((flags) =>
+        boroughsFor({
+          towerHamlets: !!flags[TOWER_HAMLETS_BOROUGH_FLAG],
+          streamlinedLookup: !!flags[STREAMLINED_WARD_LOOKUP_FLAG],
+        }),
+      ),
+    );
   }
 
   deliveryBookingVisibility(): Observable<DeliveryBookingVisibility> {

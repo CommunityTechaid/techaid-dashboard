@@ -7,4 +7,4 @@ export {
   LAMBETH, SOUTHWARK, TOWER_HAMLETS, CORE_BOROUGHS, ALL_BOROUGHS,
   supportedBoroughs, boroughListSentence,
 } from './boroughs';
-export type { Borough } from './boroughs';
+export type { Borough, BoroughSupportFlags } from './boroughs';

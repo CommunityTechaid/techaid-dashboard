@@ -22,8 +22,21 @@ import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 
 import { AppLocalCSS } from './app-local-css.component';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { boroughListSentence, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
 
 declare let window: any;
+
+/**
+ * The two out-of-area sentences that name boroughs. Kept as builders so the list appears
+ * once and the wording appears once — the initial field config and the flag-driven refresh
+ * in applySupportedBoroughCopy() both go through here.
+ */
+const outOfAreaHeading = (boroughs: string) =>
+  `<h3 class="font-weight-bold text-primary">Oops! Unfortunately, we can only provide devices to individuals who live in ${boroughs}.</h3>`;
+
+const outOfAreaCheckPostcode = (boroughs: string) =>
+  `<p class="">Please check the postcode and ensure it falls within ${boroughs} before continuing.</p>`;
 
 const CREATE_ENTITY = gql`
   mutation createOrganisation($data: CreateOrganisationInput!) {
@@ -830,29 +843,20 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
 
   /**
-   * Out-of-area page for the LEGACY (iframe) ward lookup. The two boroughs are named
-   * literally here on purpose, rather than read from CORE_BOROUGHS / supportedBoroughs():
+   * Out-of-area page. The borough names are injected rather than written in, so the list
+   * lives only in shared/utils/boroughs.ts — see applySupportedBoroughCopy() for how it is
+   * kept current, and why it is safe to rewrite these templates in place.
    *
-   *  - This copy belongs to the legacy lookup, which covers Lambeth and Southwark and
-   *    nothing else. Its own borough list and boundary data live in the github.io repo, so
-   *    it can never resolve a Tower Hamlets postcode. The sentence is therefore correct for
-   *    this path permanently, and dies with the iframe when it is retired (issue #178).
-   *  - Formly's template type renders `field.template` once into a cached innerHtml and is
-   *    OnPush, so reassigning it after the flags resolve would not re-render. Making this
-   *    dynamic means rebuilding the field configs after an async read — a real change to
-   *    the most important public page in the app, spent on markup that is about to be
-   *    deleted.
-   *
-   * The streamlined step introduced by #178 is a normal component, so it renders the
-   * borough list from boroughListSentence(supportedBoroughs()) with an ordinary binding.
-   * New code reads the list from there; this block is not the pattern to copy.
+   * Built with CORE_BOROUGHS so the copy is correct before the flags resolve. That default
+   * is today's exact wording, which is also the right answer whenever the legacy lookup is
+   * selected: it has no Tower Hamlets data and can only ever reject those postcodes.
    */
   notSupportedPage: FormlyFieldConfig = {
-    hideExpression: true,
+    hide: true,
     fieldGroup: [
       {
         className: 'row',
-        template: '<h3 class="font-weight-bold text-primary">Oops! Unfortunately, we can only provide devices to individuals who live in Lambeth or Southwark.</h3>'
+        template: outOfAreaHeading(boroughListSentence(CORE_BOROUGHS, 'or'))
       },
       {
         className: 'row',
@@ -860,7 +864,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       },
       {
         className: 'row',
-        template: '<p class="">Please check the postcode and ensure it falls within Lambeth or Southwark before continuing.</p>'
+        template: outOfAreaCheckPostcode(boroughListSentence(CORE_BOROUGHS, 'or'))
       }
     ]
   }
@@ -904,9 +908,36 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     private changeDetectorRef: ChangeDetectorRef,
     private ngZone: NgZone,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private featureFlags: FeatureFlagService
   ) {
 
+  }
+
+  /**
+   * Borough list for the out-of-area copy, as a sentence. Defaults to the pre-flag list so
+   * the page reads correctly before (or without) a flags response — a failed read leaves
+   * today's wording rather than a blank or a wrong list.
+   */
+  private supportedBoroughSentence = boroughListSentence(CORE_BOROUGHS, 'or');
+
+  private flagsSub: Subscription;
+
+  /**
+   * Rewrites the two out-of-area sentences from the current borough list.
+   *
+   * Safe to mutate `template` in place because Formly runs with `lazyRender` on (the
+   * default): a hidden field's container is cleared, and unhiding calls renderField() to
+   * build a fresh component. This page starts hidden and is only ever revealed by
+   * showNotSupportedPage(), which calls this first — so the template is read after the
+   * rewrite, never before. Mutating the template of an already-rendered field would NOT
+   * repaint: FormlyTemplateType caches its innerHtml and is OnPush.
+   */
+  private applySupportedBoroughCopy(): void {
+    const group = this.notSupportedPage.fieldGroup;
+    if (!group) return;
+    group[0].template = outOfAreaHeading(this.supportedBoroughSentence);
+    group[2].template = outOfAreaCheckPostcode(this.supportedBoroughSentence);
   }
 
   private normalizeData(data: any) {
@@ -961,6 +992,15 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   ngOnInit() {
     this.startBackendHealthCheck();
+
+    // Which boroughs we accept depends on two flags, and the answer drives the out-of-area
+    // copy. Read once here: the out-of-area page cannot be reached before the user has
+    // interacted with the location step, so this has long resolved by then, and the
+    // default already reads correctly if it never does.
+    this.flagsSub = this.featureFlags.supportedBoroughs().subscribe(boroughs => {
+      this.supportedBoroughSentence = boroughListSentence(boroughs, 'or');
+      this.applySupportedBoroughCopy();
+    });
 
     const orgRef = this.apollo
       .watchQuery({
@@ -1227,6 +1267,9 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
   showNotSupportedPage() {
+    // Rewrite before unhiding: lazyRender builds the field fresh on reveal, so this is the
+    // last moment the template can still change what the user sees.
+    this.applySupportedBoroughCopy();
     this.content = {}
     this.refOrganisationPage.hide = true;
     this.refContactPage.hide = true;
@@ -1287,6 +1330,9 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();
+    }
+    if (this.flagsSub) {
+      this.flagsSub.unsubscribe();
     }
     if (this.backendPollTimer) {
       clearTimeout(this.backendPollTimer);
