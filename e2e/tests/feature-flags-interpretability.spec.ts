@@ -23,7 +23,7 @@ import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
 
-/** The five flags seeded in techaid-server, plus the one added for borough support. */
+/** The five original flags seeded in techaid-server, plus the two for the borough epic. */
 const SERVER_FLAGS = [
   { key: 'delivery-booking', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
   { key: 'update-scanner', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
@@ -31,6 +31,7 @@ const SERVER_FLAGS = [
   { key: 'blocking-flag-enforcement', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
   { key: 'gdpr-in-app-cleanup', enabled: true, updatedAt: '2026-08-12T10:00:00Z' },
   { key: 'tower-hamlets-borough-support', enabled: false, updatedAt: '2026-08-13T10:00:00Z' },
+  { key: 'streamlined-ward-lookup', enabled: false, updatedAt: '2026-08-14T10:00:00Z' },
 ];
 
 async function fulfillJson(route: Route, body: unknown): Promise<void> {
@@ -102,6 +103,27 @@ test.describe('feature flags interpretability @mocked', () => {
     await expect(rowFor(page, 'blocking-flag-enforcement')).toContainText('Block Allocation of Flagged Devices');
     await expect(rowFor(page, 'gdpr-in-app-cleanup')).toContainText('GDPR Retention Cleanup');
     await expect(rowFor(page, 'tower-hamlets-borough-support')).toContainText('Tower Hamlets Borough Support');
+    await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('Streamlined Ward Lookup');
+  });
+
+  test('says that the two ward-lookup flags depend on each other', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installMocks(page);
+    await openFlagsTab(page);
+
+    // These two are not independent: the legacy lookup has no Tower Hamlets boundary data,
+    // so turning the lookup flag off un-supports the borough however the borough flag is
+    // set. Nothing in a pair of on/off switches conveys that, and the failure is silent —
+    // referrals simply stop being accepted from a borough we have announced. If this
+    // wording is lost, the only warning goes with it.
+    await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('Tower Hamlets');
+    await expect(rowFor(page, 'tower-hamlets-borough-support')).toContainText(
+      'only has an effect while Streamlined Ward Lookup is on',
+    );
+
+    // Off here means "the other implementation", not "feature hidden". A reader who takes
+    // it as a feature hide will not expect the public page to keep working.
+    await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('still fully working');
   });
 
   test('says that OFF is shadow mode for the two enforcement guards', async ({ page }) => {

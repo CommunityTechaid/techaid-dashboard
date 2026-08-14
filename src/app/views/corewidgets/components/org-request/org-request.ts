@@ -829,6 +829,24 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
 
+  /**
+   * Out-of-area page for the LEGACY (iframe) ward lookup. The two boroughs are named
+   * literally here on purpose, rather than read from CORE_BOROUGHS / supportedBoroughs():
+   *
+   *  - This copy belongs to the legacy lookup, which covers Lambeth and Southwark and
+   *    nothing else. Its own borough list and boundary data live in the github.io repo, so
+   *    it can never resolve a Tower Hamlets postcode. The sentence is therefore correct for
+   *    this path permanently, and dies with the iframe when it is retired (issue #178).
+   *  - Formly's template type renders `field.template` once into a cached innerHtml and is
+   *    OnPush, so reassigning it after the flags resolve would not re-render. Making this
+   *    dynamic means rebuilding the field configs after an async read — a real change to
+   *    the most important public page in the app, spent on markup that is about to be
+   *    deleted.
+   *
+   * The streamlined step introduced by #178 is a normal component, so it renders the
+   * borough list from boroughListSentence(supportedBoroughs()) with an ordinary binding.
+   * New code reads the list from there; this block is not the pattern to copy.
+   */
   notSupportedPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
