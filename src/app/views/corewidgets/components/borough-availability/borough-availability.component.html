@@ -1,0 +1,286 @@
+<div class="card shadow mb-4">
+  <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h6 class="m-0 font-weight-bold text-primary">Borough Availability</h6>
+      @if (lastUpdated) {
+        <div class="text-muted small mt-1"><em>Last updated: {{ lastUpdated }}</em></div>
+      }
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      @if (dirty) {
+        <span class="text-danger small" data-testid="unsaved-count">
+          <i class="fas fa-circle" style="font-size: 0.5rem; vertical-align: middle;"></i>
+          {{ unsavedCount }} unsaved change{{ unsavedCount === 1 ? '' : 's' }}
+        </span>
+        <button type="button" class="btn btn-link btn-sm text-muted" (click)="discard()">Discard</button>
+      }
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        data-testid="save-availability"
+        [disabled]="!canSave"
+        (click)="save()"
+      >
+        @if (saving) {
+          <i class="fas fa-spinner fa-spin"></i> Saving…
+        } @else {
+          Save Configuration
+        }
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    @if (loading) {
+      <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading…</span>
+        </div>
+      </div>
+    } @else if (loadError) {
+      <p class="text-muted mb-0" data-testid="availability-load-error">
+        Could not load the configuration.
+        <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="retry()">
+          Try again
+        </button>
+      </p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0" data-testid="availability-matrix">
+          <thead>
+            <tr>
+              <th scope="col" style="min-width: 12rem;">Borough group</th>
+              @for (column of columns; track column.key) {
+                <th scope="col" class="text-center small">
+                  <i [class]="column.icon"></i><br />{{ column.label }}
+                </th>
+              }
+              <th scope="col" class="text-center small" style="min-width: 7rem;">Max per referee</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (group of groups; track group.id) {
+              <tr [attr.data-testid]="'group-row-' + group.id">
+                <th scope="row" class="fw-normal">
+                  <div class="font-weight-bold">{{ group.name }}</div>
+                  <div class="text-muted small">
+                    {{ group.boroughs.join(', ') }}
+                    @if (group.boroughs.length > 1) {
+                      <span class="ms-1"><i class="fas fa-link"></i> Linked group · {{ group.boroughs.length }} boroughs</span>
+                    }
+                  </div>
+                  @if (group.status !== 'LIVE') {
+                    <span class="badge bg-warning text-dark mt-1">{{ group.status }}</span>
+                  }
+                </th>
+
+                @for (column of columns; track column.key) {
+                  <td class="text-center">
+                    <button
+                      type="button"
+                      class="btn btn-sm p-1 border-0 bg-transparent"
+                      [attr.data-testid]="'cell-' + group.id + '-' + column.key"
+                      [disabled]="saving"
+                      [attr.aria-label]="column.label + ' in ' + group.name + ': ' + modeOf(group, column.key)"
+                      [class.border]="isEditing(group, column)"
+                      (click)="toggleEditor(group, column)"
+                    >
+                      <span class="badge rounded-pill" [class]="chipClass(modeOf(group, column.key))">
+                        <i [class]="chipIcon(modeOf(group, column.key))"></i>
+                      </span>
+                    </button>
+                  </td>
+                }
+
+                <td class="text-center">
+                  <input
+                    type="number"
+                    min="0"
+                    class="form-control form-control-sm text-center mx-auto"
+                    style="max-width: 5rem;"
+                    [attr.data-testid]="'max-per-referee-' + group.id"
+                    [disabled]="saving"
+                    [(ngModel)]="group.maxPerReferee"
+                    [name]="'maxPerReferee-' + group.id"
+                  />
+                </td>
+              </tr>
+
+              <!-- In-flow editor row, spanning the full grid width and sitting directly under its
+                   group. Deliberately not a popover: an absolutely-positioned panel has no room
+                   in a full-width matrix and clipped in review. -->
+              @if (editing && editing.groupId === group.id && editingColumn(); as column) {
+                <tr class="table-light" data-testid="cell-editor">
+                  <td [attr.colspan]="columns.length + 2">
+                    <div class="d-flex justify-content-between align-items-start gap-3 p-2">
+                      <div>
+                        <div class="font-weight-bold">
+                          <i [class]="column.icon"></i> {{ column.label }} — {{ group.name }}
+                        </div>
+                        <div class="btn-group btn-group-sm mt-2" role="group">
+                          <button
+                            type="button"
+                            class="btn"
+                            [class.btn-success]="modeOf(group, column.key) === 'ON'"
+                            [class.btn-outline-success]="modeOf(group, column.key) !== 'ON'"
+                            data-testid="mode-on"
+                            (click)="setMode(group, column.key, 'ON')"
+                          >
+                            On (manual)
+                          </button>
+                          <button
+                            type="button"
+                            class="btn"
+                            [class.btn-info]="modeOf(group, column.key) === 'AUTO'"
+                            [class.btn-outline-info]="modeOf(group, column.key) !== 'AUTO'"
+                            data-testid="mode-auto"
+                            (click)="setMode(group, column.key, 'AUTO')"
+                          >
+                            Auto from stock
+                          </button>
+                          <button
+                            type="button"
+                            class="btn"
+                            [class.btn-secondary]="modeOf(group, column.key) === 'OFF'"
+                            [class.btn-outline-secondary]="modeOf(group, column.key) !== 'OFF'"
+                            data-testid="mode-off"
+                            (click)="setMode(group, column.key, 'OFF')"
+                          >
+                            Off (manual)
+                          </button>
+                        </div>
+                        <div class="text-muted small mt-2">
+                          @if (modeOf(group, column.key) === 'ON') {
+                            Offered in {{ group.boroughs.join(' and ') }}, regardless of stock.
+                          } @else if (modeOf(group, column.key) === 'OFF') {
+                            Hidden from the public request form in {{ group.boroughs.join(' and ') }}.
+                          } @else {
+                            <!-- The stock feed AUTO needs does not exist yet, so the mode is inert.
+                                 Saying so here is the difference between an admin understanding
+                                 why a borough offers nothing and filing a bug. -->
+                            <span class="text-danger">
+                              Not stock-tracked yet — Auto currently behaves as Off. Nothing computes
+                              stock levels, so this device type will not be offered until it is set
+                              to On.
+                            </span>
+                          }
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-link text-muted"
+                        aria-label="Close editor"
+                        data-testid="close-editor"
+                        (click)="closeEditor()"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+
+              @if (hasAuto(group)) {
+                <tr>
+                  <td [attr.colspan]="columns.length + 2" class="py-1">
+                    <div class="alert alert-warning py-2 mb-0 small" [attr.data-testid]="'auto-warning-' + group.id">
+                      Some device types in {{ group.name }} are set to <strong>Auto from stock</strong>,
+                      which is not yet implemented — they are treated as <strong>Off</strong> and will
+                      not be offered.
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3 d-flex justify-content-between align-items-center">
+    <h6 class="m-0 font-weight-bold text-primary">Request limits — exceptions by organisation</h6>
+    <button type="button" class="btn btn-primary btn-sm" data-testid="add-exception" [disabled]="saving" (click)="addException()">
+      Add exception
+    </button>
+  </div>
+  <div class="card-body">
+    <p class="text-muted small">
+      Overrides only. An organisation with no row here gets its borough group's limit.
+    </p>
+
+    @if (exceptions.length === 0) {
+      <p class="text-muted mb-0" data-testid="no-exceptions">No exceptions — every organisation uses its group's limit.</p>
+    } @else {
+      <table class="table table-sm align-middle" data-testid="exceptions-table">
+        <thead>
+          <tr>
+            <th scope="col">Organisation</th>
+            <th scope="col">Borough group</th>
+            <th scope="col" style="width: 9rem;">Max per referee</th>
+            <th scope="col" style="width: 3rem;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of exceptions; track $index) {
+            <tr>
+              <td>
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  list="organisation-options"
+                  placeholder="Start typing an organisation name"
+                  [attr.data-testid]="'exception-org-' + $index"
+                  [ngModel]="row.organisationName"
+                  [name]="'exceptionOrg-' + $index"
+                  (ngModelChange)="onOrganisationTyped(row, $event)"
+                />
+              </td>
+              <td>
+                <select
+                  class="form-select form-select-sm"
+                  [attr.data-testid]="'exception-group-' + $index"
+                  [(ngModel)]="row.boroughGroupId"
+                  [name]="'exceptionGroup-' + $index"
+                >
+                  @for (group of groups; track group.id) {
+                    <option [value]="group.id">{{ group.name }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  class="form-control form-control-sm"
+                  [attr.data-testid]="'exception-limit-' + $index"
+                  [(ngModel)]="row.maxPerReferee"
+                  [name]="'exceptionLimit-' + $index"
+                />
+              </td>
+              <td class="text-center">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-link text-danger"
+                  aria-label="Remove exception"
+                  [attr.data-testid]="'remove-exception-' + $index"
+                  (click)="removeException($index)"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <datalist id="organisation-options">
+        @for (organisation of organisationResults; track organisation.id) {
+          <option [value]="organisationOption(organisation)"></option>
+        }
+      </datalist>
+    }
+  </div>
+</div>
