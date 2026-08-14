@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"><style>
+body{margin:0;background:#eceae5;font-family:Poppins,system-ui,sans-serif}
+a{color:#12309b}a:hover{color:#0a1f6b}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 Poppins,system-ui,sans-serif;color:#1a1a1a}
+.dv-sub{margin:0 0 22px;font:400 12px/1.5 Poppins,system-ui,sans-serif;color:rgba(0,0,0,.5);max-width:820px}
+.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:500 11.5px/1.3 Poppins,system-ui,sans-serif;color:rgba(0,0,0,.6)}
+.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
+.dv-opt:target .dv-oid{background:#12309b;color:#fff}
+.dv-note{width:460px;font:400 11px/1.55 Poppins,system-ui,sans-serif;color:rgba(0,0,0,.5)}
+.dv-next{margin:24px 0 0;font:12px/1.5 Poppins,system-ui,sans-serif;color:rgba(0,0,0,.5)}
+</style></helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Eligibility gate, access control &amp; borough-scoped availability</span></div>
+<p class="dv-sub">Building on <a class="dv-oid" href="#1b">1b</a>. Three ideas that sit <i>in front of</i> the request form, plus what borough-scoped device toggles look like once a partner is through the door. The one thing they share: the postcode check becomes the eligibility test, so nobody fills in a form they can't submit.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Partner landing page — check before you start</div>
+<div class="dv-card" style="width:520px">
+  <div style="padding:30px 34px 26px;background:#12309b;color:#fff">
+    <div style="font:500 11px Poppins,sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.75">Referring partners</div>
+    <div style="font:700 26px/1.25 Poppins,sans-serif;margin-top:8px">Request devices for the people you support</div>
+    <div style="font:400 13.5px/1.6 Poppins,sans-serif;opacity:.85;margin-top:10px;max-width:400px">Two checks before you begin — they take about a minute and save you filling in a form we can't accept.</div>
+  </div>
+  <div style="padding:26px 34px 30px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:24px;height:24px;border-radius:12px;background:#3aa843;color:#fff;font:700 12px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">✓</div>
+        <div style="font:600 14px Poppins,sans-serif;color:#1a1a1a">Is your organisation registered with us?</div>
+      </div>
+      <div style="padding-left:34px;display:flex;flex-direction:column;gap:8px">
+        <div style="font:400 12.5px/1.55 Poppins,sans-serif;color:#555">We work with a limited number of partner organisations so we can keep supporting each one properly.</div>
+        <div style="border:1px solid #cfe8d2;background:#f2faf3;border-radius:7px;padding:11px 14px;font:400 12.5px Poppins,sans-serif;color:#2b4430">Signed in as <b>Brixton Advice Centre</b> · 3 of 5 requests used this month</div>
+      </div>
+    </div>
+    <div style="height:1px;background:#eceae5"></div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:24px;height:24px;border-radius:12px;background:#12309b;color:#fff;font:600 12px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">2</div>
+        <div style="font:600 14px Poppins,sans-serif;color:#1a1a1a">Does your client live in an area we cover?</div>
+      </div>
+      <div style="padding-left:34px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:8px">
+          <input value="E1 5LP" readonly style="flex:1;border:2px solid #12309b;border-radius:6px;padding:12px 14px;font:600 15px Poppins,sans-serif;letter-spacing:.06em;color:#1a1a1a"/>
+          <button style="border:none;background:#12309b;color:#fff;border-radius:6px;padding:0 18px;font:600 13px Poppins,sans-serif;cursor:pointer">Check</button>
+        </div>
+        <div style="border:1px solid #cfe8d2;background:#f2faf3;border-radius:7px;padding:13px 15px;display:flex;flex-direction:column;gap:7px">
+          <div style="font:600 13px Poppins,sans-serif;color:#1a5223">Whitechapel ward, Tower Hamlets — covered</div>
+          <div style="font:400 12px/1.5 Poppins,sans-serif;color:#2b4430">Available here right now: <b>Laptops</b>. Phones and tablets are paused in this borough.</div>
+        </div>
+      </div>
+    </div>
+    <button style="border:none;background:#12309b;color:#fff;border-radius:7px;padding:15px 0;font:700 14px Poppins,sans-serif;cursor:pointer">Start a request for Whitechapel →</button>
+    <div style="font:400 11.5px/1.55 Poppins,sans-serif;color:#6b7280;text-align:center">Not registered yet? <span style="color:#12309b;text-decoration:underline">Apply to become a referring partner</span> — we review new partners quarterly.</div>
+  </div>
+</div>
+<div class="dv-note">The landing page <i>is</i> the eligibility check: organisation, quota and area all resolved before the form opens. Borough and ward arrive pre-filled, so the request itself gets shorter, and the "available here right now" line is read straight from the admin config.</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Same page, three access modes (hidden → invite → open)</div>
+<div class="dv-card" style="width:520px">
+  <div style="padding:20px 24px 14px;border-bottom:1px solid #eceae5">
+    <div style="font:600 14px Poppins,sans-serif;color:#1a1a1a">One page, an access setting you flip when you're ready</div>
+    <div style="font:400 11.5px/1.55 Poppins,sans-serif;color:#6b7280;margin-top:6px">Same URL throughout — no re-sending links to partners when the project opens up.</div>
+  </div>
+  <div style="padding:18px 24px 24px;display:flex;flex-direction:column;gap:14px">
+    <div style="border:1px solid #d9d7d2;border-radius:9px;overflow:hidden">
+      <div style="padding:10px 14px;background:#f7f6f3;display:flex;align-items:center;gap:9px;border-bottom:1px solid #eceae5">
+        <div style="font:600 11px Poppins,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6b7280">Mode 1 · Unlisted</div>
+        <div style="font:400 11px Poppins,sans-serif;color:#9a9a95">link-only, no sign-up</div>
+      </div>
+      <div style="padding:14px;display:flex;flex-direction:column;gap:8px">
+        <div style="font:400 12.5px/1.5 Poppins,sans-serif;color:#444">Page loads normally for anyone holding the link. No index, no nav entry, a quiet banner so partners know it's a pilot.</div>
+        <div style="border-left:4px solid #12309b;background:#f2f5ff;padding:9px 12px;font:400 11.5px/1.5 Poppins,sans-serif;color:#1c2a5e;border-radius:0 5px 5px 0">Pilot — please don't share this link outside your team yet.</div>
+      </div>
+    </div>
+    <div style="border:2px solid #12309b;border-radius:9px;overflow:hidden">
+      <div style="padding:10px 14px;background:#f2f5ff;display:flex;align-items:center;gap:9px;border-bottom:1px solid #dfe6ff">
+        <div style="font:600 11px Poppins,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#12309b">Mode 2 · Invite code</div>
+        <div style="font:400 11px Poppins,sans-serif;color:#5b6ba8">link can leak, access can't</div>
+      </div>
+      <div style="padding:16px 14px;display:flex;flex-direction:column;gap:11px">
+        <div style="font:400 12.5px/1.5 Poppins,sans-serif;color:#444">A short code per organisation. Entering it names the partner, so quotas and borough scoping work without building logins.</div>
+        <div style="display:flex;gap:8px">
+          <input value="BRIX-24" readonly style="flex:1;border:1px solid #b9c0cf;border-radius:6px;padding:11px 13px;font:600 14px ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#1a1a1a"/>
+          <button style="border:none;background:#12309b;color:#fff;border-radius:6px;padding:0 18px;font:600 12.5px Poppins,sans-serif;cursor:pointer">Continue</button>
+        </div>
+        <div style="font:400 11.5px Poppins,sans-serif;color:#6b7280">Codes are revocable and expire — the safe middle step between pilot and public.</div>
+      </div>
+    </div>
+    <div style="border:1px solid #d9d7d2;border-radius:9px;overflow:hidden">
+      <div style="padding:10px 14px;background:#f7f6f3;display:flex;align-items:center;gap:9px;border-bottom:1px solid #eceae5">
+        <div style="font:600 11px Poppins,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6b7280">Mode 3 · Open</div>
+        <div style="font:400 11px Poppins,sans-serif;color:#9a9a95">listed publicly</div>
+      </div>
+      <div style="padding:14px;display:flex;flex-direction:column;gap:8px">
+        <div style="font:400 12.5px/1.5 Poppins,sans-serif;color:#444">Code step drops away, page appears in navigation. Capacity is protected by quota rather than by obscurity.</div>
+        <div style="border-left:4px solid #f5b400;background:#fdf8ea;padding:9px 12px;font:400 11.5px/1.5 Poppins,sans-serif;color:#5a4a12;border-radius:0 5px 5px 0">Waiting list — we're at capacity this month. Join the list and we'll be in touch in September.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="dv-note">Answers the hidden-URL question directly: yes, and better than a secret link. Because it's a setting rather than a different page, opening up later is a toggle in the admin config — nothing to rebuild or re-share.</div>
+</div>
+
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>1b + live availability per borough</div>
+<div class="dv-card" style="width:460px">
+  <div style="padding:22px 24px 6px;font:600 15px Poppins,sans-serif;color:#12309b">Where does your client live?</div>
+  <div style="padding:0 24px 22px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;gap:8px">
+      <input value="SW2 1EN" readonly style="flex:1;border:2px solid #12309b;border-radius:6px;padding:12px 14px;font:600 15px Poppins,sans-serif;letter-spacing:.06em;color:#1a1a1a"/>
+      <button style="border:none;background:#12309b;color:#fff;border-radius:6px;padding:0 18px;font:600 13px Poppins,sans-serif;cursor:pointer">Check</button>
+    </div>
+    <div style="border:1px solid #cfe8d2;background:#f2faf3;border-radius:8px;padding:13px 15px;display:flex;flex-direction:column;gap:5px">
+      <div style="font:600 13px Poppins,sans-serif;color:#1a5223">Brixton Rush Common ward, Lambeth</div>
+      <div style="font:400 11.5px Poppins,sans-serif;color:#2b4430">Ward confirmed from postcode · <span style="text-decoration:underline;color:#12309b">change</span></div>
+    </div>
+    <div style="font:600 13px Poppins,sans-serif;color:#1a1a1a">What do they need?</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="border:1px solid #d9d7d2;border-radius:8px;padding:13px 15px;display:flex;align-items:center;gap:12px">
+        <span style="width:17px;height:17px;border-radius:9px;border:1px solid #b9c0cf"></span>
+        <div style="flex:1"><div style="font:600 13px Poppins,sans-serif;color:#1a1a1a">Laptop</div><div style="font:400 11px Poppins,sans-serif;color:#6b7280">Refurbished, Windows or ChromeOS</div></div>
+      </div>
+      <div style="border:2px solid #12309b;background:#f7f9ff;border-radius:8px;padding:13px 15px;display:flex;align-items:center;gap:12px">
+        <span style="width:17px;height:17px;border-radius:9px;border:5px solid #12309b"></span>
+        <div style="flex:1"><div style="font:600 13px Poppins,sans-serif;color:#12309b">Smartphone</div><div style="font:400 11px Poppins,sans-serif;color:#3d4a7a">Includes 6 months of data</div></div>
+        <div style="background:#e7f0e8;color:#1a5223;border-radius:20px;padding:4px 10px;font:600 10px Poppins,sans-serif;letter-spacing:.04em">LAMBETH ONLY</div>
+      </div>
+      <div style="border:1px dashed #d9d7d2;border-radius:8px;padding:13px 15px;display:flex;align-items:center;gap:12px;opacity:.65">
+        <span style="width:17px;height:17px;border-radius:9px;border:1px solid #cfcdc8;background:#f2f1ee"></span>
+        <div style="flex:1"><div style="font:600 13px Poppins,sans-serif;color:#6b7280">Tablet</div><div style="font:400 11px Poppins,sans-serif;color:#9a9a95">Paused in Lambeth — none in stock</div></div>
+        <div style="font:500 11px Poppins,sans-serif;color:#12309b;text-decoration:underline">Notify me</div>
+      </div>
+    </div>
+    <div style="border-left:4px solid #f5b400;background:#fdf8ea;padding:11px 13px;border-radius:0 6px 6px 0;font:400 11.5px/1.5 Poppins,sans-serif;color:#5a4a12">Smartphones are available in Lambeth thanks to a recent donation. Availability changes — we'll always show what's open in your client's borough.</div>
+  </div>
+</div>
+<div class="dv-note">Steve's point made visible: each device type is on/off per borough, with three honest states — available, borough-restricted (badged, so the partner understands <i>why</i> they can see it), and paused. Never hide the type entirely; a greyed row with a reason prevents "the site is broken" emails.</div>
+</div>
+
+<div class="dv-opt" id="2d">
+<div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Coverage-at-a-glance strip (for the landing page)</div>
+<div class="dv-card" style="width:460px">
+  <div style="padding:22px 24px 8px">
+    <div style="font:600 15px Poppins,sans-serif;color:#1a1a1a">What we can offer right now</div>
+    <div style="font:400 11.5px/1.55 Poppins,sans-serif;color:#6b7280;margin-top:5px">Updated automatically as stock and funding change.</div>
+  </div>
+  <div style="padding:8px 24px 24px">
+    <div style="display:grid;grid-template-columns:1.25fr .7fr .7fr .7fr;gap:0;border:1px solid #eceae5;border-radius:9px;overflow:hidden;font-family:Poppins,sans-serif">
+      <div style="padding:11px 13px;background:#f7f6f3;font:600 10.5px Poppins,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6b7280">Borough</div>
+      <div style="padding:11px 6px;background:#f7f6f3;font:600 10.5px Poppins,sans-serif;color:#6b7280;text-align:center">Laptop</div>
+      <div style="padding:11px 6px;background:#f7f6f3;font:600 10.5px Poppins,sans-serif;color:#6b7280;text-align:center">Phone</div>
+      <div style="padding:11px 6px;background:#f7f6f3;font:600 10.5px Poppins,sans-serif;color:#6b7280;text-align:center">Tablet</div>
+
+      <div style="padding:14px 13px;border-top:1px solid #eceae5;font:600 12.5px Poppins,sans-serif;color:#1a1a1a">Lambeth</div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#3aa843">●</div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#3aa843">●</div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#d3d1cc">○</div>
+
+      <div style="padding:14px 13px;border-top:1px solid #eceae5;font:600 12.5px Poppins,sans-serif;color:#1a1a1a">Southwark</div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#3aa843">●</div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#d3d1cc">○</div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#3aa843">●</div>
+
+      <div style="padding:14px 13px;border-top:1px solid #eceae5;font:600 12.5px Poppins,sans-serif;color:#1a1a1a">Tower Hamlets<div style="font:400 10px Poppins,sans-serif;color:#b8860b;margin-top:2px">new · pilot</div></div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#3aa843">●</div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#d3d1cc">○</div>
+      <div style="padding:14px 6px;border-top:1px solid #eceae5;text-align:center;font:700 13px Poppins,sans-serif;color:#d3d1cc">○</div>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:12px;font:400 11px Poppins,sans-serif;color:#6b7280">
+      <div><span style="color:#3aa843;font-weight:700">●</span> available now</div>
+      <div><span style="color:#d3d1cc;font-weight:700">○</span> paused</div>
+      <div style="margin-left:auto">Your organisation: <b style="color:#1a1a1a">2 requests left this month</b></div>
+    </div>
+  </div>
+</div>
+<div class="dv-note">One honest grid a partner can scan before starting — and the same data the request form filters on, so the two can never disagree. Doubles as the shape of the admin screen you'd build later: this grid with switches instead of dots.</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "sketch the admin config screen as <a class="dv-oid" href="#2d">2d</a> with toggles" · "show <a class="dv-oid" href="#2a">2a</a> in the at-capacity / not-eligible states" · "combine <a class="dv-oid" href="#2a">2a</a> + <a class="dv-oid" href="#2c">2c</a> into one end-to-end flow"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Four ways to capture borough + ward across three boroughs</span></div>
+<p class="dv-sub">All four assume the borough answer drives everything downstream (which wards are offered, which device types are shown, which caps apply). Map imagery is placeholdered — the real thing stays the Leaflet lookup.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Borough gate → ward picker (map optional)</div>
+<div class="dv-card" style="width:460px">
+  <div style="padding:20px 24px 8px;border-bottom:1px solid #eceae5;display:flex;align-items:center;gap:10px">
+    <div style="width:26px;height:26px;border-radius:13px;background:#12309b;color:#fff;font:600 12px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">1</div>
+    <div style="font:600 14px Poppins,sans-serif;color:#12309b">Where does your client live?</div>
+  </div>
+  <div style="padding:18px 24px 22px;display:flex;flex-direction:column;gap:14px">
+    <div style="font:400 12.5px/1.5 Poppins,sans-serif;color:#444">We support three London boroughs. Pick one to continue.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="border:2px solid #12309b;background:#f2f5ff;border-radius:8px;padding:12px 10px;display:flex;flex-direction:column;gap:6px">
+        <div style="height:34px;border-radius:5px;background:repeating-linear-gradient(45deg,#dfe6ff,#dfe6ff 4px,#eef1ff 4px,#eef1ff 8px)"></div>
+        <div style="font:600 12.5px Poppins,sans-serif;color:#12309b">Lambeth</div>
+        <div style="font:400 10px Poppins,sans-serif;color:#6b7280">All devices</div>
+      </div>
+      <div style="border:1px solid #d9d7d2;border-radius:8px;padding:12px 10px;display:flex;flex-direction:column;gap:6px">
+        <div style="height:34px;border-radius:5px;background:repeating-linear-gradient(45deg,#e7e5e0,#e7e5e0 4px,#f3f2ef 4px,#f3f2ef 8px)"></div>
+        <div style="font:600 12.5px Poppins,sans-serif;color:#1a1a1a">Southwark</div>
+        <div style="font:400 10px Poppins,sans-serif;color:#6b7280">All devices</div>
+      </div>
+      <div style="border:1px solid #d9d7d2;border-radius:8px;padding:12px 10px;display:flex;flex-direction:column;gap:6px">
+        <div style="height:34px;border-radius:5px;background:repeating-linear-gradient(45deg,#e7e5e0,#e7e5e0 4px,#f3f2ef 4px,#f3f2ef 8px)"></div>
+        <div style="font:600 12.5px Poppins,sans-serif;color:#1a1a1a">Tower Hamlets</div>
+        <div style="font:400 10px Poppins,sans-serif;color:#b8860b">Laptops only</div>
+      </div>
+    </div>
+    <div style="height:1px;background:#eceae5;margin:4px 0"></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:26px;height:26px;border-radius:13px;background:#12309b;color:#fff;font:600 12px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">2</div>
+      <div style="font:600 14px Poppins,sans-serif;color:#12309b">Which Lambeth ward?</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input value="SW9 0QL" readonly style="flex:1;border:1px solid #d9d7d2;border-radius:6px;padding:10px 12px;font:400 12.5px Poppins,sans-serif;color:#1a1a1a;background:#fff"/>
+      <button style="border:none;background:#12309b;color:#fff;border-radius:6px;padding:0 16px;font:600 12.5px Poppins,sans-serif;cursor:pointer">Find ward</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px">
+      <div style="border:1px solid #12309b;background:#12309b;color:#fff;border-radius:20px;padding:6px 13px;font:500 11.5px Poppins,sans-serif">Oval ✓</div>
+      <div style="border:1px solid #d9d7d2;border-radius:20px;padding:6px 13px;font:400 11.5px Poppins,sans-serif;color:#444">Stockwell East</div>
+      <div style="border:1px solid #d9d7d2;border-radius:20px;padding:6px 13px;font:400 11.5px Poppins,sans-serif;color:#444">Vauxhall</div>
+      <div style="border:1px solid #d9d7d2;border-radius:20px;padding:6px 13px;font:400 11.5px Poppins,sans-serif;color:#444">Brixton Rush Common</div>
+      <div style="border:1px solid #d9d7d2;border-radius:20px;padding:6px 13px;font:400 11.5px Poppins,sans-serif;color:#444">Clapham Town</div>
+      <div style="border:1px solid #d9d7d2;border-radius:20px;padding:6px 13px;font:400 11.5px Poppins,sans-serif;color:#6b7280">+ 20 more</div>
+    </div>
+    <div style="font:400 11.5px Poppins,sans-serif;color:#12309b;text-decoration:underline;cursor:pointer">Not sure? Show the map instead</div>
+    <div style="border-left:4px solid #f5b400;background:#fdf8ea;padding:10px 12px;border-radius:0 6px 6px 0;font:400 11.5px/1.5 Poppins,sans-serif;color:#5a4a12">Selected: <b>Oval, Lambeth</b>. All device types available, 1 device per client.</div>
+  </div>
+</div>
+<div class="dv-note">Cheapest to build, works on any phone, and the borough answer is a clean field to hang limits and device filtering off. Map becomes a fallback rather than the main event.</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Postcode-first, borough inferred</div>
+<div class="dv-card" style="width:460px">
+  <div style="padding:22px 24px 6px;font:600 15px Poppins,sans-serif;color:#12309b">Where does your client live?</div>
+  <div style="padding:0 24px 20px;display:flex;flex-direction:column;gap:14px">
+    <div style="font:400 12.5px/1.5 Poppins,sans-serif;color:#444">Enter their postcode — we'll work out the borough and ward.</div>
+    <div style="display:flex;gap:8px">
+      <input value="E1 5LP" readonly style="flex:1;border:2px solid #12309b;border-radius:6px;padding:12px 14px;font:600 15px Poppins,sans-serif;letter-spacing:.06em;color:#1a1a1a"/>
+      <button style="border:none;background:#12309b;color:#fff;border-radius:6px;padding:0 18px;font:600 13px Poppins,sans-serif;cursor:pointer">Check</button>
+    </div>
+    <div style="border:1px solid #cfe8d2;background:#f2faf3;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:18px;height:18px;border-radius:9px;background:#3aa843;color:#fff;font:700 11px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">✓</div>
+        <div style="font:600 13px Poppins,sans-serif;color:#1a5223">We support this area</div>
+      </div>
+      <div style="font:400 13px/1.5 Poppins,sans-serif;color:#2b4430"><b>Whitechapel</b> ward, <b>Tower Hamlets</b></div>
+      <div style="display:flex;gap:8px;padding-top:2px">
+        <button style="border:none;background:#12309b;color:#fff;border-radius:6px;padding:9px 16px;font:600 12px Poppins,sans-serif;cursor:pointer">That's right</button>
+      </div>
+    </div>
+    <div style="border-left:4px solid #f5b400;background:#fdf8ea;padding:11px 13px;border-radius:0 6px 6px 0;font:400 11.5px/1.5 Poppins,sans-serif;color:#5a4a12">In Tower Hamlets we can currently offer <b>laptops only</b>. The device list below has been updated.</div>
+    <div style="height:1px;background:#eceae5"></div>
+    <div style="font:500 11px Poppins,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.08em">Out-of-area state</div>
+    <div style="border:1px solid #f0cfcf;background:#fdf4f4;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+      <div style="font:600 12.5px Poppins,sans-serif;color:#8a2222">SE13 6TQ — Lewisham</div>
+      <div style="font:400 11.5px/1.5 Poppins,sans-serif;color:#6b4a4a">We only take referrals from Lambeth, Southwark and Tower Hamlets. <span style="color:#12309b;text-decoration:underline">See other services near you</span> or <a href="mailto:distributions@communitytechaid.org.uk">email</a> us to discuss further</div>
+    </div>
+  </div>
+</div>
+<div class="dv-note">One field, one answer. Ward is derived, not chosen, so the 3-borough sprawl never has to be drawn. Needs a graceful manual override for edge postcodes and hostels.</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Tabbed map — one borough in view at a time</div>
+<div class="dv-card" style="width:460px">
+  <div style="padding:22px 24px 12px;font:600 15px Poppins,sans-serif;color:#12309b">Where does your client live?</div>
+  <div style="display:flex;gap:0;padding:0 24px;border-bottom:1px solid #eceae5">
+    <div style="padding:10px 14px;font:600 12.5px Poppins,sans-serif;color:#12309b;border-bottom:3px solid #12309b">Lambeth</div>
+    <div style="padding:10px 14px;font:500 12.5px Poppins,sans-serif;color:#6b7280;border-bottom:3px solid transparent">Southwark</div>
+    <div style="padding:10px 14px;font:500 12.5px Poppins,sans-serif;color:#6b7280;border-bottom:3px solid transparent">Tower Hamlets</div>
+  </div>
+  <div style="padding:16px 24px 20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;gap:8px">
+      <input placeholder="Search by postcode" readonly style="flex:1;border:1px solid #d9d7d2;border-radius:6px;padding:10px 12px;font:400 12.5px Poppins,sans-serif"/>
+      <button style="border:none;background:#12309b;color:#fff;border-radius:6px;padding:0 16px;font:600 12.5px Poppins,sans-serif;cursor:pointer">Lookup ward</button>
+    </div>
+    <div style="position:relative;height:210px;border-radius:8px;border:1px solid #d9d7d2;background:repeating-linear-gradient(135deg,#e3ece4,#e3ece4 6px,#eef4ee 6px,#eef4ee 12px);display:flex;align-items:center;justify-content:center">
+      <div style="font:400 10.5px ui-monospace,Menlo,monospace;color:#5b6b5e;text-align:center;line-height:1.6">leaflet map<br/>zoomed &amp; locked to Lambeth wards</div>
+      <div style="position:absolute;right:10px;bottom:10px;width:92px;height:62px;border:1px solid #cfd6cf;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font:400 8.5px ui-monospace,monospace;color:#8a8f8a;text-align:center">london<br/>locator</div>
+    </div>
+    <div style="font:400 12.5px/1.5 Poppins,sans-serif;color:#1a1a1a">You have selected ward <b>Oval</b> in the borough of <b>Lambeth</b></div>
+    <button style="align-self:flex-start;border:none;background:#12309b;color:#fff;border-radius:6px;padding:11px 26px;font:700 13px Poppins,sans-serif;cursor:pointer">OK</button>
+  </div>
+</div>
+<div class="dv-note">Smallest change from what exists today: keep the map you have, but never show all three boroughs at once — each tab gets its own tight extent, so Tower Hamlets doesn't force a zoomed-out, half-empty view.</div>
+</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Accordion list — no map at all</div>
+<div class="dv-card" style="width:460px">
+  <div style="padding:22px 24px 6px;font:600 15px Poppins,sans-serif;color:#12309b">Where does your client live?</div>
+  <div style="padding:0 24px 22px;display:flex;flex-direction:column;gap:10px">
+    <div style="font:400 12.5px/1.5 Poppins,sans-serif;color:#444">Choose the borough, then the ward. <span style="color:#12309b;text-decoration:underline">Look up a postcode instead</span></div>
+    <div style="border:1px solid #d9d7d2;border-radius:8px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#f7f6f3">
+        <div style="font:600 13px Poppins,sans-serif;color:#1a1a1a">Lambeth</div>
+        <div style="font:400 11px Poppins,sans-serif;color:#6b7280">25 wards ▾</div>
+      </div>
+    </div>
+    <div style="border:2px solid #12309b;border-radius:8px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#f2f5ff">
+        <div style="font:600 13px Poppins,sans-serif;color:#12309b">Tower Hamlets</div>
+        <div style="font:400 11px Poppins,sans-serif;color:#12309b">20 wards ▴</div>
+      </div>
+      <div style="padding:6px 16px 14px;display:flex;flex-direction:column;gap:2px;background:#fff">
+        <div style="display:flex;align-items:center;gap:9px;padding:7px 0;font:400 12.5px Poppins,sans-serif;color:#444"><span style="width:15px;height:15px;border-radius:8px;border:1px solid #b9c0cf"></span>Bethnal Green East</div>
+        <div style="display:flex;align-items:center;gap:9px;padding:7px 0;font:400 12.5px Poppins,sans-serif;color:#444"><span style="width:15px;height:15px;border-radius:8px;border:1px solid #b9c0cf"></span>Bow West</div>
+        <div style="display:flex;align-items:center;gap:9px;padding:7px 0;font:600 12.5px Poppins,sans-serif;color:#12309b"><span style="width:15px;height:15px;border-radius:8px;border:5px solid #12309b"></span>Whitechapel</div>
+        <div style="display:flex;align-items:center;gap:9px;padding:7px 0;font:400 12.5px Poppins,sans-serif;color:#444"><span style="width:15px;height:15px;border-radius:8px;border:1px solid #b9c0cf"></span>Spitalfields &amp; Banglatown</div>
+        <div style="display:flex;align-items:center;gap:9px;padding:7px 0;font:400 12.5px Poppins,sans-serif;color:#444"><span style="width:15px;height:15px;border-radius:8px;border:1px solid #b9c0cf"></span>Poplar</div>
+        <div style="font:400 11.5px Poppins,sans-serif;color:#12309b;text-decoration:underline;padding-top:4px">Show all 20 wards</div>
+      </div>
+    </div>
+    <div style="border:1px solid #d9d7d2;border-radius:8px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#f7f6f3">
+        <div style="font:600 13px Poppins,sans-serif;color:#1a1a1a">Southwark</div>
+        <div style="font:400 11px Poppins,sans-serif;color:#6b7280">23 wards ▾</div>
+      </div>
+    </div>
+    <div style="border-left:4px solid #f5b400;background:#fdf8ea;padding:11px 13px;border-radius:0 6px 6px 0;font:400 11.5px/1.5 Poppins,sans-serif;color:#5a4a12">Tower Hamlets referrals are <b>laptops only</b> under the current funding.</div>
+  </div>
+</div>
+<div class="dv-note">Most accessible and the least to maintain — plain radios, screen-reader friendly, no iframe. Good default for support workers filling in dozens of referrals who already know the ward.</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "combine <a class="dv-oid" href="#1b">1b</a>'s postcode result card with <a class="dv-oid" href="#1a">1a</a>'s borough tiles" · "show <a class="dv-oid" href="#1a">1a</a> on mobile" · "show what the device list looks like after Tower Hamlets is picked"</p>
+</section>
+</x-dc>
+</body>
+</html>
