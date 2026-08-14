@@ -11,10 +11,31 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
-import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, ALL_BOROUGHS } from '@app/shared/utils';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
+
+/**
+ * The value used for "borough was never captured".
+ *
+ * A sentinel rather than a real borough name: legacy requests store an EMPTY STRING, not null
+ * (`borough = data.borough ?: ""` on the server), and so does anything staff create in the admin
+ * form, where the field is read-only. Without an explicit option for them, a borough filter would
+ * silently hide a large slice of the history and look like data loss.
+ */
+export const BOROUGH_NOT_RECORDED = '__not_recorded__';
+
+/**
+ * Options for the borough filter — every borough the codebase knows about, not just the ones
+ * currently accepted. A filter has to match historical records, including Tower Hamlets requests
+ * taken during the pilot if the borough is later switched off. That is exactly what ALL_BOROUGHS
+ * exists for; `supportedBoroughs()` is the wrong list here.
+ */
+const BOROUGH_FILTER_OPTIONS = [
+  ...ALL_BOROUGHS.map(b => ({ label: b.name, value: b.name })),
+  { label: 'Not recorded', value: BOROUGH_NOT_RECORDED },
+];
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -39,6 +60,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
      id
      status
      clientRef
+     borough
      deviceRequestItems {
       phones
       tablets
@@ -157,6 +179,17 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
             required: false,
           }
         },
+        {
+          key: 'borough',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Borough?',
+            options: BOROUGH_FILTER_OPTIONS,
+            required: false,
+          }
+        },
       ]
     }
   ];
@@ -194,6 +227,26 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
     if (data.is_prepped && data.is_prepped.length) {
       count += data.is_prepped.length;
       filter['isPrepped'] = {_in: data.is_prepped};
+    }
+
+    // Borough. Selecting "Not recorded" has to reach rows holding an empty string AND any holding
+    // null — the server only started defaulting the column to "" at some point, so both shapes
+    // exist in the data. `_in` cannot express null, hence the OR; when no blank option is
+    // selected the simple `_in` is used so the common case stays a single predicate.
+    if (data.borough && data.borough.length) {
+      count += data.borough.length;
+      const named = data.borough.filter(b => b !== BOROUGH_NOT_RECORDED);
+      const includeBlank = data.borough.includes(BOROUGH_NOT_RECORDED);
+
+      if (includeBlank) {
+        const alternatives: any[] = [{ borough: { _in: [''] } }, { borough: { _is_null: true } }];
+        if (named.length) {
+          alternatives.unshift({ borough: { _in: named } });
+        }
+        filter['OR'] = alternatives;
+      } else {
+        filter['borough'] = { _in: named };
+      }
     }
 
     localStorage.setItem(`deviceRequestFilters-${this.tableId}`, JSON.stringify(data));
@@ -257,6 +310,25 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
       order: [0, 'desc'],
       serverSide: true,
       stateSave: true,
+      /**
+       * Discard a saved state that predates a column being added or removed.
+       *
+       * DataTables persists per-column state (visibility, widths, and the sort column INDEX) in
+       * localStorage keyed by table id. Adding the Borough column shifts every index after it, so
+       * a state saved before this change would restore a sort against the wrong column — or, with
+       * a stale visibility array, break the table outright. Returning false discards it.
+       *
+       * This is the classic "the table is broken for me but fine in incognito" report: it never
+       * reproduces in a fresh browser, and so never shows up in an e2e run either. Anyone changing
+       * the column list again gets the same protection for free.
+       */
+      stateLoadParams: (settings: any, data: any) => {
+        const expected = this.dtOptions.columns?.length ?? 0;
+        if (data?.columns && expected && data.columns.length !== expected) {
+          return false;
+        }
+        return true;
+      },
       processing: true,
       searching: true,
       ajax: (params: any, callback) => {
@@ -331,6 +403,11 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
         { data: null, orderable: false },
         { data: 'referringOrganisationContact.fullName' },
         { data: 'referringOrganisationContact.referringOrganisation.name' },
+        // Borough sits beside Organisation — together they answer "who referred, and from where".
+        // This array is positional against the <th> list in the template AND against the sort
+        // mapping below (dtOptions.columns[o.column].data), so the two must be edited together or
+        // the table silently sorts by the wrong field.
+        { data: 'borough' },
         { data: 'clientRef' },
         { data: 'createdAt' },
         { data: 'updatedAt' },

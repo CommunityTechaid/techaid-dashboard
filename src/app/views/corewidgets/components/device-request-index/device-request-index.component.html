@@ -33,6 +33,7 @@
                   <th>Requests</th>
                   <th>Referee</th>
                   <th>Organisation</th>
+                  <th>Borough</th>
                   <th>Client Ref</th>
                   <th>Created</th>
                   <th>Updated</th>
@@ -56,7 +57,7 @@
                           <div class="d-flex flex-column">
                             <div>
                               @if (dt.deviceRequestItems.other != 0) {
-                                <span class="me-1 mb-1">
+                                <span class="d-block mb-1">
                                   <span class="badge badge-primary">
                                     <span class="badge badge-secondary">Other</span>
                                     {{dt.types['OTHER'] || 0}}  / {{dt.deviceRequestItems.other || 0}}
@@ -64,7 +65,7 @@
                                 </span>
                               }
                               @if (dt.deviceRequestItems.laptops != 0) {
-                                <span class="me-1 mb-1">
+                                <span class="d-block mb-1">
                                   <span class="badge badge-primary">
                                     <span class="badge badge-secondary">Laptops</span>
                                     {{dt.types['LAPTOPS'] || 0}}  / {{dt.deviceRequestItems.laptops || 0}}
@@ -72,7 +73,7 @@
                                 </span>
                               }
                               @if (dt.deviceRequestItems.tablets != 0) {
-                                <span class="me-1 mb-1">
+                                <span class="d-block mb-1">
                                   <span class="badge badge-primary">
                                     <span class="badge badge-secondary">Tablets</span>
                                     {{dt.types['TABLETS'] || 0}}  / {{dt.deviceRequestItems.tablets || 0}}
@@ -80,7 +81,7 @@
                                 </span>
                               }
                               @if (dt.deviceRequestItems.allInOnes != 0) {
-                                <span class="me-1 mb-1">
+                                <span class="d-block mb-1">
                                   <span class="badge badge-primary">
                                     <span class="badge badge-secondary">All-in-ones</span>
                                     {{dt.types['ALLINONES'] || 0}}  / {{dt.deviceRequestItems.allInOnes || 0}}
@@ -88,7 +89,7 @@
                                 </span>
                               }
                               @if (dt.deviceRequestItems.desktops != 0) {
-                                <span class="me-1 mb-1">
+                                <span class="d-block mb-1">
                                   <span class="badge badge-primary">
                                     <span class="badge badge-secondary">Desktops</span>
                                     {{dt.types['DESKTOPS'] || 0}}  / {{dt.deviceRequestItems.desktops || 0}}
@@ -96,7 +97,7 @@
                                 </span>
                               }
                               @if (dt.deviceRequestItems.phones != 0) {
-                                <span class="me-1 mb-1">
+                                <span class="d-block mb-1">
                                   <span class="badge badge-primary">
                                     <span class="badge badge-secondary">Phones</span>
                                     {{dt.types['PHONES'] || 0}}  / {{dt.deviceRequestItems.phones || 0}}
@@ -104,7 +105,7 @@
                                 </span>
                               }
                               @if (dt.deviceRequestItems.commsDevices != 0) {
-                                <span class="me-1 mb-1">
+                                <span class="d-block mb-1">
                                   <span class="badge badge-primary">
                                     <span class="badge badge-secondary">SIM Cards</span>
                                     {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
@@ -112,7 +113,7 @@
                                 </span>
                               }
                               @if (dt.deviceRequestItems.broadbandHubs != 0) {
-                                <span class="me-1 mb-1">
+                                <span class="d-block mb-1">
                                   <span class="badge badge-primary">
                                     <span class="badge badge-secondary">Broadband Hubs</span>
                                     {{dt.types['BROADBANDHUBS'] || 0}}  / {{dt.deviceRequestItems.broadbandHubs || 0}}
@@ -227,6 +228,17 @@
       </td>
       <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
       <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
+      <!-- Borough. Blank for every request created before the ward-lookup step existed, and for
+           anything staff create in the admin form where the field is read-only — those rows hold
+           an empty string, not null. Say so rather than rendering an empty cell that reads like a
+           rendering fault. -->
+      <td>
+        @if (dt.borough) {
+          {{ dt.borough }}
+        } @else {
+          <span class="text-muted font-italic">Not recorded</span>
+        }
+      </td>
       <td>{{dt.clientRef}}</td>
       <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
         {{ dt.createdAt | date:'medium' }}
