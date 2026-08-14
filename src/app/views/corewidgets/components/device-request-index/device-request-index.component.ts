@@ -234,6 +234,15 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
     // exist in the data. `_in` cannot express null, hence the OR; when no blank option is
     // selected the simple `_in` is used so the common case stays a single predicate.
     if (data.borough && data.borough.length) {
+      // Drop anything the option list no longer offers. A model restored from localStorage can
+      // name a borough that has since been removed, and the checkbox for it would not render —
+      // leaving a filtered list with a badge count and nothing visibly ticked, which reads as the
+      // filter being broken. Rewrite the model so what is applied is what is shown.
+      const known = new Set(BOROUGH_FILTER_OPTIONS.map(option => option.value));
+      data.borough = data.borough.filter(value => known.has(value));
+    }
+
+    if (data.borough && data.borough.length) {
       count += data.borough.length;
       const named = data.borough.filter(b => b !== BOROUGH_NOT_RECORDED);
       const includeBlank = data.borough.includes(BOROUGH_NOT_RECORDED);

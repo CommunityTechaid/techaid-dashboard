@@ -233,7 +233,9 @@
            an empty string, not null. Say so rather than rendering an empty cell that reads like a
            rendering fault. -->
       <td>
-        @if (dt.borough) {
+        <!-- Trimmed before the test: a whitespace-only borough is as unrecorded as an empty one,
+             and without the trim it renders a blank cell that reads like a rendering fault. -->
+        @if (dt.borough?.trim()) {
           {{ dt.borough }}
         } @else {
           <span class="text-muted font-italic">Not recorded</span>
