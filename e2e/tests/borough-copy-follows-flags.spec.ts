@@ -19,6 +19,12 @@
  * borough-on + lookup-off must still say Lambeth or Southwark. Promising a borough we will
  * then reject is worse than not offering it.
  *
+ * Since #178 the three cases no longer read the same element. The first two run the legacy
+ * iframe path and read the Formly out-of-area page; the third selects the streamlined postcode
+ * step, which owns its own out-of-area card and never renders the iframe at all. That is the
+ * substitution working as intended — what is pinned here is the sentence naming exactly the
+ * boroughs the flags say we accept, whichever implementation is showing it.
+ *
  * @mocked — all GraphQL stubbed and the ward-lookup iframe served locally, so no token is
  * needed and nothing leaves the machine.
  */
@@ -133,9 +139,20 @@ test.describe('out-of-area copy follows the borough flags @mocked', () => {
   test('both flags on: names all three boroughs', async ({ page }) => {
     test.setTimeout(90_000);
     await installMocks(page, { towerHamlets: true, streamlinedLookup: true });
-    await openOutOfAreaPage(page);
 
-    await expect(page.getByText('who live in Lambeth, Southwark or Tower Hamlets')).toBeVisible();
-    await expect(page.getByText('falls within Lambeth, Southwark or Tower Hamlets')).toBeVisible();
+    // Different route to the same state. With the streamlined lookup selected the iframe is
+    // never rendered, so there is no postMessage to drive and no Formly out-of-area page —
+    // #178 answers this case inside the postcode step instead. The assertion below is the
+    // same promise as the other two cases (the sentence names exactly the boroughs the flags
+    // say we accept), read off the component that now owns it.
+    await page.goto('/organisation-device-request');
+    await expect(page.getByText('E2E public request page content')).toBeVisible({ timeout: 30_000 });
+
+    await page.locator('#postcode').fill('SE13 6TQ'); // Lewisham — absent from the table
+    await page.getByRole('button', { name: 'Check' }).click();
+
+    const card = page.getByTestId('postcode-out-of-area');
+    await expect(card).toBeVisible({ timeout: 30_000 });
+    await expect(card).toContainText('We only take referrals from Lambeth, Southwark and Tower Hamlets');
   });
 });

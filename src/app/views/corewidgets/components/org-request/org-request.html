@@ -72,13 +72,27 @@
         @if (!wardSubmitted) {
           <div>
             @if (!showTypeform) {
-              <iframe src="https://communitytechaid.github.io/ward_lookup.html?tada=true" width="100%"
-                height="600px" style="border: none;">
-              </iframe>
+              <!-- Two location steps, one flag (streamlined-ward-lookup), switchable either way
+                   with no deploy. Neither renders until the flag resolves — see the comment on
+                   streamlinedWardLookup in org-request.ts. -->
+              @if (streamlinedWardLookup === true) {
+                <postcode-location-step [supportedBoroughs]="supportedBoroughList"
+                  (confirmed)="onLocationConfirmed($event)">
+                </postcode-location-step>
+              } @else if (streamlinedWardLookup === false) {
+                <iframe src="https://communitytechaid.github.io/ward_lookup.html?tada=true" width="100%"
+                  height="600px" style="border: none;">
+                </iframe>
+              }
             }
           </div>
         }
         @if (!submited && wardSubmitted && !showTypeform) {
+          @if (deviceAvailabilityNote) {
+            <div class="alert alert-warning border-left-warning" data-testid="device-availability-note">
+              {{ deviceAvailabilityNote }}
+            </div>
+          }
           <form [formGroup]="form">
             <formly-form [options]="options" (ngSubmit)="form.valid && createEntity(form.value)" [form]="form"
               [model]="model" [fields]="fields">

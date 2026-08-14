@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, map, Observable, of, shareReplay } from 'rxjs';
+import { catchError, map, Observable, of, shareReplay, timeout } from 'rxjs';
 import { ConfigService } from './config.service';
 // Imported from the module rather than the shared barrel: the barrel eagerly pulls in
 // lodash and date-fns, and this service is loaded by the public request page.
@@ -39,6 +39,15 @@ export const STREAMLINED_WARD_LOOKUP_FLAG = 'streamlined-ward-lookup';
 export const TOWER_HAMLETS_BOROUGH_FLAG = 'tower-hamlets-borough-support';
 
 const PUBLIC_FLAGS_QUERY = `query FeatureFlagsPublic { featureFlagsPublic { key enabled } }`;
+
+/**
+ * How long to wait for the flags before giving up and treating every flag as off.
+ *
+ * Generous, because callers that need the backend already wait on their own cold-start check
+ * before asking; this is a backstop against a request that never settles at all, not a latency
+ * budget.
+ */
+const FLAG_REQUEST_TIMEOUT_MS = 20000;
 
 export interface DeliveryBookingVisibility {
   /** Whether the booking pages/links should be shown at all in this environment. */
@@ -79,6 +88,12 @@ export class FeatureFlagService {
           { query: PUBLIC_FLAGS_QUERY },
         )
         .pipe(
+          // A hung request is not an error, so catchError below would never fire and every
+          // caller awaiting a flag would wait forever. On the public request page that means a
+          // location step that renders neither implementation and never says why. Bound it, and
+          // let the timeout fall through to the same all-flags-false default as any other
+          // failure.
+          timeout(FLAG_REQUEST_TIMEOUT_MS),
           map((res) => {
             const flags: Record<string, boolean> = {};
             (res.data?.featureFlagsPublic ?? []).forEach((f) => (flags[f.key] = f.enabled));

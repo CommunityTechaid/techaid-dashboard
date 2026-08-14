@@ -22,8 +22,16 @@ import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 
 import { AppLocalCSS } from './app-local-css.component';
-import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
-import { boroughListSentence, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
+import { PostcodeLocationStepComponent } from './postcode-location-step.component';
+import {
+  FeatureFlagService,
+  STREAMLINED_WARD_LOOKUP_FLAG,
+} from '@app/shared/services/feature-flag.service';
+import { Borough, boroughListSentence, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
+import {
+  deviceRestrictionNote,
+  devicesAvailableIn,
+} from '@app/shared/utils/borough-device-availability';
 
 declare let window: any;
 
@@ -124,7 +132,7 @@ const QUERY_ADMIN_CONFIG = gql`
     selector: 'org-request',
     styleUrls: ['./org-request.scss'],
     templateUrl: './org-request.html',
-    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule]
+    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule, PostcodeLocationStepComponent]
 })
 
 export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewInit, OnDestroy {
@@ -156,6 +164,27 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   borough = "";
   ward = "";
   unsupported = false;
+
+  /**
+   * Which location step to render: `true` = the in-app postcode step, `false` = the legacy
+   * github.io iframe, `null` = the flag has not resolved yet, so render NEITHER.
+   *
+   * The null state is the point. Defaulting to either step would flash the wrong one on load
+   * and, on the legacy side, would fire off a request to a third-party origin we may have just
+   * been told not to use. In practice the flags resolve during the backend health check that
+   * already gates this whole page, so the null window is not visible.
+   */
+  streamlinedWardLookup: boolean | null = null;
+
+  /** The accepted boroughs, from the flags. Passed to the postcode step so it can decide
+   *  whether a resolved borough is one we actually take referrals from. */
+  supportedBoroughList: Borough[] = [...CORE_BOROUGHS];
+
+  /** Every device type the admin config permits, before any borough narrowing. */
+  private allDeviceOptions: { value: string; label: string }[] = [];
+
+  /** Amber note shown when the confirmed borough offers fewer device types than usual. */
+  deviceAvailabilityNote: string | null = null;
   pendingCorrelationId: null;
   deviceRequestId: any;
 
@@ -190,6 +219,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       if (res && res.data) {
         this.processAdminConfig(res.data['adminConfig']);
         this.loadPageContent();
+        this.loadFeatureFlags();
         this.backendStatus = 'ready';
         this.changeDetectorRef.detectChanges();
       } else {
@@ -210,6 +240,45 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.backendPollTimer = setTimeout(() => this.pollBackend(), this.BACKEND_POLL_INTERVAL_MS);
   }
 
+  /**
+   * Read the feature flags — deliberately only once the backend has answered.
+   *
+   * This API cold-starts, which is the entire reason startBackendHealthCheck() retries fifteen
+   * times over roughly a minute. The flags come from the same GraphQL endpoint but over a plain
+   * HttpClient POST with no retry, and FeatureFlagService caches whatever it gets — including
+   * the empty map it falls back to on error — in a shareReplay(1) for the rest of the page load.
+   *
+   * Reading them during ngOnInit therefore raced the cold start and lost: the flags POST failed,
+   * `{}` was cached, every flag read false, and the visitor got the legacy github.io iframe with
+   * Tower Hamlets rejected as out of area — silently, with both flags switched on. Waiting for
+   * the health check means the backend is known to be up before we ask.
+   */
+  private loadFeatureFlags(): void {
+    this.flagsSub.add(
+      this.featureFlags.supportedBoroughs().subscribe(boroughs => {
+        this.supportedBoroughList = boroughs;
+        this.supportedBoroughSentence = boroughListSentence(boroughs, 'or');
+        this.applySupportedBoroughCopy();
+      })
+    );
+
+    // Which location step to render. Resolved before either step paints rather than with an
+    // async pipe on the template branch — an async pipe would render the falsy branch (the
+    // iframe) for a tick and hit github.io on every load, including when the streamlined step
+    // is the one selected.
+    //
+    // No detectChanges() here on purpose: the flags arrive on an HTTP response inside the
+    // Angular zone and this component uses default change detection, so the repaint is
+    // automatic — whereas a synchronous detectChanges() would throw if the shared
+    // shareReplay(1) cache is already warm (the header reads the same flags) and replays into
+    // this subscribe synchronously.
+    this.flagsSub.add(
+      this.featureFlags.isEnabled(STREAMLINED_WARD_LOOKUP_FLAG).subscribe(enabled => {
+        this.streamlinedWardLookup = enabled;
+      })
+    );
+  }
+
   private processAdminConfig(config: any) {
     const options = [];
     if (config.canPublicRequestLaptop) {
@@ -226,13 +295,39 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     }
     if (config.canPublicRequestSIMCard) {
       options.push({ value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' });
-      this.additionalSimRequestPublic.hideExpression = false;
     }
     if (config.canPublicRequestBroadbandHub) {
       options.push({ value: 'broadbandHubs', label: 'Broadband Hub' });
-      this.additionalBroadbandHubRequestPublic.hideExpression = false;
     }
-    this.deviceTypesPublic.templateOptions.options = options;
+    this.allDeviceOptions = options;
+    // The two add-on fields are shown by applyDeviceAvailability() rather than here, so that
+    // borough narrowing applies to them too — see the comment there.
+    this.applyDeviceAvailability();
+  }
+
+  /**
+   * Narrow the offered device types to those available in the confirmed borough.
+   *
+   * Runs both when the admin config arrives and when a borough is confirmed, because the two
+   * happen in either order — the config is fetched during the health check, the borough arrives
+   * whenever the visitor finishes the location step.
+   *
+   * Borough restrictions currently come from a constant (see borough-device-availability.ts);
+   * issue #179 replaces that with real config and this method becomes the one place that has to
+   * change. Note it only ever narrows what the admin config already permits.
+   */
+  private applyDeviceAvailability(): void {
+    const available = devicesAvailableIn(this.borough, this.allDeviceOptions);
+    this.deviceTypesPublic.templateOptions.options = available;
+    this.deviceAvailabilityNote = deviceRestrictionNote(this.borough, this.allDeviceOptions);
+
+    // The SIM and broadband hub add-ons are separate fields with their own controls, and they
+    // feed setDeviceRequestItems() independently of the device-type radio group. Narrowing only
+    // the radio options would leave a Tower Hamlets referrer reading "we can currently offer
+    // laptops only" above a live SIM Card checkbox they could still submit against.
+    const offered = new Set(available.map(option => option.value));
+    this.additionalSimRequestPublic.hideExpression = !offered.has('commsDevices');
+    this.additionalBroadbandHubRequestPublic.hideExpression = !offered.has('broadbandHubs');
   }
 
   private loadPageContent() {
@@ -997,10 +1092,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     // copy. Read once here: the out-of-area page cannot be reached before the user has
     // interacted with the location step, so this has long resolved by then, and the
     // default already reads correctly if it never does.
-    this.flagsSub = this.featureFlags.supportedBoroughs().subscribe(boroughs => {
-      this.supportedBoroughSentence = boroughListSentence(boroughs, 'or');
-      this.applySupportedBoroughCopy();
-    });
+    this.flagsSub = new Subscription();
 
     const orgRef = this.apollo
       .watchQuery({
@@ -1071,8 +1163,30 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
 
+  /**
+   * The streamlined step's answer to the same question the iframe's postMessage answers.
+   *
+   * Deliberately identical to the tail of messageEvent() below: same fields, same order, same
+   * flag. Nothing downstream of here can tell which location step ran, which is the whole
+   * requirement of running the two implementations side by side.
+   */
+  onLocationConfirmed(location: { borough: string; ward: string }) {
+    this.ward = location.ward;
+    this.borough = location.borough;
+    this.wardSubmitted = true;
+    // The borough is only known now, and it narrows which device types are on offer.
+    this.applyDeviceAvailability();
+  }
+
   @HostListener('window:message', ['$event'])
   messageEvent(event: MessageEvent) {
+
+    // With the streamlined step selected the iframe is never rendered, so nothing should be
+    // posting to us. Ignoring messages explicitly means a stray postMessage from an extension
+    // or a stale tab cannot drive the page down the legacy path behind the flag's back.
+    if (this.streamlinedWardLookup) {
+      return;
+    }
 
     if (event.origin !== 'https://communitytechaid.github.io') {
       return;
@@ -1098,6 +1212,10 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.ward = event.data.ward;
     this.borough = event.data.borough;
     this.wardSubmitted = true;
+    // Same call as onLocationConfirmed(), for the same reason. A no-op in practice today —
+    // the legacy lookup can only ever return Lambeth or Southwark, and neither is restricted —
+    // but leaving it out would make the two paths diverge the moment a restriction is added.
+    this.applyDeviceAvailability();
   }
 
 
