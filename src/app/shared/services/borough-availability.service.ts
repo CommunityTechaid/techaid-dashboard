@@ -153,7 +153,15 @@ export function availabilityNote(
   if (!borough || !availability) return null;
 
   const available = narrowToAvailability(availability, offered);
-  if (available.length === 0 || available.length === offered.length) return null;
+
+  // A borough configured with everything closed is a real state — a paused pilot, or no stock.
+  // It must say so: without this the device list simply renders empty with no explanation, which
+  // issue #179 calls out by name as the failure mode to avoid.
+  if (available.length === 0) {
+    return `We can't currently offer any devices in ${borough}. Please check back later, or email us to discuss further.`;
+  }
+
+  if (available.length === offered.length) return null;
 
   // Short plural nouns rather than the full option labels: the SIM card label is a whole sentence
   // ("SIM card (6 months, 20GB data…)") and reads badly mid-sentence.

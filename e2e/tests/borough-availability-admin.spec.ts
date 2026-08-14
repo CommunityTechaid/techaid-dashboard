@@ -270,4 +270,27 @@ test.describe('borough availability admin @mocked', () => {
     await expect(page.locator('[data-testid="availability-load-error"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-testid="availability-matrix"]')).toHaveCount(0);
   });
+
+  test('a failed load cannot be saved over the top of', async ({ page }) => {
+    test.setTimeout(60_000);
+    const capturedSaves: string[] = [];
+    await installMocks(page, { loadError: 'boom', capturedSaves });
+    await page.goto(ADMIN_PANEL_PATH);
+    await page.getByRole('link', { name: 'Borough Availability' }).click();
+    await expect(page.locator('[data-testid="availability-load-error"]')).toBeVisible({ timeout: 15_000 });
+
+    // The regression this guards: a failed load left groups/exceptions empty while `pristine`
+    // was still the empty string, so the two differed and the component reported itself dirty.
+    // Save was enabled, and pressing it sent {groups: [], exceptions: []} to a mutation that
+    // replaces the configuration wholesale — deleting every borough group and every exception.
+    // A transient 500 on a routine page open was one click from wiping the config.
+    await expect(page.locator('[data-testid="unsaved-count"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="save-availability"]')).toBeDisabled();
+
+    // Force the click regardless of the disabled attribute — a future refactor that re-enables
+    // the button must still not be able to send an empty configuration.
+    await page.locator('[data-testid="save-availability"]').dispatchEvent('click');
+    await page.waitForTimeout(500);
+    expect(capturedSaves).toHaveLength(0);
+  });
 });

@@ -65,6 +65,28 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
 
   activeTab: 'config' | 'flags' | 'availability' = 'config';
 
+  @ViewChild(BoroughAvailabilityComponent) availabilityTab?: BoroughAvailabilityComponent;
+
+  /**
+   * Switch tabs, confirming first if it would throw away staged work.
+   *
+   * The Borough Availability tab holds edits that are not saved until its own Save is pressed,
+   * and it is destroyed when the tab changes. Without this, clicking another tab silently
+   * discarded a matrix the admin had spent time on — its own Discard button asks for
+   * confirmation, so the far easier path was the destructive one.
+   */
+  selectTab(tab: 'config' | 'flags' | 'availability'): void {
+    if (this.activeTab === 'availability' && tab !== 'availability' && this.availabilityTab?.dirty) {
+      const unsaved = this.availabilityTab.unsavedCount;
+      const confirmed = window.confirm(
+        `You have ${unsaved} unsaved borough availability change${unsaved === 1 ? '' : 's'}.\n\n` +
+          'Leaving this tab discards them. Continue?',
+      );
+      if (!confirmed) return;
+    }
+    this.activeTab = tab;
+  }
+
   constructor(
     private modalService: NgbModal,
     private router: Router,

@@ -100,7 +100,10 @@ export interface GroupRow {
 
 export interface ExceptionRow {
   organisationId: string | null;
+  /** What is in the text box — not necessarily a confirmed selection. */
   organisationName: string;
+  /** The exact option text that produced `organisationId`, so a re-touch cannot clear it. */
+  selectedLabel?: string | null;
   boroughGroupId: string | null;
   maxPerReferee: number;
 }
@@ -134,6 +137,17 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
    * unsaved changes that do not exist.
    */
   private pristine = '';
+
+  /**
+   * Whether a load has actually succeeded.
+   *
+   * Everything that can write is gated on this. Without it, a failed load left `groups: []`,
+   * `exceptions: []` and `pristine: ''` — which do not match, so the form read as dirty and
+   * offered an enabled Save. Pressing it would have sent an empty configuration to a mutation
+   * that replaces wholesale, deleting every borough group and exception. A transient 500 on a
+   * routine page open was one click away from wiping the config.
+   */
+  private loaded = false;
 
   /** Which cell's editor row is open. Only ever one, per the design. */
   editing: { groupId: string | null; key: string } | null = null;
@@ -179,6 +193,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   private load(): void {
     this.loading = true;
     this.loadError = false;
+    this.loaded = false;
     this.apollo
       .query<{ boroughGroups: any[]; referrerLimitExceptions: any[] }>({
         query: QUERY,
@@ -204,11 +219,15 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
           this.lastUpdated =
             this.groups.map((g) => g.updatedAt).filter(Boolean).sort().pop() ?? null;
           this.pristine = this.snapshot();
+          this.loaded = true;
           this.loading = false;
         },
         error: () => {
           this.loading = false;
           this.loadError = true;
+          // Leave `loaded` false so nothing can be saved from a configuration we never read.
+          this.groups = [];
+          this.exceptions = [];
           this.toastr.error('Could not load the borough availability configuration');
         },
       });
@@ -226,8 +245,17 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     return JSON.stringify({ groups: this.groups, exceptions: this.exceptions });
   }
 
+  /**
+   * Gated on `loaded`, not merely on `!loading`. See the comment on `loaded` — the difference is
+   * a one-click wipe of the entire configuration after a failed read.
+   */
   get dirty(): boolean {
-    return !this.loading && this.snapshot() !== this.pristine;
+    return this.loaded && !this.loading && this.snapshot() !== this.pristine;
+  }
+
+  /** Whether Save may be pressed at all. */
+  get canSave(): boolean {
+    return this.dirty && !this.saving;
   }
 
   /**
@@ -237,7 +265,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
    * setting a cell back to its original value correctly takes the count back down.
    */
   get unsavedCount(): number {
-    if (!this.pristine) return 0;
+    if (!this.loaded || !this.pristine) return 0;
     const before = JSON.parse(this.pristine) as { groups: GroupRow[]; exceptions: ExceptionRow[] };
     let count = 0;
 
@@ -254,9 +282,16 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
       });
     });
 
-    if (JSON.stringify(before.exceptions) !== JSON.stringify(this.exceptions)) {
-      count += Math.abs(this.exceptions.length - before.exceptions.length) || 1;
-    }
+    // Count exception changes field by field rather than by row-count delta, so editing three
+    // fields on one row does not report a single change.
+    const beforeRows = before.exceptions;
+    count += Math.abs(this.exceptions.length - beforeRows.length);
+    this.exceptions.slice(0, beforeRows.length).forEach((row, i) => {
+      const original = beforeRows[i];
+      if (original.organisationId !== row.organisationId) count += 1;
+      if (original.boroughGroupId !== row.boroughGroupId) count += 1;
+      if (Number(original.maxPerReferee) !== Number(row.maxPerReferee)) count += 1;
+    });
     return count;
   }
 
@@ -323,12 +358,32 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     this.exceptions = this.exceptions.filter((_, i) => i !== index);
   }
 
+  /**
+   * Options are labelled "Name #id" so the list is unambiguous.
+   *
+   * Two referring organisations can share a name, and matching on the name alone would silently
+   * bind the exception to whichever happened to come back first — an override quietly applied to
+   * the wrong organisation, which nothing downstream would flag.
+   */
+  organisationOption(organisation: { id: string; name: string }): string {
+    return `${organisation.name} #${organisation.id}`;
+  }
+
   onOrganisationTyped(row: ExceptionRow, term: string): void {
     row.organisationName = term;
-    // Clear the id as soon as the text stops matching the chosen organisation, so a half-typed
-    // name cannot be saved against the previously selected id.
-    const match = this.organisationResults.find((o) => o.name === term);
-    row.organisationId = match ? match.id : null;
+
+    const byOption = this.organisationResults.find((o) => this.organisationOption(o) === term);
+    if (byOption) {
+      row.organisationId = byOption.id;
+      row.selectedLabel = term;
+    } else if (term !== row.selectedLabel) {
+      // Only drop the id when the text has actually moved away from what was chosen. Clearing it
+      // on every keystroke meant re-touching a row after searching in a different row wiped a
+      // valid selection, because the shared results list no longer contained it.
+      row.organisationId = null;
+      row.selectedLabel = null;
+    }
+
     if (term && term.length >= 3) this.organisationSearch.next(term);
   }
 
@@ -343,9 +398,24 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
    * in the same transaction, and the admin would see a failed save with no obvious cause.
    */
   save(): void {
+    // Never send a configuration we did not successfully read: the mutation replaces wholesale,
+    // so an empty payload deletes everything.
+    if (!this.loaded || this.saving) return;
+
     const incomplete = this.exceptions.some((e) => !e.organisationId || !e.boroughGroupId);
     if (incomplete) {
       this.toastr.error('Every exception needs an organisation and a borough group');
+      return;
+    }
+
+    // A cleared number input binds as null, and Number(null) is 0 — which would silently set a
+    // borough's referees to zero permitted requests. Reject it rather than interpret it.
+    const badLimit = [
+      ...this.groups.map((g) => g.maxPerReferee),
+      ...this.exceptions.map((e) => e.maxPerReferee),
+    ].some((value) => value === null || value === undefined || `${value}` === '' || Number(value) < 0);
+    if (badLimit) {
+      this.toastr.error('Every request limit needs a number of 0 or more');
       return;
     }
 

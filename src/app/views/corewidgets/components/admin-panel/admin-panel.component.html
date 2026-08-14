@@ -16,15 +16,15 @@
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'config'" href="#"
-           (click)="activeTab = 'config'; $event.preventDefault()">Application Configuration</a>
+           (click)="selectTab('config'); $event.preventDefault()">Application Configuration</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'flags'" href="#"
-           (click)="activeTab = 'flags'; $event.preventDefault()">Feature Flags</a>
+           (click)="selectTab('flags'); $event.preventDefault()">Feature Flags</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'availability'" href="#"
-           (click)="activeTab = 'availability'; $event.preventDefault()">Borough Availability</a>
+           (click)="selectTab('availability'); $event.preventDefault()">Borough Availability</a>
       </li>
     </ul>
 

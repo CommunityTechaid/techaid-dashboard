@@ -18,7 +18,7 @@
         type="button"
         class="btn btn-primary btn-sm"
         data-testid="save-availability"
-        [disabled]="!dirty || saving"
+        [disabled]="!canSave"
         (click)="save()"
       >
         @if (saving) {
@@ -80,6 +80,7 @@
                       type="button"
                       class="btn btn-sm p-1 border-0 bg-transparent"
                       [attr.data-testid]="'cell-' + group.id + '-' + column.key"
+                      [disabled]="saving"
                       [attr.aria-label]="column.label + ' in ' + group.name + ': ' + modeOf(group, column.key)"
                       [class.border]="isEditing(group, column)"
                       (click)="toggleEditor(group, column)"
@@ -98,6 +99,7 @@
                     class="form-control form-control-sm text-center mx-auto"
                     style="max-width: 5rem;"
                     [attr.data-testid]="'max-per-referee-' + group.id"
+                    [disabled]="saving"
                     [(ngModel)]="group.maxPerReferee"
                     [name]="'maxPerReferee-' + group.id"
                   />
@@ -200,7 +202,7 @@
 <div class="card shadow mb-4">
   <div class="card-header py-3 d-flex justify-content-between align-items-center">
     <h6 class="m-0 font-weight-bold text-primary">Request limits — exceptions by organisation</h6>
-    <button type="button" class="btn btn-primary btn-sm" data-testid="add-exception" (click)="addException()">
+    <button type="button" class="btn btn-primary btn-sm" data-testid="add-exception" [disabled]="saving" (click)="addException()">
       Add exception
     </button>
   </div>
@@ -276,7 +278,7 @@
 
       <datalist id="organisation-options">
         @for (organisation of organisationResults; track organisation.id) {
-          <option [value]="organisation.name"></option>
+          <option [value]="organisationOption(organisation)"></option>
         }
       </datalist>
     }

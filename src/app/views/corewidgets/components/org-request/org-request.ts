@@ -344,6 +344,11 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       ? (this.availabilityByBorough[this.borough.trim().toLowerCase()] ?? null)
       : null;
     const available = narrowToAvailability(availability, this.allDeviceOptions);
+    const previous = (this.deviceTypesPublic.templateOptions.options ?? []) as { value: string }[];
+    const changed =
+      previous.length !== available.length ||
+      previous.some((option, i) => option.value !== available[i]?.value);
+
     this.deviceTypesPublic.templateOptions.options = available;
     this.deviceAvailabilityNote = availabilityNote(this.borough, availability, this.allDeviceOptions);
 
@@ -354,6 +359,21 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     const offered = new Set(available.map(option => option.value));
     this.additionalSimRequestPublic.hideExpression = !offered.has('commsDevices');
     this.additionalBroadbandHubRequestPublic.hideExpression = !offered.has('broadbandHubs');
+
+    // If the options changed while the form was already on screen, rebuild the field tree.
+    //
+    // Formly's radio type is OnPush and its options pipe is pure, so writing
+    // templateOptions.options in place does not repaint an already-rendered field — the amber
+    // note (plain interpolation, default change detection) WOULD update, so the page could end
+    // up saying "laptops only" above a full list of device types. Reassigning `fields` is the
+    // reliable way to make formly re-read them.
+    //
+    // Only reached when availability lands after the location step, which needs a slow cold
+    // start. The user has just confirmed a postcode and has not filled anything in yet, so a
+    // rebuild costs nothing here.
+    if (changed && this.wardSubmitted) {
+      this.fields = [...this.fields];
+    }
   }
 
   private loadPageContent() {
