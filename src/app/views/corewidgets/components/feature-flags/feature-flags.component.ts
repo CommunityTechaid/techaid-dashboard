@@ -89,12 +89,28 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
       'turning it off is a decision, not a toggle.',
     critical: true,
   },
+  'streamlined-ward-lookup': {
+    label: 'Streamlined Ward Lookup',
+    description:
+      'Choose which location step the public device request page uses. On: the streamlined step built ' +
+      'into the page — the referrer types a postcode and we derive the borough and ward. Off: the older ' +
+      'step, an embedded map page loaded from communitytechaid.github.io. Both work; this switches ' +
+      'between them and can be changed back at any time without a deploy.',
+    offMeaning:
+      'Off is not "feature hidden" — it is the older map-based lookup, still fully working. A change ' +
+      'reaches someone already on the page only when they next load it. Careful: the older lookup cannot ' +
+      'handle Tower Hamlets postcodes, so switching off also stops Tower Hamlets referrals even when the ' +
+      'borough flag below is on.',
+  },
   'tower-hamlets-borough-support': {
     label: 'Tower Hamlets Borough Support',
     description:
-      'Placeholder for the upcoming Tower Hamlets borough-support work. Seeded ahead of that work so the ' +
-      'toggle exists and matches across UAT and production.',
-    offMeaning: 'Nothing reads this flag yet, so neither setting currently has any effect.',
+      'Accept device referrals for clients living in Tower Hamlets, alongside Lambeth and Southwark. ' +
+      'Applies to the public request page: with this on, a Tower Hamlets postcode resolves and the ' +
+      'request can continue; with it off, it is treated as outside our area.',
+    offMeaning:
+      'Off = Lambeth and Southwark only. This flag only has an effect while Streamlined Ward Lookup ' +
+      'is on — the older lookup has no Tower Hamlets data and rejects those postcodes either way.',
   },
 };
 
