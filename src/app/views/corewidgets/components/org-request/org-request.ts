@@ -29,9 +29,11 @@ import {
 } from '@app/shared/services/feature-flag.service';
 import { Borough, boroughListSentence, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
 import {
-  deviceRestrictionNote,
-  devicesAvailableIn,
-} from '@app/shared/utils/borough-device-availability';
+  availabilityNote,
+  BoroughAvailability,
+  BoroughAvailabilityService,
+  narrowToAvailability,
+} from '@app/shared/services/borough-availability.service';
 
 declare let window: any;
 
@@ -185,6 +187,13 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   /** Amber note shown when the confirmed borough offers fewer device types than usual. */
   deviceAvailabilityNote: string | null = null;
+
+  /**
+   * Server-resolved availability, keyed by normalised borough name. Empty until it loads, and
+   * empty if the read fails — a borough with no entry is treated as unrestricted, so a failed
+   * request cannot hide every device type from every referrer.
+   */
+  private availabilityByBorough: Record<string, BoroughAvailability> = {};
   pendingCorrelationId: null;
   deviceRequestId: any;
 
@@ -277,6 +286,19 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         this.streamlinedWardLookup = enabled;
       })
     );
+
+    // Which device types each borough offers. Read here for the same reason as the flags: it is
+    // an anonymous request against the same cold-starting endpoint, and the cached failure would
+    // last the whole page load. Arrives well before it is needed — nothing consults it until a
+    // borough has been confirmed, which is several steps away.
+    this.flagsSub.add(
+      this.boroughAvailability.all().subscribe(availability => {
+        this.availabilityByBorough = availability;
+        // The borough may already be confirmed if the visitor moved quickly, so re-apply rather
+        // than assuming this landed first.
+        this.applyDeviceAvailability();
+      })
+    );
   }
 
   private processAdminConfig(config: any) {
@@ -312,14 +334,18 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
    * happen in either order — the config is fetched during the health check, the borough arrives
    * whenever the visitor finishes the location step.
    *
-   * Borough restrictions currently come from a constant (see borough-device-availability.ts);
-   * issue #179 replaces that with real config and this method becomes the one place that has to
-   * change. Note it only ever narrows what the admin config already permits.
+   * Restrictions come from the server, via BoroughAvailabilityService — the same config the
+   * Borough Availability admin tab edits. This is the one read path: the device list and the
+   * amber note below are both derived from it here, so the copy cannot claim one thing while the
+   * list shows another. Note it only ever narrows what the global admin config already permits.
    */
   private applyDeviceAvailability(): void {
-    const available = devicesAvailableIn(this.borough, this.allDeviceOptions);
+    const availability = this.borough
+      ? (this.availabilityByBorough[this.borough.trim().toLowerCase()] ?? null)
+      : null;
+    const available = narrowToAvailability(availability, this.allDeviceOptions);
     this.deviceTypesPublic.templateOptions.options = available;
-    this.deviceAvailabilityNote = deviceRestrictionNote(this.borough, this.allDeviceOptions);
+    this.deviceAvailabilityNote = availabilityNote(this.borough, availability, this.allDeviceOptions);
 
     // The SIM and broadband hub add-ons are separate fields with their own controls, and they
     // feed setDeviceRequestItems() independently of the device-type radio group. Narrowing only
@@ -1004,7 +1030,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     private ngZone: NgZone,
     private route: ActivatedRoute,
     private router: Router,
-    private featureFlags: FeatureFlagService
+    private featureFlags: FeatureFlagService,
+    private boroughAvailability: BoroughAvailabilityService
   ) {
 
   }

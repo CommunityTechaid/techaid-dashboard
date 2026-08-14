@@ -8,8 +8,9 @@
  * both land in 'not-found' -> 'out-of-area', and the copy must never name a borough on that
  * path. A well-formed-but-unknown postcode ('malformed') and a failed table fetch
  * ('unavailable') are two further, distinct dead ends — none of the four states may bleed into
- * another. This spec pins all four, plus the borough-scoped device narrowing from
- * borough-device-availability.ts and the legacy iframe fallback when the flag is off.
+ * another. This spec pins all four, plus the borough-scoped device narrowing (served by
+ * boroughAvailabilityPublic, see BoroughAvailabilityService) and the legacy iframe fallback when
+ * the flag is off.
  *
  * Real postcodes, verified against the shipped table (src/assets/ward-lookup/postcode-index.may-2026.json):
  *   - SE15 5TD -> Peckham ward, Southwark (covered)
@@ -61,6 +62,31 @@ async function installMocks(page: Page, flags: FlagState): Promise<void> {
           featureFlagsPublic: [
             { key: 'tower-hamlets-borough-support', enabled: flags.towerHamlets },
             { key: 'streamlined-ward-lookup', enabled: flags.streamlinedLookup },
+          ],
+        },
+      });
+    }
+    if (raw.includes('boroughAvailabilityPublic')) {
+      // Borough-scoped availability is server config since #179 — it used to be a hardcoded
+      // constant in the bundle, so this stub is what makes the narrowing testable at all. The
+      // shape mirrors the seeded configuration: Lambeth and Southwark offer everything, Tower
+      // Hamlets is the laptops-only pilot.
+      const everything = [
+        'laptops',
+        'desktops',
+        'tablets',
+        'phones',
+        'allInOnes',
+        'commsDevices',
+        'broadbandHubs',
+        'other',
+      ];
+      return json({
+        data: {
+          boroughAvailabilityPublic: [
+            { borough: 'Lambeth', offered: everything, maxPerReferee: 3, unresolvedAuto: [] },
+            { borough: 'Southwark', offered: everything, maxPerReferee: 3, unresolvedAuto: [] },
+            { borough: 'Tower Hamlets', offered: ['laptops'], maxPerReferee: 1, unresolvedAuto: [] },
           ],
         },
       });

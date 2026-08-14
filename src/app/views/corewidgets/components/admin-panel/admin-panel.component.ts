@@ -14,6 +14,7 @@ import { Title } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
 import { warnIfFormInvalid } from '@app/shared/utils';
 import { FeatureFlagsComponent } from '../feature-flags/feature-flags.component';
+import { BoroughAvailabilityComponent } from '../borough-availability/borough-availability.component';
 
 const QUERY_CONFIG = gql`
   query adminConfig {
@@ -51,11 +52,18 @@ const UPDATE_CONFIG = gql`
     selector: 'admin-panel',
     styleUrls: ['admin-panel.component.scss'],
     templateUrl: './admin-panel.component.html',
-    imports: [RouterLink, ReactiveFormsModule, FormlyModule, DatePipe, FeatureFlagsComponent]
+    imports: [
+        RouterLink,
+        ReactiveFormsModule,
+        FormlyModule,
+        DatePipe,
+        FeatureFlagsComponent,
+        BoroughAvailabilityComponent,
+    ]
 })
 export class AdminPanelComponent implements OnInit, OnDestroy {
 
-  activeTab: 'config' | 'flags' = 'config';
+  activeTab: 'config' | 'flags' | 'availability' = 'config';
 
   constructor(
     private modalService: NgbModal,

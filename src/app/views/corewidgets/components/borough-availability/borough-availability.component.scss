@@ -1,0 +1,26 @@
+// The matrix is wide — eight device columns plus the limit — so the cells stay compact and the
+// table scrolls inside its own container rather than pushing the admin panel sideways.
+:host {
+  display: block;
+}
+
+table[data-testid='availability-matrix'] {
+  th,
+  td {
+    vertical-align: middle;
+  }
+
+  // Selected cell, outlined in the brand navy the design specifies.
+  .btn.border {
+    border-color: #12309b !important;
+    border-radius: 6px;
+  }
+
+  .badge {
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
