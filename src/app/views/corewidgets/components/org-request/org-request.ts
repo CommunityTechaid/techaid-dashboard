@@ -219,6 +219,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       if (res && res.data) {
         this.processAdminConfig(res.data['adminConfig']);
         this.loadPageContent();
+        this.loadFeatureFlags();
         this.backendStatus = 'ready';
         this.changeDetectorRef.detectChanges();
       } else {
@@ -239,6 +240,45 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.backendPollTimer = setTimeout(() => this.pollBackend(), this.BACKEND_POLL_INTERVAL_MS);
   }
 
+  /**
+   * Read the feature flags — deliberately only once the backend has answered.
+   *
+   * This API cold-starts, which is the entire reason startBackendHealthCheck() retries fifteen
+   * times over roughly a minute. The flags come from the same GraphQL endpoint but over a plain
+   * HttpClient POST with no retry, and FeatureFlagService caches whatever it gets — including
+   * the empty map it falls back to on error — in a shareReplay(1) for the rest of the page load.
+   *
+   * Reading them during ngOnInit therefore raced the cold start and lost: the flags POST failed,
+   * `{}` was cached, every flag read false, and the visitor got the legacy github.io iframe with
+   * Tower Hamlets rejected as out of area — silently, with both flags switched on. Waiting for
+   * the health check means the backend is known to be up before we ask.
+   */
+  private loadFeatureFlags(): void {
+    this.flagsSub.add(
+      this.featureFlags.supportedBoroughs().subscribe(boroughs => {
+        this.supportedBoroughList = boroughs;
+        this.supportedBoroughSentence = boroughListSentence(boroughs, 'or');
+        this.applySupportedBoroughCopy();
+      })
+    );
+
+    // Which location step to render. Resolved before either step paints rather than with an
+    // async pipe on the template branch — an async pipe would render the falsy branch (the
+    // iframe) for a tick and hit github.io on every load, including when the streamlined step
+    // is the one selected.
+    //
+    // No detectChanges() here on purpose: the flags arrive on an HTTP response inside the
+    // Angular zone and this component uses default change detection, so the repaint is
+    // automatic — whereas a synchronous detectChanges() would throw if the shared
+    // shareReplay(1) cache is already warm (the header reads the same flags) and replays into
+    // this subscribe synchronously.
+    this.flagsSub.add(
+      this.featureFlags.isEnabled(STREAMLINED_WARD_LOOKUP_FLAG).subscribe(enabled => {
+        this.streamlinedWardLookup = enabled;
+      })
+    );
+  }
+
   private processAdminConfig(config: any) {
     const options = [];
     if (config.canPublicRequestLaptop) {
@@ -255,13 +295,13 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     }
     if (config.canPublicRequestSIMCard) {
       options.push({ value: 'commsDevices', label: 'SIM card (6 months, 20GB data, unlimited UK calls)' });
-      this.additionalSimRequestPublic.hideExpression = false;
     }
     if (config.canPublicRequestBroadbandHub) {
       options.push({ value: 'broadbandHubs', label: 'Broadband Hub' });
-      this.additionalBroadbandHubRequestPublic.hideExpression = false;
     }
     this.allDeviceOptions = options;
+    // The two add-on fields are shown by applyDeviceAvailability() rather than here, so that
+    // borough narrowing applies to them too — see the comment there.
     this.applyDeviceAvailability();
   }
 
@@ -277,11 +317,17 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
    * change. Note it only ever narrows what the admin config already permits.
    */
   private applyDeviceAvailability(): void {
-    this.deviceTypesPublic.templateOptions.options = devicesAvailableIn(
-      this.borough,
-      this.allDeviceOptions,
-    );
+    const available = devicesAvailableIn(this.borough, this.allDeviceOptions);
+    this.deviceTypesPublic.templateOptions.options = available;
     this.deviceAvailabilityNote = deviceRestrictionNote(this.borough, this.allDeviceOptions);
+
+    // The SIM and broadband hub add-ons are separate fields with their own controls, and they
+    // feed setDeviceRequestItems() independently of the device-type radio group. Narrowing only
+    // the radio options would leave a Tower Hamlets referrer reading "we can currently offer
+    // laptops only" above a live SIM Card checkbox they could still submit against.
+    const offered = new Set(available.map(option => option.value));
+    this.additionalSimRequestPublic.hideExpression = !offered.has('commsDevices');
+    this.additionalBroadbandHubRequestPublic.hideExpression = !offered.has('broadbandHubs');
   }
 
   private loadPageContent() {
@@ -1046,26 +1092,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     // copy. Read once here: the out-of-area page cannot be reached before the user has
     // interacted with the location step, so this has long resolved by then, and the
     // default already reads correctly if it never does.
-    this.flagsSub = this.featureFlags.supportedBoroughs().subscribe(boroughs => {
-      this.supportedBoroughList = boroughs;
-      this.supportedBoroughSentence = boroughListSentence(boroughs, 'or');
-      this.applySupportedBoroughCopy();
-    });
-
-    // Which location step to render. Resolved here rather than with an async pipe on the
-    // template branch so the answer is known before the step first paints — an async pipe
-    // would render the falsy branch (the iframe) for a tick and hit github.io on every load,
-    // including when the streamlined step is the one selected.
-    this.flagsSub.add(
-      // No detectChanges() here on purpose. The flags arrive on an HTTP response inside the
-      // Angular zone and this component uses default change detection, so the repaint is
-      // automatic — whereas a synchronous detectChanges() would throw if the shared
-      // shareReplay(1) cache is already warm (the header reads the same flags) and replays
-      // into this subscribe before ngOnInit has returned.
-      this.featureFlags.isEnabled(STREAMLINED_WARD_LOOKUP_FLAG).subscribe(enabled => {
-        this.streamlinedWardLookup = enabled;
-      })
-    );
+    this.flagsSub = new Subscription();
 
     const orgRef = this.apollo
       .watchQuery({

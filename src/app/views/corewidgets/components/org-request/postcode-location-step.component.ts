@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Borough, boroughListSentence, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
 import { PostcodeLookup, WardLookupService } from '@app/shared/services/ward-lookup.service';
@@ -148,10 +148,18 @@ type StepState =
           </div>
         }
       </div>
+
+      @if (attribution.length) {
+        <p class="text-muted small mt-4 mb-0" data-testid="postcode-attribution">
+          @for (line of attribution; track line) {
+            {{ line }}<br />
+          }
+        </p>
+      }
     </div>
   `,
 })
-export class PostcodeLocationStepComponent {
+export class PostcodeLocationStepComponent implements OnInit {
   /**
    * The boroughs currently accepted, from FeatureFlagService.supportedBoroughs().
    *
@@ -179,6 +187,18 @@ export class PostcodeLocationStepComponent {
   state: StepState = 'empty';
   result: PostcodeLookup | null = null;
 
+  /** The postcode the in-flight lookup was started for, so a superseded result can be dropped. */
+  private checking: string | null = null;
+
+  /**
+   * Open Government Licence attribution for the ONS/Royal Mail/OS data behind the lookup.
+   *
+   * The licence requires these acknowledgements wherever the derived data is published, and this
+   * public page is where we publish it — so they are rendered, not merely carried in the
+   * artefact. Read from the artefact's own `meta` block so they cannot drift from the data.
+   */
+  attribution: string[] = [];
+
   readonly otherServicesUrl = OTHER_SERVICES_URL;
   readonly distributionsEmail = DISTRIBUTIONS_EMAIL;
 
@@ -204,14 +224,34 @@ export class PostcodeLocationStepComponent {
     }
   }
 
+  /**
+   * Only fetched once the step is on screen — the table is not touched, and its ~22 KB not
+   * downloaded, unless a visitor actually reaches the location step.
+   */
+  ngOnInit(): void {
+    this.wardLookup.meta().subscribe((meta) => {
+      this.attribution = meta?.attribution ?? [];
+      this.changeDetectorRef.markForCheck();
+    });
+  }
+
   check(): void {
     const entered = this.postcode.trim();
     if (!entered || this.state === 'checking') return;
 
     this.state = 'checking';
     this.result = null;
+    this.checking = entered;
 
     this.wardLookup.lookup(entered).subscribe((result) => {
+      // Drop a result the user has already moved on from. The input stays editable while the
+      // lookup runs (design 1b), and the first lookup waits on a 63 KB fetch — long enough to
+      // type a different postcode. Without this guard, editing SE1 1AA to E1 6AN mid-flight
+      // would render "Southwark" against an input reading E1 6AN, and "That's right" would
+      // confirm the borough the user was no longer asking about.
+      if (this.checking !== entered) return;
+      this.checking = null;
+
       this.result = result;
       this.state = this.stateFor(result);
       // The lookup resolves outside Angular's view check on a cached table, and this component
@@ -245,7 +285,10 @@ export class PostcodeLocationStepComponent {
   }
 
   confirm(): void {
-    if (this.result?.status !== 'resolved') return;
-    this.confirmed.emit({ borough: this.result.borough.name, ward: this.result.ward });
+    // Gated on `covered`, not merely on the result being resolved: a resolved postcode in an
+    // unsupported borough must not be confirmable even if this is called outside the template.
+    const resolved = this.covered;
+    if (!resolved) return;
+    this.confirmed.emit({ borough: resolved.borough.name, ward: resolved.ward });
   }
 }

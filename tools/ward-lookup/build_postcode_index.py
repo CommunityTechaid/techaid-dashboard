@@ -22,11 +22,11 @@ Usage
 -----
     python tools/ward-lookup/build_postcode_index.py
 
-    # pin a specific ONSPD edition / ward vintage instead of the configured default
-    python tools/ward-lookup/build_postcode_index.py --onspd "February 2026"
-
     # write somewhere else, e.g. to diff against the committed artefact
     python tools/ward-lookup/build_postcode_index.py --out /tmp/index.json
+
+To move to a different ONSPD edition, edit ONSPD_SERVICE / WARD_SERVICE below — the two have to
+stay vintage-aligned, so they are deliberately not command-line options.
 
 Run `--help` for the rest. Requires only the standard library.
 
@@ -335,7 +335,7 @@ def build_index(postcode_rows: list[dict], ward_rows: list[dict]) -> dict:
     }, skipped, unknown_wards
 
 
-def verify(index: dict, expected_postcodes: int) -> None:
+def verify(index: dict, expected_postcodes: int, skipped: int = 0) -> None:
     """Sanity-check the artefact before it is written.
 
     These are cheap assertions that would each have caught a real class of silent corruption:
@@ -343,10 +343,22 @@ def verify(index: dict, expected_postcodes: int) -> None:
     misaligns the inward strings.
     """
     meta = index["meta"]
-    if meta["postcodeCount"] != expected_postcodes:
+    # Every row the service reported must be accounted for: packed, or deliberately skipped as
+    # malformed. Comparing against the raw count alone would make any skipped row look like a
+    # paging bug — and, before this accounted for them, made the "skipped N malformed" note
+    # unreachable because the build died immediately after printing it.
+    if meta["postcodeCount"] + skipped != expected_postcodes:
         raise BuildError(
-            f"packed {meta['postcodeCount']:,} postcodes but the service reported "
-            f"{expected_postcodes:,} — paging or de-duplication is wrong"
+            f"packed {meta['postcodeCount']:,} postcodes and skipped {skipped:,}, but the "
+            f"service reported {expected_postcodes:,} — paging or de-duplication is wrong"
+        )
+
+    # A handful of malformed rows is survivable; a flood means the postcode column has moved or
+    # changed format, which would quietly produce a table full of holes.
+    if skipped and skipped > max(10, expected_postcodes // 1000):
+        raise BuildError(
+            f"{skipped:,} of {expected_postcodes:,} rows were malformed — that is too many to "
+            f"be data noise. Check that {PC_FIELD!r} is still the postcode column."
         )
 
     for buckets in index["postcodes"].values():
@@ -436,7 +448,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"apart — align ONSPD_SERVICE and WARD_SERVICE."
             )
 
-        verify(index, expected)
+        verify(index, expected, len(skipped))
 
         out.parent.mkdir(parents=True, exist_ok=True)
         separators = None if args.indent else (",", ":")
