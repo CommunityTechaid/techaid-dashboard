@@ -14,6 +14,24 @@ export const DEVICE_TYPES: DeviceType[] = [
   { value: 'OTHER', label: 'Other' },
 ];
 
+/**
+ * The device types the public request form can actually offer.
+ *
+ * A type only reaches a referrer if Application Configuration has a global switch for it
+ * (`canPublicRequestLaptop` and friends). There are six of those, and `allInOnes` and `other` are
+ * not among them — org-request.ts never puts either into the public device list, whatever else
+ * says otherwise. Showing them in the borough matrix therefore offered an admin two controls that
+ * silently did nothing.
+ *
+ * Deliberately NOT a trimmed DEVICE_TYPES: that list still needs all eight, because the admin
+ * request-list filters match historical records and requests were raised for all-in-ones and
+ * "other" long before this matrix existed. Same reasoning as CORE_BOROUGHS vs ALL_BOROUGHS in
+ * boroughs.ts — what we offer today and what we have to be able to display are different questions.
+ */
+export const OFFERABLE_DEVICE_TYPES: DeviceType[] = DEVICE_TYPES.filter(
+  (type) => !['ALLINONES', 'OTHER'].includes(type.value),
+);
+
 export const DEVICE_TYPE_LOOKUP: Record<string, string> = {
   'LAPTOPS': 'laptops',
   'PHONES': 'phones',
