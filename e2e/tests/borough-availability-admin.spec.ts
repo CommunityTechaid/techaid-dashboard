@@ -57,6 +57,21 @@ function seedGroups() {
   ];
 }
 
+/**
+ * Everything offered service-wide. The default because the borough matrix is only meaningful
+ * below a permissive global row — with a switch off, its whole column is disabled by design.
+ */
+const GLOBALS_ALL_ON = {
+  id: '1',
+  canPublicRequestLaptop: true,
+  canPublicRequestPhone: true,
+  canPublicRequestTablet: true,
+  canPublicRequestDesktop: true,
+  canPublicRequestSIMCard: true,
+  canPublicRequestBroadbandHub: true,
+  updatedAt: '2026-08-01T10:00:00Z',
+};
+
 async function fulfillJson(route: Route, body: unknown): Promise<void> {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
 }
@@ -69,6 +84,8 @@ interface MockOpts {
   /** When set, BoroughAvailabilityAdmin replies with this GraphQL error instead of data. */
   loadError?: string;
   organisations?: { id: string; name: string }[];
+  /** The global (service-wide) offer. Defaults to everything on. */
+  adminConfig?: Record<string, unknown> | null;
 }
 
 async function installMocks(page: Page, opts: MockOpts = {}): Promise<void> {
@@ -91,7 +108,13 @@ async function installMocks(page: Page, opts: MockOpts = {}): Promise<void> {
       if (opts.loadError) {
         return fulfillJson(route, { errors: [{ message: opts.loadError }] });
       }
-      return fulfillJson(route, { data: { boroughGroups: groups, referrerLimitExceptions: exceptions } });
+      return fulfillJson(route, {
+        data: {
+          boroughGroups: groups,
+          referrerLimitExceptions: exceptions,
+          adminConfig: opts.adminConfig ?? GLOBALS_ALL_ON,
+        },
+      });
     }
     if (body.includes('featureFlagsPublic')) {
       return fulfillJson(route, { data: { featureFlagsPublic: [] } });
@@ -120,10 +143,10 @@ async function installMocks(page: Page, opts: MockOpts = {}): Promise<void> {
   });
 }
 
-/** Opens the Admin Panel and switches to the Borough Availability tab. */
+/** Opens the Admin Panel and switches to the Device Availability tab. */
 async function openAvailabilityTab(page: Page): Promise<void> {
   await page.goto(ADMIN_PANEL_PATH);
-  await page.getByRole('link', { name: 'Borough Availability' }).click();
+  await page.getByRole('link', { name: 'Device Availability' }).click();
   await expect(page.locator('[data-testid="availability-matrix"]')).toBeVisible({ timeout: 15_000 });
 }
 
@@ -237,7 +260,7 @@ test.describe('borough availability admin @mocked', () => {
     const phonesEntry = group2.availability.find((a: any) => a.deviceType === 'phones');
     expect(phonesEntry.mode).toBe('ON');
 
-    await expect(page.locator('#toast-container')).toContainText('Borough availability saved');
+    await expect(page.locator('#toast-container')).toContainText('Availability saved');
   });
 
   test('exceptions table: add, remove, and blocked save when incomplete', async ({ page }) => {
@@ -265,7 +288,7 @@ test.describe('borough availability admin @mocked', () => {
     test.setTimeout(60_000);
     await installMocks(page, { loadError: 'boom' });
     await page.goto(ADMIN_PANEL_PATH);
-    await page.getByRole('link', { name: 'Borough Availability' }).click();
+    await page.getByRole('link', { name: 'Device Availability' }).click();
 
     await expect(page.locator('[data-testid="availability-load-error"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-testid="availability-matrix"]')).toHaveCount(0);
@@ -276,7 +299,7 @@ test.describe('borough availability admin @mocked', () => {
     const capturedSaves: string[] = [];
     await installMocks(page, { loadError: 'boom', capturedSaves });
     await page.goto(ADMIN_PANEL_PATH);
-    await page.getByRole('link', { name: 'Borough Availability' }).click();
+    await page.getByRole('link', { name: 'Device Availability' }).click();
     await expect(page.locator('[data-testid="availability-load-error"]')).toBeVisible({ timeout: 15_000 });
 
     // The regression this guards: a failed load left groups/exceptions empty while `pristine`
@@ -291,6 +314,69 @@ test.describe('borough availability admin @mocked', () => {
     // the button must still not be able to send an empty configuration.
     await page.locator('[data-testid="save-availability"]').dispatchEvent('click');
     await page.waitForTimeout(500);
+    expect(capturedSaves).toHaveLength(0);
+  });
+});
+
+/**
+ * The global row, absorbed from the old Application Configuration tab.
+ *
+ * It exists because the relationship was invisible while the two lived on separate tabs: the six
+ * `canPublicRequest*` switches are the ceiling for the whole matrix, so a device switched off
+ * globally cannot be offered by any borough — and an admin who switched a borough on regardless
+ * saw a successful save and no change on the request form, with nothing to explain why.
+ */
+test.describe("device availability global row @mocked", () => {
+  test.beforeEach(async ({ page }) => {
+    await authenticateWithPermissions(page, ["app:admin"]);
+  });
+
+  test("a globally-off device disables that column for every borough", async ({ page }) => {
+    test.setTimeout(60_000);
+    await installMocks(page, { adminConfig: { ...GLOBALS_ALL_ON, canPublicRequestPhone: false } });
+    await openAvailabilityTab(page);
+
+    // Disabled, not hidden — the borough setting is still real, just outranked.
+    await expect(cell(page, "1", "phones")).toBeDisabled();
+    await expect(cell(page, "2", "phones")).toBeDisabled();
+    await expect(cell(page, "1", "phones")).toHaveAttribute("aria-label", /switched off for all boroughs/);
+
+    // A column that IS on globally stays editable, so this is the switch talking and not a
+    // wholesale lockout.
+    await expect(cell(page, "1", "laptops")).toBeEnabled();
+  });
+
+  test("toggling a global switch stages a change and sends updateAdminConfig on save", async ({ page }) => {
+    test.setTimeout(60_000);
+    const capturedSaves: string[] = [];
+    let globalUpdate: string | null = null;
+
+    await installMocks(page, { capturedSaves });
+    // Registered AFTER installMocks on purpose: Playwright matches routes in reverse registration
+    // order, so the last one wins and everything it does not claim falls back to the general mock.
+    await page.route("**/graphql", async (route) => {
+      const body = route.request().postData() ?? "";
+      if (body.includes("UpdateAdminConfig")) {
+        globalUpdate = body;
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ data: { updateAdminConfig: GLOBALS_ALL_ON } }),
+        });
+      }
+      return route.fallback();
+    });
+    await openAvailabilityTab(page);
+
+    await page.locator("[data-testid=\"global-cell-tablets\"]").click();
+    await expect(page.locator("[data-testid=\"unsaved-count\"]")).toContainText("1 unsaved change");
+
+    await page.locator("[data-testid=\"save-availability\"]").click();
+    await expect(page.locator("#toast-container")).toContainText("Availability saved");
+
+    expect(globalUpdate).toContain("canPublicRequestTablet");
+    // The matrix itself did not change, so the borough half must not have been sent — the two
+    // records are saved independently to keep the ordinary save a single call.
     expect(capturedSaves).toHaveLength(0);
   });
 });

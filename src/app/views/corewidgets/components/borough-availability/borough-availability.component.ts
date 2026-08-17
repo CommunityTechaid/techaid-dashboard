@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, Subscription, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { Subject, Subscription, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 import { BoroughAvailabilityService } from '@app/shared/services/borough-availability.service';
 import { OFFERABLE_DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils/device-types';
 
@@ -28,8 +28,54 @@ const QUERY = gql`
       boroughGroupId
       maxPerReferee
     }
+    adminConfig {
+      id
+      canPublicRequestLaptop
+      canPublicRequestPhone
+      canPublicRequestTablet
+      canPublicRequestDesktop
+      canPublicRequestSIMCard
+      canPublicRequestBroadbandHub
+      updatedAt
+    }
   }
 `;
+
+const UPDATE_GLOBAL = gql`
+  mutation UpdateAdminConfig($data: UpdateAdminConfigInput!) {
+    updateAdminConfig(data: $data) {
+      id
+      canPublicRequestLaptop
+      canPublicRequestPhone
+      canPublicRequestTablet
+      canPublicRequestDesktop
+      canPublicRequestSIMCard
+      canPublicRequestBroadbandHub
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * The global switch backing each device-type column.
+ *
+ * These are the six `canPublicRequest*` booleans that used to live on their own Application
+ * Configuration tab. They are the ceiling for the whole grid: org-request.ts builds the public
+ * device list from them and only then narrows it by borough, so a borough can remove from the
+ * offer but never add to it. Keeping the two side by side is the point of merging the tabs — the
+ * precedence used to be invisible, and an admin could switch a borough on and see nothing happen.
+ *
+ * Every offerable device type must appear here. A type with no global switch cannot reach a
+ * referrer at all, which is why allInOnes and other were dropped from the grid.
+ */
+const GLOBAL_KEY_BY_DEVICE_TYPE: Record<string, string> = {
+  laptops: 'canPublicRequestLaptop',
+  phones: 'canPublicRequestPhone',
+  tablets: 'canPublicRequestTablet',
+  desktops: 'canPublicRequestDesktop',
+  commsDevices: 'canPublicRequestSIMCard',
+  broadbandHubs: 'canPublicRequestBroadbandHub',
+};
 
 const SAVE = gql`
   mutation SaveBoroughAvailability($data: SaveBoroughAvailabilityInput!) {
@@ -131,6 +177,15 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   exceptions: ExceptionRow[] = [];
   lastUpdated: string | null = null;
 
+  /**
+   * The global offer, keyed by device type rather than by its `canPublicRequest*` name, so the
+   * grid can look it up with the same key it uses for every borough cell.
+   */
+  globalOffered: Record<string, boolean> = {};
+
+  /** Kept so the update mutation can be addressed to the existing row rather than creating one. */
+  private adminConfigId: string | null = null;
+
   loading = true;
   saving = false;
   loadError = false;
@@ -221,8 +276,21 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
             boroughGroupId: String(row.boroughGroupId),
             maxPerReferee: row.maxPerReferee,
           }));
+          const config = (data as any)?.adminConfig ?? null;
+          this.adminConfigId = config?.id != null ? String(config.id) : null;
+          this.globalOffered = {};
+          this.columns.forEach((column) => {
+            const key = GLOBAL_KEY_BY_DEVICE_TYPE[column.key];
+            // Absent config means nothing has been configured; treat as not offered rather than
+            // assuming a permissive default we never read.
+            this.globalOffered[column.key] = key ? Boolean(config?.[key]) : false;
+          });
+
           this.lastUpdated =
-            this.groups.map((g) => g.updatedAt).filter(Boolean).sort().pop() ?? null;
+            [...this.groups.map((g) => g.updatedAt), config?.updatedAt]
+              .filter(Boolean)
+              .sort()
+              .pop() ?? null;
           this.pristine = this.snapshot();
           this.loaded = true;
           this.loading = false;
@@ -247,7 +315,37 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   }
 
   private snapshot(): string {
-    return JSON.stringify({ groups: this.groups, exceptions: this.exceptions });
+    return JSON.stringify({
+      global: this.globalOffered,
+      groups: this.groups,
+      exceptions: this.exceptions,
+    });
+  }
+
+  /**
+   * Whether this device type is switched off for the whole service.
+   *
+   * Borough cells for such a column are disabled rather than hidden: an admin needs to see that
+   * Tower Hamlets *would* offer phones if phones were on globally. Hiding the cell would make the
+   * borough look misconfigured when the cause is one row above it.
+   */
+  isGloballyOff(key: string): boolean {
+    return !this.globalOffered[key];
+  }
+
+  toggleGlobal(key: string): void {
+    if (this.saving || !this.loaded) return;
+    this.globalOffered[key] = !this.globalOffered[key];
+    // A column that has just been switched off keeps its borough values. They are inert while the
+    // global switch is off, and discarding them would lose the borough configuration on a toggle
+    // that may well be temporary.
+    if (this.editing && this.isGloballyOff(this.editing.key)) this.editing = null;
+  }
+
+  private globalChanged(): boolean {
+    if (!this.pristine) return false;
+    const before = (JSON.parse(this.pristine) as { global?: Record<string, boolean> }).global ?? {};
+    return this.columns.some((column) => Boolean(before[column.key]) !== Boolean(this.globalOffered[column.key]));
   }
 
   /**
@@ -271,8 +369,17 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
    */
   get unsavedCount(): number {
     if (!this.loaded || !this.pristine) return 0;
-    const before = JSON.parse(this.pristine) as { groups: GroupRow[]; exceptions: ExceptionRow[] };
+    const before = JSON.parse(this.pristine) as {
+      global?: Record<string, boolean>;
+      groups: GroupRow[];
+      exceptions: ExceptionRow[];
+    };
     let count = 0;
+
+    const globalBefore = before.global ?? {};
+    this.columns.forEach((column) => {
+      if (Boolean(globalBefore[column.key]) !== Boolean(this.globalOffered[column.key])) count += 1;
+    });
 
     const byId = new Map(before.groups.map((g) => [g.id, g]));
     this.groups.forEach((group) => {
@@ -425,7 +532,68 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     }
 
     this.saving = true;
-    this.apollo
+
+    // Two mutations behind one button, because the global offer and the borough matrix are
+    // separate records on the server. Each is sent only if that half actually changed, which is
+    // what keeps the usual save a single call — an admin normally touches one or the other.
+    //
+    // The residual risk is a partial save when both changed and the second call fails. It is not
+    // hidden: the error names which half landed, and load() then re-reads the server so the grid
+    // shows what is really stored rather than what was attempted. Making this atomic would need a
+    // combined server-side mutation, which is not worth it for a screen two people use.
+    const globalFirst = this.globalChanged()
+      ? this.apollo.mutate({
+          mutation: UPDATE_GLOBAL,
+          variables: {
+            data: this.columns.reduce<Record<string, boolean>>((data, column) => {
+              const key = GLOBAL_KEY_BY_DEVICE_TYPE[column.key];
+              if (key) data[key] = Boolean(this.globalOffered[column.key]);
+              return data;
+            }, {}),
+          },
+        })
+      : of(null);
+
+    globalFirst
+      .pipe(
+        catchError((err) => {
+          throw new Error(`The global device settings could not be saved: ${err?.message ?? err}`);
+        }),
+        switchMap(() => this.saveMatrix()),
+      )
+      .subscribe({
+        next: () => {
+          this.saving = false;
+          this.editing = null;
+          // The public form caches this per page load, so drop the cache here too — otherwise an
+          // admin checking their own change on the request form would keep seeing the old config.
+          this.availability.reload();
+          this.toastr.success('Availability saved');
+          this.load();
+        },
+        error: (err) => {
+          this.saving = false;
+          this.toastr.error(err?.message ?? 'Could not save the configuration');
+          // Re-read so the grid reflects whatever actually landed, including a partial save.
+          this.load();
+        },
+      });
+  }
+
+  /** The borough half of the save. Sent only when the matrix itself changed. */
+  private saveMatrix() {
+    const matrixChanged = (() => {
+      if (!this.pristine) return true;
+      const before = JSON.parse(this.pristine) as { groups: GroupRow[]; exceptions: ExceptionRow[] };
+      return (
+        JSON.stringify(before.groups) !== JSON.stringify(this.groups) ||
+        JSON.stringify(before.exceptions) !== JSON.stringify(this.exceptions)
+      );
+    })();
+
+    if (!matrixChanged) return of(null);
+
+    return this.apollo
       .mutate<{ saveBoroughAvailability: any[] }>({
         mutation: SAVE,
         variables: {
@@ -449,23 +617,17 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
           },
         },
       })
-      .subscribe({
-        next: () => {
-          this.saving = false;
-          this.editing = null;
-          // The public form caches this per page load, so drop the cache here too — otherwise an
-          // admin checking their own change on the request form would keep seeing the old config.
-          this.availability.reload();
-          this.toastr.success('Borough availability saved');
-          this.load();
-        },
-        error: (err) => {
-          this.saving = false;
+      .pipe(
+        catchError((err) => {
           // Surface the server's message: its validation errors name the offending borough or
-          // device type, which is the only thing that tells an admin what to change.
-          this.toastr.error(err?.message ?? 'Could not save the configuration');
-        },
-      });
+          // device type, which is the only thing that tells an admin what to change. Say whether
+          // the global half already landed, so a partial save is not a mystery.
+          const prefix = this.globalChanged()
+            ? 'The global device settings were saved, but the borough matrix was not: '
+            : '';
+          throw new Error(`${prefix}${err?.message ?? err}`);
+        }),
+      );
   }
 
   discard(): void {

@@ -115,12 +115,12 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
   'borough-availability-rules': {
     label: 'Borough Availability Rules',
     description:
-      'Let the Borough Availability tab govern the public request page: which device types each borough ' +
+      'Let the Device Availability tab govern the public request page: which device types each borough ' +
       'offers, and how many open requests one referrer may hold there. On: the configuration decides ' +
       'both. Off: every borough offers whatever the global device settings already allow, and the limit ' +
       'is a flat 3 open requests per referrer counted across all boroughs together.',
     offMeaning:
-      'Off = the admin tab still works and the matrix can still be edited, including Tower Hamlets — ' +
+      'Off = the Device Availability tab still works and the matrix can still be edited, including Tower Hamlets — ' +
       'none of it reaches the public page. Editing borough configuration while this is off changes ' +
       'nothing a referrer sees, which is deliberate: it lets the configuration be built and checked ' +
       'before anyone is affected by it.',
