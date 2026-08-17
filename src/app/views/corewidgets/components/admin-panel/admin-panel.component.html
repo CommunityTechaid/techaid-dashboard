@@ -2,9 +2,6 @@
 <div class="row">
   <!-- Content Column -->
   <div class="col-lg-12 mb-4">
-    @if (!model?.id) {
-      <div class="overlay"></div>
-    }
     <!-- Project Card Example -->
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
@@ -15,61 +12,31 @@
 
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
-        <a class="nav-link" [class.active]="activeTab === 'config'" href="#"
-           (click)="selectTab('config'); $event.preventDefault()">Application Configuration</a>
+        <a class="nav-link" [class.active]="activeTab === 'availability'" href="#"
+           (click)="selectTab('availability'); $event.preventDefault()">Device Availability</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'flags'" href="#"
            (click)="selectTab('flags'); $event.preventDefault()">Feature Flags</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" [class.active]="activeTab === 'availability'" href="#"
-           (click)="selectTab('availability'); $event.preventDefault()">Borough Availability</a>
-      </li>
     </ul>
 
-    <!-- Application Configuration tab -->
-    <div [hidden]="activeTab !== 'config'">
-    <div class="card shadow mb-4 mt-1">
-      <div class="card-header py-3">
-        <div class="d-flex justify-content-between">
-          <div>
-            <h6 class="m-0 font-weight-bold text-primary">
-              Application Configuration Settings (Last updated: {{ model?.updatedAt | date:'medium' }})
-            </h6>
-          </div>
-          <div>
-            <button (click)="updateConfig(form.value)"
-              type="submit" class="btn btn-sm"
-              [class.btn-primary]="!form.invalid" [class.btn-warning]="form.invalid">
-              <small>Save Configuration</small>
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        <form [formGroup]="form">
-          <formly-form [options]="options" (ngSubmit)="updateConfig(form.value)"
-            [form]="form" [model]="model" [fields]="fields">
-          </formly-form>
-        </form>
+    <!-- Device Availability tab. Rendered with @if rather than [hidden] like its neighbour:
+         it holds staged, unsaved edits, and [hidden] would keep a half-edited matrix alive
+         (and its "3 unsaved changes" counter running) behind whichever tab the admin moved to.
 
-
-      </div>
-    </div>
-    </div><!-- /Application Configuration tab -->
+         This absorbed the old Application Configuration tab. Those six switches were the ceiling
+         for everything in the matrix — a device off globally could not be offered by any borough —
+         but on a separate tab that relationship was invisible, and switching a borough on while
+         the global switch was off did nothing with no explanation. They are now the top row. -->
+    @if (activeTab === 'availability') {
+      <app-borough-availability></app-borough-availability>
+    }
 
     <!-- Feature Flags tab -->
     <div [hidden]="activeTab !== 'flags'">
       <app-feature-flags></app-feature-flags>
     </div>
-
-    <!-- Borough Availability tab. Rendered with @if rather than [hidden] like its neighbours:
-         it holds staged, unsaved edits, and [hidden] would keep a half-edited matrix alive
-         (and its "3 unsaved changes" counter running) behind whichever tab the admin moved to. -->
-    @if (activeTab === 'availability') {
-      <app-borough-availability></app-borough-availability>
-    }
   </div>
 </div>
 

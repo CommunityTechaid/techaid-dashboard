@@ -1,7 +1,1 @@
-// Generated at build time — see build/build-pre.js and the "Generate version.ts"
-// step in deploy-dev.yml / deploy-prod.yml. This file is in .gitignore; the
-// checked-in copy exists only so a fresh clone compiles, and deliberately
-// carries a placeholder rather than a real semver. If a running app reports
-// 0.0.0-local, it was built without the stamping step — do not read it as a
-// release. Never commit a stamped version of this file.
-export const APP_VERSION = {version: '0.0.0-local', build: 'local', date: '1970-01-01T00:00:00.000Z', commit: 'local'};
+export const APP_VERSION = {version: '1.3.6', build: '26.08.17-1557', date: '2026-08-17T14:57:52.081Z', commit: 'd5b835f'};

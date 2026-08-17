@@ -59,6 +59,37 @@
             </tr>
           </thead>
           <tbody>
+            <!-- The global offer, above the boroughs because it outranks them: org-request.ts
+                 builds the public device list from these switches and only then narrows it by
+                 borough. A column off here is off everywhere, whatever the rows below say. This
+                 row is the old Application Configuration tab, moved next to the thing it governs
+                 so the precedence is visible instead of having to be known. -->
+            <tr class="table-secondary" data-testid="global-row">
+              <th scope="row" class="fw-normal">
+                <div class="font-weight-bold"><i class="fas fa-globe"></i> All boroughs</div>
+                <div class="text-muted small">Service-wide. Switching a device off here removes it everywhere.</div>
+              </th>
+
+              @for (column of columns; track column.key) {
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 border-0 bg-transparent"
+                    [attr.data-testid]="'global-cell-' + column.key"
+                    [disabled]="saving"
+                    [attr.aria-label]="column.label + ' service-wide: ' + (globalOffered[column.key] ? 'offered' : 'not offered')"
+                    (click)="toggleGlobal(column.key)"
+                  >
+                    <span class="badge rounded-pill" [class]="globalOffered[column.key] ? 'bg-success' : 'bg-secondary'">
+                      <i [class]="globalOffered[column.key] ? 'fas fa-check' : 'fas fa-times'"></i>
+                    </span>
+                  </button>
+                </td>
+              }
+
+              <td class="text-center text-muted small">—</td>
+            </tr>
+
             @for (group of groups; track group.id) {
               <tr [attr.data-testid]="'group-row-' + group.id">
                 <th scope="row" class="fw-normal">
@@ -75,13 +106,23 @@
                 </th>
 
                 @for (column of columns; track column.key) {
-                  <td class="text-center">
+                  <!-- Disabled, not hidden, when the global switch is off: the borough setting is
+                       still real and still stored, it is simply outranked. Hiding it would make
+                       the borough look misconfigured when the cause is the row above. -->
+                  <td
+                    class="text-center"
+                    [class.opacity-50]="isGloballyOff(column.key)"
+                    [attr.title]="isGloballyOff(column.key)
+                      ? column.label + ' is switched off for all boroughs, so this setting has no effect until it is switched back on above.'
+                      : null"
+                  >
                     <button
                       type="button"
                       class="btn btn-sm p-1 border-0 bg-transparent"
                       [attr.data-testid]="'cell-' + group.id + '-' + column.key"
-                      [disabled]="saving"
-                      [attr.aria-label]="column.label + ' in ' + group.name + ': ' + modeOf(group, column.key)"
+                      [disabled]="saving || isGloballyOff(column.key)"
+                      [attr.aria-label]="column.label + ' in ' + group.name + ': ' + modeOf(group, column.key)
+                        + (isGloballyOff(column.key) ? ' (disabled: switched off for all boroughs)' : '')"
                       [class.border]="isEditing(group, column)"
                       (click)="toggleEditor(group, column)"
                     >
