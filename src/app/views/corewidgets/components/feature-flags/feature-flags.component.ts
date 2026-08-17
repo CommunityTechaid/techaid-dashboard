@@ -112,6 +112,19 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
       'Off = Lambeth and Southwark only. This flag only has an effect while Streamlined Ward Lookup ' +
       'is on — the older lookup has no Tower Hamlets data and rejects those postcodes either way.',
   },
+  'borough-availability-rules': {
+    label: 'Borough Availability Rules',
+    description:
+      'Let the Borough Availability tab govern the public request page: which device types each borough ' +
+      'offers, and how many open requests one referrer may hold there. On: the configuration decides ' +
+      'both. Off: every borough offers whatever the global device settings already allow, and the limit ' +
+      'is a flat 3 open requests per referrer counted across all boroughs together.',
+    offMeaning:
+      'Off = the admin tab still works and the matrix can still be edited, including Tower Hamlets — ' +
+      'none of it reaches the public page. Editing borough configuration while this is off changes ' +
+      'nothing a referrer sees, which is deliberate: it lets the configuration be built and checked ' +
+      'before anyone is affected by it.',
+  },
 };
 
 // Shown instead of a blank line for a flag with no entry above — a flag added server-side
