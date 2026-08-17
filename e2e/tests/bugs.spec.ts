@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { advancePastLocationStep } from '../helpers/location-step';
 
 /**
  * Regression tests for the post-upgrade bug batch.
@@ -1344,16 +1345,13 @@ test.describe('ORG-B2: Find Email with unknown email shows not-found prompt', ()
     // Wait for backend ready state (spinner gone)
     await page.waitForFunction(() => !document.querySelector('.spinner-border'), null, { timeout: 30_000 });
 
-    // Bypass the ward lookup iframe
-    await page.evaluate(() => {
-      window.dispatchEvent(new MessageEvent('message', {
-        origin: 'https://communitytechaid.github.io',
-        data: { borough: 'Lambeth', ward: 'Brixton Hill' },
-      }));
-    });
+    // Get past the location step, whichever one is live. This test is about the Find Email
+    // prompt; which lookup the streamlined-ward-lookup flag selects is incidental to it, and
+    // hard-coding either one breaks the moment that flag is flipped. See the helper.
+    await advancePastLocationStep(page);
 
-    // After the ward bypass, the form either shows the Lambeth/Southwark radio question
-    // or goes straight to the org autocomplete — wait for whichever appears.
+    // The form then either shows the Lambeth/Southwark radio question or goes straight to the
+    // org autocomplete — wait for whichever appears.
     await page.locator('input[type=radio][value="true"], ng-select input').first()
       .waitFor({ state: 'visible', timeout: 10_000 });
 
