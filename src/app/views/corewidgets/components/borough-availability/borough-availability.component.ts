@@ -5,7 +5,7 @@ import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, Subscription, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { BoroughAvailabilityService } from '@app/shared/services/borough-availability.service';
-import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils/device-types';
+import { OFFERABLE_DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils/device-types';
 
 const QUERY = gql`
   query BoroughAvailabilityAdmin {
@@ -62,8 +62,13 @@ const SEARCH_ORGANISATIONS = gql`
 export type Mode = 'ON' | 'OFF' | 'AUTO';
 
 /**
- * A device-type column. Derived from the shared DEVICE_TYPES list rather than re-listed here —
- * the handoff is explicit that this screen must not fork a second copy of the device types.
+ * A device-type column. Derived from the shared OFFERABLE_DEVICE_TYPES list rather than re-listed
+ * here — this screen must not fork a second copy of the device types.
+ *
+ * OFFERABLE_DEVICE_TYPES, not DEVICE_TYPES: a type only reaches a referrer if Application
+ * Configuration has a global switch for it, and `allInOnes` and `other` have none. Columns for
+ * them were controls that silently did nothing — an admin could set Tower Hamlets to offer
+ * all-in-ones and no referrer would ever see one, with nothing on screen explaining why.
  *
  * The icons are the exception: they live on the device request subpanel and nowhere shareable, so
  * they are mapped here by server key. If a device type is ever added, the column appears
@@ -116,7 +121,7 @@ export interface ExceptionRow {
   styleUrl: './borough-availability.component.scss',
 })
 export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
-  readonly columns: DeviceColumn[] = DEVICE_TYPES.map((type) => ({
+  readonly columns: DeviceColumn[] = OFFERABLE_DEVICE_TYPES.map((type) => ({
     key: DEVICE_TYPE_LOOKUP[type.value],
     label: type.label,
     icon: ICONS[DEVICE_TYPE_LOOKUP[type.value]] ?? 'fas fa-box',
