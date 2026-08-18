@@ -32,6 +32,8 @@ import { DatePipe } from '@angular/common';
 const QUERY_ENTITY = gql`
   query getAuditTrail($id: Long!) {
     kitAudits(where: $id) {
+      changedNothingAudited
+      siblingKitsInRevision
       revision {
         id
         timestamp
@@ -86,6 +88,14 @@ export class KitAuditComponent implements OnInit, OnDestroy {
   selections = {};
   selected = [];
   entities = [];
+  /**
+   * Every revision the server returned, before collateral is filtered out. `entities` is what the
+   * table renders; this is what the count in the notice is measured against, and what comes back
+   * when the reader asks to see everything.
+   */
+  allEntities = [];
+  hiddenCollateral = 0;
+  showCollateral = false;
   form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   ages = {
@@ -190,7 +200,8 @@ export class KitAuditComponent implements OnInit, OnDestroy {
               if (!this.total) {
                 this.total = 10;
               }
-              this.entities = data;
+              this.allEntities = data;
+              this.applyCollateralFilter();
 
             }
 
@@ -232,6 +243,33 @@ export class KitAuditComponent implements OnInit, OnDestroy {
     if (this.sub) {
       this.sub.unsubscribe();
     }
+  }
+
+  /**
+   * Hides revisions where a device was rewritten without anything about it changing, because it
+   * was a sibling in someone else's transaction (#148, fixed 2026-08-13). 83,179 such rows exist
+   * in production and they arrived in bursts of up to 2,927, so a device's real history can be
+   * buried under dozens of identical entries.
+   *
+   * BOTH conditions are required. `changedNothingAudited` on its own also matches a genuine edit
+   * to the device's attributes — notes, state, credentials, network — which is @NotAudited and so
+   * has nothing to show in this table either. Those are real work by real people and hiding them
+   * would be a regression; only collateral arrives with siblings.
+   *
+   * Nothing is deleted and nothing is hidden from the server: the notice states the count and the
+   * reader can show them.
+   */
+  applyCollateralFilter() {
+    const collateral = (r: any) => r.changedNothingAudited && r.siblingKitsInRevision > 0;
+    this.hiddenCollateral = this.allEntities.filter(collateral).length;
+    this.entities = this.showCollateral
+      ? this.allEntities
+      : this.allEntities.filter((r) => !collateral(r));
+  }
+
+  toggleCollateral() {
+    this.showCollateral = !this.showCollateral;
+    this.applyCollateralFilter();
   }
 
   select(row?: any) {
