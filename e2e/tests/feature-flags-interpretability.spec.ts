@@ -12,8 +12,12 @@
  * copy fails this spec rather than quietly shipping a blank row.
  *
  * The other assertions pin the meaning-carrying parts that a bare on/off switch cannot
- * convey: that "off" is shadow mode for the two enforcement guards, and that the GDPR job
- * is a compliance control whose off switch is confirmed rather than one-click.
+ * convey: that "off" is shadow mode for the two enforcement guards, and that the two
+ * ward-lookup flags depend on each other.
+ *
+ * The `critical` confirm-before-disabling path lost its only user when gdpr-in-app-cleanup
+ * was removed (techaid-server #175), so the assertion that a critical flag prompts went with
+ * it. What remains is the negative case: an ordinary flag must NOT prompt.
  *
  * @mocked — every GraphQL operation is page.route-stubbed and the Auth0 cache is written
  * directly, so no token is needed.
@@ -23,13 +27,13 @@ import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
 
-/** The five original flags seeded in techaid-server, plus the two for the borough epic. */
+/** The flags seeded in techaid-server. gdpr-in-app-cleanup was removed with the flag itself
+ *  (techaid-server #175) once the GDPR job stopped being switchable. */
 const SERVER_FLAGS = [
   { key: 'delivery-booking', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
   { key: 'update-scanner', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
   { key: 'wipe-cert-enforcement', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
   { key: 'blocking-flag-enforcement', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
-  { key: 'gdpr-in-app-cleanup', enabled: true, updatedAt: '2026-08-12T10:00:00Z' },
   { key: 'tower-hamlets-borough-support', enabled: false, updatedAt: '2026-08-13T10:00:00Z' },
   { key: 'streamlined-ward-lookup', enabled: false, updatedAt: '2026-08-14T10:00:00Z' },
 ];
@@ -101,7 +105,6 @@ test.describe('feature flags interpretability @mocked', () => {
     // Before #174 these three rendered their kebab key as the heading.
     await expect(rowFor(page, 'wipe-cert-enforcement')).toContainText('Require Wipe Certificate Before Allocation');
     await expect(rowFor(page, 'blocking-flag-enforcement')).toContainText('Block Allocation of Flagged Devices');
-    await expect(rowFor(page, 'gdpr-in-app-cleanup')).toContainText('GDPR Retention Cleanup');
     await expect(rowFor(page, 'tower-hamlets-borough-support')).toContainText('Tower Hamlets Borough Support');
     await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('Streamlined Ward Lookup');
   });
@@ -137,29 +140,6 @@ test.describe('feature flags interpretability @mocked', () => {
       await expect(rowFor(page, key)).toContainText('Off does NOT mean unchecked');
       await expect(rowFor(page, key)).toContainText('shadow mode');
     }
-  });
-
-  test('marks the GDPR job as a compliance control and confirms before switching it off', async ({ page }) => {
-    test.setTimeout(60_000);
-    const capturedUpdates: string[] = [];
-    await installMocks(page, { capturedUpdates });
-    await openFlagsTab(page);
-
-    const gdprRow = rowFor(page, 'gdpr-in-app-cleanup');
-    await expect(gdprRow).toContainText('Compliance control');
-    await expect(gdprRow).toContainText('no GDPR retention runs at all');
-
-    // Dismissing the confirmation must leave the flag alone — no mutation at all.
-    page.once('dialog', (dialog) => dialog.dismiss());
-    await gdprRow.locator('input[type="checkbox"]').click();
-    await expect(gdprRow.locator('input[type="checkbox"]')).toBeChecked();
-    expect(capturedUpdates).toHaveLength(0);
-
-    // Accepting it goes through.
-    page.once('dialog', (dialog) => dialog.accept());
-    await gdprRow.locator('input[type="checkbox"]').click();
-    await expect.poll(() => capturedUpdates.length).toBe(1);
-    expect(capturedUpdates[0]).toContain('gdpr-in-app-cleanup');
   });
 
   test('a non-critical flag toggles without a confirmation prompt', async ({ page }) => {
