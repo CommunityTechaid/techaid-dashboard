@@ -27,8 +27,7 @@ interface FlagCopy {
    * What OFF means for THIS flag. Load-bearing: "off" does not mean the same thing
    * across these flags, and a bare on/off switch implies it does. Two of them are
    * enforcement guards where off is shadow mode (still evaluated, still logged, but
-   * allowed), and one is a scheduled compliance job where off means nothing runs at
-   * all. See issue #174.
+   * allowed); the rest genuinely hide or switch a feature.
    */
   offMeaning: string;
   /** Off has consequences beyond hiding a feature — warn, and confirm before disabling. */
@@ -76,18 +75,6 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
     offMeaning:
       'Off does NOT mean unchecked — off is shadow mode: every change is still checked and logged, ' +
       'but allowed through. On rejects it with an error.',
-  },
-  'gdpr-in-app-cleanup': {
-    label: 'GDPR Retention Cleanup (scheduled job)',
-    description:
-      'Run the automatic GDPR data-retention cleanup inside the application — Fridays at 18:00 London, plus ' +
-      'a catch-up on start-up if a run was missed while the service was scaled to zero. It replaced the ' +
-      'database-side pg_cron job at the 2026-08-12 cutover; that job still exists but is disabled, and is ' +
-      'the rollback path.',
-    offMeaning:
-      'Off = no GDPR retention runs at all. This is a compliance control, not a feature switch — ' +
-      'turning it off is a decision, not a toggle.',
-    critical: true,
   },
   'streamlined-ward-lookup': {
     label: 'Streamlined Ward Lookup',
@@ -193,9 +180,11 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
   toggle(row: FlagRow, event: Event): void {
     const input = event.target as HTMLInputElement;
     const next = !row.enabled;
-    // Switching a critical flag OFF stops something that is meant to be running —
-    // gdpr-in-app-cleanup halts GDPR retention entirely. Turning one ON is never the
-    // dangerous direction, so only the off transition is confirmed.
+    // Switching a critical flag OFF stops something that is meant to be running, rather than
+    // merely hiding a feature. Turning one ON is never the dangerous direction, so only the off
+    // transition is confirmed. No flag currently sets `critical` — gdpr-in-app-cleanup was the
+    // one, and it was removed when the GDPR job stopped being switchable (techaid-server #175).
+    // Kept because the next compliance-shaped flag will want it.
     if (row.critical && !next && !window.confirm(`${row.label}\n\n${row.offMeaning}\n\nTurn it off anyway?`)) {
       input.checked = row.enabled;
       return;
