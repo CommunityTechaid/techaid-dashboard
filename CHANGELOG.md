@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.4.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.6...v1.4.0) (2026-08-18)
+
+
+### Features
+
+* **admin:** borough availability tab, and one read path for the availability rule ([#179](https://github.com/CommunityTechaid/techaid-dashboard/issues/179)) ([23364a7](https://github.com/CommunityTechaid/techaid-dashboard/commit/23364a7eba50a6c12a2fd2e9c3a27729c943fb3c))
+* **admin:** make every feature flag interpretable on the admin page ([#174](https://github.com/CommunityTechaid/techaid-dashboard/issues/174)) ([a4da006](https://github.com/CommunityTechaid/techaid-dashboard/commit/a4da006f80d8d613f4ebe40bd5dad70723356c63))
+* **admin:** merge Application Configuration into the availability grid ([#189](https://github.com/CommunityTechaid/techaid-dashboard/issues/189)) ([3d82d8f](https://github.com/CommunityTechaid/techaid-dashboard/commit/3d82d8facfb223013642fb6ee90aab39b2a742b6))
+* **devices:** hide automated rewrites from the device history ([#192](https://github.com/CommunityTechaid/techaid-dashboard/issues/192)) ([17d339d](https://github.com/CommunityTechaid/techaid-dashboard/commit/17d339d8477f1ec5f267a026ce66027185a19b45))
+* **flags:** wire the Tower Hamlets epic flags, and fix the out-of-area page never rendering ([#177](https://github.com/CommunityTechaid/techaid-dashboard/issues/177)) ([#181](https://github.com/CommunityTechaid/techaid-dashboard/issues/181)) ([6240d48](https://github.com/CommunityTechaid/techaid-dashboard/commit/6240d4826db7107da600c92044344260f05c24c0))
+* postcode-first ward lookup in the device request flow ([#178](https://github.com/CommunityTechaid/techaid-dashboard/issues/178)) ([f5f81db](https://github.com/CommunityTechaid/techaid-dashboard/commit/f5f81db8c0d7b14afcc590720df5bf485ff8ebae))
+* **requests:** borough column and filter on the device request list ([#180](https://github.com/CommunityTechaid/techaid-dashboard/issues/180)) ([fd21d4c](https://github.com/CommunityTechaid/techaid-dashboard/commit/fd21d4c5a91aad796f08adb3556f29dc8487cccc))
+
+
+### Bug Fixes
+
+* **admin:** drop all-in-ones and other from the borough matrix ([#188](https://github.com/CommunityTechaid/techaid-dashboard/issues/188)) ([80db50a](https://github.com/CommunityTechaid/techaid-dashboard/commit/80db50aa7572ab4698621c52d3ee83797dabca5b))
+* **e2e:** stop bugs.spec assuming which ward lookup is live ([#187](https://github.com/CommunityTechaid/techaid-dashboard/issues/187)) ([5202619](https://github.com/CommunityTechaid/techaid-dashboard/commit/52026192fc982c3154c8f6dcaaa18eeb93b51e63))
+
 ## [1.3.6](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.5...v1.3.6) (2026-08-13)
 
 
