@@ -13,6 +13,18 @@
         </div>
       </div>
       <div class="card-body">
+        @if (hiddenCollateral > 0) {
+          <div class="alert alert-light border d-flex justify-content-between align-items-center py-2 mb-3">
+            <small class="mb-0">
+              {{ hiddenCollateral }} automated {{ hiddenCollateral === 1 ? 'rewrite' : 'rewrites' }}
+              {{ showCollateral ? 'shown below' : 'hidden' }}
+              &mdash; this device was written alongside others without anything about it changing.
+            </small>
+            <button type="button" class="btn btn-sm btn-link p-0" (click)="toggleCollateral()">
+              {{ showCollateral ? 'Hide them' : 'Show them' }}
+            </button>
+          </div>
+        }
         <div class="w-100">
           <div class="table-responsive">
             <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable [dtOptions]="dtOptions">
