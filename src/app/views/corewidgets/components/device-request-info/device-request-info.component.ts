@@ -12,7 +12,7 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
-import { getKitTypeLabel, warnIfFormInvalid } from '@app/shared/utils';
+import { errorText, getKitTypeLabel, warnIfFormInvalid } from '@app/shared/utils';
 import { environment } from '@env/environment';
 
 import { KitComponent } from '../kit-component/kit-component.component';
@@ -1103,7 +1103,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
           this.assignmentResults.push({ deviceId: kitId, status: 'error', message: 'Device not found' });
         }
       } catch (err) {
-        this.assignmentResults.push({ deviceId: kitId, status: 'error', message: this.extractGraphQLError(err) });
+        this.assignmentResults.push({ deviceId: kitId, status: 'error', message: errorText(err) });
       }
     }
 
@@ -1112,16 +1112,6 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
     }
 
     this.isAssigning = false;
-  }
-
-  private extractGraphQLError(err: any): string {
-    if (err && err.graphQLErrors && err.graphQLErrors.length > 0) {
-      return err.graphQLErrors[0].message;
-    }
-    if (err && err.networkError) {
-      return err.networkError.message || 'Network error';
-    }
-    return err instanceof Error ? err.message : String(err);
   }
 
   generatingPdf = false;

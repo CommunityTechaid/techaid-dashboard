@@ -14,6 +14,7 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { errorText, graphQLErrorMessages, isNetworkError } from '@app/shared/utils';
 import { AbstractControl, UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -1531,14 +1532,13 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   private readonly NULL_BUBBLE_RE =
     /\s*The field at path '[^']*' was declared as a non null type[\s\S]*?within parent type '[^']*'\.?\s*/g;
 
-  private parseApolloError(error: any): { isLimit: boolean; isNetwork: boolean; message: string } {
-    const gqlMessages: string[] = (((error?.graphQLErrors as any[]) || []))
-      .map(e => (e && e.message) || '').filter(Boolean);
-    const networkResultMessages: string[] = (((error?.networkError?.result?.errors as any[]) || []))
-      .map((e: any) => (e && e.message) || '').filter(Boolean);
-    const rawMessage: string = (error?.message || '').toString();
+  private parseApolloError(error: unknown): { isLimit: boolean; isNetwork: boolean; message: string } {
+    // graphQLErrorMessages reads Apollo v4's own error classes and recovers the messages from a
+    // non-200 body too, so the two v3 lookups this used to do collapse into one call.
+    const gqlMessages: string[] = graphQLErrorMessages(error);
+    const rawMessage: string = errorText(error);
 
-    const sources = [...gqlMessages, ...networkResultMessages, rawMessage].filter(Boolean);
+    const sources = [...gqlMessages, rawMessage].filter(Boolean);
     const haystack = sources.join(' || ');
 
     if (haystack.includes(this.THREE_REQUEST_LIMIT_MARKER)) {
@@ -1552,7 +1552,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     if (cleaned.length > 0) {
       return { isLimit: false, isNetwork: false, message: cleaned[0] };
     }
-    if (error?.networkError || /network|fetch|cors/i.test(rawMessage)) {
+    if (isNetworkError(error) || /network|fetch|cors/i.test(rawMessage)) {
       return {
         isLimit: false,
         isNetwork: true,

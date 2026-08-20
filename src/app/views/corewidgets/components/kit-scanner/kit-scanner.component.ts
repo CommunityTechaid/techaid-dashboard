@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ScanModeStrategy, ScanSession } from '../scan/scan-session';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
 import { KitScannerApiService, ScannerKit } from './kit-scanner-api.service';
+import { errorText, isNetworkError } from '@app/shared/utils';
 
 /**
  * A mode the scanner can be set to. `code` is the payload on the printed
@@ -415,26 +416,3 @@ function formatTime(at: Date): string {
   return at.toTimeString().slice(0, 5);
 }
 
-function isNetworkError(err: unknown): boolean {
-  return !!(err && typeof err === 'object' && (err as { networkError?: unknown }).networkError);
-}
-
-function errorText(err: unknown): string {
-  if (err && typeof err === 'object') {
-    const e = err as {
-      graphQLErrors?: { message: string }[];
-      networkError?: { message?: string };
-      message?: string;
-    };
-    if (e.graphQLErrors?.length) {
-      return e.graphQLErrors[0].message;
-    }
-    if (e.networkError?.message) {
-      return e.networkError.message;
-    }
-    if (e.message) {
-      return e.message;
-    }
-  }
-  return String(err);
-}
