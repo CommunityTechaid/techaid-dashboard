@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.4.2](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.4.1...v1.4.2) (2026-08-20)
+
+
+### Bug Fixes
+
+* **errors:** read Apollo v4 errors, so failures name themselves again ([#196](https://github.com/CommunityTechaid/techaid-dashboard/issues/196)) ([e98c95d](https://github.com/CommunityTechaid/techaid-dashboard/commit/e98c95d69e828e0fe1081e69d081631169eabe89))
+
 ## [1.4.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.4.0...v1.4.1) (2026-08-20)
 
 
