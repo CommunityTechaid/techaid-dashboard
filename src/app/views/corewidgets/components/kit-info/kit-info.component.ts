@@ -230,10 +230,8 @@ query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
   deviceRequestConnection(page: {
     size: 50
   }, where: {
-    id: {
-      _eq: $numericterm
-    }
     OR: [
+    { id: { _eq: $numericterm } },
     { referringOrganisationContact: { referringOrganisation: { name: { _contains: $term } } } },
     { referringOrganisationContact: { fullName: { _contains: $term } } },
     { clientRef: { _contains: $term } }
