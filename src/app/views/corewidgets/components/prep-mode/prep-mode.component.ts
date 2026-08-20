@@ -5,6 +5,7 @@ import { Title } from '@angular/platform-browser';
 import { ScanInputComponent } from '../scan/scan-input.component';
 import { ScanModeStrategy, ScanSession } from '../scan/scan-session';
 import { PrepApiService, QueueRange } from './prep-api.service';
+import { errorText } from '@app/shared/utils';
 import {
   ITEM_KEY_LABELS,
   KIT_TYPE_TO_ITEM_KEY,
@@ -368,7 +369,7 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
       this.phase.set('prepping');
       await this.openIndex(0);
     } catch (err) {
-      this.queueError.set(this.errorText(err));
+      this.queueError.set(errorText(err));
     } finally {
       this.loadingQueue.set(false);
     }
@@ -389,7 +390,7 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
         this.banner.set({ kind: 'error', text: `Request #${item.id} could not be loaded.` });
       }
     } catch (err) {
-      this.banner.set({ kind: 'error', text: this.errorText(err) });
+      this.banner.set({ kind: 'error', text: errorText(err) });
     } finally {
       this.loadingRequest.set(false);
     }
@@ -473,7 +474,7 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
         this.banner.set({ kind: 'success', text: `Kit #${id} (${kit.type}) assigned.` });
       }
     } catch (err) {
-      this.banner.set({ kind: 'error', text: this.errorText(err) });
+      this.banner.set({ kind: 'error', text: errorText(err) });
     }
   }
 
@@ -517,7 +518,7 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
       });
       await this.advance();
     } catch (err) {
-      this.banner.set({ kind: 'error', text: this.errorText(err) });
+      this.banner.set({ kind: 'error', text: errorText(err) });
     }
   }
 
@@ -590,19 +591,4 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
     };
   }
 
-  private errorText(err: unknown): string {
-    if (err && typeof err === 'object') {
-      const anyErr = err as { graphQLErrors?: { message: string }[]; networkError?: { message?: string }; message?: string };
-      if (anyErr.graphQLErrors?.length) {
-        return anyErr.graphQLErrors[0].message;
-      }
-      if (anyErr.networkError?.message) {
-        return anyErr.networkError.message;
-      }
-      if (anyErr.message) {
-        return anyErr.message;
-      }
-    }
-    return String(err);
-  }
 }

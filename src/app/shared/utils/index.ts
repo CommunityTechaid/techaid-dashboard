@@ -8,3 +8,4 @@ export {
   supportedBoroughs, boroughListSentence,
 } from './boroughs';
 export type { Borough, BoroughSupportFlags } from './boroughs';
+export { errorText, graphQLErrorMessages, isNetworkError } from './apollo-error';
