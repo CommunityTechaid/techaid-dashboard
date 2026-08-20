@@ -12,6 +12,27 @@ import { ConfirmationStepComponent } from './confirmation-step/confirmation-step
 
 type Step = 'day' | 'window' | 'details' | 'confirmation';
 
+// The server's booking input has a single free-text `address` field, so the
+// building/flat detail and postcode collected as separate form controls are folded
+// into it here, in the order a reader expects: building detail, then street address,
+// then postcode (skipped if `formatted_address` already ends with it).
+function composeAddress(form: DetailsFormValue): string {
+  const parts: string[] = [];
+  if (form.buildingDetail.trim()) {
+    parts.push(form.buildingDetail.trim());
+  }
+  const address = form.address.trim();
+  parts.push(address);
+  const postcode = form.postcode.trim();
+  if (postcode) {
+    const normalise = (value: string) => value.toLowerCase().replace(/\s+/g, '');
+    if (!normalise(address).endsWith(normalise(postcode))) {
+      parts.push(postcode);
+    }
+  }
+  return parts.join('\n');
+}
+
 const STEP_LABELS: Record<Exclude<Step, 'confirmation'>, string> = {
   day: 'Step 1 of 3 — Choose a day',
   window: 'Step 2 of 3 — Choose a window',
@@ -120,7 +141,7 @@ export class BookingFlowComponent implements OnInit {
       surname: form.surname,
       email: form.email,
       phone: form.phone,
-      address: form.address,
+      address: composeAddress(form),
       accessNotes: form.accessNotes || undefined,
       // The form control is a text input; the schema types this as Long!.
       ctaReference: Number(form.ctaReference),

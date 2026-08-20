@@ -33,7 +33,7 @@
       <label>Email address</label>
       <input formControlName="email" placeholder="you&#64;example.org" [class.field--invalid]="invalid('email')" />
       @if (invalid('email')) {
-        <div class="form-error">Enter a valid email address.</div>
+        <div class="form-error">Enter a full email address, like name&#64;example.com</div>
       }
     </div>
 
@@ -41,7 +41,23 @@
       <label>Phone number <span class="field__hint">— the driver may call on the day</span></label>
       <input formControlName="phone" placeholder="07…" [class.field--invalid]="invalid('phone')" />
       @if (invalid('phone')) {
-        <div class="form-error">Enter a valid phone number.</div>
+        <div class="form-error">Enter a UK phone number, like 020 3488 7742 or 07700 900123</div>
+      }
+    </div>
+
+    <div class="field">
+      <label>Flat, building or office name <span class="field__hint">(optional)</span></label>
+      <div class="field__note">
+        If your address has a flat number, building name or office, add it here — the address lookup often can't.
+      </div>
+      <input
+        formControlName="buildingDetail"
+        placeholder="Flat 2, Riverside House"
+        maxlength="100"
+        [class.field--invalid]="invalid('buildingDetail')"
+      />
+      @if (invalid('buildingDetail')) {
+        <div class="form-error">Keep this under 100 characters</div>
       }
     </div>
 
@@ -51,9 +67,11 @@
         formControlName="address"
         placeholder="Flat, street, postcode"
         autocomplete="off"
+        maxlength="250"
         [class.field--invalid]="invalid('address')"
         appPlaceAutocomplete
         #addressAutocomplete="appPlaceAutocomplete"
+        (placeSelected)="onPlaceSelected($event)"
       ></textarea>
       @if (addressAutocomplete.suggestions.length > 0) {
         <ul class="address-suggestions">
@@ -62,14 +80,43 @@
           }
         </ul>
       }
-      @if (invalid('address')) {
+      @if (hasError('address', 'maxlength')) {
+        <div class="form-error">Keep this under 250 characters</div>
+      } @else if (invalid('address')) {
         <div class="form-error">Enter the delivery address.</div>
       }
     </div>
 
     <div class="field">
+      <label>Postcode</label>
+      <input
+        formControlName="postcode"
+        placeholder="SW9 7AA"
+        autocomplete="off"
+        [class.field--invalid]="invalid('postcode')"
+        (blur)="onPostcodeBlur()"
+      />
+      @if (hasError('postcode', 'pattern')) {
+        <div class="form-error">Enter a UK postcode, like SW9 7AA</div>
+      } @else if (invalid('postcode')) {
+        <div class="form-error">Enter your postcode.</div>
+      }
+      @if (boroughWarning) {
+        <div class="alert alert-warning" data-testid="delivery-borough-warning">{{ boroughWarning }}</div>
+      }
+    </div>
+
+    <div class="field">
       <label>Access notes <span class="field__hint">(optional)</span></label>
-      <input formControlName="accessNotes" placeholder="Buzzer 3, second floor…" />
+      <input
+        formControlName="accessNotes"
+        placeholder="Buzzer 3, second floor…"
+        maxlength="500"
+        [class.field--invalid]="invalid('accessNotes')"
+      />
+      @if (invalid('accessNotes')) {
+        <div class="form-error">Keep this under 500 characters</div>
+      }
     </div>
 
     <div class="field">
