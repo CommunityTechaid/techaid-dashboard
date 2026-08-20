@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.4.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.4.0...v1.4.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* **devices:** restore the device request filter pickers on the device list ([#195](https://github.com/CommunityTechaid/techaid-dashboard/issues/195)) ([6ebf5e6](https://github.com/CommunityTechaid/techaid-dashboard/commit/6ebf5e64194f8acc64833f544d2df79a500cb9ad))
+* **devices:** restore the device request picker on the device page ([#193](https://github.com/CommunityTechaid/techaid-dashboard/issues/193)) ([13ca029](https://github.com/CommunityTechaid/techaid-dashboard/commit/13ca029b7e85227a828eb9414ad100905060059a))
+
 ## [1.4.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.3.6...v1.4.0) (2026-08-18)
 
 
