@@ -2,6 +2,43 @@
   display: block;
 }
 
-.form-switch {
-  min-width: 70px;
+.bookings-table {
+  table-layout: fixed;
+
+  .col-name {
+    width: 12%;
+  }
+
+  .col-cta-ref {
+    width: 10%;
+  }
+
+  .col-email {
+    width: 18%;
+  }
+
+  .col-phone {
+    width: 10%;
+  }
+
+  .col-address {
+    width: 20%;
+  }
+
+  .col-access-notes {
+    width: 18%;
+  }
+
+  .col-booked {
+    width: 8%;
+  }
+
+  .col-action {
+    width: 4%;
+  }
+
+  td.wrap-cell {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 }

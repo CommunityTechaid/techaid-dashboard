@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostListener, inject, OnDestroy } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, HostListener, inject, OnDestroy, Output } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { NgControl } from '@angular/forms';
 import { Subject, Subscription, of } from 'rxjs';
@@ -21,6 +21,23 @@ interface AutocompleteResponse {
   predictions?: PlaceSuggestion[];
 }
 
+interface PlaceAddressComponent {
+  long_name: string;
+  types: string[];
+}
+
+interface PlaceDetailsResponse {
+  result?: {
+    formatted_address?: string;
+    address_components?: PlaceAddressComponent[];
+  };
+}
+
+export interface PlaceSelectedEvent {
+  formattedAddress: string;
+  postcode: string | null;
+}
+
 /**
  * Assistive Google Places autocomplete for a plain reactive-forms input/textarea.
  * Purely a suggestion aid — free text always remains valid, nothing here blocks
@@ -28,8 +45,10 @@ interface AutocompleteResponse {
  * `formControl` and read `suggestions` / call `select()` via the directive's
  * `exportAs` template reference (see details-step.component.html).
  *
- * Debounced 300ms, minimum 3 characters, mirrors the admin `PlaceInput` component but
- * skips its `/details` postcode lookup — here we always store the full description.
+ * Debounced 300ms, minimum 3 characters, mirrors the admin `PlaceInput` component's
+ * `/details` postcode lookup (see place.component.ts) — a selection resolves the full
+ * place details so the stored value (and the `placeSelected` output) carry a postcode,
+ * which a bare autocomplete prediction never does.
  */
 @Directive({
   selector: '[appPlaceAutocomplete]',
@@ -38,6 +57,8 @@ interface AutocompleteResponse {
 })
 export class PlaceAutocompleteDirective implements OnDestroy {
   suggestions: PlaceSuggestion[] = [];
+
+  @Output() placeSelected = new EventEmitter<PlaceSelectedEvent>();
 
   private readonly http = inject(HttpClient);
   private readonly elementRef = inject(ElementRef<HTMLInputElement | HTMLTextAreaElement>);
@@ -79,7 +100,26 @@ export class PlaceAutocompleteDirective implements OnDestroy {
 
   select(suggestion: PlaceSuggestion): void {
     this.suggestions = [];
-    this.ngControl?.control?.setValue(suggestion.description);
+    if (!suggestion.place_id) {
+      this.ngControl?.control?.setValue(suggestion.description);
+      this.placeSelected.emit({ formattedAddress: suggestion.description, postcode: null });
+      return;
+    }
+    this.http
+      .get<PlaceDetailsResponse>(`${PLACES_PROXY_URL}/details`, { params: { place_id: suggestion.place_id } })
+      .pipe(
+        // Free-typing must always work — if the details lookup fails, fall back to
+        // the prediction description exactly as before rather than surfacing an error.
+        catchError(() => of<PlaceDetailsResponse>({})),
+      )
+      .subscribe((response) => {
+        const result = response.result;
+        const formattedAddress = result?.formatted_address ?? suggestion.description;
+        const components = result?.address_components ?? [];
+        const postcode = components.find((c) => c.types.includes('postal_code'))?.long_name ?? null;
+        this.ngControl?.control?.setValue(formattedAddress);
+        this.placeSelected.emit({ formattedAddress, postcode });
+      });
   }
 
   ngOnDestroy(): void {

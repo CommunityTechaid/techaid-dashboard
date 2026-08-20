@@ -1,0 +1,8 @@
+:host {
+  display: block;
+}
+
+// No min-width override here: Bootstrap's own .form-switch { padding-left: 2.5em } already
+// insets the control from the panel edge (em-based, so it scales rather than being a fixed
+// pixel value that only looks right at one viewport width). A min-width fought that padding
+// without adding any real spacing.

@@ -19,6 +19,10 @@
         <a class="nav-link" [class.active]="activeTab === 'flags'" href="#"
            (click)="selectTab('flags'); $event.preventDefault()">Feature Flags</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'delivery'" href="#"
+           (click)="selectTab('delivery'); $event.preventDefault()">Delivery Configuration</a>
+      </li>
     </ul>
 
     <!-- Device Availability tab. Rendered with @if rather than [hidden] like its neighbour:
@@ -36,6 +40,11 @@
     <!-- Feature Flags tab -->
     <div [hidden]="activeTab !== 'flags'">
       <app-feature-flags></app-feature-flags>
+    </div>
+
+    <!-- Delivery Configuration tab -->
+    <div [hidden]="activeTab !== 'delivery'">
+      <app-delivery-configuration></app-delivery-configuration>
     </div>
   </div>
 </div>
