@@ -166,6 +166,7 @@ async function reachDetailsStepAndFill(page: Page): Promise<void> {
   await form.locator('input[formControlName="email"]').fill('sofia@example.org');
   await form.locator('input[formControlName="phone"]').fill('07700900000');
   await form.locator('textarea[formControlName="address"]').fill('1 Test Street, London SW9 0AA');
+  await form.locator('input[formControlName="postcode"]').fill('SW9 7AA');
   await form.locator('input[formControlName="ctaReference"]').fill('4298');
   // The widget host must have rendered (siteKey is set in uat-local).
   await expect

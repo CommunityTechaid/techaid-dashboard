@@ -57,6 +57,53 @@ async function fulfillJson(route: import('@playwright/test').Route, body: unknow
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
 }
 
+interface PlacesDetailsOutcome {
+  /** HTTP status to return. >=400 simulates a proxy/upstream /details failure. */
+  status?: number;
+  formattedAddress?: string;
+  /** Set null to omit the postal_code address_component entirely. */
+  postcode?: string | null;
+}
+
+/**
+ * Local stub for the proxy's /details endpoint (place_id → formatted address + address
+ * components). The shared stubPlacesProxy helper only covers /autocomplete's
+ * {predictions} shape; selecting a suggestion now additionally calls /details, so specs
+ * that click a suggestion need this too. Register this AFTER stubPlacesProxy — Playwright
+ * matches the most-recently-added route first, so this narrower /details pattern takes
+ * precedence and stubPlacesProxy keeps serving /autocomplete.
+ */
+async function stubPlacesDetails(
+  page: Page,
+  outcome: { current: PlacesDetailsOutcome } = { current: {} },
+): Promise<void> {
+  await page.route('**cta-places-proxy.community-techaid.workers.dev/details**', async (route) => {
+    const {
+      status = 200,
+      formattedAddress = '10 Downing Street, London SW1A 2AA',
+      postcode = 'SW1A 2AA',
+    } = outcome.current;
+    if (status >= 400) {
+      await route.fulfill({
+        status,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'stubbed details failure' }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        result: {
+          formatted_address: formattedAddress,
+          address_components: postcode ? [{ long_name: postcode, short_name: postcode, types: ['postal_code'] }] : [],
+        },
+      }),
+    });
+  });
+}
+
 /** Same fake Turnstile shim as delivery-booking-public.spec.ts. */
 async function stubTurnstile(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -145,6 +192,12 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
   test('free text with no suggestion selected reaches the mutation unchanged', async ({ page }) => {
     test.setTimeout(60_000);
     const submits: any[] = [];
+    let detailsRequests = 0;
+    page.on('request', (req) => {
+      if (req.url().includes('/details')) {
+        detailsRequests++;
+      }
+    });
     // No predictions ever returned — the visitor types an address Places doesn't know
     // about (e.g. a new build) and must still be able to book.
     await stubTurnstile(page);
@@ -158,6 +211,7 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await form.locator('input[formControlName="email"]').fill('sofia@example.org');
     await form.locator('input[formControlName="phone"]').fill('07700900000');
     await form.locator('textarea[formControlName="address"]').fill('221B Typed Street, London SW1A 1AA');
+    await form.locator('input[formControlName="postcode"]').fill('SW1A 1AA');
     await form.locator('input[formControlName="ctaReference"]').fill('4298');
 
     await expect(page.locator('.address-suggestions')).toHaveCount(0);
@@ -168,6 +222,8 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await expect(page.locator('.step-label--done')).toBeVisible({ timeout: 10_000 });
     expect(submits).toHaveLength(1);
     expect(submits[0].variables.input.address).toBe('221B Typed Street, London SW1A 1AA');
+    // No suggestion was ever selected, so the /details lookup must never fire.
+    expect(detailsRequests, 'no /details request when free-typing with no suggestion selected').toBe(0);
   });
 
   test('a failing proxy yields no suggestions and leaves the field usable', async ({ page }) => {
@@ -192,5 +248,148 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
 
     // The field itself remains fully usable free-text input.
     await expect(address).toHaveValue('Somewhere that errors out');
+  });
+
+  test('selecting a suggestion calls /details and auto-fills the postcode field', async ({ page }) => {
+    test.setTimeout(60_000);
+    const submits: unknown[] = [];
+    let detailsRequests = 0;
+    page.on('request', (req) => {
+      if (req.url().includes('/details')) {
+        detailsRequests++;
+      }
+    });
+    const placesOutcome: { current: PlacesProxyOutcome } = {
+      current: { predictions: [{ description: '10 Downing Street, London SW1A 2AA', place_id: 'p1' }] },
+    };
+    const detailsOutcome: { current: PlacesDetailsOutcome } = {
+      current: { formattedAddress: '10 Downing Street, Westminster, London SW1A 2AA', postcode: 'SW1A 2AA' },
+    };
+    await stubTurnstile(page);
+    await stubPlacesProxy(page, placesOutcome);
+    await stubPlacesDetails(page, detailsOutcome);
+    await installBookingMocks(page, submits);
+    await reachDetailsStep(page);
+
+    const address = page.locator('textarea[formControlName="address"]');
+    await address.fill('10 Downing');
+
+    const suggestions = page.locator('.address-suggestions li');
+    await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
+    await suggestions.first().click();
+
+    await expect(page.locator('input[formControlName="postcode"]')).toHaveValue('SW1A 2AA', { timeout: 5_000 });
+    expect(detailsRequests).toBe(1);
+  });
+
+  test('selecting a suggestion writes formatted_address, not the prediction text, into the address field', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const submits: unknown[] = [];
+    const placesOutcome: { current: PlacesProxyOutcome } = {
+      current: { predictions: [{ description: '10 Downing St (prediction)', place_id: 'p1' }] },
+    };
+    const detailsOutcome: { current: PlacesDetailsOutcome } = {
+      current: { formattedAddress: '10 Downing Street, Westminster, London SW1A 2AA', postcode: 'SW1A 2AA' },
+    };
+    await stubTurnstile(page);
+    await stubPlacesProxy(page, placesOutcome);
+    await stubPlacesDetails(page, detailsOutcome);
+    await installBookingMocks(page, submits);
+    await reachDetailsStep(page);
+
+    const address = page.locator('textarea[formControlName="address"]');
+    await address.fill('10 Downing');
+
+    const suggestions = page.locator('.address-suggestions li');
+    await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
+    await suggestions.first().click();
+
+    await expect(address).toHaveValue('10 Downing Street, Westminster, London SW1A 2AA');
+  });
+
+  test('falls back to the prediction text and leaves postcode empty when /details fails, and the form stays usable', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const submits: any[] = [];
+    const placesOutcome: { current: PlacesProxyOutcome } = {
+      current: { predictions: [{ description: '10 Downing Street, London SW1A 2AA', place_id: 'p1' }] },
+    };
+    await stubTurnstile(page);
+    await stubPlacesProxy(page, placesOutcome);
+    await stubPlacesDetails(page, { current: { status: 500 } });
+    await installBookingMocks(page, submits);
+    await reachDetailsStep(page);
+
+    const address = page.locator('textarea[formControlName="address"]');
+    await address.fill('10 Downing');
+
+    const suggestions = page.locator('.address-suggestions li');
+    await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
+    await suggestions.first().click();
+
+    // /details failed → falls back to the prediction's description, postcode stays empty.
+    await expect(address).toHaveValue('10 Downing Street, London SW1A 2AA');
+    await expect(page.locator('input[formControlName="postcode"]')).toHaveValue('');
+
+    // A lookup failure must never block a booking — the visitor fills the postcode
+    // themselves and completes the form as normal.
+    const form = page.locator('form.form');
+    await form.locator('input[formControlName="firstName"]').fill('Sofia');
+    await form.locator('input[formControlName="surname"]').fill('Martino');
+    await form.locator('input[formControlName="email"]').fill('sofia@example.org');
+    await form.locator('input[formControlName="phone"]').fill('07700900000');
+    await form.locator('input[formControlName="postcode"]').fill('SW1A 2AA');
+    await form.locator('input[formControlName="ctaReference"]').fill('4298');
+
+    await issueToken(page, 'fake-token-details-fail');
+    await page.locator('button[type="submit"]').click();
+
+    await expect(page.locator('.step-label--done')).toBeVisible({ timeout: 10_000 });
+    expect(submits).toHaveLength(1);
+  });
+
+  test('composes the submitted address with the building detail and without a duplicated postcode', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const submits: any[] = [];
+    const placesOutcome: { current: PlacesProxyOutcome } = {
+      current: { predictions: [{ description: '10 Downing Street', place_id: 'p1' }] },
+    };
+    const detailsOutcome: { current: PlacesDetailsOutcome } = {
+      current: { formattedAddress: '10 Downing Street, London, SW1A 2AA', postcode: 'SW1A 2AA' },
+    };
+    await stubTurnstile(page);
+    await stubPlacesProxy(page, placesOutcome);
+    await stubPlacesDetails(page, detailsOutcome);
+    await installBookingMocks(page, submits);
+    await reachDetailsStep(page);
+
+    const form = page.locator('form.form');
+    await form.locator('input[formControlName="buildingDetail"]').fill('Flat 4');
+    await form.locator('input[formControlName="firstName"]').fill('Sofia');
+    await form.locator('input[formControlName="surname"]').fill('Martino');
+    await form.locator('input[formControlName="email"]').fill('sofia@example.org');
+    await form.locator('input[formControlName="phone"]').fill('07700900000');
+    await form.locator('input[formControlName="ctaReference"]').fill('4298');
+
+    const address = page.locator('textarea[formControlName="address"]');
+    await address.fill('10 Downing');
+    const suggestions = page.locator('.address-suggestions li');
+    await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
+    await suggestions.first().click();
+    await expect(page.locator('input[formControlName="postcode"]')).toHaveValue('SW1A 2AA', { timeout: 5_000 });
+
+    await issueToken(page, 'fake-token-compose');
+    await page.locator('button[type="submit"]').click();
+
+    await expect(page.locator('.step-label--done')).toBeVisible({ timeout: 10_000 });
+    expect(submits).toHaveLength(1);
+    // buildingDetail is prepended; the postcode line is omitted because the selected
+    // formatted_address already ends with it (case/space-insensitive comparison).
+    expect(submits[0].variables.input.address).toBe('Flat 4\n10 Downing Street, London, SW1A 2AA');
   });
 });

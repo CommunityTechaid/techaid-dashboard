@@ -66,6 +66,25 @@ const BOOKING_CAROL = {
   matchedRequestOpen: null,
 };
 
+/** Its matched request shows a delivery already arranged, so deleting it triggers the second confirm. */
+const BOOKING_DAVE = {
+  id: 'bk-4',
+  date: '2026-07-22',
+  dayLabel: 'Wed 22 Jul',
+  window: { id: 'w-morning', name: 'Morning' },
+  firstName: 'Dave',
+  surname: 'Davidson',
+  email: 'dave@example.com',
+  phone: '07700000004',
+  address: '4 Test Street',
+  accessNotes: '',
+  ctaReference: 1004,
+  createdAt: '2026-07-03T09:00:00Z',
+  matchedRequestId: '7001',
+  matchedRequestStatus: 'PROCESSING_COLLECTION_DELIVERY_ARRANGED',
+  matchedRequestOpen: true,
+};
+
 async function installGraphqlMocks(
   page: Page,
   opts: { bookings?: any[]; captureDelete?: { body: any }[]; deleteResult?: boolean } = {},
@@ -165,6 +184,10 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
 
     await expect.poll(() => captured.length, { timeout: 5_000 }).toBeGreaterThan(0);
     expect(captured[0].body?.variables?.id, 'deleteDeliveryBooking must be called with the booking id').toBe('bk-1');
+    expect(
+      captured[0].body?.variables?.clearRequestDelivery,
+      'clearRequestDelivery must be false when the matched request is not delivery-arranged',
+    ).toBe(false);
 
     // The confirm() message should identify the booking being removed.
     expect(dialogMessage).toContain('Alice Ainsley');
@@ -213,5 +236,66 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
     await expect.poll(() => captured.length, { timeout: 5_000 }).toBeGreaterThan(0);
     await expect(page.getByText('No bookings yet.')).toBeVisible();
     await expect(bookingCountBadge(page)).toContainText('0 booking');
+  });
+
+  test('a delivery-arranged match asks a second question; accepting it sends clearRequestDelivery: true', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const captured: { body: any }[] = [];
+    await installGraphqlMocks(page, { bookings: [BOOKING_DAVE], captureDelete: captured, deleteResult: true });
+
+    const dialogMessages: string[] = [];
+    page.on('dialog', dialog => {
+      dialogMessages.push(dialog.message());
+      dialog.accept().catch(() => {});
+    });
+
+    await openDeliverySlotsTab(page);
+    const daveRow = bookingRow(page, 'Dave Davidson');
+    await daveRow.getByTestId('delete-booking').click();
+
+    await expect.poll(() => captured.length, { timeout: 5_000 }).toBeGreaterThan(0);
+
+    // Two confirms fired: the ordinary delete confirm, then the delivery-arranged question.
+    expect(dialogMessages).toHaveLength(2);
+    expect(dialogMessages[1]).toContain('7001');
+    expect(dialogMessages[1]).toContain('still shows a delivery as arranged');
+
+    expect(captured[0].body?.variables?.id).toBe('bk-4');
+    expect(
+      captured[0].body?.variables?.clearRequestDelivery,
+      'accepting the second confirm must clear the request delivery details',
+    ).toBe(true);
+
+    await expect(daveRow).toHaveCount(0);
+  });
+
+  test('dismissing the second (delivery-arranged) confirm aborts entirely: no mutation fires', async ({ page }) => {
+    test.setTimeout(60_000);
+    const captured: { body: any }[] = [];
+    await installGraphqlMocks(page, { bookings: [BOOKING_DAVE], captureDelete: captured });
+
+    page.on('dialog', dialog => {
+      // First (ordinary delete) confirm: accept. Second (delivery-arranged) confirm: dismiss —
+      // this is the regression the original bug report was about: dismissing "cancel" must not
+      // still delete the booking.
+      if (dialog.message().includes('still shows a delivery as arranged')) {
+        dialog.dismiss().catch(() => {});
+      } else {
+        dialog.accept().catch(() => {});
+      }
+    });
+
+    await openDeliverySlotsTab(page);
+    const daveRow = bookingRow(page, 'Dave Davidson');
+    await daveRow.getByTestId('delete-booking').click();
+
+    // Give a wrongly-fired mutation a chance to show up before asserting none did.
+    await page.waitForTimeout(500);
+    expect(captured.length, 'deleteDeliveryBooking must NOT fire when the second confirm is dismissed').toBe(0);
+
+    await expect(daveRow).toBeVisible();
+    await expect(bookingCountBadge(page)).toContainText('1 booking');
   });
 });
