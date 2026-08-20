@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FeatureFlagsComponent } from '../feature-flags/feature-flags.component';
 import { BoroughAvailabilityComponent } from '../borough-availability/borough-availability.component';
+import { DeliveryConfigurationComponent } from '../delivery-configuration/delivery-configuration.component';
 
 /**
  * The admin panel is now two tabs, not three.
@@ -22,10 +23,10 @@ import { BoroughAvailabilityComponent } from '../borough-availability/borough-av
   selector: 'admin-panel',
   styleUrls: ['admin-panel.component.scss'],
   templateUrl: './admin-panel.component.html',
-  imports: [RouterLink, FeatureFlagsComponent, BoroughAvailabilityComponent],
+  imports: [RouterLink, FeatureFlagsComponent, BoroughAvailabilityComponent, DeliveryConfigurationComponent],
 })
 export class AdminPanelComponent implements OnInit {
-  activeTab: 'availability' | 'flags' = 'availability';
+  activeTab: 'availability' | 'flags' | 'delivery' = 'availability';
 
   @ViewChild(BoroughAvailabilityComponent) availabilityTab?: BoroughAvailabilityComponent;
 
@@ -43,7 +44,7 @@ export class AdminPanelComponent implements OnInit {
    * the admin had spent time on — its own Discard button asks for confirmation, so the far easier
    * path was the destructive one.
    */
-  selectTab(tab: 'availability' | 'flags'): void {
+  selectTab(tab: 'availability' | 'flags' | 'delivery'): void {
     if (this.activeTab === 'availability' && tab !== 'availability' && this.availabilityTab?.dirty) {
       const unsaved = this.availabilityTab.unsavedCount;
       const confirmed = window.confirm(
