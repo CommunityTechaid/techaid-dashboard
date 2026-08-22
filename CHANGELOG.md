@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.5.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.4.2...v1.5.0) (2026-08-22)
+
+
+### Features
+
+* **delivery:** the UAT feedback round on the delivery booking system ([#198](https://github.com/CommunityTechaid/techaid-dashboard/issues/198)) ([fd2f720](https://github.com/CommunityTechaid/techaid-dashboard/commit/fd2f7200f6c1342281a5f9e431dd5713e6792481))
+
+
+### Bug Fixes
+
+* **delivery:** UK dates and unclipped controls on the delivery booking admin ([#200](https://github.com/CommunityTechaid/techaid-dashboard/issues/200)) ([ad64da9](https://github.com/CommunityTechaid/techaid-dashboard/commit/ad64da9310f81f31182cb9b51627b2d0e0424ac7))
+
 ## [1.4.2](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.4.1...v1.4.2) (2026-08-20)
 
 
