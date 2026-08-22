@@ -43,7 +43,7 @@ import { stubPlacesProxy } from '../helpers/places-proxy';
 
 /** The exact duplicate-booking copy the server returns as a BAD_REQUEST. */
 const DUPLICATE_MESSAGE =
-  'You already have an upcoming delivery booked. If you need to change it, please call us on 020 3488 2912.';
+  'This CTA reference number has already been used to book a delivery. If you need to book another, please call us on 020 3488 7742.';
 
 /** One bookable day with one window that has spots — enough to reach the details step. */
 const AVAILABILITY = [
