@@ -2,39 +2,46 @@
   display: block;
 }
 
+// Column widths are shares of the table, and the table has a floor. Without the floor the
+// action column collapsed on a narrow window and its buttons were clipped by
+// .table-responsive's overflow rather than scrolled to — resizing the window cut off both
+// right-hand buttons. min-width makes .table-responsive produce a scrollbar instead.
 .bookings-table {
   table-layout: fixed;
+  min-width: 1200px;
 
   .col-name {
     width: 12%;
   }
 
   .col-cta-ref {
-    width: 10%;
+    width: 9%;
   }
 
   .col-email {
-    width: 18%;
+    width: 16%;
   }
 
   .col-phone {
-    width: 10%;
+    width: 9%;
   }
 
   .col-address {
-    width: 20%;
+    width: 17%;
   }
 
   .col-access-notes {
-    width: 18%;
+    width: 13%;
   }
 
+  // Wide enough for a UK short date plus time ("22/08/2026, 09:57") on one line.
   .col-booked {
-    width: 8%;
+    width: 10%;
   }
 
+  // Wide enough for the "Allow another booking" button; it wraps rather than overflows.
   .col-action {
-    width: 4%;
+    width: 14%;
   }
 
   td.wrap-cell {

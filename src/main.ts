@@ -1,6 +1,8 @@
-import { enableProdMode, APP_INITIALIZER, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { enableProdMode, APP_INITIALIZER, LOCALE_ID, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { registerLocaleData } from '@angular/common';
+import localeEnGb from '@angular/common/locales/en-GB';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withRouterConfig } from '@angular/router';
@@ -31,6 +33,12 @@ import { FormlyCustomCreateReferringOrganisationContactNote } from './app/views/
 import { FormlyCustomKitCheckboxType } from './app/views/corewidgets/components/kit-info/custom-kit-checkbox';
 import { FormlyCustomKitInfoType } from './app/views/corewidgets/components/kit-info/custom-kit-info-input';
 
+// Every date on this dashboard is a UK date. Angular's default LOCALE_ID is 'en-US', which
+// renders `| date:'short'` as 8/22/26, 9:57 AM — read as 8 August by UK staff. Registering
+// en-GB and providing it as LOCALE_ID makes the built-in date/number pipes format the British
+// way (22/08/2026, 09:57) everywhere, rather than each template carrying its own format string.
+registerLocaleData(localeEnGb);
+
 if (environment.production) {
   enableProdMode();
 }
@@ -38,6 +46,7 @@ if (environment.production) {
 bootstrapApplication(AppComponent, {
   providers: [
     provideZoneChangeDetection(),
+    { provide: LOCALE_ID, useValue: 'en-GB' },
     provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
     provideAnimations(),
     provideHttpClient(withInterceptorsFromDi()),
