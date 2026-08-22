@@ -674,3 +674,33 @@ table.table.dataTable > tbody > tr.selected a {
 .form-check-input {
     border-color: rgba(0, 0, 0, 0.5);
 }
+
+/* Bootstrap 5 lays a switch out as `padding-left: 2.5em` on the .form-check wrapper
+   plus a matching `margin-left: -2.5em` on the input, so the control ends up flush
+   with the wrapper's content edge and the label starts 2.5em in.
+
+   src/sb-admin.css is a Bootstrap 4-era theme loaded *after* bootstrap.css, and it
+   re-declares:
+       .form-check       { padding-left: 1.25rem; }
+       .form-check-input { position: absolute; margin-top: 0.3rem; margin-left: -1.25rem; }
+   The wrapper rule has the same specificity as Bootstrap's `.form-switch` and comes
+   later, so it wins and the padding drops to 1.25rem. The input rule is *less*
+   specific than Bootstrap's `.form-switch .form-check-input`, so the -2.5em margin
+   survives. Net effect: the switch is dragged ~20px to the left of its own box —
+   past the card's padding and onto the card border, where it reads as touching the
+   sidebar — and `position: absolute` takes it out of flow so the label never lines
+   up with it either.
+
+   Re-assert Bootstrap 5's geometry with enough specificity to beat both. Scoped to
+   .form-switch so plain checkboxes/radios keep the Bootstrap 4 positioning the rest
+   of the app's forms were built against. */
+.form-check.form-switch {
+    padding-left: 2.5em;
+}
+
+.form-check.form-switch .form-check-input {
+    position: static;
+    float: left;
+    margin-top: 0.25em;
+    margin-left: -2.5em;
+}

@@ -59,24 +59,30 @@
                       <td class="wrap-cell">{{ bk.address }}</td>
                       <td class="wrap-cell">{{ bk.accessNotes }}</td>
                       <td>{{ bk.createdAt | date: 'short' }}</td>
-                      <td class="d-flex flex-column gap-1 align-items-start">
-                        @if (bk.additionalBookingAllowed) {
-                          <span class="badge bg-info text-dark" data-testid="additional-booking-allowed">Another booking allowed</span>
-                        } @else {
+                      <!-- The flex box is an inner div, not the <td> itself: a display:flex cell
+                           drops out of the table's column model, so under table-layout:fixed the
+                           buttons sized themselves and spilled past the last column's right edge.
+                           align-items-stretch lets a long label wrap inside the cell instead. -->
+                      <td>
+                        <div class="d-flex flex-column gap-1 align-items-stretch">
+                          @if (bk.additionalBookingAllowed) {
+                            <span class="badge bg-info text-dark" data-testid="additional-booking-allowed">Another booking allowed</span>
+                          } @else {
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-outline-secondary"
+                              data-testid="allow-additional-booking"
+                              (click)="allowAdditionalBooking(bk)"
+                            >Allow another booking</button>
+                          }
                           <button
                             type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            data-testid="allow-additional-booking"
-                            (click)="allowAdditionalBooking(bk)"
-                          >Allow another booking</button>
-                        }
-                        <button
-                          type="button"
-                          class="btn btn-sm btn-outline-danger"
-                          data-testid="delete-booking"
-                          [attr.data-booking-id]="bk.id"
-                          (click)="deleteBooking(bk, group)"
-                        >Delete</button>
+                            class="btn btn-sm btn-outline-danger"
+                            data-testid="delete-booking"
+                            [attr.data-booking-id]="bk.id"
+                            (click)="deleteBooking(bk, group)"
+                          >Delete</button>
+                        </div>
                       </td>
                     </tr>
                   }
