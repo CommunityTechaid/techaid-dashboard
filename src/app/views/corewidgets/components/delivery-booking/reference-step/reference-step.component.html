@@ -1,0 +1,33 @@
+<div class="step">
+  <div class="intro">Let's find your request. Enter your Community TechAid ID reference number to get started.</div>
+
+  <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="field">
+      <label>Your Community TechAid ID reference number</label>
+      <div class="field__note">
+        This is in the email we sent to you or the person who referred you. Without it we can't get your device ready.
+      </div>
+      <input
+        formControlName="ctaReference"
+        placeholder="e.g. 4298"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        class="field--narrow"
+        [class.field--invalid]="invalid('ctaReference')"
+      />
+      @if (invalid('ctaReference')) {
+        <div class="form-error">Enter your CTA ID reference number — digits only, e.g. 4298.</div>
+      }
+    </div>
+
+    @if (error) {
+      <div class="status status--error">{{ error }}</div>
+    }
+
+    <div class="actions">
+      <button type="submit" class="btn btn--primary" [disabled]="checking">
+        {{ checking ? 'Checking…' : 'Continue' }}
+      </button>
+    </div>
+  </form>
+</div>

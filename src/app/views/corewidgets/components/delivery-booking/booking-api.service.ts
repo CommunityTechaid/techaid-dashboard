@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 import { ConfigService } from '@app/shared/services/config.service';
 import {
   DeliveryBookingConfirmation,
+  DeliveryBookingEligibility,
   DeliveryBookingInput,
   DeliveryDayAvailability,
 } from './models';
@@ -14,15 +15,24 @@ import {
  * GraphQL with HttpClient and send no Authorization header — deliberately NOT the
  * shared Apollo client, whose auth link would bounce an anonymous visitor to Auth0.
  */
+const ELIGIBILITY_QUERY = `
+  query DeliveryBookingEligibilityPublic($ctaReference: Long!) {
+    deliveryBookingEligibilityPublic(ctaReference: $ctaReference) {
+      eligible
+      message
+    }
+  }
+`;
+
 const AVAILABILITY_QUERY = `
-  query DeliveryAvailabilityPublic {
-    deliveryAvailabilityPublic {
+  query DeliveryAvailabilityPublic($ctaReference: Long) {
+    deliveryAvailabilityPublic(ctaReference: $ctaReference) {
       date
       dayOfWeek
       dayLabel
       windows {
         spotsRemaining
-        window { id name startTime endTime icon }
+        window { id name startTime endTime }
       }
     }
   }
@@ -34,7 +44,7 @@ const SUBMIT_MUTATION = `
       id
       date
       dayLabel
-      window { id name startTime endTime icon }
+      window { id name startTime endTime }
       address
       ctaReference
       confirmationSentTo
@@ -86,9 +96,17 @@ export class BookingApiService {
       );
   }
 
-  getAvailability(): Observable<DeliveryDayAvailability[]> {
+  checkEligibility(ctaReference: number): Observable<DeliveryBookingEligibility> {
+    return this.request<{ deliveryBookingEligibilityPublic: DeliveryBookingEligibility }>(
+      ELIGIBILITY_QUERY,
+      { ctaReference },
+    ).pipe(map((data) => data.deliveryBookingEligibilityPublic));
+  }
+
+  getAvailability(ctaReference: number | null): Observable<DeliveryDayAvailability[]> {
     return this.request<{ deliveryAvailabilityPublic: DeliveryDayAvailability[] }>(
       AVAILABILITY_QUERY,
+      { ctaReference },
     ).pipe(map((data) => data.deliveryAvailabilityPublic));
   }
 

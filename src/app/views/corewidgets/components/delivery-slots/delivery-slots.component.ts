@@ -8,13 +8,11 @@ import { Subscription } from 'rxjs';
 
 const DATA_QUERY = gql`
   query deliverySlotsAdmin {
-    deliveryBookingsAdmin { id date dayLabel window { id name } firstName surname email phone address accessNotes ctaReference createdAt matchedRequestId matchedRequestStatus matchedRequestOpen additionalBookingAllowed }
+    deliveryBookingsAdmin { id date dayLabel window { id name } firstName surname email phone address accessNotes ctaReference createdAt matchedRequestId matchedRequestStatus matchedRequestOpen }
   }
 `;
 
 const DELETE_BOOKING = gql`mutation deleteDeliveryBooking($id: ID!, $clearRequestDelivery: Boolean) { deleteDeliveryBooking(id: $id, clearRequestDelivery: $clearRequestDelivery) }`;
-
-const ALLOW_ADDITIONAL = gql`mutation allowAdditionalDeliveryBooking($ctaReference: Long!, $note: String) { allowAdditionalDeliveryBooking(ctaReference: $ctaReference, note: $note) }`;
 
 // The server refuses to delete a booking while its linked request still shows a delivery as
 // arranged — this is the exact enum value matchedRequestStatus arrives as (confirmed against the
@@ -38,7 +36,6 @@ interface BookingRow {
   matchedRequestId?: string;
   matchedRequestStatus?: string;
   matchedRequestOpen?: boolean;
-  additionalBookingAllowed: boolean;
 }
 
 interface BookingGroup {
@@ -109,8 +106,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
           bookings: [],
         });
       }
-      // Apollo v4 freezes query responses — copy each row so it can later be mutated in place
-      // (e.g. flipping additionalBookingAllowed) without throwing on a frozen object.
+      // Apollo v4 freezes query responses — copy each row so it isn't a frozen object.
       groups.get(key)!.bookings.push({ ...b });
     }
     this.bookingGroups = Array.from(groups.values());
@@ -150,33 +146,6 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.toastr.error(err?.message || 'Could not delete booking');
-        },
-      });
-  }
-
-  allowAdditionalBooking(bk: BookingRow): void {
-    if (
-      !confirm(
-        `Allow one further booking for CTA reference ${bk.ctaReference}? This grants a one-off exemption from the duplicate-booking check for this reference.`,
-      )
-    ) {
-      return;
-    }
-    this.apollo
-      .mutate<any>({ mutation: ALLOW_ADDITIONAL, variables: { ctaReference: bk.ctaReference } })
-      .subscribe({
-        next: () => {
-          // The override is per reference, not per booking — flip every row sharing it.
-          this.bookingGroups = this.bookingGroups.map((g) => ({
-            ...g,
-            bookings: g.bookings.map((b) =>
-              b.ctaReference === bk.ctaReference ? { ...b, additionalBookingAllowed: true } : b,
-            ),
-          }));
-          this.toastr.success('Another booking is now allowed for this reference');
-        },
-        error: (err) => {
-          this.toastr.error(err?.message || 'Could not grant the exemption');
         },
       });
   }

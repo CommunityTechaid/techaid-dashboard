@@ -1,16 +1,17 @@
-import { Component, computed, OnInit, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { BookingApiError, BookingApiService } from './booking-api.service';
 import {
   DeliveryBookingConfirmation,
   DeliveryBookingInput,
   DeliveryDayAvailability,
 } from './models';
+import { ReferenceStepComponent } from './reference-step/reference-step.component';
 import { DayStepComponent } from './day-step/day-step.component';
 import { WindowStepComponent } from './window-step/window-step.component';
 import { DetailsStepComponent, DetailsFormValue } from './details-step/details-step.component';
 import { ConfirmationStepComponent } from './confirmation-step/confirmation-step.component';
 
-type Step = 'day' | 'window' | 'details' | 'confirmation';
+type Step = 'reference' | 'day' | 'window' | 'details' | 'confirmation';
 
 // The server's booking input has a single free-text `address` field, so the
 // building/flat detail and postcode collected as separate form controls are folded
@@ -34,20 +35,31 @@ function composeAddress(form: DetailsFormValue): string {
 }
 
 const STEP_LABELS: Record<Exclude<Step, 'confirmation'>, string> = {
-  day: 'Step 1 of 3 — Choose a day',
-  window: 'Step 2 of 3 — Choose a window',
-  details: 'Step 3 of 3 — Your details',
+  reference: 'Step 1 of 4 — Your request ID',
+  day: 'Step 2 of 4 — Choose a day',
+  window: 'Step 3 of 4 — Choose a window',
+  details: 'Step 4 of 4 — Your details',
 };
 
 @Component({
   selector: 'app-booking-flow',
   standalone: true,
-  imports: [DayStepComponent, WindowStepComponent, DetailsStepComponent, ConfirmationStepComponent],
+  imports: [
+    ReferenceStepComponent,
+    DayStepComponent,
+    WindowStepComponent,
+    DetailsStepComponent,
+    ConfirmationStepComponent,
+  ],
   templateUrl: './booking-flow.component.html',
   styleUrl: './booking-flow.component.scss',
 })
-export class BookingFlowComponent implements OnInit {
-  readonly step = signal<Step>('day');
+export class BookingFlowComponent {
+  readonly step = signal<Step>('reference');
+
+  readonly ctaReference = signal<number | null>(null);
+  readonly checkingReference = signal(false);
+  readonly referenceError = signal<string | null>(null);
 
   readonly availability = signal<DeliveryDayAvailability[] | null>(null);
   readonly loadingAvailability = signal(true);
@@ -78,25 +90,49 @@ export class BookingFlowComponent implements OnInit {
 
   readonly stepIndex = computed(() => {
     switch (this.step()) {
-      case 'day':
+      case 'reference':
         return 1;
-      case 'window':
+      case 'day':
         return 2;
-      default:
+      case 'window':
         return 3;
+      default:
+        return 4;
     }
   });
 
   constructor(private readonly api: BookingApiService) {}
 
-  ngOnInit(): void {
-    this.loadAvailability();
+  submitReference(ref: number): void {
+    this.checkingReference.set(true);
+    this.referenceError.set(null);
+    this.api.checkEligibility(ref).subscribe({
+      next: (result) => {
+        this.checkingReference.set(false);
+        if (result.eligible) {
+          this.ctaReference.set(ref);
+          this.step.set('day');
+          this.loadAvailability();
+        } else {
+          this.referenceError.set(result.message ?? 'This request isn’t eligible to book a delivery yet.');
+        }
+      },
+      error: () => {
+        // Network/transport failure — let them through. The server re-applies the
+        // identical eligibility check at submit time, so a transient failure here
+        // must not block a legitimate booking.
+        this.checkingReference.set(false);
+        this.ctaReference.set(ref);
+        this.step.set('day');
+        this.loadAvailability();
+      },
+    });
   }
 
   loadAvailability(): void {
     this.loadingAvailability.set(true);
     this.availabilityError.set(null);
-    this.api.getAvailability().subscribe({
+    this.api.getAvailability(this.ctaReference()).subscribe({
       next: (days) => {
         this.availability.set(days);
         this.loadingAvailability.set(false);
@@ -119,6 +155,13 @@ export class BookingFlowComponent implements OnInit {
     this.step.set('details');
   }
 
+  backToReference(): void {
+    this.selectedDate.set(null);
+    this.selectedWindowId.set(null);
+    this.availability.set(null);
+    this.step.set('reference');
+  }
+
   backToDay(): void {
     this.step.set('day');
   }
@@ -130,7 +173,8 @@ export class BookingFlowComponent implements OnInit {
   submit(form: DetailsFormValue): void {
     const date = this.selectedDate();
     const windowId = this.selectedWindowId();
-    if (!date || !windowId) {
+    const ctaReference = this.ctaReference();
+    if (!date || !windowId || ctaReference === null) {
       return;
     }
 
@@ -143,8 +187,7 @@ export class BookingFlowComponent implements OnInit {
       phone: form.phone,
       address: composeAddress(form),
       accessNotes: form.accessNotes || undefined,
-      // The form control is a text input; the schema types this as Long!.
-      ctaReference: Number(form.ctaReference),
+      ctaReference,
       turnstileToken: form.turnstileToken || undefined,
     };
 

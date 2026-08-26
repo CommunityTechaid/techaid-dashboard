@@ -10,6 +10,7 @@
         <div class="progress-bar progress-bar--on"></div>
         <div class="progress-bar" [class.progress-bar--on]="stepIndex() >= 2"></div>
         <div class="progress-bar" [class.progress-bar--on]="stepIndex() >= 3"></div>
+        <div class="progress-bar" [class.progress-bar--on]="stepIndex() >= 4"></div>
       </div>
       <div class="step-label">{{ stepLabel() }}</div>
     } @else {
@@ -19,6 +20,13 @@
 
   <div class="card-body">
     @switch (step()) {
+      @case ('reference') {
+        <app-reference-step
+          [checking]="checkingReference()"
+          [error]="referenceError()"
+          (referenceSubmitted)="submitReference($event)"
+        />
+      }
       @case ('day') {
         <app-day-step
           [days]="availability()"
@@ -26,6 +34,7 @@
           [error]="availabilityError()"
           (daySelected)="selectDay($event)"
           (retry)="loadAvailability()"
+          (back)="backToReference()"
         />
       }
       @case ('window') {
@@ -35,6 +44,7 @@
         <app-details-step
           [day]="selectedDay()"
           [window]="selectedWindow()"
+          [ctaReference]="ctaReference()"
           [submitting]="submitting()"
           [submitError]="submitError()"
           (back)="backToWindow()"

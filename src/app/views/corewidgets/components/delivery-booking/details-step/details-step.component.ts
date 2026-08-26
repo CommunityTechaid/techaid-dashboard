@@ -29,7 +29,6 @@ export interface DetailsFormValue {
   address: string;
   postcode: string;
   accessNotes: string;
-  ctaReference: string;
   turnstileToken?: string;
 }
 
@@ -75,6 +74,7 @@ function ukPhoneValidator(control: AbstractControl): ValidationErrors | null {
 export class DetailsStepComponent implements AfterViewInit, OnChanges {
   @Input() day: DeliveryDayAvailability | null = null;
   @Input() window: DeliveryWindow | null = null;
+  @Input() ctaReference: number | null = null;
   @Input() submitting = false;
   @Input() submitError: string | null = null;
 
@@ -112,7 +112,6 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
     address: ['', [Validators.required, Validators.maxLength(250)]],
     postcode: ['', [Validators.required, Validators.pattern(UK_POSTCODE_PATTERN)]],
     accessNotes: ['', Validators.maxLength(500)],
-    ctaReference: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
   });
 
   get summarySlot(): string {
