@@ -4,7 +4,6 @@ import { DeliveryDayAvailability } from '../models';
 interface DayRow {
   date: string;
   label: string;
-  sub: string;
 }
 
 @Component({
@@ -21,27 +20,14 @@ export class DayStepComponent {
 
   @Output() daySelected = new EventEmitter<string>();
   @Output() retry = new EventEmitter<void>();
+  @Output() back = new EventEmitter<void>();
 
   get rows(): DayRow[] {
     return (this.days ?? [])
-      .map((day) => {
-        const available = day.windows.filter((w) => w.spotsRemaining > 0);
-        return { day, available };
-      })
-      .filter(({ available }) => available.length > 0)
-      .map(({ day, available }) => ({
+      .filter((day) => day.windows.some((w) => w.spotsRemaining > 0))
+      .map((day) => ({
         date: day.date,
         label: day.dayLabel,
-        sub: this.subLabel(day, available.length),
       }));
-  }
-
-  private subLabel(day: DeliveryDayAvailability, availableCount: number): string {
-    if (availableCount === day.windows.length) {
-      return 'Morning & afternoon available';
-    }
-    const availableName = day.windows.find((w) => w.spotsRemaining > 0)?.window.name ?? '';
-    const fullName = day.windows.find((w) => w.spotsRemaining === 0)?.window.name ?? '';
-    return `${availableName} only — ${fullName.replace(' window', '').toLowerCase()} is full`;
   }
 }
