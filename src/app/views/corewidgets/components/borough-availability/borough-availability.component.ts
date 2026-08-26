@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, Subscription, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
+import { Subject, Subscription, catchError, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
+import { NgSelectComponent } from '@ng-select/ng-select';
 import { BoroughAvailabilityService } from '@app/shared/services/borough-availability.service';
 import { OFFERABLE_DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils/device-types';
 
@@ -94,9 +95,22 @@ const SAVE = gql`
   }
 `;
 
+/**
+ * The organisation lookup behind the exception rows.
+ *
+ * `referringOrganisationsConnection`, NOT `referringOrganisations`. The latter resolves to a
+ * single ReferringOrganisation and has no `content` field, so the query this screen shipped with
+ * was rejected by the server every time with "Validation error (FieldUndefined@[referringOrganisations/content])".
+ * The lookup therefore never returned a single row against the real API — which is the actual
+ * reason an exception could not be saved: with no options to choose from there was no way to
+ * record an organisation id, and Save could only ever answer "Every exception needs an
+ * organisation and a borough group". Mocked tests could not catch it because they stub the
+ * response rather than the schema. Same shape as the referee autocomplete in
+ * referring-organisation-contact-info.component.ts, which is the one that has always worked.
+ */
 const SEARCH_ORGANISATIONS = gql`
   query SearchReferringOrganisations($term: String) {
-    referringOrganisations(where: { name: { _contains: $term }, archived: { _eq: false } }) {
+    referringOrganisationsConnection(page: { size: 50 }, where: { name: { _contains: $term }, archived: { _eq: false } }) {
       content {
         id
         name
@@ -149,20 +163,39 @@ export interface GroupRow {
   updatedAt?: string | null;
 }
 
+/**
+ * One option in an exception row's organisation picker.
+ *
+ * The label carries the id ("Name #57") because two referring organisations can share a name.
+ * The id is what is bound and saved, so the suffix is only there to let a human tell two
+ * identically-named organisations apart in the list.
+ */
+export interface OrganisationOption {
+  id: string;
+  label: string;
+}
+
 export interface ExceptionRow {
   organisationId: string | null;
-  /** What is in the text box — not necessarily a confirmed selection. */
-  organisationName: string;
-  /** The exact option text that produced `organisationId`, so a re-touch cannot clear it. */
-  selectedLabel?: string | null;
   boroughGroupId: string | null;
   maxPerReferee: number;
+  /**
+   * The options offered by THIS row's picker.
+   *
+   * Per row rather than one list shared by the whole table: searching in the second row used to
+   * replace the options the first row's selection was displayed from, so a valid choice went
+   * blank on screen while its id was still staged for save.
+   */
+  options: OrganisationOption[];
+  /** Search terms from this row's picker, wired to the lookup in `wireOrganisationSearch`. */
+  search: Subject<string>;
+  loading: boolean;
 }
 
 @Component({
   selector: 'app-borough-availability',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NgSelectComponent],
   templateUrl: './borough-availability.component.html',
   styleUrl: './borough-availability.component.scss',
 })
@@ -212,9 +245,6 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   /** Which cell's editor row is open. Only ever one, per the design. */
   editing: { groupId: string | null; key: string } | null = null;
 
-  organisationSearch = new Subject<string>();
-  organisationResults: { id: string; name: string }[] = [];
-
   private sub = new Subscription();
 
   constructor(
@@ -225,28 +255,10 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
-
-    this.sub.add(
-      this.organisationSearch
-        .pipe(
-          debounceTime(200),
-          distinctUntilChanged(),
-          switchMap((term) =>
-            this.apollo.query<{ referringOrganisations: { content: { id: string; name: string }[] } }>({
-              query: SEARCH_ORGANISATIONS,
-              variables: { term },
-              fetchPolicy: 'network-only',
-            }),
-          ),
-        )
-        .subscribe({
-          next: ({ data }) => (this.organisationResults = data?.referringOrganisations?.content ?? []),
-          error: () => (this.organisationResults = []),
-        }),
-    );
   }
 
   ngOnDestroy(): void {
+    this.exceptions.forEach((row) => row.search.complete());
     this.sub.unsubscribe();
   }
 
@@ -254,6 +266,9 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.loadError = false;
     this.loaded = false;
+    // The rows about to be replaced own live picker subjects; completing them tears down their
+    // subscriptions rather than leaving a set per load on a screen that reloads after every save.
+    this.exceptions.forEach((row) => row.search.complete());
     this.apollo
       .query<{ boroughGroups: any[]; referrerLimitExceptions: any[] }>({
         query: QUERY,
@@ -270,12 +285,27 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
             modes: this.modesFrom(group.availability ?? []),
             updatedAt: group.updatedAt,
           }));
-          this.exceptions = (data?.referrerLimitExceptions ?? []).map((row) => ({
-            organisationId: String(row.organisationId),
-            organisationName: row.organisationName,
-            boroughGroupId: String(row.boroughGroupId),
-            maxPerReferee: row.maxPerReferee,
-          }));
+          this.exceptions = (data?.referrerLimitExceptions ?? []).map((row) =>
+            this.exceptionRow({
+              organisationId: String(row.organisationId),
+              boroughGroupId: String(row.boroughGroupId),
+              maxPerReferee: row.maxPerReferee,
+              // Seed the picker with the organisation this row already points at. Without it the
+              // select has no option matching its own bound id and renders blank until someone
+              // searches — which reads as "no organisation set" on a row that has one.
+              // The name can come back null on an exception whose organisation was since archived
+              // or renamed away; showing "null #57" would read as corruption. The id alone is
+              // still enough to identify the row and to save it unchanged.
+              options: [
+                {
+                  id: String(row.organisationId),
+                  label: row.organisationName
+                    ? `${row.organisationName} #${row.organisationId}`
+                    : `#${row.organisationId}`,
+                },
+              ],
+            }),
+          );
           const config = (data as any)?.adminConfig ?? null;
           this.adminConfigId = config?.id != null ? String(config.id) : null;
           this.globalOffered = {};
@@ -318,8 +348,23 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     return JSON.stringify({
       global: this.globalOffered,
       groups: this.groups,
-      exceptions: this.exceptions,
+      exceptions: this.exceptionSnapshot(),
     });
+  }
+
+  /**
+   * Just the three fields that are actually saved.
+   *
+   * The rows also carry a picker subject and its option list, and neither belongs in a
+   * change comparison: the subject is not serialisable at all, and merely searching for an
+   * organisation would otherwise rewrite `options` and report the configuration as edited.
+   */
+  private exceptionSnapshot(): Pick<ExceptionRow, 'organisationId' | 'boroughGroupId' | 'maxPerReferee'>[] {
+    return this.exceptions.map((row) => ({
+      organisationId: row.organisationId,
+      boroughGroupId: row.boroughGroupId,
+      maxPerReferee: row.maxPerReferee,
+    }));
   }
 
   /**
@@ -372,7 +417,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     const before = JSON.parse(this.pristine) as {
       global?: Record<string, boolean>;
       groups: GroupRow[];
-      exceptions: ExceptionRow[];
+      exceptions: Pick<ExceptionRow, 'organisationId' | 'boroughGroupId' | 'maxPerReferee'>[];
     };
     let count = 0;
 
@@ -457,46 +502,95 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   addException(): void {
     this.exceptions = [
       ...this.exceptions,
-      {
+      this.exceptionRow({
         organisationId: null,
-        organisationName: '',
         boroughGroupId: this.groups[0]?.id ?? null,
         maxPerReferee: this.groups[0]?.maxPerReferee ?? 1,
-      },
+        options: [],
+      }),
     ];
   }
 
   removeException(index: number): void {
+    this.exceptions[index]?.search.complete();
     this.exceptions = this.exceptions.filter((_, i) => i !== index);
   }
 
-  /**
-   * Options are labelled "Name #id" so the list is unambiguous.
-   *
-   * Two referring organisations can share a name, and matching on the name alone would silently
-   * bind the exception to whichever happened to come back first — an override quietly applied to
-   * the wrong organisation, which nothing downstream would flag.
-   */
-  organisationOption(organisation: { id: string; name: string }): string {
-    return `${organisation.name} #${organisation.id}`;
+  /** Build a row and connect its picker. Every ExceptionRow must come from here. */
+  private exceptionRow(
+    row: Pick<ExceptionRow, 'organisationId' | 'boroughGroupId' | 'maxPerReferee' | 'options'>,
+  ): ExceptionRow {
+    const built: ExceptionRow = { ...row, search: new Subject<string>(), loading: false };
+    this.wireOrganisationSearch(built);
+    return built;
   }
 
-  onOrganisationTyped(row: ExceptionRow, term: string): void {
-    row.organisationName = term;
+  /**
+   * Run one row's typed terms against the organisation lookup.
+   *
+   * This replaces a native `<datalist>`, which failed in a way worth recording. A datalist offers
+   * suggestions but does not require one to be taken, and the row only recorded an organisation
+   * when the typed text matched an option character for character — including the " #57" suffix
+   * no one would type. An admin who typed the organisation name and pressed Save therefore had
+   * `organisationId` null and was told "Every exception needs an organisation and a borough
+   * group" while looking at a box with the organisation's name in it. Binding the id from a real
+   * selection removes the class of bug rather than the symptom, and is the same control the
+   * public booking form already uses for this exact lookup.
+   */
+  private wireOrganisationSearch(row: ExceptionRow): void {
+    this.sub.add(
+      row.search
+        .pipe(
+          // `minTermLength` gates what typing emits, but ng-select's own _clearSearch() pushes a
+          // bare null straight into the typeahead subject on select, on close and on clear. Left
+          // alone that fires a `_contains: null` search after every pick, whose 50-row answer then
+          // replaces this row's options — so reopening a row showed an arbitrary list of
+          // organisations rather than what was searched for. Gate the subject itself, since the
+          // component cannot rely on who is pushing into it.
+          filter((term) => (term ?? '').trim().length >= 3),
+          debounceTime(200),
+          distinctUntilChanged(),
+          switchMap((term) => {
+            row.loading = true;
+            return this.apollo
+              .query<{ referringOrganisationsConnection: { content: { id: string; name: string }[] } }>({
+                query: SEARCH_ORGANISATIONS,
+                variables: { term },
+                fetchPolicy: 'network-only',
+              })
+              // Swallowed per row: a failed search must leave the row's existing selection and
+              // the rest of the table alone, not tear down the whole picker for the page.
+              .pipe(catchError(() => of(null)));
+          }),
+        )
+        .subscribe((res) => {
+          row.loading = false;
+          const found: OrganisationOption[] = (res?.data?.referringOrganisationsConnection?.content ?? []).map(
+            (organisation) => ({
+              id: String(organisation.id),
+              label: `${organisation.name} #${organisation.id}`,
+            }),
+          );
+          row.options = this.keepingSelection(row, found);
+        }),
+    );
+  }
 
-    const byOption = this.organisationResults.find((o) => this.organisationOption(o) === term);
-    if (byOption) {
-      row.organisationId = byOption.id;
-      row.selectedLabel = term;
-    } else if (term !== row.selectedLabel) {
-      // Only drop the id when the text has actually moved away from what was chosen. Clearing it
-      // on every keystroke meant re-touching a row after searching in a different row wiped a
-      // valid selection, because the shared results list no longer contained it.
-      row.organisationId = null;
-      row.selectedLabel = null;
-    }
-
-    if (term && term.length >= 3) this.organisationSearch.next(term);
+  /**
+   * Keep the row's current selection in its option list.
+   *
+   * Belt and braces rather than a fix for an observed failure: ng-select's own mapSelectedItems
+   * already retains a selected item that a later `items` array no longer contains, and every id
+   * here originated from this row's own options. This makes the invariant the code depends on —
+   * the bound id is always present in the list it is displayed from — true locally, instead of
+   * inherited from a third-party implementation detail that could change under a version bump.
+   */
+  private keepingSelection(row: ExceptionRow, found: OrganisationOption[]): OrganisationOption[] {
+    const selected = row.organisationId
+      ? row.options.find((option) => option.id === row.organisationId)
+      : null;
+    if (!selected || found.some((option) => option.id === selected.id)) return found;
+    return [selected, ...found];
   }
 
   // --- saving -------------------------------------------------------------------------------
@@ -584,10 +678,10 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   private saveMatrix() {
     const matrixChanged = (() => {
       if (!this.pristine) return true;
-      const before = JSON.parse(this.pristine) as { groups: GroupRow[]; exceptions: ExceptionRow[] };
+      const before = JSON.parse(this.pristine) as { groups: GroupRow[]; exceptions: unknown[] };
       return (
         JSON.stringify(before.groups) !== JSON.stringify(this.groups) ||
-        JSON.stringify(before.exceptions) !== JSON.stringify(this.exceptions)
+        JSON.stringify(before.exceptions) !== JSON.stringify(this.exceptionSnapshot())
       );
     })();
 

@@ -100,8 +100,13 @@
                       <span class="ms-1"><i class="fas fa-link"></i> Linked group · {{ group.boroughs.length }} boroughs</span>
                     }
                   </div>
+                  <!-- Plain muted text, not a badge. An amber badge reads as a warning that
+                       something needs attention, and PILOT is a settled state of the group, not
+                       a problem with it. -->
                   @if (group.status !== 'LIVE') {
-                    <span class="badge bg-warning text-dark mt-1">{{ group.status }}</span>
+                    <div class="text-muted small" [attr.data-testid]="'group-status-' + group.id">
+                      {{ group.status }}
+                    </div>
                   }
                 </th>
 
@@ -268,16 +273,25 @@
           @for (row of exceptions; track $index) {
             <tr>
               <td>
-                <input
-                  type="text"
-                  class="form-control form-control-sm"
-                  list="organisation-options"
-                  placeholder="Start typing an organisation name"
+                <!-- The same searchable picker the public booking form uses for "your
+                     organisation". It binds the organisation id from an actual selection, so a
+                     half-typed name can no longer look chosen and then fail validation on Save. -->
+                <ng-select
                   [attr.data-testid]="'exception-org-' + $index"
-                  [ngModel]="row.organisationName"
+                  [items]="row.options"
+                  bindLabel="label"
+                  bindValue="id"
+                  [typeahead]="row.search"
+                  [loading]="row.loading"
+                  [minTermLength]="3"
+                  [disabled]="saving"
+                  [(ngModel)]="row.organisationId"
                   [name]="'exceptionOrg-' + $index"
-                  (ngModelChange)="onOrganisationTyped(row, $event)"
-                />
+                  placeholder="Start typing an organisation name"
+                  typeToSearchText="Type at least three letters of the organisation name"
+                  notFoundText="No matching organisation"
+                >
+                </ng-select>
               </td>
               <td>
                 <select
@@ -316,12 +330,6 @@
           }
         </tbody>
       </table>
-
-      <datalist id="organisation-options">
-        @for (organisation of organisationResults; track organisation.id) {
-          <option [value]="organisationOption(organisation)"></option>
-        }
-      </datalist>
     }
   </div>
 </div>

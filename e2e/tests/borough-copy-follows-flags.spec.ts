@@ -21,9 +21,16 @@
  *
  * Since #178 the three cases no longer read the same element. The first two run the legacy
  * iframe path and read the Formly out-of-area page; the third selects the streamlined postcode
- * step, which owns its own out-of-area card and never renders the iframe at all. That is the
- * substitution working as intended — what is pinned here is the sentence naming exactly the
- * boroughs the flags say we accept, whichever implementation is showing it.
+ * step, which owns its own out-of-area card and never renders the iframe at all.
+ *
+ * The third case no longer asserts the same sentence, and that is a deliberate narrowing rather
+ * than drift. The Request Booking 2.0 round replaced the streamlined card's copy with a plain
+ * apology and an email address, naming no boroughs at all — so on that path there is nothing
+ * left for the flags to move. What the third case now pins is the other half of the #177
+ * promise: whatever the flags say, that card must never name a borough, because a card that
+ * lists boroughs it does not read from the flags is exactly the hardcoded copy #177 removed.
+ * The flag-following assertion itself lives on in the two legacy-path cases, which still show
+ * the Formly page.
  *
  * @mocked — all GraphQL stubbed and the ward-lookup iframe served locally, so no token is
  * needed and nothing leaves the machine.
@@ -136,15 +143,13 @@ test.describe('out-of-area copy follows the borough flags @mocked', () => {
     await expect(page.getByText('Tower Hamlets')).toHaveCount(0);
   });
 
-  test('both flags on: names all three boroughs', async ({ page }) => {
+  test('both flags on: the streamlined card apologises and names no borough', async ({ page }) => {
     test.setTimeout(90_000);
     await installMocks(page, { towerHamlets: true, streamlinedLookup: true });
 
     // Different route to the same state. With the streamlined lookup selected the iframe is
     // never rendered, so there is no postMessage to drive and no Formly out-of-area page —
-    // #178 answers this case inside the postcode step instead. The assertion below is the
-    // same promise as the other two cases (the sentence names exactly the boroughs the flags
-    // say we accept), read off the component that now owns it.
+    // #178 answers this case inside the postcode step instead.
     await page.goto('/organisation-device-request');
     await expect(page.getByText('E2E public request page content')).toBeVisible({ timeout: 30_000 });
 
@@ -153,6 +158,16 @@ test.describe('out-of-area copy follows the borough flags @mocked', () => {
 
     const card = page.getByTestId('postcode-out-of-area');
     await expect(card).toBeVisible({ timeout: 30_000 });
-    await expect(card).toContainText('We only take referrals from Lambeth, Southwark and Tower Hamlets');
+    await expect(card).toContainText(
+      "Unfortunately we don't support this area at the moment. Please email us for further information.",
+    );
+
+    // No borough may be named on this path, with both flags ON — the case that would catch a
+    // hardcoded list being reintroduced. A hand-written list would read correctly here today and
+    // go stale the moment a flag moved, which is the #177 failure exactly.
+    const text = ((await card.textContent()) ?? '').toLowerCase();
+    for (const borough of ['lambeth', 'southwark', 'tower hamlets', 'lewisham']) {
+      expect(text).not.toContain(borough);
+    }
   });
 });

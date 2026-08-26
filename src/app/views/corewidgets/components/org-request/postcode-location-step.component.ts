@@ -1,16 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Borough, boroughListSentence, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
+import { Borough, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
 import { PostcodeLookup, WardLookupService } from '@app/shared/services/ward-lookup.service';
-
-/**
- * Where the "See other services near you" link points.
- *
- * TODO(#178): the design draws this as a link but does not say what it links to, and no such
- * destination exists anywhere else in the codebase. Pointed at the main site as a safe default
- * — swap it for the real signposting page when someone confirms what that is. Flagged in the PR.
- */
-export const OTHER_SERVICES_URL = 'https://communitytechaid.org.uk';
 
 export const DISTRIBUTIONS_EMAIL = 'distributions@communitytechaid.org.uk';
 
@@ -55,6 +46,14 @@ type StepState =
          off in a single frame. Fading in makes that read as a response rather than a glitch. */
       .postcode-result {
         animation: postcode-result-in 120ms ease-out;
+      }
+      /* Licence acknowledgements, not page copy. Bootstrap's .small (0.875em) still read as a
+         paragraph competing with the postcode result, so the size is set explicitly here rather
+         than by stacking another utility class. Kept at 11px and on the muted-not-faint colour:
+         the OGL requires the acknowledgement to be shown, not merely present. */
+      .postcode-attribution {
+        font-size: 0.6875rem;
+        line-height: 1.35;
       }
       @keyframes postcode-result-in {
         from {
@@ -112,7 +111,7 @@ type StepState =
               <b>{{ resolved.ward }}</b> ward, <b>{{ resolved.borough.name }}</b>
             </p>
             <button type="button" class="btn btn-primary" (click)="confirm()">
-              That's right
+              Submit a request
             </button>
           </div>
         }
@@ -121,11 +120,8 @@ type StepState =
           <div class="alert alert-danger postcode-result" data-testid="postcode-out-of-area">
             <div class="font-weight-bold">{{ result?.postcode }}</div>
             <p class="mb-0 mt-2">
-              We only take referrals from {{ supportedSentence }}.
-              <a [href]="otherServicesUrl" target="_blank" rel="noopener">
-                See other services near you</a
-              >
-              or <a [href]="'mailto:' + distributionsEmail">email</a> us to discuss further
+              Unfortunately we don't support this area at the moment. Please
+              <a [href]="'mailto:' + distributionsEmail">email us</a> for further information.
             </p>
           </div>
         }
@@ -150,7 +146,7 @@ type StepState =
       </div>
 
       @if (attribution.length) {
-        <p class="text-muted small mt-4 mb-0" data-testid="postcode-attribution">
+        <p class="text-muted postcode-attribution mt-4 mb-0" data-testid="postcode-attribution">
           @for (line of attribution; track line) {
             {{ line }}<br />
           }
@@ -171,7 +167,7 @@ export class PostcodeLocationStepComponent implements OnInit {
   @Input() supportedBoroughs: readonly Borough[] = CORE_BOROUGHS;
 
   /**
-   * Emitted on "That's right". Payload matches what the legacy iframe posts, so the parent's
+   * Emitted on "Submit a request". Payload matches what the legacy iframe posts, so the parent's
    * handler for the two paths is the same code.
    *
    * There is deliberately no matching "out of area" output. The legacy path answers that case by
@@ -199,17 +195,12 @@ export class PostcodeLocationStepComponent implements OnInit {
    */
   attribution: string[] = [];
 
-  readonly otherServicesUrl = OTHER_SERVICES_URL;
   readonly distributionsEmail = DISTRIBUTIONS_EMAIL;
 
   constructor(
     private readonly wardLookup: WardLookupService,
     private readonly changeDetectorRef: ChangeDetectorRef,
   ) {}
-
-  get supportedSentence(): string {
-    return boroughListSentence(this.supportedBoroughs, 'and');
-  }
 
   /** The resolved result, but only while it is actually being shown as covered. */
   get covered(): Extract<PostcodeLookup, { status: 'resolved' }> | null {

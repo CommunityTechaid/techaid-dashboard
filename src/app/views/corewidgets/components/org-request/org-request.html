@@ -88,7 +88,7 @@
           </div>
         }
         @if (!submited && wardSubmitted && !showTypeform) {
-          @if (deviceAvailabilityNote) {
+          @if (deviceAvailabilityNote && !requestLimitReached) {
             <div class="alert alert-warning border-left-warning" data-testid="device-availability-note">
               {{ deviceAvailabilityNote }}
             </div>
