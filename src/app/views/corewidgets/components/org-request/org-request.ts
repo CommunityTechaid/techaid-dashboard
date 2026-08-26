@@ -49,6 +49,52 @@ const outOfAreaHeading = (boroughs: string) =>
 const outOfAreaCheckPostcode = (boroughs: string) =>
   `<p class="">Please check the postcode and ensure it falls within ${boroughs} before continuing.</p>`;
 
+/** What the server tells us when it refuses a request for exceeding the referrer's cap. */
+export interface RequestLimitDetail {
+  open: number;
+  /** The borough group the cap was counted against, or 'overall' for the ungrouped fallback. */
+  scope: string;
+  limit: number;
+}
+
+/**
+ * These templates are interpolated straight into Formly `template` strings, which Angular renders
+ * as raw HTML. The borough group name is admin-entered, so it is escaped rather than trusted.
+ */
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+/**
+ * The refusal shown to a referrer who is already at their open-request limit.
+ *
+ * This page used to say "It looks like you already have 3 open requests", with the three written
+ * into the page. That number was correct only while the cap was a flat figure counted across every
+ * borough. Since #179 the cap is set per borough group and can be overridden per organisation, so
+ * a Tower Hamlets referrer (limit 1) was told they already had three requests when they had one.
+ *
+ * The numbers therefore come from the server's own error, which is the only place that knows what
+ * was actually resolved — it has already applied the borough group and any organisation-level
+ * exception, neither of which this page can see.
+ *
+ * `detail` of null means that error could not be parsed, and the copy then names no number at all.
+ * That is deliberate: a refusal screen stating a false count is worse than one stating none, so a
+ * change to the server's wording degrades to vague rather than to wrong.
+ */
+const requestLimitCopy = (detail: RequestLimitDetail | null): string => {
+  const tail = 'Please wait for these to be fulfilled before making another.';
+  if (!detail) {
+    return `<p class="">It looks like you already have the maximum number of open requests for this area.</br> ${tail}</p>`;
+  }
+  const requests = detail.open === 1 ? 'request' : 'requests';
+  // 'overall' is the server's own word for the ungrouped fallback; naming it would read as a place.
+  const where = detail.scope && detail.scope !== 'overall' ? ` for ${escapeHtml(detail.scope)}` : '';
+  return `<p class="">It looks like you already have ${detail.open} open ${requests}${where}. The limit is ${detail.limit}.</br> ${tail}</p>`;
+};
+
 const CREATE_ENTITY = gql`
   mutation createOrganisation($data: CreateOrganisationInput!) {
     createOrganisation(data: $data){
@@ -188,6 +234,17 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   /** Amber note shown when the confirmed borough offers fewer device types than usual. */
   deviceAvailabilityNote: string | null = null;
+
+  /**
+   * Set once the request has been refused for hitting the referrer's open-request limit.
+   *
+   * The limit page replaces the form's field groups but leaves the surrounding page intact, so
+   * without this the amber "in Tower Hamlets we can currently offer laptops only" note stayed
+   * above it — telling someone what they can request on the very screen that has just told them
+   * they cannot request anything. A flag rather than clearing the note itself, so a later
+   * applyDeviceAvailability() cannot quietly bring it back.
+   */
+  requestLimitReached = false;
 
   /**
    * Server-resolved availability, keyed by normalised borough name. Empty until it loads, and
@@ -969,6 +1026,11 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     ]
   }
 
+  /**
+   * Built with the number-free wording, which is the right answer until the server's error has
+   * been read — and remains the right answer if it cannot be parsed. applyRequestLimitCopy()
+   * replaces the second row just before the page is revealed.
+   */
   moreThanThreeRequestsPage: FormlyFieldConfig = {
     hideExpression: true,
     fieldGroup: [
@@ -978,7 +1040,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       },
       {
         className: 'row',
-        template: '<p class="">It looks like you already have 3 open requests.</br> Please wait for these to be fulfilled before making another.</p>'
+        template: requestLimitCopy(null)
       }
     ]
   }
@@ -1423,13 +1485,24 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.options.detectChanges?.(this.fields[0]);
   }
 
-  showMoreThanThreeRequestsPage() {
+  showMoreThanThreeRequestsPage(detail: RequestLimitDetail | null = null) {
+    // Rewrite before unhiding, for the same reason as showNotSupportedPage(): lazyRender builds
+    // the field fresh on reveal, so this is the last moment the template can still change what
+    // the user sees.
+    this.applyRequestLimitCopy(detail);
     this.content = {}
+    this.requestLimitReached = true;
     this.refOrganisationPage.hide = true;
     this.refContactPage.hide = true;
     this.requestPage.hide = true;
     this.moreThanThreeRequestsPage.hide = false;
     this.options.detectChanges?.(this.fields[0]);
+  }
+
+  private applyRequestLimitCopy(detail: RequestLimitDetail | null): void {
+    const group = this.moreThanThreeRequestsPage.fieldGroup;
+    if (!group) return;
+    group[1].template = requestLimitCopy(detail);
   }
 
   showNotSupportedPage() {
@@ -1527,12 +1600,27 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
   private readonly THREE_REQUEST_LIMIT_MARKER = 'Could not create new requests. This user already has';
+
+  /**
+   * Pulls the real figures out of the server's refusal, which reads
+   * "Could not create new requests. This user already has 1 requests open in Tower Hamlets (limit 1)".
+   *
+   * Matching the whole shape rather than just the leading number is what makes a wording change
+   * fail closed: a partial match yields null and the page falls back to copy that names no number.
+   */
+  private readonly REQUEST_LIMIT_DETAIL_RE =
+    /This user already has (\d+) requests? open in (.+?) \(limit (\d+)\)/;
   // GraphQL emits this boilerplate alongside any non-nullable mutation that returns null.
   // It's noisy and unhelpful; strip it before showing anything to the user.
   private readonly NULL_BUBBLE_RE =
     /\s*The field at path '[^']*' was declared as a non null type[\s\S]*?within parent type '[^']*'\.?\s*/g;
 
-  private parseApolloError(error: unknown): { isLimit: boolean; isNetwork: boolean; message: string } {
+  private parseApolloError(error: unknown): {
+    isLimit: boolean;
+    isNetwork: boolean;
+    message: string;
+    limit: RequestLimitDetail | null;
+  } {
     // graphQLErrorMessages reads Apollo v4's own error classes and recovers the messages from a
     // non-200 body too, so the two v3 lookups this used to do collapse into one call.
     const gqlMessages: string[] = graphQLErrorMessages(error);
@@ -1542,7 +1630,15 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     const haystack = sources.join(' || ');
 
     if (haystack.includes(this.THREE_REQUEST_LIMIT_MARKER)) {
-      return { isLimit: true, isNetwork: false, message: '' };
+      const detail = this.REQUEST_LIMIT_DETAIL_RE.exec(haystack);
+      return {
+        isLimit: true,
+        isNetwork: false,
+        message: '',
+        limit: detail
+          ? { open: Number(detail[1]), scope: detail[2].trim(), limit: Number(detail[3]) }
+          : null,
+      };
     }
 
     const cleaned = sources
@@ -1550,19 +1646,21 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       .filter(Boolean);
 
     if (cleaned.length > 0) {
-      return { isLimit: false, isNetwork: false, message: cleaned[0] };
+      return { isLimit: false, isNetwork: false, message: cleaned[0], limit: null };
     }
     if (isNetworkError(error) || /network|fetch|cors/i.test(rawMessage)) {
       return {
         isLimit: false,
         isNetwork: true,
         message: "We couldn't reach the server. Please check your connection and try again in a moment.",
+        limit: null,
       };
     }
     return {
       isLimit: false,
       isNetwork: false,
       message: 'Something went wrong while saving your request. Please try again, or contact distributions@communitytechaid.org.uk if it persists.',
+      limit: null,
     };
   }
 
@@ -1649,7 +1747,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       const parsed = this.parseApolloError(firstError);
 
       if (parsed.isLimit) {
-        this.showMoreThanThreeRequestsPage();
+        this.showMoreThanThreeRequestsPage(parsed.limit);
         return false;
       }
 
@@ -1673,7 +1771,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         console.warn('createDeviceRequest failed (retry):', retryError);
         const retryParsed = this.parseApolloError(retryError);
         if (retryParsed.isLimit) {
-          this.showMoreThanThreeRequestsPage();
+          this.showMoreThanThreeRequestsPage(retryParsed.limit);
           return false;
         }
         this.toastr.error(retryParsed.message);

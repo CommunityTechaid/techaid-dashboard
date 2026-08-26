@@ -153,6 +153,46 @@ async function checkPostcode(page: Page, postcode: string): Promise<void> {
   await page.getByRole('button', { name: 'Check' }).click();
 }
 
+/**
+ * Drives a Tower Hamlets postcode through to a submittable device-request form, so the two
+ * request-limit tests below differ only in the mocked createDeviceRequest error.
+ */
+async function fillSubmittableTowerHamletsRequest(page: Page): Promise<void> {
+  await checkPostcode(page, TOWER_HAMLETS_POSTCODE);
+  await expect(page.getByTestId('postcode-covered')).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Submit a request' }).click();
+
+  // Precondition: the note is showing before the limit is hit.
+  await expect(page.getByTestId('device-availability-note')).toBeVisible({ timeout: 15_000 });
+
+  await advanceToDeviceRequestPage(page);
+
+  const form = page.locator('formly-form');
+  await form.getByText('Laptop', { exact: true }).click();
+  await form.locator('textarea').fill('E2E test request — no identifiable details.');
+  await page
+    .getByLabel("For your records, enter your client's initials or a client reference")
+    .fill('E2E-1');
+}
+
+/**
+ * Registered AFTER installMocks on purpose: Playwright matches routes in reverse registration
+ * order, so this wins for createDeviceRequest and everything else falls back to the general mock.
+ */
+async function mockCreateDeviceRequestError(page: Page, message: string): Promise<void> {
+  await page.route('**/graphql', async route => {
+    const raw = route.request().postData() ?? '';
+    if (raw.includes('createDeviceRequest')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ errors: [{ message }] }),
+      });
+    }
+    return route.fallback();
+  });
+}
+
 test.describe('streamlined ward lookup @mocked', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -168,7 +208,7 @@ test.describe('streamlined ward lookup @mocked', () => {
     await expect(covered).toContainText('Peckham');
     await expect(covered).toContainText('Southwark');
 
-    await page.getByRole('button', { name: "That's right" }).click();
+    await page.getByRole('button', { name: 'Submit a request' }).click();
 
     // The postcode step is gone, and the device-request form has taken its place.
     await expect(page.locator('#postcode')).toHaveCount(0);
@@ -185,6 +225,14 @@ test.describe('streamlined ward lookup @mocked', () => {
     const outOfArea = page.getByTestId('postcode-out-of-area');
     await expect(outOfArea).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('formly-form')).toHaveCount(0);
+
+    // The agreed wording, pinned. Signed off in the Request Booking 2.0 tracker: an unsupported
+    // postcode gets one plain apology and one route to a human, and the address to write to is
+    // part of the promise — a card that regrets and then offers nowhere to go is worse than the
+    // borough list it replaced.
+    await expect(outOfArea).toContainText(
+      "Unfortunately we don't support this area at the moment. Please email us for further information.",
+    );
     await expect(outOfArea.locator('a[href^="mailto:distributions@communitytechaid.org.uk"]')).toBeVisible();
 
     // The table holds only the boroughs we serve, so a miss tells us nothing about where the
@@ -192,6 +240,28 @@ test.describe('streamlined ward lookup @mocked', () => {
     const text = (await outOfArea.textContent()) ?? '';
     expect(text.toLowerCase()).not.toContain('lewisham');
     expect(text.toLowerCase()).not.toContain('ward');
+  });
+
+  /**
+   * The Open Government Licence acknowledgements are required to be shown, so they cannot be
+   * dropped — but at .small they read as page copy and crowded the postcode result, which is what
+   * the tracker asked to fix. This pins both halves: still rendered, and visibly smaller than the
+   * body text around it.
+   */
+  test('the licence attribution is rendered, and smaller than body copy', async ({ page }) => {
+    test.setTimeout(90_000);
+    await installMocks(page, { towerHamlets: true, streamlinedLookup: true });
+    await openReadyPage(page);
+
+    const attribution = page.getByTestId('postcode-attribution');
+    await expect(attribution).toBeVisible({ timeout: 15_000 });
+    await expect(attribution).toContainText('Crown copyright');
+
+    const sizes = await attribution.evaluate((element) => ({
+      attribution: parseFloat(getComputedStyle(element).fontSize),
+      body: parseFloat(getComputedStyle(document.body).fontSize),
+    }));
+    expect(sizes.attribution).toBeLessThan(sizes.body * 0.8);
   });
 
   test('malformed postcode gets a distinct message from out-of-area', async ({ page }) => {
@@ -224,7 +294,7 @@ test.describe('streamlined ward lookup @mocked', () => {
 
     await checkPostcode(page, TOWER_HAMLETS_POSTCODE);
     await expect(page.getByTestId('postcode-covered')).toBeVisible({ timeout: 15_000 });
-    await page.getByRole('button', { name: "That's right" }).click();
+    await page.getByRole('button', { name: 'Submit a request' }).click();
 
     const note = page.getByTestId('device-availability-note');
     await expect(note).toBeVisible({ timeout: 15_000 });
@@ -238,6 +308,71 @@ test.describe('streamlined ward lookup @mocked', () => {
     await expect(form.getByText('Smartphone', { exact: true })).toHaveCount(0);
     await expect(form.getByText('Tablet', { exact: true })).toHaveCount(0);
     await expect(form.getByText('Desktop computer', { exact: true })).toHaveCount(0);
+  });
+
+  /**
+   * Red/green for the amber-note bug: showMoreThanThreeRequestsPage() swaps the form's field
+   * groups for the "Oops!" limit page, but the amber device-availability note sits outside
+   * those field groups, above them — so it used to stay on screen telling someone what they
+   * could request on the very page refusing them. Fixed by gating the note on
+   * `!requestLimitReached`.
+   *
+   * The mocked error uses the REAL server format (techaid-server DeviceRequestMutations.kt):
+   * "Could not create new requests. This user already has ${open} requests open in ${scope}
+   * (limit ${limit})". This also pins the second fix on the same page: the copy used to
+   * hardcode "3 open requests", which was wrong for every borough group whose limit isn't 3 —
+   * since #179 the cap is per-group and per-organisation, so a Tower Hamlets referrer (limit 1)
+   * was told they already had three requests when they had one.
+   */
+  test('the request-limit page clears the amber note and shows the real limit figures', async ({ page }) => {
+    test.setTimeout(90_000);
+    await installMocks(page, { towerHamlets: true, streamlinedLookup: true });
+    await openReadyPage(page);
+
+    await fillSubmittableTowerHamletsRequest(page);
+    await mockCreateDeviceRequestError(
+      page,
+      'Could not create new requests. This user already has 1 requests open in Tower Hamlets (limit 1)',
+    );
+
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    await expect(page.getByText('Oops!')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('1 open request for Tower Hamlets')).toBeVisible();
+    await expect(page.getByText('The limit is 1.')).toBeVisible();
+    await expect(page.getByText('3 open requests')).toHaveCount(0);
+
+    // This is the assertion that fails without the fix: the note used to remain visible above
+    // the limit page.
+    await expect(page.getByTestId('device-availability-note')).toHaveCount(0);
+  });
+
+  /**
+   * Pins the fail-closed fallback: the marker string alone is what classifies an error as a
+   * limit refusal, but if the trailing wording doesn't match the parser's shape the page must
+   * degrade to vague copy naming no number — never carry over a wrong one. A refusal screen
+   * stating a false count is worse than one stating none.
+   */
+  test('an unparseable limit error falls back to copy that states no number', async ({ page }) => {
+    test.setTimeout(90_000);
+    await installMocks(page, { towerHamlets: true, streamlinedLookup: true });
+    await openReadyPage(page);
+
+    await fillSubmittableTowerHamletsRequest(page);
+    await mockCreateDeviceRequestError(
+      page,
+      'Could not create new requests. This user already has too many open.',
+    );
+
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    await expect(page.getByText('Oops!')).toBeVisible({ timeout: 15_000 });
+
+    const limitParagraph = page.getByText('the maximum number of open requests for this area');
+    await expect(limitParagraph).toBeVisible();
+
+    const text = (await limitParagraph.textContent()) ?? '';
+    expect(text).not.toMatch(/\d/);
   });
 
   test('Tower Hamlets is out of area when its borough flag is off', async ({ page }) => {

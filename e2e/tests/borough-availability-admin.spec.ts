@@ -81,6 +81,8 @@ interface MockOpts {
   exceptions?: { id: string; organisationId: string; organisationName: string; boroughGroupId: string; maxPerReferee: number }[];
   /** Every SaveBoroughAvailability mutation body lands here, for "was it sent?" assertions. */
   capturedSaves?: string[];
+  /** Every SearchReferringOrganisations request body lands here, for "did it ask the right field?" assertions. */
+  capturedOrgQueries?: string[];
   /** When set, BoroughAvailabilityAdmin replies with this GraphQL error instead of data. */
   loadError?: string;
   organisations?: { id: string; name: string }[];
@@ -102,7 +104,27 @@ async function installMocks(page: Page, opts: MockOpts = {}): Promise<void> {
       return fulfillJson(route, { data: { saveBoroughAvailability: parsed.variables?.data?.groups ?? [] } });
     }
     if (body.includes('SearchReferringOrganisations')) {
-      return fulfillJson(route, { data: { referringOrganisations: { content: organisations } } });
+      opts.capturedOrgQueries?.push(body);
+      // The real schema has NO `content` field on `referringOrganisations` (it resolves to a
+      // single ReferringOrganisation) — the field that paginates is `referringOrganisationsConnection`.
+      // A component querying the wrong one gets rejected live with:
+      //   Validation error (FieldUndefined@[referringOrganisations/content]) : Field 'content' in
+      //   type 'ReferringOrganisation' is undefined
+      // which meant the picker silently returned zero rows against the real API forever, and no
+      // exception could ever be saved. This mock is written to agree with the REAL schema, not to
+      // accommodate whatever the client happens to send — mirroring a wrong query back at itself
+      // would hide this exact regression again.
+      if (!body.includes('referringOrganisationsConnection')) {
+        return fulfillJson(route, {
+          errors: [
+            {
+              message:
+                "Validation error (FieldUndefined@[referringOrganisations/content]) : Field 'content' in type 'ReferringOrganisation' is undefined",
+            },
+          ],
+        });
+      }
+      return fulfillJson(route, { data: { referringOrganisationsConnection: { content: organisations } } });
     }
     if (body.includes('BoroughAvailabilityAdmin')) {
       if (opts.loadError) {
@@ -159,15 +181,22 @@ test.describe('borough availability admin @mocked', () => {
     await authenticateWithPermissions(page, ['app:admin']);
   });
 
-  test('renders the matrix with both groups and a status badge', async ({ page }) => {
+  test('the PILOT status renders as plain text, not a badge', async ({ page }) => {
     test.setTimeout(60_000);
     await installMocks(page);
     await openAvailabilityTab(page);
 
     await expect(page.locator('[data-testid="group-row-1"]')).toBeVisible();
     await expect(page.locator('[data-testid="group-row-2"]')).toBeVisible();
-    await expect(page.locator('[data-testid="group-row-2"]')).toContainText('PILOT');
     await expect(page.locator('[data-testid="group-row-2"]')).toContainText('Tower Hamlets');
+
+    // An amber badge reads as "needs attention"; PILOT is a settled state of the group, not a
+    // problem with it, so the status is plain muted text rather than a badge.
+    const status = page.locator('[data-testid="group-status-2"]');
+    await expect(status).toBeVisible();
+    await expect(status).toContainText('PILOT');
+    await expect(status).not.toHaveClass(/badge/);
+    await expect(status.locator('.badge')).toHaveCount(0);
   });
 
   test('cells reflect stored modes', async ({ page }) => {
@@ -282,6 +311,163 @@ test.describe('borough availability admin @mocked', () => {
 
     await page.locator('[data-testid="remove-exception-0"]').click();
     await expect(page.locator('[data-testid="no-exceptions"]')).toBeVisible();
+  });
+
+  test('an organisation picked from the lookup saves as an exception', async ({ page }) => {
+    /**
+     * The bug this guards: the old control was a native `<input list=datalist>` bound to
+     * free-text `organisationName`, and it only recorded `organisationId` when the typed text
+     * matched an option's label character-for-character — including the " #10" id suffix nobody
+     * would type. An admin who typed the organisation's name and pressed Save Configuration got
+     * the toast "Every exception needs an organisation and a borough group" while looking at a
+     * box that plainly showed the organisation's name. Selecting from the ng-select typeahead
+     * must both silence that toast and stage the real id.
+     */
+    test.setTimeout(60_000);
+    const capturedSaves: string[] = [];
+    await installMocks(page, { capturedSaves });
+    await openAvailabilityTab(page);
+
+    await page.locator('[data-testid="add-exception"]').click();
+
+    const orgSelect = page.locator('[data-testid="exception-org-0"]');
+    await orgSelect.click();
+    const searchResp = page.waitForResponse(
+      (r) => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('SearchReferringOrganisations'),
+      { timeout: 10_000 },
+    );
+    await orgSelect.locator('.ng-input input').fill('Exa');
+    await searchResp;
+
+    const option = page.locator('.ng-option', { hasText: 'Example Org #10' });
+    await option.waitFor({ state: 'visible', timeout: 10_000 });
+    await option.click();
+
+    await page.locator('[data-testid="exception-group-0"]').selectOption('2');
+    await page.locator('[data-testid="exception-limit-0"]').fill('3');
+
+    await page.locator('[data-testid="save-availability"]').click();
+    await expect.poll(() => capturedSaves.length).toBe(1);
+
+    const parsed = JSON.parse(capturedSaves[0]);
+    expect(parsed.variables?.data?.exceptions).toEqual([
+      { organisationId: '10', boroughGroupId: '2', maxPerReferee: 3 },
+    ]);
+
+    await expect(page.locator('#toast-container')).toContainText('Availability saved');
+    await expect(page.locator('#toast-container')).not.toContainText('Every exception needs an organisation');
+  });
+
+  test('the organisation lookup queries the connection field the server actually exposes', async ({ page }) => {
+    /**
+     * Live UAT root cause behind the "cannot save an exception" report: the component's search
+     * query asked for `referringOrganisations { content { id name } } }`, but on the real schema
+     * `referringOrganisations` resolves to a SINGLE ReferringOrganisation with no `content` field.
+     * The real API rejected every search with:
+     *   Validation error (FieldUndefined@[referringOrganisations/content]) : Field 'content' in
+     *   type 'ReferringOrganisation' is undefined
+     * so the picker returned zero rows against the real API, always — no organisation id could
+     * ever be recorded, and Save could only ever answer "Every exception needs an organisation
+     * and a borough group". A mocked test could not see this on its own: the mock mirrored the
+     * component's own (wrong) field name, so client and mock agreed with each other and
+     * disagreed with the server. This test inspects the raw outgoing query instead of trusting
+     * that a mock response arrived at all.
+     */
+    test.setTimeout(60_000);
+    const capturedOrgQueries: string[] = [];
+    await installMocks(page, { capturedOrgQueries });
+    await openAvailabilityTab(page);
+
+    await page.locator('[data-testid="add-exception"]').click();
+
+    const orgSelect = page.locator('[data-testid="exception-org-0"]');
+    await orgSelect.click();
+    const searchResp = page.waitForResponse(
+      (r) => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('SearchReferringOrganisations'),
+      { timeout: 10_000 },
+    );
+    await orgSelect.locator('.ng-input input').fill('Exa');
+    await searchResp;
+
+    expect(capturedOrgQueries.length).toBeGreaterThan(0);
+    expect(capturedOrgQueries[0]).toContain('referringOrganisationsConnection');
+    expect(capturedOrgQueries[0]).not.toMatch(/referringOrganisations\(/);
+  });
+
+  test("searching in one exception row does not blank another row's selection", async ({ page }) => {
+    // The old shared results list: a search in the second row replaced the array driving both
+    // rows' picker, so a valid earlier selection rendered as blank even though its id was still
+    // staged for save. Each row now owns its own options list, seeded from its own last search.
+    test.setTimeout(60_000);
+    await installMocks(page);
+    await openAvailabilityTab(page);
+
+    await page.locator('[data-testid="add-exception"]').click();
+    await page.locator('[data-testid="add-exception"]').click();
+
+    const row0 = page.locator('[data-testid="exception-org-0"]');
+    await row0.click();
+    const row0Search = page.waitForResponse(
+      (r) => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('SearchReferringOrganisations'),
+      { timeout: 10_000 },
+    );
+    await row0.locator('.ng-input input').fill('Exa');
+    await row0Search;
+    const row0Option = page.locator('.ng-option', { hasText: 'Example Org #10' });
+    await row0Option.waitFor({ state: 'visible', timeout: 10_000 });
+    await row0Option.click();
+
+    await expect(row0.locator('.ng-value-label')).toContainText('Example Org');
+
+    // Registered AFTER installMocks on purpose, same pattern as the global-row test below: a
+    // subsequent SearchReferringOrganisations call gets a different organisation list, and
+    // everything else falls back to the general mock.
+    await page.route('**/graphql', async (route) => {
+      const body = route.request().postData() ?? '';
+      if (body.includes('SearchReferringOrganisations')) {
+        return fulfillJson(route, { data: { referringOrganisationsConnection: { content: [{ id: '20', name: 'Other Org' }] } } });
+      }
+      return route.fallback();
+    });
+
+    const row1 = page.locator('[data-testid="exception-org-1"]');
+    await row1.click();
+    const row1Search = page.waitForResponse(
+      (r) => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('SearchReferringOrganisations'),
+      { timeout: 10_000 },
+    );
+    await row1.locator('.ng-input input').fill('Oth');
+    await row1Search;
+    await page.locator('.ng-option', { hasText: 'Other Org #20' }).waitFor({ state: 'visible', timeout: 10_000 });
+
+    // Row 0's selection must still be intact: the search in row 1 must not have replaced it.
+    await expect(row0.locator('.ng-value-label')).toContainText('Example Org');
+  });
+
+  test('searching an exception org does not itself mark the config dirty', async ({ page }) => {
+    // Only {organisationId, boroughGroupId, maxPerReferee} are snapshotted for exceptions — the
+    // per-row options list and search Subject are not, so merely searching (without changing the
+    // selection) must not flip the header into "unsaved changes".
+    test.setTimeout(60_000);
+    await installMocks(page, {
+      exceptions: [
+        { id: 'e1', organisationId: '10', organisationName: 'Example Org', boroughGroupId: '1', maxPerReferee: 2 },
+      ],
+    });
+    await openAvailabilityTab(page);
+
+    await expect(page.locator('[data-testid="unsaved-count"]')).toHaveCount(0);
+
+    const row0 = page.locator('[data-testid="exception-org-0"]');
+    await row0.click();
+    const searchResp = page.waitForResponse(
+      (r) => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('SearchReferringOrganisations'),
+      { timeout: 10_000 },
+    );
+    await row0.locator('.ng-input input').fill('Exa');
+    await searchResp;
+
+    await expect(page.locator('[data-testid="unsaved-count"]')).toHaveCount(0);
   });
 
   test('a failed load is reported, not silent', async ({ page }) => {
