@@ -4,25 +4,33 @@ import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
-import { Subscription, catchError, concatMap, from, map, of } from 'rxjs';
+import { Subscription, catchError, concatMap, forkJoin, from, map, of } from 'rxjs';
+import { ALL_BOROUGHS } from '@app/shared/utils/boroughs';
 
 const DATA_QUERY = gql`
   query deliveryConfigAdmin {
-    deliveryConfig { id enabled daysOfWeek leadTimeDays advanceDays updatedAt }
-    deliveryWindowsAdmin { id name startTime endTime icon capacity sortOrder active }
+    deliveryConfig { id enabled daysOfWeek leadTimeDays advanceDays boroughSchedulingEnabled updatedAt }
+    deliveryWindowsAdmin { id name startTime endTime capacity sortOrder active }
     deliveryBlockedDates { id date reason }
+    deliveryDayBoroughs { dayOfWeek boroughs }
   }
 `;
 
 const UPDATE_CONFIG = gql`
   mutation updateDeliveryConfig($data: UpdateDeliveryConfigInput!) {
-    updateDeliveryConfig(data: $data) { id enabled daysOfWeek leadTimeDays advanceDays updatedAt }
+    updateDeliveryConfig(data: $data) { id enabled daysOfWeek leadTimeDays advanceDays boroughSchedulingEnabled updatedAt }
+  }
+`;
+
+const SET_DAY_BOROUGHS = gql`
+  mutation setDeliveryDayBoroughs($dayOfWeek: Int!, $boroughs: [String!]!) {
+    setDeliveryDayBoroughs(dayOfWeek: $dayOfWeek, boroughs: $boroughs) { dayOfWeek boroughs }
   }
 `;
 
 const SAVE_WINDOW = gql`
   mutation saveDeliveryWindow($data: DeliveryWindowInput!) {
-    saveDeliveryWindow(data: $data) { id name startTime endTime icon capacity sortOrder active }
+    saveDeliveryWindow(data: $data) { id name startTime endTime capacity sortOrder active }
   }
 `;
 
@@ -42,7 +50,6 @@ interface WindowRow {
   /** 24-hour `HH:mm`, as edited by the <input type="time"> — see toDisplayTime/fromDisplayTime. */
   startTime: string;
   endTime: string;
-  icon?: string;
   capacity: number;
   sortOrder?: number;
   active: boolean;
@@ -126,6 +133,7 @@ const DAY_DEFS = [
 })
 export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
   readonly dayDefs = DAY_DEFS;
+  readonly allBoroughs = ALL_BOROUGHS;
 
   activeSection: 'settings' | 'windows' | 'blocked' = 'settings';
 
@@ -138,6 +146,12 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
   leadTimeDays = 1;
   advanceDays = 4;
   configUpdatedAt?: string;
+
+  boroughSchedulingEnabled = false;
+  /** dayOfWeek (1=Mon..7=Sun) -> borough names ticked for that day. Empty/missing = open to any borough. */
+  dayBoroughs: Record<number, string[]> = {};
+  /** Snapshot as last loaded/saved from the server, to derive which days changed before saving. */
+  private loadedDayBoroughs: Record<number, string[]> = {};
 
   windows: WindowRow[] = [];
   blocked: BlockedRow[] = [];
@@ -185,6 +199,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
             this.leadTimeDays = cfg?.leadTimeDays ?? 1;
             this.advanceDays = cfg?.advanceDays ?? 4;
             this.configUpdatedAt = cfg?.updatedAt;
+            this.boroughSchedulingEnabled = cfg?.boroughSchedulingEnabled ?? false;
             this.days = {};
             (cfg?.daysOfWeek || '')
               .split(',')
@@ -194,6 +209,16 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
 
             this.windows = (data.deliveryWindowsAdmin || []).map((w: any) => this.toRow(w));
             this.blocked = (data.deliveryBlockedDates || []).map((b: any) => ({ ...b }));
+
+            this.dayBoroughs = {};
+            (data.deliveryDayBoroughs || []).forEach((row: any) => {
+              this.dayBoroughs[row.dayOfWeek] = [...(row.boroughs || [])];
+            });
+            this.loadedDayBoroughs = {};
+            Object.keys(this.dayBoroughs).forEach((k) => {
+              this.loadedDayBoroughs[+k] = [...this.dayBoroughs[+k]];
+            });
+
             this.loading = false;
           },
           error: () => {
@@ -215,9 +240,41 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
       .join(',');
   }
 
+  /** Days we currently deliver on — the only days boroughs can be restricted for. */
+  get enabledDayDefs() {
+    return this.dayDefs.filter((d) => this.days[d.n]);
+  }
+
+  isBoroughChecked(n: number, boroughName: string): boolean {
+    return (this.dayBoroughs[n] || []).includes(boroughName);
+  }
+
+  toggleDayBorough(n: number, boroughName: string): void {
+    const current = this.dayBoroughs[n] || [];
+    const next = current.includes(boroughName)
+      ? current.filter((b) => b !== boroughName)
+      : [...current, boroughName];
+    this.dayBoroughs = { ...this.dayBoroughs, [n]: next };
+  }
+
+  get anyDayHasBoroughRestriction(): boolean {
+    return this.enabledDayDefs.some((d) => (this.dayBoroughs[d.n] || []).length > 0);
+  }
+
+  private static boroughSetKey(list: string[] | undefined): string {
+    return JSON.stringify([...(list || [])].sort());
+  }
+
+  private dayBoroughsChanged(n: number): boolean {
+    return (
+      DeliveryConfigurationComponent.boroughSetKey(this.dayBoroughs[n]) !==
+      DeliveryConfigurationComponent.boroughSetKey(this.loadedDayBoroughs[n])
+    );
+  }
+
   saveSettings(): void {
     this.savingSettings = true;
-    this.apollo
+    const configObs = this.apollo
       .mutate<any>({
         mutation: UPDATE_CONFIG,
         variables: {
@@ -226,20 +283,49 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
             daysOfWeek: this.daysCsv(),
             leadTimeDays: Number(this.leadTimeDays) || 0,
             advanceDays: Number(this.advanceDays) || 1,
+            boroughSchedulingEnabled: this.boroughSchedulingEnabled,
           },
         },
       })
-      .subscribe({
-        next: ({ data }) => {
-          this.configUpdatedAt = data.updateDeliveryConfig.updatedAt;
-          this.savingSettings = false;
-          this.toastr.success('Delivery settings saved');
-        },
-        error: () => {
-          this.savingSettings = false;
-          this.toastr.error('Could not save settings');
-        },
-      });
+      .pipe(
+        map(({ data }) => ({ ok: true as const, kind: 'config' as const, updatedAt: data.updateDeliveryConfig.updatedAt })),
+        catchError(() => of({ ok: false as const, kind: 'config' as const, updatedAt: undefined })),
+      );
+
+    const changedDays = this.dayDefs.map((d) => d.n).filter((n) => this.dayBoroughsChanged(n));
+    const dayObs = changedDays.map((n) =>
+      this.apollo
+        .mutate<any>({
+          mutation: SET_DAY_BOROUGHS,
+          variables: { dayOfWeek: n, boroughs: this.dayBoroughs[n] || [] },
+        })
+        .pipe(
+          map(() => ({ ok: true as const, kind: 'day' as const, day: n })),
+          catchError(() => of({ ok: false as const, kind: 'day' as const, day: n })),
+        ),
+    );
+
+    forkJoin([configObs, ...dayObs]).subscribe((results) => {
+      this.savingSettings = false;
+      const configResult = results[0] as { ok: boolean; updatedAt?: string };
+      const failedDays = results.filter((r) => r.kind === 'day' && !r.ok) as { day: number }[];
+
+      if (!configResult.ok) {
+        this.toastr.error('Could not save settings');
+        return;
+      }
+      if (failedDays.length > 0) {
+        const names = failedDays
+          .map((f) => this.dayDefs.find((d) => d.n === f.day)?.label || f.day)
+          .join(', ');
+        this.toastr.error(`Could not save borough settings for ${names}`);
+        return;
+      }
+
+      this.configUpdatedAt = configResult.updatedAt;
+      changedDays.forEach((n) => (this.loadedDayBoroughs[n] = [...(this.dayBoroughs[n] || [])]));
+      this.toastr.success('Delivery settings saved');
+    });
   }
 
   addWindow(): void {
@@ -247,7 +333,6 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
       name: '',
       startTime: '',
       endTime: '',
-      icon: '🚚',
       capacity: 4,
       sortOrder: this.windows.length + 1,
       active: true,
@@ -277,7 +362,6 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
       name: w.name,
       startTime: w.startTime,
       endTime: w.endTime,
-      icon: w.icon,
       capacity: w.capacity,
       sortOrder: w.sortOrder,
       active: w.active,
@@ -292,7 +376,6 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
       name: w.name,
       startTime: start ?? '',
       endTime: end ?? '',
-      icon: w.icon,
       capacity: w.capacity,
       sortOrder: w.sortOrder,
       active: w.active,
@@ -362,7 +445,6 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
             name: w.name,
             startTime: startDisplay,
             endTime: endDisplay,
-            icon: w.icon || null,
             capacity: Number(w.capacity) || 0,
             sortOrder: w.sortOrder ?? null,
             active: w.active,

@@ -49,6 +49,44 @@
         }
       </div>
 
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" role="switch" id="dsBoroughScheduling" [(ngModel)]="boroughSchedulingEnabled" />
+        <label class="form-check-label" for="dsBoroughScheduling">
+          <strong>Borough-specific delivery days</strong>
+          <span class="text-muted small"> — when off, every delivery day is open to every borough.</span>
+        </label>
+      </div>
+
+      @if (boroughSchedulingEnabled) {
+        <div class="mb-3">
+          @for (d of enabledDayDefs; track d.n) {
+            <div class="mb-2">
+              <div class="small font-weight-bold mb-1">{{ d.label }}</div>
+              <div class="d-flex flex-wrap align-items-center gap-3">
+                @for (b of allBoroughs; track b.code) {
+                  <div class="form-check form-check-inline mb-0">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [id]="'dayBorough-' + d.n + '-' + b.code"
+                      [checked]="isBoroughChecked(d.n, b.name)"
+                      (change)="toggleDayBorough(d.n, b.name)"
+                    />
+                    <label class="form-check-label small" [for]="'dayBorough-' + d.n + '-' + b.code">{{ b.name }}</label>
+                  </div>
+                }
+                @if ((dayBoroughs[d.n] || []).length === 0) {
+                  <span class="text-muted small">(open to any borough)</span>
+                }
+              </div>
+            </div>
+          }
+          @if (!anyDayHasBoroughRestriction) {
+            <div class="text-muted small">Borough scheduling is on but no day currently has a borough set — it has no effect yet.</div>
+          }
+        </div>
+      }
+
       <div class="row">
         <div class="col-sm-6 col-md-4 mb-2">
           <label class="small font-weight-bold mb-1">Lead time (days)</label>
@@ -97,13 +135,9 @@
       }
       @for (w of windows; track $index) {
         <div class="row g-2 align-items-end mb-3 pb-3 border-bottom">
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md-4">
             <label class="small text-muted">Name</label>
             <input class="form-control form-control-sm" [(ngModel)]="w.name" placeholder="Morning window" required />
-          </div>
-          <div class="col-3 col-md-2">
-            <label class="small text-muted">Icon</label>
-            <input class="form-control form-control-sm" [(ngModel)]="w.icon" placeholder="☀️" />
           </div>
           <div class="col-3 col-md-2">
             <label class="small text-muted">Start</label>
@@ -119,7 +153,7 @@
               <span class="badge bg-warning text-dark small mt-1 d-block">Unrecognised time "{{ w.endTimeRaw }}" — please re-enter</span>
             }
           </div>
-          <div class="col-5 col-md-2">
+          <div class="col-5 col-md-3">
             <label class="small text-muted">Capacity</label>
             <div class="input-group input-group-sm">
               <button class="btn btn-outline-secondary" type="button" (click)="adjustCapacity(w, -1)">−</button>
