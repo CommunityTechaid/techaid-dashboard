@@ -28,12 +28,14 @@ const CONFIG_DATA = {
     daysOfWeek: '1,2,3',
     leadTimeDays: 1,
     advanceDays: 4,
+    boroughSchedulingEnabled: false,
     updatedAt: '2026-07-18T00:00:00Z',
   },
   deliveryWindowsAdmin: [
     { id: 'win-1', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm', icon: '☀️', capacity: 5, sortOrder: 1, active: true },
   ],
   deliveryBlockedDates: [{ id: 'blk-1', date: '2026-12-25', reason: 'Christmas Day' }],
+  deliveryDayBoroughs: [{ dayOfWeek: 2, boroughs: ['Southwark'] }],
 };
 
 async function installMocks(page: Page): Promise<void> {
@@ -123,5 +125,28 @@ test.describe('Admin Panel — Delivery Configuration tab @mocked', () => {
     const pointerLink = page.getByRole('link', { name: /Admin Panel.*Delivery Configuration/ });
     await expect(pointerLink).toBeVisible();
     await expect(pointerLink).toHaveAttribute('href', '/dashboard/admin-panel');
+  });
+
+  test('turning on borough-specific delivery days reveals the per-day borough picker', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installMocks(page);
+    await page.goto(ADMIN_PANEL_PATH);
+    await page.getByRole('link', { name: 'Delivery Configuration' }).click();
+
+    const settingsPanel = page.locator('.card', { hasText: 'Booking settings' });
+    await expect(settingsPanel).toBeVisible();
+
+    const boroughSwitch = page.locator('#dsBoroughScheduling');
+    await expect(boroughSwitch).not.toBeChecked();
+    // Per-day picker is hidden while the switch is off — only its enabling switch is present.
+    await expect(page.locator('#dayBorough-2-E09000028')).toHaveCount(0);
+
+    await boroughSwitch.check();
+
+    // Tue (day 2, enabled by CONFIG_DATA's daysOfWeek) gets a per-day picker with Southwark
+    // ticked, matching CONFIG_DATA's deliveryDayBoroughs seed.
+    const southwarkCheckbox = page.locator('#dayBorough-2-E09000028');
+    await expect(southwarkCheckbox).toBeVisible();
+    await expect(southwarkCheckbox).toBeChecked();
   });
 });

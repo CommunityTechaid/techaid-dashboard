@@ -1,20 +1,25 @@
 /**
  * Mocked coverage for the public delivery-booking flow (booking-flow.component +
- * details-step.component + booking-api.service). These pin the delivery-booking
- * hardening shipped recently:
+ * reference-step.component + details-step.component + booking-api.service). These pin
+ * the delivery-booking hardening shipped recently:
  *
- *   1. TURNSTILE GATE — with a siteKey configured (the uat-local environment sets
+ *   1. REFERENCE GATE — the flow now opens on a reference step. Submitting it runs
+ *      deliveryBookingEligibilityPublic; eligible:true advances to the day step (and only
+ *      then loads availability), eligible:false keeps the visitor on the reference step
+ *      and shows the server's message verbatim, and a transport-level failure on that
+ *      query still lets the visitor through (the server re-checks identically at submit).
+ *   2. TURNSTILE GATE — with a siteKey configured (the uat-local environment sets
  *      turnstile_site_key to Cloudflare's test key 1x00000000000000000000AA), the
  *      submit is blocked with a "verify your browser" note until the widget issues a
  *      token, and once issued the token is carried into the submitDeliveryBookingPublic
  *      mutation input.
- *   2. SINGLE-USE-TOKEN RESET (highest regression risk) — when a submit fails so
+ *   3. SINGLE-USE-TOKEN RESET (highest regression risk) — when a submit fails so
  *      submitError transitions null→non-null, details-step.component.ts ngOnChanges must
  *      call turnstile.reset(widgetId). Turnstile tokens are single-use; without this
  *      every retry after a duplicate/validation error would fail with a stale token.
- *   3. BookingApiError CONTRACT — a GraphQL error with extensions.classification
- *      "BAD_REQUEST" is shown verbatim (duplicate-booking copy); any other
- *      classification collapses to a generic message so raw internal errors never leak.
+ *   4. BookingApiError CONTRACT — a GraphQL error with extensions.classification
+ *      "BAD_REQUEST" is shown verbatim (rejection copy); any other classification
+ *      collapses to a generic message so raw internal errors never leak.
  *
  * The public flow does NOT use Apollo — booking-api.service.ts POSTs plain GraphQL via
  * HttpClient to the environment graphql_endpoint (/graphql), so page.route('**\/graphql')
@@ -41,9 +46,9 @@
 import { test, expect, Page } from '@playwright/test';
 import { stubPlacesProxy } from '../helpers/places-proxy';
 
-/** The exact duplicate-booking copy the server returns as a BAD_REQUEST. */
-const DUPLICATE_MESSAGE =
-  'This CTA reference number has already been used to book a delivery. If you need to book another, please call us on 020 3488 7742.';
+/** The exact rejection copy the server returns as a BAD_REQUEST, `<ref>` interpolated in. */
+const rejectionMessage = (ref: string): string =>
+  `You are not able to book a delivery for request ID '${ref}' at this time. Please check the number is correct, and try again if not. Otherwise please contact distributions@communitytechaid.org.uk quoting your request ID for further information`;
 
 /** One bookable day with one window that has spots — enough to reach the details step. */
 const AVAILABILITY = [
@@ -54,7 +59,7 @@ const AVAILABILITY = [
     windows: [
       {
         spotsRemaining: 5,
-        window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm', icon: '☀️' },
+        window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm' },
       },
     ],
   },
@@ -64,7 +69,7 @@ const CONFIRMATION = {
   id: 'booking-1',
   date: '2026-08-03',
   dayLabel: 'Monday 3 August',
-  window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm', icon: '☀️' },
+  window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm' },
   address: '1 Test Street, London SW9 0AA',
   ctaReference: 4298,
   confirmationSentTo: 'sofia@example.org',
@@ -76,6 +81,15 @@ interface SubmitOutcome {
   message?: string;
   classification?: string;
 }
+
+interface EligibilityOutcome {
+  /** 'success' returns {eligible, message}; 'network-error' aborts the request. */
+  kind: 'success' | 'network-error';
+  eligible?: boolean;
+  message?: string | null;
+}
+
+const ELIGIBLE: EligibilityOutcome = { kind: 'success', eligible: true, message: null };
 
 async function fulfillJson(route: import('@playwright/test').Route, body: unknown): Promise<void> {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
@@ -111,18 +125,36 @@ async function stubTurnstile(page: Page): Promise<void> {
 }
 
 /**
- * Routes /graphql: availability → AVAILABILITY, submit → the given outcome (captured
- * into `submits`), buildInfo/featureFlags/anything else → empty. The outcome is read
- * from a mutable holder so a single installer can serve success or error per test.
+ * Routes /graphql: eligibility → the given outcome (default eligible), availability →
+ * AVAILABILITY (each call recorded into `availabilityRequests`), submit → the given
+ * outcome (captured into `submits`), buildInfo/featureFlags/anything else → empty.
+ * Outcomes are read from mutable holders so a single installer can serve different
+ * results per test.
  */
 async function installBookingMocks(
   page: Page,
   outcome: { current: SubmitOutcome },
   submits: unknown[],
+  eligibility: { current: EligibilityOutcome } = { current: ELIGIBLE },
+  availabilityRequests: unknown[] = [],
 ): Promise<void> {
   await page.route('**/graphql', async (route) => {
     const body = route.request().postData() ?? '';
+    if (body.includes('deliveryBookingEligibilityPublic')) {
+      if (eligibility.current.kind === 'network-error') {
+        return route.abort('failed');
+      }
+      return fulfillJson(route, {
+        data: {
+          deliveryBookingEligibilityPublic: {
+            eligible: eligibility.current.eligible ?? true,
+            message: eligibility.current.message ?? null,
+          },
+        },
+      });
+    }
     if (body.includes('deliveryAvailabilityPublic')) {
+      availabilityRequests.push(body);
       return fulfillJson(route, { data: { deliveryAvailabilityPublic: AVAILABILITY } });
     }
     if (body.includes('submitDeliveryBookingPublic')) {
@@ -150,12 +182,19 @@ async function installBookingMocks(
   });
 }
 
-/** Walks day → window → details and fills the required fields (no submit). */
+/** Fills the reference step's input and submits it. */
+async function submitReferenceStep(page: Page, reference = '4298'): Promise<void> {
+  await page.locator('input[formControlName="ctaReference"]').fill(reference);
+  await page.locator('button[type="submit"]').click();
+}
+
+/** Walks reference → day → window → details and fills the required fields (no submit). */
 async function reachDetailsStepAndFill(page: Page): Promise<void> {
   // The address field fires autocomplete requests to the Places proxy as soon as it's
   // typed into (see file header) — stub it so this @mocked suite stays hermetic.
   await stubPlacesProxy(page);
   await page.goto('/delivery-booking');
+  await submitReferenceStep(page);
   await page.locator('.day-row').first().click();
   await page.locator('.window-row').first().click();
 
@@ -167,7 +206,6 @@ async function reachDetailsStepAndFill(page: Page): Promise<void> {
   await form.locator('input[formControlName="phone"]').fill('07700900000');
   await form.locator('textarea[formControlName="address"]').fill('1 Test Street, London SW9 0AA');
   await form.locator('input[formControlName="postcode"]').fill('SW9 7AA');
-  await form.locator('input[formControlName="ctaReference"]').fill('4298');
   // The widget host must have rendered (siteKey is set in uat-local).
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { __turnstile: { rendered: string[] } }).__turnstile.rendered.length))
@@ -184,6 +222,69 @@ const resetCount = (page: Page) =>
 test.describe('public delivery-booking flow @mocked', () => {
   // A genuine member of the public: no Auth0 cache, no cookies. See the file header.
   test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('an ineligible reference keeps the user on the reference step and shows the server message', async ({ page }) => {
+    test.setTimeout(60_000);
+    const message = rejectionMessage('4298');
+    const outcome = { current: { kind: 'success' } as SubmitOutcome };
+    const submits: unknown[] = [];
+    const eligibility = { current: { kind: 'success', eligible: false, message } as EligibilityOutcome };
+    await stubTurnstile(page);
+    await installBookingMocks(page, outcome, submits, eligibility);
+
+    await page.goto('/delivery-booking');
+    await submitReferenceStep(page);
+
+    await expect(page.locator('.status--error')).toHaveText(message, { timeout: 10_000 });
+    // Still on the reference step — never advanced to the day step.
+    await expect(page.locator('input[formControlName="ctaReference"]')).toBeVisible();
+    await expect(page.locator('.day-row')).toHaveCount(0);
+  });
+
+  test('an eligible reference advances to the day step', async ({ page }) => {
+    test.setTimeout(60_000);
+    const outcome = { current: { kind: 'success' } as SubmitOutcome };
+    const submits: unknown[] = [];
+    await stubTurnstile(page);
+    await installBookingMocks(page, outcome, submits);
+
+    await page.goto('/delivery-booking');
+    await submitReferenceStep(page);
+
+    await expect(page.locator('.day-row').first()).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('does not request availability until the reference is accepted', async ({ page }) => {
+    test.setTimeout(60_000);
+    const outcome = { current: { kind: 'success' } as SubmitOutcome };
+    const submits: unknown[] = [];
+    const availabilityRequests: unknown[] = [];
+    await stubTurnstile(page);
+    await installBookingMocks(page, outcome, submits, undefined, availabilityRequests);
+
+    await page.goto('/delivery-booking');
+    await expect(page.locator('input[formControlName="ctaReference"]')).toBeVisible();
+    expect(availabilityRequests, 'availability must not be requested before the reference is accepted').toHaveLength(0);
+
+    await submitReferenceStep(page);
+
+    await expect(page.locator('.day-row').first()).toBeVisible({ timeout: 10_000 });
+    expect(availabilityRequests.length, 'availability is requested once the reference is accepted').toBeGreaterThan(0);
+  });
+
+  test('an eligibility check that fails at the transport level still lets the user reach the day step', async ({ page }) => {
+    test.setTimeout(60_000);
+    const outcome = { current: { kind: 'success' } as SubmitOutcome };
+    const submits: unknown[] = [];
+    const eligibility = { current: { kind: 'network-error' } as EligibilityOutcome };
+    await stubTurnstile(page);
+    await installBookingMocks(page, outcome, submits, eligibility);
+
+    await page.goto('/delivery-booking');
+    await submitReferenceStep(page);
+
+    await expect(page.locator('.day-row').first()).toBeVisible({ timeout: 10_000 });
+  });
 
   test('blocks submit until Turnstile issues a token', async ({ page }) => {
     test.setTimeout(60_000);
@@ -226,7 +327,8 @@ test.describe('public delivery-booking flow @mocked', () => {
     test.setTimeout(60_000);
     // The single-use-token regression: after a failed submit the widget must be reset
     // (details-step ngOnChanges) so the next attempt uses a fresh token.
-    const outcome = { current: { kind: 'error', message: DUPLICATE_MESSAGE, classification: 'BAD_REQUEST' } as SubmitOutcome };
+    const message = rejectionMessage('4298');
+    const outcome = { current: { kind: 'error', message, classification: 'BAD_REQUEST' } as SubmitOutcome };
     const submits: unknown[] = [];
     await stubTurnstile(page);
     await installBookingMocks(page, outcome, submits);
@@ -238,7 +340,7 @@ test.describe('public delivery-booking flow @mocked', () => {
     await page.locator('button[type="submit"]').click();
 
     // BAD_REQUEST → verbatim server copy in the banner.
-    await expect(page.locator('.form-error--banner')).toHaveText(DUPLICATE_MESSAGE, { timeout: 10_000 });
+    await expect(page.locator('.form-error--banner')).toHaveText(message, { timeout: 10_000 });
     // …and the single-use token was reset for the next attempt.
     await expect.poll(() => resetCount(page), { timeout: 5_000 }).toBeGreaterThan(0);
   });

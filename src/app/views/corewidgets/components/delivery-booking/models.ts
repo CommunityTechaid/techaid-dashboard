@@ -9,7 +9,6 @@ export interface DeliveryWindow {
   name: string;
   startTime: string;
   endTime: string;
-  icon: string;
 }
 
 export interface DeliveryWindowAvailability {
@@ -37,6 +36,11 @@ export interface DeliveryBookingInput {
   /** The client's device request id. Numeric server-side (schema type Long!). */
   ctaReference: number;
   turnstileToken?: string;
+}
+
+export interface DeliveryBookingEligibility {
+  eligible: boolean;
+  message: string | null;
 }
 
 export interface DeliveryBookingConfirmation {

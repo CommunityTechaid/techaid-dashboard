@@ -4,9 +4,12 @@
  *  1. "Dates on delivery slots page / who's booked seem to be US format" - Angular's default
  *     LOCALE_ID is en-US, so `| date:'short'` rendered 7/18/26, 9:00 AM. main.ts now registers
  *     en-GB and provides it as LOCALE_ID, so the Booked column reads 18/07/2026, 10:00.
- *  2. Feedback #13 - the "Allow another booking" button was clipped on the right edge. The
- *     action column was 4% of a table-layout:fixed table and the <td> itself was display:flex,
- *     so the buttons sized themselves and spilled past the last column.
+ *  2. Feedback #13 - the row's action button was clipped on the right edge. The action column
+ *     was 4% of a table-layout:fixed table and the <td> itself was display:flex, so the button
+ *     sized itself and spilled past the last column. The "Allow another booking" button that
+ *     originally surfaced the clip is gone (the staff override was dropped in row 24 of the
+ *     UAT feedback sheet), so these specs now pin the same layout fix against the Delete
+ *     button instead.
  *  3. Feedback #11 - the booking-settings switch sat ~20px outside the card body, on the card
  *     border next to the sidebar. src/sb-admin.css (Bootstrap 4 era, loaded after Bootstrap 5)
  *     shrinks .form-check's padding while Bootstrap's more specific .form-switch rule keeps the
@@ -42,7 +45,6 @@ const BOOKINGS = [
     matchedRequestId: '5551',
     matchedRequestStatus: 'PROCESSING_COLLECTION_DELIVERY_ARRANGED',
     matchedRequestOpen: true,
-    additionalBookingAllowed: false,
   },
 ];
 
@@ -126,15 +128,12 @@ test.describe('delivery slots - booked list layout and dates @mocked', () => {
     await openWhosBooked(page);
 
     const tableBox = await page.locator('table.bookings-table').boundingBox();
-    const allowBox = await page.getByTestId('allow-additional-booking').boundingBox();
     const deleteBox = await page.getByTestId('delete-booking').boundingBox();
     expect(tableBox).not.toBeNull();
-    expect(allowBox).not.toBeNull();
     expect(deleteBox).not.toBeNull();
 
     // +1 for sub-pixel rounding on the last column's border.
     const tableRight = tableBox!.x + tableBox!.width + 1;
-    expect(allowBox!.x + allowBox!.width).toBeLessThanOrEqual(tableRight);
     expect(deleteBox!.x + deleteBox!.width).toBeLessThanOrEqual(tableRight);
   });
 
@@ -157,8 +156,8 @@ test.describe('delivery slots - booked list layout and dates @mocked', () => {
     // Reachable by scrolling the container is the difference between "off to the right" and
     // "cut off": the button must still sit inside the table's own box.
     const tableBox = await page.locator('table.bookings-table').boundingBox();
-    const allowBox = await page.getByTestId('allow-additional-booking').boundingBox();
-    expect(allowBox!.x + allowBox!.width).toBeLessThanOrEqual(tableBox!.x + tableBox!.width + 1);
+    const deleteBox = await page.getByTestId('delete-booking').boundingBox();
+    expect(deleteBox!.x + deleteBox!.width).toBeLessThanOrEqual(tableBox!.x + tableBox!.width + 1);
   });
 });
 

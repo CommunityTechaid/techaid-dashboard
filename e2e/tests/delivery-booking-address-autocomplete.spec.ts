@@ -23,6 +23,9 @@
  * shared stubPlacesProxy helper — see e2e/helpers/places-proxy.ts for why that stub is
  * required for every spec that types into this field.
  *
+ * The flow now opens on a reference step (reference-step.component.ts); reachDetailsStep
+ * submits it with an eligible reference before walking day → window as before.
+ *
  * @mocked — no token, all GraphQL and Places-proxy traffic stubbed.
  */
 import { test, expect, Page } from '@playwright/test';
@@ -37,7 +40,7 @@ const AVAILABILITY = [
     windows: [
       {
         spotsRemaining: 5,
-        window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm', icon: '☀️' },
+        window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm' },
       },
     ],
   },
@@ -47,7 +50,7 @@ const CONFIRMATION = {
   id: 'booking-1',
   date: '2026-08-03',
   dayLabel: 'Monday 3 August',
-  window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm', icon: '☀️' },
+  window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm' },
   address: '221B Typed Street, London SW1A 1AA',
   ctaReference: 4298,
   confirmationSentTo: 'sofia@example.org',
@@ -125,10 +128,17 @@ async function stubTurnstile(page: Page): Promise<void> {
   });
 }
 
-/** Routes /graphql: availability → AVAILABILITY, submit → success (captured into `submits`). */
+/**
+ * Routes /graphql: eligibility → eligible (unconditionally — this suite is about the
+ * address field, not reference gating), availability → AVAILABILITY, submit → success
+ * (captured into `submits`).
+ */
 async function installBookingMocks(page: Page, submits: unknown[]): Promise<void> {
   await page.route('**/graphql', async (route) => {
     const body = route.request().postData() ?? '';
+    if (body.includes('deliveryBookingEligibilityPublic')) {
+      return fulfillJson(route, { data: { deliveryBookingEligibilityPublic: { eligible: true, message: null } } });
+    }
     if (body.includes('deliveryAvailabilityPublic')) {
       return fulfillJson(route, { data: { deliveryAvailabilityPublic: AVAILABILITY } });
     }
@@ -147,9 +157,11 @@ async function installBookingMocks(page: Page, submits: unknown[]): Promise<void
   });
 }
 
-/** Walks day → window → details, leaving the form otherwise unfilled. */
+/** Walks reference → day → window → details, leaving the form otherwise unfilled. */
 async function reachDetailsStep(page: Page): Promise<void> {
   await page.goto('/delivery-booking');
+  await page.locator('input[formControlName="ctaReference"]').fill('4298');
+  await page.locator('button[type="submit"]').click();
   await page.locator('.day-row').first().click();
   await page.locator('.window-row').first().click();
   await expect(page.locator('form.form')).toBeVisible({ timeout: 15_000 });
@@ -212,7 +224,6 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await form.locator('input[formControlName="phone"]').fill('07700900000');
     await form.locator('textarea[formControlName="address"]').fill('221B Typed Street, London SW1A 1AA');
     await form.locator('input[formControlName="postcode"]').fill('SW1A 1AA');
-    await form.locator('input[formControlName="ctaReference"]').fill('4298');
 
     await expect(page.locator('.address-suggestions')).toHaveCount(0);
 
@@ -342,7 +353,6 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await form.locator('input[formControlName="email"]').fill('sofia@example.org');
     await form.locator('input[formControlName="phone"]').fill('07700900000');
     await form.locator('input[formControlName="postcode"]').fill('SW1A 2AA');
-    await form.locator('input[formControlName="ctaReference"]').fill('4298');
 
     await issueToken(page, 'fake-token-details-fail');
     await page.locator('button[type="submit"]').click();
@@ -374,7 +384,6 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await form.locator('input[formControlName="surname"]').fill('Martino');
     await form.locator('input[formControlName="email"]').fill('sofia@example.org');
     await form.locator('input[formControlName="phone"]').fill('07700900000');
-    await form.locator('input[formControlName="ctaReference"]').fill('4298');
 
     const address = page.locator('textarea[formControlName="address"]');
     await address.fill('10 Downing');

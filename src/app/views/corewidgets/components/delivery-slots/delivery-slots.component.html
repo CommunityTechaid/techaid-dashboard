@@ -65,16 +65,6 @@
                            align-items-stretch lets a long label wrap inside the cell instead. -->
                       <td>
                         <div class="d-flex flex-column gap-1 align-items-stretch">
-                          @if (bk.additionalBookingAllowed) {
-                            <span class="badge bg-info text-dark" data-testid="additional-booking-allowed">Another booking allowed</span>
-                          } @else {
-                            <button
-                              type="button"
-                              class="btn btn-sm btn-outline-secondary"
-                              data-testid="allow-additional-booking"
-                              (click)="allowAdditionalBooking(bk)"
-                            >Allow another booking</button>
-                          }
                           <button
                             type="button"
                             class="btn btn-sm btn-outline-danger"

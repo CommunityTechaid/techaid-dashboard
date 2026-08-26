@@ -5,7 +5,6 @@
 
   @for (window of availableWindows; track window.id) {
     <div class="window-row" (click)="windowSelected.emit(window.id)">
-      <div class="window-row__icon">{{ window.icon }}</div>
       <div class="window-row__text">
         <div class="window-row__name">{{ window.name }}</div>
         <div class="window-row__time">{{ window.startTime }} – {{ window.endTime }}</div>

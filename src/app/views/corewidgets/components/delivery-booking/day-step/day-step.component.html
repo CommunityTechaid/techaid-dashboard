@@ -18,10 +18,11 @@
       <div class="day-row" (click)="daySelected.emit(row.date)">
         <div class="day-row__text">
           <div class="day-row__label">{{ row.label }}</div>
-          <div class="day-row__sub">{{ row.sub }}</div>
         </div>
         <div class="day-row__chevron">›</div>
       </div>
     }
   }
+
+  <div class="back-link" (click)="back.emit()">‹ Change request ID</div>
 </div>

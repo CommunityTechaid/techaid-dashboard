@@ -1,4 +1,8 @@
 <div class="step">
+  @if (ctaReference) {
+    <div class="intro">Booking for request ID {{ ctaReference }}</div>
+  }
+
   <div class="summary">
     <div class="summary__text">
       <div class="summary__day">{{ day?.dayLabel }}</div>
@@ -116,24 +120,6 @@
       />
       @if (invalid('accessNotes')) {
         <div class="form-error">Keep this under 500 characters</div>
-      }
-    </div>
-
-    <div class="field">
-      <label>Your Community TechAid ID reference number</label>
-      <div class="field__note">
-        This is in the email we sent to you or the person who referred you. Without it we can't get your device ready.
-      </div>
-      <input
-        formControlName="ctaReference"
-        placeholder="e.g. 4298"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        class="field--narrow"
-        [class.field--invalid]="invalid('ctaReference')"
-      />
-      @if (invalid('ctaReference')) {
-        <div class="form-error">Enter your CTA ID reference number — digits only, e.g. 4298.</div>
       }
     </div>
 

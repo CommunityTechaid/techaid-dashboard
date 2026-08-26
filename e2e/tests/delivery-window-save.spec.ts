@@ -29,8 +29,11 @@ const CONFIG = {
   daysOfWeek: '1,2,3',
   leadTimeDays: 1,
   advanceDays: 4,
+  boroughSchedulingEnabled: false,
   updatedAt: '2026-07-18T00:00:00Z',
 };
+
+const DAY_BOROUGHS = [{ dayOfWeek: 2, boroughs: ['Southwark'] }];
 
 /** Stored server-side as '2:00pm' — must round-trip through the <input type="time"> as '14:00'. */
 const WINDOW_MORNING = {
@@ -79,7 +82,12 @@ async function installMocks(page: Page, opts: MockOpts = {}): Promise<void> {
     }
     if (body.includes('deliveryConfigAdmin')) {
       return fulfillJson(route, {
-        data: { deliveryConfig: CONFIG, deliveryWindowsAdmin: windows, deliveryBlockedDates: [] },
+        data: {
+          deliveryConfig: CONFIG,
+          deliveryWindowsAdmin: windows,
+          deliveryBlockedDates: [],
+          deliveryDayBoroughs: DAY_BOROUGHS,
+        },
       });
     }
     if (body.includes('deliverySlotsAdmin') || body.includes('deliveryBookingsAdmin')) {
