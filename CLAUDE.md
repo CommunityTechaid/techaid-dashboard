@@ -155,7 +155,7 @@ dashboard, then DevTools → Application → Local Storage → copy the Auth0 ac
 E2E_BEARER_TOKEN=<token> node e2e/save-token.mjs
 ```
 
-Tokens expire in ~2h. The `@mocked` subset (`npm run e2e:fast`) needs **no** token — it stubs all
+Tokens last 24h (measured from the JWT: `exp - iat` is exactly 86400). The `@mocked` subset (`npm run e2e:fast`) needs **no** token — it stubs all
 GraphQL and mints a fake JWT (this is what CI runs). Never commit anything under `e2e/.auth/`.
 
 ## Issue Triage Workflow

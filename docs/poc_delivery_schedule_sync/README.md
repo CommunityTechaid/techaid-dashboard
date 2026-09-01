@@ -5,7 +5,7 @@ driver's **Delivery Schedule** spreadsheet.
 
 | | What it is | Auth | Effort to run |
 |---|---|---|---|
-| **1. Manual CSV** | `scripts/export-delivery-schedule.mjs` in this repo writes a CSV in the exact column shape of the "TaDa Import" tab. Import it into the sheet. | Your own dashboard bearer token, pasted into an env var | One command, ~2h token life |
+| **1. Manual CSV** | `scripts/export-delivery-schedule.mjs` in this repo writes a CSV in the exact column shape of the "TaDa Import" tab. Import it into the sheet. | Your own dashboard bearer token, pasted into an env var | One command, 24h token life |
 | **2. Apps Script** | `Code.gs` here, pasted into the spreadsheet, pulls the same data on demand from a menu item or a button. | Auth0 machine-to-machine client (or a pasted token for a first try) | One click, once set up |
 
 Both read the **same two queries**, so they produce identical rows.
@@ -68,7 +68,7 @@ the **referring organisation's office**, not where the devices go. Checked again
 | 6964 | 96 Great Guildford St | Flat 30 Latimer, Beaconsfield Rd SE17 2EN |
 | 6973 | Martha Jones House, Wandsworth Rd | *same* — delivery is to the hostel |
 
-So the export leaves Address as `[delivery address needed - not held in TaDa]` for
+So the export leaves Address as `[N/A]` for
 staff-arranged rows rather than filling in an address that would send the driver to a
 charity's head office instead of someone's flat. Name and phone are the **referrer's** for
 the same reason — the recipient's own details only exist once they book through the public
@@ -88,8 +88,10 @@ address is still typed by hand.
 | `Distributions Only` | Literal `Distribution` — every booking made through the public flow is a device delivery to a beneficiary |
 | `Name` | `booking.firstName` + `booking.surname` |
 | `Org` | Matched device request → referring organisation name |
-| `Address` | `booking.address`, with `(Access: …)` appended when there are access notes |
+| `Address` | `booking.address` — or `[N/A]` for a staff-arranged row, see above |
 | `Telephone no.` | `booking.phone` |
+| *(H, I)* | **left empty on purpose** — see below |
+| `Access Notes` (J) | `booking.accessNotes`; always empty for a staff-arranged row, since only a booking captures them |
 
 Two differences from the weekly tabs worth knowing about:
 
@@ -102,8 +104,12 @@ Two differences from the weekly tabs worth knowing about:
   the driver merged two requests into one trip. The export writes one row per booking, so
   merging stays a human decision made in the sheet.
 
-The driver's own columns — `Delivered (Y or N)`, `Follow up call permission`, `Notes` —
-are deliberately not touched. The refresh clears and rewrites only columns A–G.
+Access Notes lands in **column J**, not H, so a block of exported rows pastes straight into
+one of the weekly driver tabs — there H is `Delivered (Y or N)`, I is the follow-up call
+permission and J is `Notes`. The two blank columns are load-bearing; don't tidy them away.
+
+The refresh rewrites columns **A–G and J only**. H and I are never cleared, so anything the
+driver has put there survives a refresh.
 
 ## 1. Manual CSV
 
@@ -158,9 +164,9 @@ pattern in this org — it's how the bulk-insert sheet's "Insert Single Device" 
 ### Auth, longer term
 
 Reading the token from a cell means anyone who can open the spreadsheet can read it and act
-as you until it expires (~2h). That's the same trade the bulk-insert sheet already makes, so
+as you until it expires (24h). That's the same trade the bulk-insert sheet already makes, so
 it's a known and accepted shape rather than a new risk — but it does mean someone has to
-re-paste a token every session.
+re-paste a token once a day.
 
 For an unattended refresh the script would need an **Auth0 machine-to-machine application**
 in the `techaid-auth.eu.auth0.com` tenant, scoped to just the queries it uses. That's a

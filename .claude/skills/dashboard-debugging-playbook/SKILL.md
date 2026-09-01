@@ -300,7 +300,8 @@ secondary structural signal → `dashboard-testing-and-e2e`.
 ## 12. e2e flakes (brief — deep dive → `dashboard-testing-and-e2e`)
 
 **First check** — a wave of auth-redirect failures on code you didn't touch is almost always an
-**expired bearer token**. Live-UAT tokens last ~2h; refresh `e2e/.auth/user.json`:
+**expired bearer token**. Live-UAT tokens last 24h, so check the file's date first; refresh
+`e2e/.auth/user.json`:
 
 ```bash
 E2E_BEARER_TOKEN=<fresh-token> node e2e/save-token.mjs
