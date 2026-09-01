@@ -1,7 +1,10 @@
 /**
  * Mocked coverage for the assistive Google Places autocomplete on the public
  * delivery-booking address field (place-autocomplete.directive.ts, wired onto the
- * `address` textarea in details-step.component.html).
+ * `addressLine1` input in details-step.component.html). Selecting a suggestion re-splits
+ * the resolved formatted_address across `addressLine1`/`addressLine2` (see
+ * applyPlaceToAddressLines() in details-step.component.ts) — several tests below assert
+ * that split explicitly.
  *
  * Design under test: autocomplete is a pure suggestion aid. It must never gate
  * submission — free text is always valid, a suggestion is never required, and a
@@ -188,8 +191,8 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await installBookingMocks(page, submits);
     await reachDetailsStep(page);
 
-    const address = page.locator('textarea[formControlName="address"]');
-    await address.fill('10 Downing'); // >=3 chars → fires the debounced request
+    const addressLine1 = page.locator('input[formControlName="addressLine1"]');
+    await addressLine1.fill('10 Downing'); // >=3 chars → fires the debounced request
 
     const suggestions = page.locator('.address-suggestions li');
     await expect(suggestions).toHaveCount(2, { timeout: 5_000 });
@@ -197,7 +200,11 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
 
     await suggestions.first().click();
 
-    await expect(address).toHaveValue('10 Downing Street, London SW1A 2AA');
+    // No /details stub is registered in this test, so the generic stubPlacesProxy route
+    // answers /details too (with a {predictions} body, no `result`) and the directive
+    // falls back to the prediction's own description — which is then re-split across
+    // the two address lines, so only the first comma-separated part lands here.
+    await expect(addressLine1).toHaveValue('10 Downing Street');
     await expect(page.locator('.address-suggestions')).toHaveCount(0);
   });
 
@@ -222,7 +229,8 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await form.locator('input[formControlName="surname"]').fill('Martino');
     await form.locator('input[formControlName="email"]').fill('sofia@example.org');
     await form.locator('input[formControlName="phone"]').fill('07700900000');
-    await form.locator('textarea[formControlName="address"]').fill('221B Typed Street, London SW1A 1AA');
+    await form.locator('input[formControlName="addressLine1"]').fill('221B Typed Street');
+    await form.locator('input[formControlName="addressLine2"]').fill('London SW1A 1AA');
     await form.locator('input[formControlName="postcode"]').fill('SW1A 1AA');
 
     await expect(page.locator('.address-suggestions')).toHaveCount(0);
@@ -232,7 +240,9 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
 
     await expect(page.locator('.step-label--done')).toBeVisible({ timeout: 10_000 });
     expect(submits).toHaveLength(1);
-    expect(submits[0].variables.input.address).toBe('221B Typed Street, London SW1A 1AA');
+    // composeAddress() joins buildingDetail/addressLine1/addressLine2/postcode with '\n';
+    // the postcode is omitted here because addressLine2 already ends with it.
+    expect(submits[0].variables.input.address).toBe('221B Typed Street\nLondon SW1A 1AA');
     // No suggestion was ever selected, so the /details lookup must never fire.
     expect(detailsRequests, 'no /details request when free-typing with no suggestion selected').toBe(0);
   });
@@ -248,8 +258,8 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await installBookingMocks(page, submits);
     await reachDetailsStep(page);
 
-    const address = page.locator('textarea[formControlName="address"]');
-    await address.fill('Somewhere that errors out');
+    const addressLine1 = page.locator('input[formControlName="addressLine1"]');
+    await addressLine1.fill('Somewhere that errors out');
 
     // Give the debounce (300ms) + request time to settle, then assert no suggestions
     // and no uncaught page error — the directive's catchError must swallow this.
@@ -258,7 +268,7 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     expect(consoleErrors).toHaveLength(0);
 
     // The field itself remains fully usable free-text input.
-    await expect(address).toHaveValue('Somewhere that errors out');
+    await expect(addressLine1).toHaveValue('Somewhere that errors out');
   });
 
   test('selecting a suggestion calls /details and auto-fills the postcode field', async ({ page }) => {
@@ -282,8 +292,8 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await installBookingMocks(page, submits);
     await reachDetailsStep(page);
 
-    const address = page.locator('textarea[formControlName="address"]');
-    await address.fill('10 Downing');
+    const addressLine1 = page.locator('input[formControlName="addressLine1"]');
+    await addressLine1.fill('10 Downing');
 
     const suggestions = page.locator('.address-suggestions li');
     await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
@@ -293,7 +303,7 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     expect(detailsRequests).toBe(1);
   });
 
-  test('selecting a suggestion writes formatted_address, not the prediction text, into the address field', async ({
+  test('selecting a suggestion writes the formatted_address, split across the two address lines, not the prediction text', async ({
     page,
   }) => {
     test.setTimeout(60_000);
@@ -310,14 +320,17 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await installBookingMocks(page, submits);
     await reachDetailsStep(page);
 
-    const address = page.locator('textarea[formControlName="address"]');
-    await address.fill('10 Downing');
+    const addressLine1 = page.locator('input[formControlName="addressLine1"]');
+    await addressLine1.fill('10 Downing');
 
     const suggestions = page.locator('.address-suggestions li');
     await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
     await suggestions.first().click();
 
-    await expect(address).toHaveValue('10 Downing Street, Westminster, London SW1A 2AA');
+    // The first comma-separated part becomes line 1, the rest (postcode stripped) line 2 —
+    // never the raw prediction text.
+    await expect(addressLine1).toHaveValue('10 Downing Street');
+    await expect(page.locator('input[formControlName="addressLine2"]')).toHaveValue('Westminster, London');
   });
 
   test('falls back to the prediction text and leaves postcode empty when /details fails, and the form stays usable', async ({
@@ -334,15 +347,17 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await installBookingMocks(page, submits);
     await reachDetailsStep(page);
 
-    const address = page.locator('textarea[formControlName="address"]');
-    await address.fill('10 Downing');
+    const addressLine1 = page.locator('input[formControlName="addressLine1"]');
+    await addressLine1.fill('10 Downing');
 
     const suggestions = page.locator('.address-suggestions li');
     await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
     await suggestions.first().click();
 
-    // /details failed → falls back to the prediction's description, postcode stays empty.
-    await expect(address).toHaveValue('10 Downing Street, London SW1A 2AA');
+    // /details failed → falls back to the prediction's description, still split across
+    // the two lines, and postcode stays empty.
+    await expect(addressLine1).toHaveValue('10 Downing Street');
+    await expect(page.locator('input[formControlName="addressLine2"]')).toHaveValue('London');
     await expect(page.locator('input[formControlName="postcode"]')).toHaveValue('');
 
     // A lookup failure must never block a booking — the visitor fills the postcode
@@ -385,8 +400,8 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await form.locator('input[formControlName="email"]').fill('sofia@example.org');
     await form.locator('input[formControlName="phone"]').fill('07700900000');
 
-    const address = page.locator('textarea[formControlName="address"]');
-    await address.fill('10 Downing');
+    const addressLine1 = page.locator('input[formControlName="addressLine1"]');
+    await addressLine1.fill('10 Downing');
     const suggestions = page.locator('.address-suggestions li');
     await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
     await suggestions.first().click();
@@ -397,8 +412,40 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
 
     await expect(page.locator('.step-label--done')).toBeVisible({ timeout: 10_000 });
     expect(submits).toHaveLength(1);
-    // buildingDetail is prepended; the postcode line is omitted because the selected
-    // formatted_address already ends with it (case/space-insensitive comparison).
-    expect(submits[0].variables.input.address).toBe('Flat 4\n10 Downing Street, London, SW1A 2AA');
+    // buildingDetail is prepended. The selected formatted_address is split across the two
+    // address lines with its postcode stripped, so unlike free-typed text the last address
+    // line ("London") no longer ends with the postcode — composeAddress() therefore appends
+    // it as its own trailing line rather than deduplicating it.
+    expect(submits[0].variables.input.address).toBe('Flat 4\n10 Downing Street\nLondon\nSW1A 2AA');
+  });
+
+  test('splits a selected place across address line 1/2, stripping the postcode and the trailing country', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const submits: unknown[] = [];
+    const placesOutcome: { current: PlacesProxyOutcome } = {
+      current: { predictions: [{ description: '10 Downing St, London', place_id: 'p1' }] },
+    };
+    const detailsOutcome: { current: PlacesDetailsOutcome } = {
+      current: { formattedAddress: '10 Downing St, London SW1A 2AA, UK', postcode: 'SW1A 2AA' },
+    };
+    await stubTurnstile(page);
+    await stubPlacesProxy(page, placesOutcome);
+    await stubPlacesDetails(page, detailsOutcome);
+    await installBookingMocks(page, submits);
+    await reachDetailsStep(page);
+
+    const addressLine1 = page.locator('input[formControlName="addressLine1"]');
+    await addressLine1.fill('10 Downing');
+
+    const suggestions = page.locator('.address-suggestions li');
+    await expect(suggestions).toHaveCount(1, { timeout: 5_000 });
+    await suggestions.first().click();
+
+    // part[0] → line 1; the remaining parts (postcode stripped, trailing "UK" dropped) → line 2.
+    await expect(addressLine1).toHaveValue('10 Downing St');
+    await expect(page.locator('input[formControlName="addressLine2"]')).toHaveValue('London');
+    await expect(page.locator('input[formControlName="postcode"]')).toHaveValue('SW1A 2AA', { timeout: 5_000 });
   });
 });

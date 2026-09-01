@@ -176,7 +176,9 @@ test.describe('live UAT delivery-booking smoke @live-smoke', () => {
 
     const windowRow = page.locator('.window-row').first();
     await expect(windowRow, 'the selected day must have at least one window with spots').toBeVisible({ timeout: 15_000 });
-    const windowName = (await windowRow.locator('.window-row__name').innerText()).trim();
+    // The window row no longer shows the window's internal `name` (see window-step.component.html) —
+    // only its time range, which is also all the details-step slot summary shows.
+    const windowTime = (await windowRow.locator('.window-row__time').innerText()).trim();
     await windowRow.click();
 
     const form = page.locator('form.form');
@@ -185,7 +187,9 @@ test.describe('live UAT delivery-booking smoke @live-smoke', () => {
     await form.locator('input[formControlName="surname"]').fill(SMOKE_SURNAME);
     await form.locator('input[formControlName="email"]').fill(SMOKE_EMAIL);
     await form.locator('input[formControlName="phone"]').fill(SMOKE_PHONE);
-    await form.locator('textarea[formControlName="address"]').fill(SMOKE_ADDRESS);
+    // SMOKE_ADDRESS is a single marker string, not a real "street, locality" address, so
+    // there's no meaningful split point — it all goes in line 1, line 2 stays empty.
+    await form.locator('input[formControlName="addressLine1"]').fill(SMOKE_ADDRESS);
     await form.locator('input[formControlName="accessNotes"]').fill(SMOKE_ACCESS_NOTES);
     await form.locator('input[formControlName="ctaReference"]').fill(String(smokeMarker.ctaReference));
 
@@ -217,7 +221,7 @@ test.describe('live UAT delivery-booking smoke @live-smoke', () => {
     await expect(page.getByText('Your delivery is booked ✓')).toBeVisible();
     const summary = page.locator('.summary');
     await expect(summary).toContainText(dayLabel);
-    await expect(summary).toContainText(windowName);
+    await expect(summary).toContainText(windowTime);
     await expect(summary).toContainText(String(smokeMarker.ctaReference));
     await expect(summary).toContainText(SMOKE_ADDRESS);
   });

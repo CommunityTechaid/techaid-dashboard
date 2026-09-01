@@ -11,6 +11,11 @@
   line-height: 1.5;
 }
 
+.intro--who {
+  font-weight: 600;
+  color: #333;
+}
+
 .summary {
   background: var(--cta-tint);
   border-radius: 8px;
@@ -76,11 +81,6 @@
     &:focus {
       border-color: var(--cta-primary);
     }
-  }
-
-  textarea {
-    resize: none;
-    height: 56px;
   }
 }
 

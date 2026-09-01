@@ -30,15 +30,10 @@
   }
 }
 
-.window-row__name {
+// The time is now the row's only line, so it takes the weight the slot name used to carry.
+.window-row__time {
   font-size: 14px;
   font-weight: 600;
-}
-
-.window-row__time {
-  font-size: 12px;
-  opacity: 0.75;
-  margin-top: 1px;
 }
 
 .back-link {

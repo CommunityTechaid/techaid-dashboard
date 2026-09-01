@@ -13,21 +13,24 @@ import { ConfirmationStepComponent } from './confirmation-step/confirmation-step
 
 type Step = 'reference' | 'day' | 'window' | 'details' | 'confirmation';
 
-// The server's booking input has a single free-text `address` field, so the
-// building/flat detail and postcode collected as separate form controls are folded
-// into it here, in the order a reader expects: building detail, then street address,
-// then postcode (skipped if `formatted_address` already ends with it).
+// The server's booking input has a single free-text `address` field, so the building/flat
+// detail, the two address lines and the postcode collected as separate form controls are
+// folded into it here, in the order a reader expects: building detail, address lines, then
+// postcode (skipped if the last line already ends with it).
 function composeAddress(form: DetailsFormValue): string {
   const parts: string[] = [];
   if (form.buildingDetail.trim()) {
     parts.push(form.buildingDetail.trim());
   }
-  const address = form.address.trim();
-  parts.push(address);
+  parts.push(form.addressLine1.trim());
+  if (form.addressLine2.trim()) {
+    parts.push(form.addressLine2.trim());
+  }
   const postcode = form.postcode.trim();
   if (postcode) {
     const normalise = (value: string) => value.toLowerCase().replace(/\s+/g, '');
-    if (!normalise(address).endsWith(normalise(postcode))) {
+    const lastLine = parts[parts.length - 1] ?? '';
+    if (!normalise(lastLine).endsWith(normalise(postcode))) {
       parts.push(postcode);
     }
   }

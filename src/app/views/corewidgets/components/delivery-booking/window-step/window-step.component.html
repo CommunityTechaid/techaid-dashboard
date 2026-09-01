@@ -6,7 +6,7 @@
   @for (window of availableWindows; track window.id) {
     <div class="window-row" (click)="windowSelected.emit(window.id)">
       <div class="window-row__text">
-        <div class="window-row__name">{{ window.name }}</div>
+        <!-- The window's internal `name` (e.g. "10 - 4") only restates the times below it, so it isn't shown. -->
         <div class="window-row__time">{{ window.startTime }} – {{ window.endTime }}</div>
       </div>
     </div>
