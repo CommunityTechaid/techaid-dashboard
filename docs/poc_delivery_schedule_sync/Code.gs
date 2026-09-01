@@ -31,7 +31,7 @@
  *
  * The token is read from a cell, matching the bulk-insert sheet's "Login first" tab.
  * Anyone who can open the spreadsheet can read that token and act as you until it
- * expires (~2h), so treat sharing on this sheet accordingly.
+ * expires (24h), so treat sharing on this sheet accordingly.
  */
 
 var ENDPOINTS = {
@@ -389,7 +389,7 @@ function graphql_(endpoint, token, query, variables) {
   if (code === 401 || code === 403) {
     throw new Error(
       'The token in ' + TOKEN_CELL + ' was rejected (HTTP ' + code + '). Either it has expired ' +
-      '(they last about two hours) or it was issued by the other environment — check it matches ' + ENV_CELL + '.'
+      '(they last 24 hours) or it was issued by the other environment — check it matches ' + ENV_CELL + '.'
     );
   }
   if (code !== 200) {

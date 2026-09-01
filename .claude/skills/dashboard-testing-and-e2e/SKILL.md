@@ -75,7 +75,8 @@ E2E_BEARER_TOKEN=<token> node e2e/save-token.mjs
 ```
 
 Get the token from a logged-in dashboard session: DevTools → Application → Local Storage → the Auth0
-access token. Tokens expire in **~2h**. `save-token.mjs` decodes the JWT and synthesizes the exact
+access token. Tokens last **24h** — `exp - iat` on a real one is exactly 86400, so a token saved
+yesterday is stale but one saved this morning is fine. `save-token.mjs` decodes the JWT and synthesizes the exact
 `auth0-spa-js` v2 cache shape (wrapped access-token entry, unwrapped id-token entry, the
 `auth0.<clientId>.is.authenticated` cookie) so the SDK treats it as a real cached session — it writes
 **two** storageStates: `e2e/.auth/user.json` (localhost, used by `playwright.config.ts`) and
@@ -204,7 +205,7 @@ individually when copying a pattern).
   `deviceRequestFilters-device-request-index` to `{}` via `page.addInitScript` before the component
   boots.
 - **A wave of Auth0-redirect failures on code you didn't touch is almost always an expired token**, not
-  a regression — live tokens last ~2h. Re-save (`E2E_BEARER_TOKEN=<fresh> node e2e/save-token.mjs`) and
+  a regression — live tokens last 24h, so anything saved yesterday is expired. Re-save (`E2E_BEARER_TOKEN=<fresh> node e2e/save-token.mjs`) and
   re-judge before assuming a real break. If `npm run e2e:fast` is green but the live suite fails broadly
   on auth, it's the token.
 - **UAT data isn't guaranteed internally consistent** — e.g. a request can show a device badge on the

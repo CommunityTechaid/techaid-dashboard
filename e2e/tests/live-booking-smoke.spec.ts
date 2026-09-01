@@ -50,20 +50,35 @@ const SMOKE_SURNAME = 'LiveSmokeTest';
 // Ofcom's reserved drama/fiction number range — guaranteed not to ring a real phone.
 const SMOKE_PHONE = '07700900000';
 const SMOKE_ADDRESS = 'LIVE-SMOKE TEST BOOKING — safe to ignore/delete, created by e2e/tests/live-booking-smoke.spec.ts';
+const SMOKE_POSTCODE = 'SW9 7AA';
 const SMOKE_ACCESS_NOTES = 'Automated live-smoke test — no delivery will actually occur.';
 
-/** e.g. 920260719 — one per calendar day, so repeat runs on the same day collide deliberately
- *  (surfaces a leftover-cleanup failure instead of silently piling up rows). ctaReference is a
- *  device request id (schema type Long!), so the marker is numeric; the leading 9 keeps it well
- *  clear of real request ids, and it therefore matches no request and forwards nothing. */
-function smokeCtaReference(now = new Date()): number {
-  const y = now.getUTCFullYear();
-  const m = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(now.getUTCDate()).padStart(2, '0');
-  return Number(`9${y}${m}${d}`);
+/**
+ * Booking only succeeds for a device request whose status is exactly
+ * PROCESSING_EQUALITIES_DATA_COMPLETE (DeliveryService.kt:196-203 on the server — nothing
+ * else is checked). There's no way to invent a reference any more, so this discovers a real,
+ * currently-eligible one via the admin API. Not rate-limited (unlike the public eligibility
+ * query), so it's safe to call once up front rather than probing candidates through the UI.
+ */
+async function findEligibleCtaReference(token: string): Promise<number | null> {
+  const res = await adminGql<{ deviceRequestConnection: { content: { id: string; status: string }[] } }>(
+    token,
+    `query {
+      deviceRequestConnection(page: { size: 10 }, where: { status: { _eq: PROCESSING_EQUALITIES_DATA_COMPLETE } }) {
+        content { id status }
+      }
+    }`,
+  );
+  if (res.errors) {
+    throw new Error(`deviceRequestConnection query failed — ${JSON.stringify(res.errors)}`);
+  }
+  const first = res.data?.deviceRequestConnection.content[0];
+  return first ? Number(first.id) : null;
 }
 
 interface SmokeMarker {
+  /** A real, discovered device-request id in PROCESSING_EQUALITIES_DATA_COMPLETE — see
+   *  findEligibleCtaReference(). Booking it flips its status; cleanup must restore it. */
   ctaReference: number;
   email: string;
 }
@@ -93,17 +108,24 @@ function warnLeftoverBooking(marker: SmokeMarker, reason: string): void {
       `[live-smoke cleanup] COULD NOT CONFIRM CLEANUP of the booking this run may have\n` +
       `created (ctaReference "${marker.ctaReference}", email "${marker.email}").\n` +
       `Reason: ${reason}\n` +
-      `ACTION: check the admin Delivery Bookings screen (or query deliveryBookingsAdmin)\n` +
-      `for a row matching that ctaReference/email and delete it by hand if present.\n` +
+      `ACTION: check the admin Delivery Bookings screen (or query deliveryBookingsAdmin) for a\n` +
+      `row matching that ctaReference/email and delete it by hand if present. The linked device\n` +
+      `request id ${marker.ctaReference} may also still be stuck in\n` +
+      `PROCESSING_COLLECTION_DELIVERY_ARRANGED — check it and, if so, move it back to\n` +
+      `PROCESSING_EQUALITIES_DATA_COMPLETE by hand so it remains usable by future smoke runs.\n` +
       `${'!'.repeat(72)}\n`,
   );
 }
 
 /**
  * Finds and hard-deletes the booking matching the given marker via the admin
- * `deleteDeliveryBooking(id: ID!)` mutation. Never throws — every failure mode
- * (missing/expired token, mutation not yet deployed, booking not found) is reported
- * via warnLeftoverBooking() instead, so a cleanup problem never masks the test's own
+ * `deleteDeliveryBooking(id: ID!, clearRequestDelivery: Boolean)` mutation, passing
+ * `clearRequestDelivery: true` so the linked device request (which booking moved to
+ * PROCESSING_COLLECTION_DELIVERY_ARRANGED) is released back to its prior status —
+ * otherwise every run would permanently burn one of the handful of UAT requests that
+ * are currently eligible to book. Never throws — every failure mode (missing/expired
+ * token, mutation not yet deployed, booking not found) is reported via
+ * warnLeftoverBooking() instead, so a cleanup problem never masks the test's own
  * pass/fail result.
  */
 async function cleanupSmokeBooking(marker: SmokeMarker): Promise<void> {
@@ -135,8 +157,8 @@ async function cleanupSmokeBooking(marker: SmokeMarker): Promise<void> {
 
   const delRes = await adminGql<{ deleteDeliveryBooking: boolean }>(
     token,
-    `mutation ($id: ID!) { deleteDeliveryBooking(id: $id) }`,
-    { id: match.id },
+    `mutation ($id: ID!, $clear: Boolean) { deleteDeliveryBooking(id: $id, clearRequestDelivery: $clear) }`,
+    { id: match.id, clear: true },
   );
   if (delRes.errors || delRes.data?.deleteDeliveryBooking !== true) {
     // Tolerate the mutation not existing yet: it merged to techaid-server dev today
@@ -155,8 +177,15 @@ async function cleanupSmokeBooking(marker: SmokeMarker): Promise<void> {
 
 const test = base.extend<{ smokeMarker: SmokeMarker }>({
   // eslint-disable-next-line no-empty-pattern
-  smokeMarker: async ({}, use) => {
-    const marker: SmokeMarker = { ctaReference: smokeCtaReference(), email: SMOKE_EMAIL };
+  smokeMarker: async ({}, use, testInfo) => {
+    const token = getBearerToken();
+    const ctaReference = await findEligibleCtaReference(token);
+    testInfo.skip(
+      ctaReference === null,
+      'UAT has no device request in PROCESSING_EQUALITIES_DATA_COMPLETE right now — ' +
+        'move one into that status for this smoke to have something eligible to book.',
+    );
+    const marker: SmokeMarker = { ctaReference: ctaReference as number, email: SMOKE_EMAIL };
     await use(marker);
     // Runs after the test body completes — success or failure — same as a try/finally.
     await cleanupSmokeBooking(marker);
@@ -169,8 +198,19 @@ test.describe('live UAT delivery-booking smoke @live-smoke', () => {
 
     await page.goto('https://app-testing.communitytechaid.org.uk/delivery-booking');
 
+    // Step 1 (reference-first since PR #202): the discovered eligible request id must be
+    // entered before availability loads at all.
+    const referenceForm = page.locator('form.form').first();
+    await expect(referenceForm).toBeVisible({ timeout: 15_000 });
+    await referenceForm.locator('input[formControlName="ctaReference"]').fill(String(smokeMarker.ctaReference));
+    await referenceForm.locator('button[type="submit"]').click();
+
     const dayRow = page.locator('.day-row').first();
-    await expect(dayRow, 'UAT must have at least one bookable day for this smoke to run').toBeVisible({ timeout: 20_000 });
+    await expect(
+      dayRow,
+      `request id ${smokeMarker.ctaReference} was PROCESSING_EQUALITIES_DATA_COMPLETE moments ago but the ` +
+        `day step never rendered — either it was ineligible after all or UAT has no bookable day right now`,
+    ).toBeVisible({ timeout: 20_000 });
     const dayLabel = (await dayRow.locator('.day-row__label').innerText()).trim();
     await dayRow.click();
 
@@ -190,8 +230,9 @@ test.describe('live UAT delivery-booking smoke @live-smoke', () => {
     // SMOKE_ADDRESS is a single marker string, not a real "street, locality" address, so
     // there's no meaningful split point — it all goes in line 1, line 2 stays empty.
     await form.locator('input[formControlName="addressLine1"]').fill(SMOKE_ADDRESS);
+    await form.locator('input[formControlName="postcode"]').fill(SMOKE_POSTCODE);
     await form.locator('input[formControlName="accessNotes"]').fill(SMOKE_ACCESS_NOTES);
-    await form.locator('input[formControlName="ctaReference"]').fill(String(smokeMarker.ctaReference));
+    // No ctaReference field here any more — it was collected in step 1 (reference step).
 
     // Real Cloudflare Turnstile widget — UAT's siteKey is Cloudflare's "always passes"
     // test key, so the managed widget auto-completes without interaction, but it does
