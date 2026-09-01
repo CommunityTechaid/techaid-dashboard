@@ -1,9 +1,20 @@
 @if (loading) {
   <div class="text-muted small p-3">Loading delivery slot settings…</div>
 } @else {
-  <div class="text-muted small mb-3">
-    Delivery settings, windows and blocked dates have moved to
-    <a [routerLink]="['/dashboard/admin-panel']">Admin Panel → Delivery Configuration</a>.
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="text-muted small">
+      Delivery settings, windows and blocked dates have moved to
+      <a [routerLink]="['/dashboard/admin-panel']">Admin Panel → Delivery Configuration</a>.
+    </div>
+    <button
+      type="button"
+      class="btn btn-sm btn-primary flex-shrink-0 ms-3"
+      data-testid="export-bookings-csv"
+      [disabled]="exporting || totalBookings === 0"
+      (click)="exportCsv()"
+    >
+      {{ exporting ? 'Exporting…' : 'Export CSV' }}
+    </button>
   </div>
 
   <!-- Bookings -->

@@ -3,6 +3,8 @@
     <div class="intro">Booking for request ID {{ ctaReference }}</div>
   }
 
+  <div class="intro intro--who">All details should be for the individual we are delivering to on the day.</div>
+
   <div class="summary">
     <div class="summary__text">
       <div class="summary__day">{{ day?.dayLabel }}</div>
@@ -50,7 +52,7 @@
     </div>
 
     <div class="field">
-      <label>Flat, building or office name <span class="field__hint">(optional)</span></label>
+      <label>Flat, building or office name</label>
       <div class="field__note">
         If your address has a flat number, building name or office, add it here — the address lookup often can't.
       </div>
@@ -66,17 +68,17 @@
     </div>
 
     <div class="field field--autocomplete">
-      <label>Delivery address &amp; postcode</label>
-      <textarea
-        formControlName="address"
-        placeholder="Flat, street, postcode"
+      <label>Address line 1</label>
+      <input
+        formControlName="addressLine1"
+        placeholder="12 Coldharbour Lane"
         autocomplete="off"
-        maxlength="250"
-        [class.field--invalid]="invalid('address')"
+        maxlength="150"
+        [class.field--invalid]="invalid('addressLine1')"
         appPlaceAutocomplete
         #addressAutocomplete="appPlaceAutocomplete"
         (placeSelected)="onPlaceSelected($event)"
-      ></textarea>
+      />
       @if (addressAutocomplete.suggestions.length > 0) {
         <ul class="address-suggestions">
           @for (suggestion of addressAutocomplete.suggestions; track suggestion.description) {
@@ -84,10 +86,24 @@
           }
         </ul>
       }
-      @if (hasError('address', 'maxlength')) {
-        <div class="form-error">Keep this under 250 characters</div>
-      } @else if (invalid('address')) {
+      @if (hasError('addressLine1', 'maxlength')) {
+        <div class="form-error">Keep this under 150 characters</div>
+      } @else if (invalid('addressLine1')) {
         <div class="form-error">Enter the delivery address.</div>
+      }
+    </div>
+
+    <div class="field">
+      <label>Address line 2 <span class="field__hint">(optional)</span></label>
+      <input
+        formControlName="addressLine2"
+        placeholder="Brixton, London"
+        autocomplete="off"
+        maxlength="150"
+        [class.field--invalid]="invalid('addressLine2')"
+      />
+      @if (invalid('addressLine2')) {
+        <div class="form-error">Keep this under 150 characters</div>
       }
     </div>
 

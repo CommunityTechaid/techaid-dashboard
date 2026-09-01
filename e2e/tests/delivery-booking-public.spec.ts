@@ -204,7 +204,8 @@ async function reachDetailsStepAndFill(page: Page): Promise<void> {
   await form.locator('input[formControlName="surname"]').fill('Martino');
   await form.locator('input[formControlName="email"]').fill('sofia@example.org');
   await form.locator('input[formControlName="phone"]').fill('07700900000');
-  await form.locator('textarea[formControlName="address"]').fill('1 Test Street, London SW9 0AA');
+  await form.locator('input[formControlName="addressLine1"]').fill('1 Test Street');
+  await form.locator('input[formControlName="addressLine2"]').fill('London SW9 0AA');
   await form.locator('input[formControlName="postcode"]').fill('SW9 7AA');
   // The widget host must have rendered (siteKey is set in uat-local).
   await expect
@@ -284,6 +285,33 @@ test.describe('public delivery-booking flow @mocked', () => {
     await submitReferenceStep(page);
 
     await expect(page.locator('.day-row').first()).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('the details step shows the "who this is for" note, an un-named slot summary, and the right optional hints', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const outcome = { current: { kind: 'success' } as SubmitOutcome };
+    const submits: unknown[] = [];
+    await stubTurnstile(page);
+    await installBookingMocks(page, outcome, submits);
+
+    await reachDetailsStepAndFill(page);
+
+    await expect(page.locator('.intro--who')).toContainText(
+      'All details should be for the individual we are delivering to on the day',
+    );
+
+    // The slot summary shows the window's times but not its internal `name` — see
+    // details-step.component.ts's summarySlot getter.
+    const summarySlot = page.locator('div.summary__slot');
+    await expect(summarySlot).not.toContainText(AVAILABILITY[0].windows[0].window.name);
+    await expect(summarySlot).toContainText(AVAILABILITY[0].windows[0].window.startTime);
+    await expect(summarySlot).toContainText(AVAILABILITY[0].windows[0].window.endTime);
+
+    // "Flat, building or office name" lost its "(optional)" hint; "Access notes" kept it.
+    await expect(page.locator('label', { hasText: 'Flat, building or office name' })).not.toContainText('(optional)');
+    await expect(page.locator('label', { hasText: 'Access notes' })).toContainText('(optional)');
   });
 
   test('blocks submit until Turnstile issues a token', async ({ page }) => {

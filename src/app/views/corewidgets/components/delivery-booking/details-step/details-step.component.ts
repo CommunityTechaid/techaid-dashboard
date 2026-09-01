@@ -26,7 +26,8 @@ export interface DetailsFormValue {
   email: string;
   phone: string;
   buildingDetail: string;
-  address: string;
+  addressLine1: string;
+  addressLine2: string;
   postcode: string;
   accessNotes: string;
   turnstileToken?: string;
@@ -40,6 +41,12 @@ function normalisePostcode(raw: string): string {
   const compact = raw.replace(/\s+/g, '').toUpperCase();
   return compact.length > 3 ? `${compact.slice(0, -3)} ${compact.slice(-3)}` : compact;
 }
+
+// Matches a UK postcode anywhere in a line so it can be stripped out of the address lines —
+// Google folds it into the locality part ("London SW1A 2AA") and it has its own field here.
+const POSTCODE_IN_TEXT = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i;
+
+const ADDRESS_LINE_MAX = 150;
 
 // Angular's Validators.email accepts non-addresses like "A@B" — this pattern additionally
 // requires a domain with a dot and a real (2+ char) final label, e.g. "example.com".
@@ -109,13 +116,16 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
     email: ['', [Validators.required, Validators.email, Validators.pattern(EMAIL_DOMAIN_PATTERN)]],
     phone: ['', [Validators.required, ukPhoneValidator]],
     buildingDetail: ['', Validators.maxLength(100)],
-    address: ['', [Validators.required, Validators.maxLength(250)]],
+    addressLine1: ['', [Validators.required, Validators.maxLength(150)]],
+    addressLine2: ['', Validators.maxLength(150)],
     postcode: ['', [Validators.required, Validators.pattern(UK_POSTCODE_PATTERN)]],
     accessNotes: ['', Validators.maxLength(500)],
   });
 
+  // Deliberately omits the window's `name` — internal slot labels like "10 - 4" duplicate
+  // the times they sit next to and read as noise to the person booking.
   get summarySlot(): string {
-    return this.window ? `${this.window.name} · ${this.window.startTime} – ${this.window.endTime}` : '';
+    return this.window ? `${this.window.startTime} – ${this.window.endTime}` : '';
   }
 
   ngAfterViewInit(): void {
@@ -181,12 +191,38 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
   }
 
   onPlaceSelected(event: PlaceSelectedEvent): void {
+    // The directive has already written the whole formatted address into line 1; re-split it
+    // across the two lines before anything else reads it.
+    this.applyPlaceToAddressLines(event.formattedAddress);
+
     // Auto-fill only — the postcode control stays editable so the lookup missing a
     // postcode (or getting it wrong) never blocks or locks the field.
     if (event.postcode) {
       this.form.controls.postcode.setValue(normalisePostcode(event.postcode));
       this.checkBorough(this.form.controls.postcode.value);
     }
+  }
+
+  /**
+   * Google hands back a single formatted address — "10 Downing St, London SW1A 2AA, UK" —
+   * so the two address lines are derived from it: the first comma-separated part becomes
+   * line 1 and the rest line 2, with the country and the postcode dropped. The postcode has
+   * its own field, and repeating it inside the address reads as a mistake to the person
+   * booking. Free typing is untouched; this only runs on an explicit suggestion pick.
+   */
+  private applyPlaceToAddressLines(formattedAddress: string): void {
+    const parts = formattedAddress
+      .split(',')
+      .map((part) => part.replace(POSTCODE_IN_TEXT, '').trim())
+      .filter((part) => part.length > 0)
+      .filter((part) => !/^(uk|gb|united kingdom)$/i.test(part));
+
+    if (parts.length === 0) {
+      return;
+    }
+
+    this.form.controls.addressLine1.setValue(parts[0].slice(0, ADDRESS_LINE_MAX));
+    this.form.controls.addressLine2.setValue(parts.slice(1).join(', ').slice(0, ADDRESS_LINE_MAX));
   }
 
   onPostcodeBlur(): void {
