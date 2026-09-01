@@ -14,11 +14,44 @@ const DATA_QUERY = gql`
 
 const DELETE_BOOKING = gql`mutation deleteDeliveryBooking($id: ID!, $clearRequestDelivery: Boolean) { deleteDeliveryBooking(id: $id, clearRequestDelivery: $clearRequestDelivery) }`;
 
+// Bookings don't carry the referring organisation, so the CSV export resolves it from the
+// device request each booking's ctaReference points at. Only run when exporting — the
+// table itself doesn't show Org, so making the page's initial load pay for it would be waste.
+const EXPORT_ORGS_QUERY = gql`
+  query deliveryExportOrgs($ids: [Long]) {
+    deviceRequestConnection(page: { size: 500 }, where: { id: { _in: $ids } }) {
+      content {
+        id
+        referringOrganisationContact {
+          referringOrganisation { name }
+        }
+      }
+    }
+  }
+`;
+
+// Column order and header text must match the "TaDa Import" tab of the driver's Delivery
+// Schedule spreadsheet exactly — see docs/poc_delivery_schedule_sync/README.md. The CSV this
+// produces is byte-identical in shape to scripts/export-delivery-schedule.mjs.
+const CSV_HEADERS = ['Date', 'Req No.', 'Distributions Only', 'Name', 'Org', 'Address', 'Telephone no.', 'Access Notes'];
+
 // The server refuses to delete a booking while its linked request still shows a delivery as
 // arranged — this is the exact enum value matchedRequestStatus arrives as (confirmed against the
 // display label map in device-request-info.component.ts and the e2e fixture in
 // delivery-slots-badges.spec.ts), not a display label.
 const DELIVERY_ARRANGED_STATUS = 'PROCESSING_COLLECTION_DELIVERY_ARRANGED';
+
+/** The sheet's Date column is UK-formatted, matching the weekly driver tabs. */
+function toUkDate(iso?: string): string {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function csvCell(value: unknown): string {
+  const s = value === null || value === undefined ? '' : String(value);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
 
 interface BookingRow {
   id: string;
@@ -60,9 +93,13 @@ interface BookingGroup {
 })
 export class DeliverySlotsComponent implements OnInit, OnDestroy {
   loading = true;
+  exporting = false;
 
   bookingGroups: BookingGroup[] = [];
   totalBookings = 0;
+
+  /** Flat copy of what's on screen, kept in load order, so the export matches the table. */
+  private allBookings: BookingRow[] = [];
 
   private readonly sub = new Subscription();
 
@@ -95,6 +132,8 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
 
   private groupBookings(bookings: BookingRow[]): void {
     this.totalBookings = bookings.length;
+    // Apollo v4 freezes query responses — copy each row so it isn't a frozen object.
+    this.allBookings = bookings.map((b) => ({ ...b }));
     const groups = new Map<string, BookingGroup>();
     for (const b of bookings) {
       const key = `${b.date}::${b.window?.id ?? '?'}`;
@@ -148,6 +187,74 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
           this.toastr.error(err?.message || 'Could not delete booking');
         },
       });
+  }
+
+  /**
+   * Downloads what's currently on this page as a CSV in the column shape of the "TaDa Import"
+   * tab of the driver's Delivery Schedule spreadsheet. Exports every booking the page has
+   * loaded, past ones included — the page is the source of truth for what's exported, so
+   * what you see is what you get; narrowing to a date range is left to the spreadsheet.
+   */
+  exportCsv(): void {
+    if (this.exporting || this.allBookings.length === 0) {
+      return;
+    }
+    this.exporting = true;
+
+    const ids = Array.from(
+      new Set(this.allBookings.map((b) => b.ctaReference).filter((r) => r !== null && r !== undefined)),
+    );
+
+    this.sub.add(
+      this.apollo.query<any>({ query: EXPORT_ORGS_QUERY, variables: { ids }, fetchPolicy: 'network-only' }).subscribe({
+        next: ({ data }) => {
+          const orgById = new Map<string, string>();
+          for (const req of data?.deviceRequestConnection?.content ?? []) {
+            orgById.set(String(req.id), req.referringOrganisationContact?.referringOrganisation?.name ?? '');
+          }
+          this.downloadCsv(this.buildCsv(orgById));
+          this.exporting = false;
+        },
+        error: () => {
+          // A failed org lookup shouldn't cost the user the export — every other column is
+          // already in hand, so fall back to blank Org rather than nothing at all.
+          this.downloadCsv(this.buildCsv(new Map()));
+          this.exporting = false;
+          this.toastr.warning('Exported without organisation names — the lookup failed.');
+        },
+      }),
+    );
+  }
+
+  private buildCsv(orgById: Map<string, string>): string {
+    const rows = this.allBookings
+      .slice()
+      .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
+      .map((b) => [
+        toUkDate(b.date),
+        b.ctaReference ?? '',
+        // Every booking made through the public flow is a device delivery to a beneficiary,
+        // which is what the driver's sheet calls a Distribution.
+        'Distribution',
+        [b.firstName, b.surname].filter(Boolean).join(' ').trim(),
+        orgById.get(String(b.ctaReference)) ?? '',
+        (b.address ?? '').trim(),
+        b.phone ?? '',
+        (b.accessNotes ?? '').trim(),
+      ]);
+
+    return [CSV_HEADERS, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  }
+
+  private downloadCsv(csv: string): void {
+    // The BOM makes Excel read it as UTF-8 rather than the local codepage.
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `delivery-schedule-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   ngOnDestroy(): void {
