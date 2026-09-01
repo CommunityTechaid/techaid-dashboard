@@ -33,7 +33,21 @@ const EXPORT_ORGS_QUERY = gql`
 // Column order and header text must match the "TaDa Import" tab of the driver's Delivery
 // Schedule spreadsheet exactly — see docs/poc_delivery_schedule_sync/README.md. The CSV this
 // produces is byte-identical in shape to scripts/export-delivery-schedule.mjs.
-const CSV_HEADERS = ['Date', 'Req No.', 'Distributions Only', 'Name', 'Org', 'Address', 'Telephone no.', 'Access Notes'];
+// Access Notes sits in column J, leaving H and I empty, so a block of rows pasted into one of
+// the weekly driver tabs lines up: there H is "Delivered (Y or N)", I is the follow-up call
+// permission and J is "Notes". The two blanks are load-bearing - don't tidy them away.
+const CSV_HEADERS = [
+  'Date',
+  'Req No.',
+  'Distributions Only',
+  'Name',
+  'Org',
+  'Address',
+  'Telephone no.',
+  '',
+  '',
+  'Access Notes',
+];
 
 // The server refuses to delete a booking while its linked request still shows a delivery as
 // arranged — this is the exact enum value matchedRequestStatus arrives as (confirmed against the
@@ -240,6 +254,8 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
         orgById.get(String(b.ctaReference)) ?? '',
         (b.address ?? '').trim(),
         b.phone ?? '',
+        '',
+        '',
         (b.accessNotes ?? '').trim(),
       ]);
 

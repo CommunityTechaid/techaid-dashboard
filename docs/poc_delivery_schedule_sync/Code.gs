@@ -46,10 +46,18 @@ var LINK_CELL = 'L1';
 var LOOKAHEAD_DAYS = 14;
 
 // Column order and header text must match the "TaDa Import" tab exactly.
-var HEADERS = ['Date', 'Req No.', 'Distributions Only', 'Name', 'Org', 'Address', 'Telephone no.', 'Access Notes'];
+// Columns A-G, written as a block.
+var HEADERS = ['Date', 'Req No.', 'Distributions Only', 'Name', 'Org', 'Address', 'Telephone no.'];
+
+// Access Notes goes in J, not H, so that H and I stay empty and a block of rows can be
+// pasted straight into a weekly tab - where H is "Delivered (Y or N)", I is the follow-up
+// call permission and J is "Notes". Rows are built with the notes in slot 7 and split
+// across the two ranges at write time.
+var ACCESS_NOTES_COLUMN = 10; // J
+var ACCESS_NOTES_HEADER = 'Access Notes';
 var HEADER_ROW = 1;
 var FIRST_DATA_ROW = 2;
-var LAST_DATA_COLUMN = 8; // H — everything right of this belongs to the driver.
+var LAST_DATA_COLUMN = 7; // G — the last column of the main block.
 
 var BOOKINGS_QUERY =
   'query DeliveryBookingsForExport($from: String, $to: String) {' +
@@ -331,21 +339,36 @@ function isoDate_(date) {
 function writeSheet_(sheet, rows) {
   // Headers are rewritten every time so a renamed column can't silently shift the data.
   sheet.getRange(HEADER_ROW, 1, 1, HEADERS.length).setValues([HEADERS]);
+  sheet.getRange(HEADER_ROW, ACCESS_NOTES_COLUMN).setValue(ACCESS_NOTES_HEADER);
 
   // Clear only the columns this script owns — the driver's own columns, the token in M2
   // and the refresh link in L1 all sit to the right of column G and are left alone.
   var lastRow = sheet.getLastRow();
   if (lastRow >= FIRST_DATA_ROW) {
-    sheet.getRange(FIRST_DATA_ROW, 1, lastRow - FIRST_DATA_ROW + 1, LAST_DATA_COLUMN).clearContent();
+    var rowCount = lastRow - FIRST_DATA_ROW + 1;
+    sheet.getRange(FIRST_DATA_ROW, 1, rowCount, LAST_DATA_COLUMN).clearContent();
+    // H and I are deliberately left alone - they are kept empty so a paste lines up with a
+    // weekly tab, and clearing them would also wipe anything the driver had put there.
+    sheet.getRange(FIRST_DATA_ROW, ACCESS_NOTES_COLUMN, rowCount, 1).clearContent();
   }
 
   if (!rows.length) return;
 
-  sheet.getRange(FIRST_DATA_ROW, 1, rows.length, HEADERS.length).setValues(rows);
+  // Split each row: A-G as one block, then the access notes on their own into J.
+  var mainBlock = [];
+  var notesBlock = [];
+  for (var i = 0; i < rows.length; i++) {
+    mainBlock.push(rows[i].slice(0, HEADERS.length));
+    notesBlock.push([rows[i][HEADERS.length] || '']);
+  }
+
+  sheet.getRange(FIRST_DATA_ROW, 1, mainBlock.length, HEADERS.length).setValues(mainBlock);
+  sheet.getRange(FIRST_DATA_ROW, ACCESS_NOTES_COLUMN, notesBlock.length, 1).setValues(notesBlock);
+
   sheet.getRange(FIRST_DATA_ROW, 1, rows.length, 1).setNumberFormat('dd/mm/yyyy');
-  // Address (F) and Access Notes (H) are the two free-text columns that need to wrap.
+  // Address (F) and Access Notes (J) are the two free-text columns that need to wrap.
   sheet.getRange(FIRST_DATA_ROW, 6, rows.length, 1).setWrap(true);
-  sheet.getRange(FIRST_DATA_ROW, 8, rows.length, 1).setWrap(true);
+  sheet.getRange(FIRST_DATA_ROW, ACCESS_NOTES_COLUMN, rows.length, 1).setWrap(true);
 }
 
 // ---------------------------------------------------------------- transport

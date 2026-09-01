@@ -204,13 +204,18 @@ function rowFromRequest(req) {
     (contact?.referringOrganisation?.name ?? '').trim(),
     ADDRESS_NEEDED,
     (contact?.phoneNumber ?? '').trim(),
+    '',
+    '',
     // A staff-arranged request has no access notes - only a booking captures them.
     '',
   ];
 }
 
 // Column order and header text must match the "TaDa Import" tab exactly.
-const HEADERS = ['Date', 'Req No.', 'Distributions Only', 'Name', 'Org', 'Address', 'Telephone no.', 'Access Notes'];
+// Access Notes sits in column J, leaving H and I empty, so a block of rows pasted into one of
+// the weekly driver tabs lines up: there H is "Delivered (Y or N)", I is the follow-up call
+// permission and J is "Notes". The two blanks are load-bearing — don't tidy them away.
+const HEADERS = ['Date', 'Req No.', 'Distributions Only', 'Name', 'Org', 'Address', 'Telephone no.', '', '', 'Access Notes'];
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -275,6 +280,8 @@ async function main() {
         req?.referringOrganisationContact?.referringOrganisation?.name ?? '',
         composeAddress(b),
         b.phone ?? '',
+        '',
+        '',
         (b.accessNotes ?? '').trim(),
       ];
     });

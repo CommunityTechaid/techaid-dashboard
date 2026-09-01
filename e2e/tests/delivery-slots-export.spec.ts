@@ -21,6 +21,39 @@ async function fulfillJson(route: import('@playwright/test').Route, body: unknow
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
 }
 
+/** Minimal CSV field splitter: respects double-quoted fields (which may themselves contain
+ *  commas, e.g. the Address field), so field counts can be asserted without a naive
+ *  split(',') being fooled by commas inside quotes. */
+function splitCsvFields(line: string): string[] {
+  const fields: string[] = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ',') {
+      fields.push(field);
+      field = '';
+    } else {
+      field += char;
+    }
+  }
+  fields.push(field);
+  return fields;
+}
+
 const WINDOW = { id: 'win-1', name: 'Morning window' };
 
 /** Two bookings: one org-matched with access notes, one unmatched without — different dates
@@ -140,19 +173,31 @@ test.describe('delivery-slots export CSV @mocked', () => {
       chunks.push(chunk as Buffer);
     }
     // The download opens with a UTF-8 BOM so Excel doesn't misread it — strip before comparing.
-    const csv = Buffer.concat(chunks).toString('utf-8').replace(/^﻿/, '');
+    const csv = Buffer.concat(chunks).toString('utf-8').replace(/^\ufeff/, '');
     const lines = csv.trim().split('\r\n');
 
-    expect(lines[0]).toBe('Date,Req No.,Distributions Only,Name,Org,Address,Telephone no.,Access Notes');
+    // Fields 8 and 9 are deliberately blank (not just "no Access Notes column"): a block of
+    // rows pastes straight into a weekly driver tab where H is "Delivered (Y or N)", I is the
+    // follow-up call permission, and J is "Notes" — so Access Notes has to land in the 10th
+    // field, with H/I left for the driver to fill in by hand.
+    expect(lines[0]).toBe('Date,Req No.,Distributions Only,Name,Org,Address,Telephone no.,,,Access Notes');
 
     // Ascending date order: the 3 August booking (mocked second) must sort ahead of the
     // 5 August booking (mocked first).
     const expectedMatchedLine =
-      '03/08/2026,9101,Distribution,Erin Matched,Org A,10 Example Street,07700900101,Ring bell twice';
+      '03/08/2026,9101,Distribution,Erin Matched,Org A,10 Example Street,07700900101,,,Ring bell twice';
     const expectedUnmatchedLine =
-      '05/08/2026,9102,Distribution,Fiona Unmatched,,12 Example Road,07700900102,';
+      '05/08/2026,9102,Distribution,Fiona Unmatched,,12 Example Road,07700900102,,,';
     expect(lines[1]).toBe(expectedMatchedLine);
     expect(lines[2]).toBe(expectedUnmatchedLine);
+
+    // Every emitted line has exactly 10 comma-separated fields, fields 8 and 9 empty.
+    for (const line of lines) {
+      const fields = splitCsvFields(line);
+      expect(fields).toHaveLength(10);
+      expect(fields[7]).toBe('');
+      expect(fields[8]).toBe('');
+    }
   });
 
   test('is disabled when there are no bookings to export', async ({ page }) => {
