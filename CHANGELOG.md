@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.6.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.5.0...v1.6.0) (2026-09-03)
+
+
+### Features
+
+* **delivery:** booking form address split and driver-schedule CSV export ([#205](https://github.com/CommunityTechaid/techaid-dashboard/issues/205)) ([21ac1a9](https://github.com/CommunityTechaid/techaid-dashboard/commit/21ac1a973eec797a4555d0c9b232fe4e26571016))
+* **delivery:** out-of-area address warning, admin flag, and export date/status fixes ([69f5724](https://github.com/CommunityTechaid/techaid-dashboard/commit/69f57248d74d735b20f6fc549549079a75e957d9))
+* **delivery:** request-ID-first booking flow, borough delivery days, icon and sub-text removal ([#202](https://github.com/CommunityTechaid/techaid-dashboard/issues/202)) ([89af2de](https://github.com/CommunityTechaid/techaid-dashboard/commit/89af2de590e0070ddcf781b5eca3e369aa5ca65c))
+* **delivery:** warn on out-of-area delivery addresses and flag them for admins ([d0505d0](https://github.com/CommunityTechaid/techaid-dashboard/commit/d0505d08f8d483b990c874f044b73f83b0821079))
+
+
+### Bug Fixes
+
+* **delivery:** London-local export dates and an Arranged-only status filter ([8ead8f8](https://github.com/CommunityTechaid/techaid-dashboard/commit/8ead8f8dea4389a456b1f19e5822f20b34b4c9fd))
+* **request-booking:** the Request Booking 2.0 feedback round ([#204](https://github.com/CommunityTechaid/techaid-dashboard/issues/204)) ([80def6c](https://github.com/CommunityTechaid/techaid-dashboard/commit/80def6cf0708af3da79f886b848dafeb6e25eed3))
+
 ## [1.5.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.4.2...v1.5.0) (2026-08-22)
 
 
