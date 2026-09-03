@@ -35,16 +35,19 @@ Deliveries are **already explicitly marked** in TaDa; nothing has to be inferred
 ```graphql
 where: { AND: [
   { collectionMethod: { _eq: DELIVERY } }
+  { status: { _eq: PROCESSING_COLLECTION_DELIVERY_ARRANGED } }
   { collectionDate: { _gte: $from } }
   { collectionDate: { _lte: $to } }
 ]}
 ```
 
-Verified against the driver's **31 Aug** tab: this returned **exactly the 13 requests listed
-there — no misses, no false positives** — while correctly excluding 18 `COLLECTION`
-requests dated the same week. All 13 were also
-`status: PROCESSING_COLLECTION_DELIVERY_ARRANGED`, but status is not needed as a filter and
-adding it would only make the rule more brittle.
+Verified against the driver's **31 Aug** tab: `collectionMethod: DELIVERY` alone returned
+**exactly the 13 requests listed there — no misses, no false positives** — while correctly
+excluding 18 `COLLECTION` requests dated the same week. All 13 were also
+`status: PROCESSING_COLLECTION_DELIVERY_ARRANGED`, so the status filter is included as a
+belt-and-braces guard: it keeps requests that are still mid-collection-workflow (a
+`collectionDate` set for planning purposes, but not yet at the "Arranged" stage) out of the
+export.
 
 Two traps worth knowing:
 

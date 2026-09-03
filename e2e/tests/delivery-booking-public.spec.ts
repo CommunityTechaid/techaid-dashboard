@@ -314,6 +314,43 @@ test.describe('public delivery-booking flow @mocked', () => {
     await expect(page.locator('label', { hasText: 'Access notes' })).toContainText('(optional)');
   });
 
+  test('shows a soft out-of-area warning for an unsupported postcode, and not for a supported one', async ({ page }) => {
+    // Pins the Part 1 change to details-step.component.ts's checkBorough(): a well-formed
+    // postcode the ward-lookup asset has no record of (SW1A 2AA — Westminster, outside the
+    // table's Lambeth/Southwark/Tower Hamlets coverage) now warns, where it used to silently
+    // clear the warning. Uses the real bundled ward-lookup asset (a same-origin static file,
+    // not a /graphql call) rather than stubbing it.
+    test.setTimeout(60_000);
+    const outcome = { current: { kind: 'success' } as SubmitOutcome };
+    const submits: unknown[] = [];
+    await stubTurnstile(page);
+    await installBookingMocks(page, outcome, submits);
+
+    // reachDetailsStepAndFill leaves a supported postcode (SW9 7AA — Lambeth) in the field.
+    await reachDetailsStepAndFill(page);
+
+    const postcodeInput = page.locator('input[formControlName="postcode"]');
+    const warning = page.locator('[data-testid="delivery-borough-warning"]');
+
+    await postcodeInput.blur();
+    await expect(warning).toHaveCount(0);
+
+    await postcodeInput.fill('SW1A 2AA');
+    await postcodeInput.blur();
+    await expect(warning).toBeVisible({ timeout: 10_000 });
+    await expect(warning).toHaveText(
+      "NOTE: You are entering an address outside of our supported areas. This may lead to delays and possible cancellation of your request. Please call us on 020 3488 7742 if you're unsure.",
+    );
+
+    // The submit button must never be disabled by this — advisory only.
+    await expect(page.locator('button[type="submit"]')).toBeEnabled();
+
+    // Back to a supported postcode clears it.
+    await postcodeInput.fill('SW9 7AA');
+    await postcodeInput.blur();
+    await expect(warning).toHaveCount(0);
+  });
+
   test('blocks submit until Turnstile issues a token', async ({ page }) => {
     test.setTimeout(60_000);
     const outcome = { current: { kind: 'success' } as SubmitOutcome };

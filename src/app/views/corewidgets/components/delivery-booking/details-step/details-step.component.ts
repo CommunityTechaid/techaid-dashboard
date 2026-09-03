@@ -48,6 +48,13 @@ const POSTCODE_IN_TEXT = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i;
 
 const ADDRESS_LINE_MAX = 150;
 
+// Shown for any postcode that doesn't resolve to one of our supported boroughs — whether it's
+// a known-but-unsupported borough (e.g. Tower Hamlets with the flag off) or simply absent from
+// the lookup table (out of area, or newer than the table's edition). Advisory only; see
+// boroughWarning below.
+const OUT_OF_AREA_WARNING =
+  "NOTE: You are entering an address outside of our supported areas. This may lead to delays and possible cancellation of your request. Please call us on 020 3488 7742 if you're unsure.";
+
 // Angular's Validators.email accepts non-addresses like "A@B" — this pattern additionally
 // requires a domain with a dot and a real (2+ char) final label, e.g. "example.com".
 const EMAIL_DOMAIN_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -99,8 +106,10 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
   /**
    * Advisory only — never a hard block. The authoritative check is server-side against the
    * linked request's own borough, because a delivery address can legitimately differ from the
-   * applicant's borough (staying with family, a workplace drop). A lookup miss, an unknown
-   * postcode, or a covered borough all show nothing.
+   * applicant's borough (staying with family, a workplace drop). A covered borough, or an
+   * incomplete/malformed postcode the user is still typing, shows nothing; a resolved-but-
+   * unsupported borough and a well-formed postcode the lookup table has no record of (out of
+   * area, or newer than the table's edition) both warn — see checkBorough().
    */
   boroughWarning: string | null = null;
 
@@ -237,22 +246,27 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
    * Resolves the postcode's borough via the existing (lazily-loaded) ward lookup, and warns —
    * but never blocks — if it isn't one we currently cover. Reuses WardLookupService and
    * FeatureFlagService as-is rather than re-parsing the lookup table here.
+   *
+   * Gated on UK_POSTCODE_PATTERN (not WardLookupService.isWellFormed, though the two agree in
+   * practice) so the warning never flashes while the postcode is still being typed. A
+   * 'not-found' result warns too, alongside a 'resolved'-but-unsupported borough: the table
+   * only contains our supported boroughs, so a miss on a well-formed postcode means "not one
+   * we serve" (or a postcode newer than the table's edition) either way. 'unavailable' (the
+   * asset failed to load) never warns — a lookup failure isn't the visitor's fault to see.
    */
   private checkBorough(postcode: string): void {
-    if (!WardLookupService.isWellFormed(postcode)) {
+    if (!UK_POSTCODE_PATTERN.test(postcode)) {
       this.boroughWarning = null;
       return;
     }
     combineLatest([this.wardLookup.lookup(postcode), this.featureFlags.supportedBoroughs()]).subscribe(
       ([result, supported]) => {
-        if (result.status !== 'resolved') {
-          this.boroughWarning = null;
+        if (result.status === 'resolved') {
+          const covered = supported.some((b) => b.code === result.borough.code);
+          this.boroughWarning = covered ? null : OUT_OF_AREA_WARNING;
           return;
         }
-        const covered = supported.some((b) => b.code === result.borough.code);
-        this.boroughWarning = covered
-          ? null
-          : `We don't usually deliver to ${result.borough.name}. You can still book, but please call us on 020 3488 7742 first so we can check we can reach you.`;
+        this.boroughWarning = result.status === 'not-found' ? OUT_OF_AREA_WARNING : null;
       },
     );
   }

@@ -75,6 +75,40 @@ const BOOKINGS = [
     matchedRequestStatus: 'REQUEST_COMPLETED',
     matchedRequestOpen: false,
   },
+  {
+    id: 'bk-outofarea',
+    date: '2026-08-03',
+    dayLabel: 'Monday 3 August',
+    window: WINDOW,
+    firstName: 'Dana',
+    surname: 'Outsider',
+    email: 'dana@example.org',
+    phone: '07700900004',
+    address: '1 Whitehall\nLondon\nSW1A 2AA',
+    accessNotes: '',
+    ctaReference: 9004,
+    createdAt: '2026-07-18T09:15:00Z',
+    matchedRequestId: '5553',
+    matchedRequestStatus: 'PROCESSING_COLLECTION_DELIVERY_ARRANGED',
+    matchedRequestOpen: true,
+  },
+  {
+    id: 'bk-supported',
+    date: '2026-08-03',
+    dayLabel: 'Monday 3 August',
+    window: WINDOW,
+    firstName: 'Erin',
+    surname: 'Local',
+    email: 'erin@example.org',
+    phone: '07700900005',
+    address: '10 Coldharbour Lane\nLondon\nSW9 7AA',
+    accessNotes: '',
+    ctaReference: 9005,
+    createdAt: '2026-07-18T09:20:00Z',
+    matchedRequestId: '5554',
+    matchedRequestStatus: 'PROCESSING_COLLECTION_DELIVERY_ARRANGED',
+    matchedRequestOpen: true,
+  },
 ];
 
 const SLOTS_DATA = {
@@ -144,5 +178,32 @@ test.describe('delivery-slots booking badges @mocked', () => {
       'title',
       'Matched device request #5552 (REQUEST_COMPLETED)',
     );
+  });
+
+  test('flags a booking whose address postcode is outside the supported boroughs, and not a supported one', async ({ page }) => {
+    // Part 2: resolved client-side from the address's postcode via WardLookupService — the
+    // real bundled ward-lookup asset is used (a same-origin static file, not a /graphql call),
+    // not stubbed. SW1A 2AA (Westminster) isn't in the table at all; SW9 7AA (Lambeth) is.
+    test.setTimeout(60_000);
+    await installSlotsMocks(page);
+
+    await page.goto('/dashboard/distributions-and-deliveries');
+    await page.getByRole('link', { name: 'Delivery Slots' }).click();
+
+    const outOfAreaRow = page.locator('tr', { hasText: 'Dana Outsider' });
+    const supportedRow = page.locator('tr', { hasText: 'Erin Local' });
+    const unmatchedRow = page.locator('tr', { hasText: 'Alice Unmatched' });
+
+    const outOfAreaBadge = outOfAreaRow.locator('span.badge-danger');
+    await expect(outOfAreaBadge).toBeVisible({ timeout: 15_000 });
+    await expect(outOfAreaBadge).toHaveText('outside delivery area');
+    await expect(outOfAreaBadge).toHaveAttribute(
+      'title',
+      "This postcode doesn't resolve to one of our currently supported delivery boroughs",
+    );
+
+    await expect(supportedRow.locator('span.badge-danger')).toHaveCount(0);
+    // A booking with no extractable postcode in its address must stay silent, not flagged.
+    await expect(unmatchedRow.locator('span.badge-danger')).toHaveCount(0);
   });
 });
