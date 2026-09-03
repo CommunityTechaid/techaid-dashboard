@@ -100,6 +100,7 @@ const DELIVERY_REQUESTS_QUERY = `
       where: {
         AND: [
           { collectionMethod: { _eq: DELIVERY } }
+          { status: { _eq: PROCESSING_COLLECTION_DELIVERY_ARRANGED } }
           { collectionDate: { _gte: $from } }
           { collectionDate: { _lte: $to } }
         ]
@@ -158,6 +159,26 @@ function ukDate(iso) {
 }
 
 /**
+ * `collectionDate` is a UTC Instant (e.g. "2026-09-07T23:00:00Z" for midnight London/BST) -
+ * truncating the raw string reads the UTC calendar day, which is a day early for evening UTC
+ * timestamps. Format the instant in the Europe/London timezone instead, so the export shows
+ * the date the delivery actually falls on in London. Same dd/mm/yyyy shape as ukDate().
+ */
+function londonDate(instant) {
+  if (!instant) return '';
+  const d = new Date(instant);
+  if (Number.isNaN(d.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d);
+  const get = (type) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${get('day')}/${get('month')}/${get('year')}`;
+}
+
+/**
  * The booking's `address` is one free-text blob (building detail, address lines and postcode
  * joined by newlines by the public form). The driver's sheet keeps a single Address cell too,
  * so newlines are preserved - Excel and Sheets both render them inside the cell as long as the
@@ -197,7 +218,7 @@ function rowFromRequest(req) {
   // which render as a mangled cell — collapse any run of whitespace to a single space.
   const name = (req.collectionContactName || contact?.fullName || '').replace(/\s+/g, ' ').trim();
   return [
-    ukDate(String(req.collectionDate ?? '').slice(0, 10)),
+    londonDate(req.collectionDate),
     req.id ?? '',
     'Distribution',
     name,

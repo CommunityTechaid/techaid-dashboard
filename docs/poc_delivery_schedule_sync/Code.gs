@@ -101,6 +101,7 @@ var DELIVERY_REQUESTS_QUERY =
   '    where: {' +
   '      AND: [' +
   '        { collectionMethod: { _eq: DELIVERY } }' +
+  '        { status: { _eq: PROCESSING_COLLECTION_DELIVERY_ARRANGED } }' +
   '        { collectionDate: { _gte: $from } }' +
   '        { collectionDate: { _lte: $to } }' +
   '      ]' +
@@ -315,7 +316,10 @@ function rowFromRequest_(req) {
   // which render as a mangled cell — collapse any run of whitespace to a single space.
   var name = String(req.collectionContactName || contact.fullName || '').replace(/\s+/g, ' ').trim();
   var org = contact.referringOrganisation ? contact.referringOrganisation.name : '';
-  var collectionDate = req.collectionDate ? String(req.collectionDate).slice(0, 10) : '';
+  // collectionDate is a UTC Instant (e.g. "2026-09-07T23:00:00Z" for midnight London/BST) -
+  // slicing the raw string would read the UTC calendar day, not the London one. Convert via
+  // isoDate_ so the sheet shows the date the delivery actually falls on in London.
+  var collectionDate = req.collectionDate ? isoDate_(new Date(req.collectionDate)) : '';
   return [
     // A real Date so the sheet's own date formatting applies, matching the weekly tabs.
     collectionDate ? new Date(collectionDate + 'T00:00:00') : '',
