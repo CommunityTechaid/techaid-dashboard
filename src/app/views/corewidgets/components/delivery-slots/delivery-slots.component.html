@@ -67,7 +67,15 @@
                       </td>
                       <td class="wrap-cell">{{ bk.email }}</td>
                       <td class="wrap-cell">{{ bk.phone }}</td>
-                      <td class="wrap-cell">{{ bk.address }}</td>
+                      <td class="wrap-cell">
+                        {{ bk.address }}
+                        @if (bk.outOfArea) {
+                          <span
+                            class="badge badge-danger ms-1"
+                            title="This postcode doesn't resolve to one of our currently supported delivery boroughs"
+                          >outside delivery area</span>
+                        }
+                      </td>
                       <td class="wrap-cell">{{ bk.accessNotes }}</td>
                       <td>{{ bk.createdAt | date: 'short' }}</td>
                       <!-- The flex box is an inner div, not the <td> itself: a display:flex cell

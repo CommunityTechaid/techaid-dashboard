@@ -4,7 +4,9 @@ import { RouterLink } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
-import { Subscription } from 'rxjs';
+import { combineLatest, Subscription } from 'rxjs';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { WardLookupService } from '@app/shared/services/ward-lookup.service';
 
 const DATA_QUERY = gql`
   query deliverySlotsAdmin {
@@ -67,6 +69,18 @@ function csvCell(value: unknown): string {
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
+// UK postcode found anywhere in a free-text blob. Duplicated from details-step.component.ts's
+// UK_POSTCODE_PATTERN (with the `g` flag added for matchAll) rather than pulled into a shared
+// helper — there's no existing shared location for this kind of parsing, and this is the
+// shorter diff. Global so every candidate in the address can be found; the LAST one is taken,
+// since the postcode is conventionally last and a street name can contain postcode-like tokens.
+const POSTCODE_PATTERN = /[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/gi;
+
+function extractPostcode(address: string): string | null {
+  const matches = address.match(POSTCODE_PATTERN);
+  return matches && matches.length > 0 ? matches[matches.length - 1] : null;
+}
+
 interface BookingRow {
   id: string;
   date: string;
@@ -83,6 +97,8 @@ interface BookingRow {
   matchedRequestId?: string;
   matchedRequestStatus?: string;
   matchedRequestOpen?: boolean;
+  /** Resolved client-side after load, from the address's postcode — see resolveOutOfArea(). */
+  outOfArea?: boolean;
 }
 
 interface BookingGroup {
@@ -120,6 +136,8 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   constructor(
     private readonly apollo: Apollo,
     private readonly toastr: ToastrService,
+    private readonly featureFlags: FeatureFlagService,
+    private readonly wardLookup: WardLookupService,
   ) {}
 
   ngOnInit(): void {
@@ -163,6 +181,52 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
       groups.get(key)!.bookings.push({ ...b });
     }
     this.bookingGroups = Array.from(groups.values());
+    this.resolveOutOfArea();
+  }
+
+  /**
+   * Flags bookings whose address's postcode doesn't resolve to a currently-supported borough,
+   * for the "outside delivery area" chiclet. Resolved client-side rather than persisted at
+   * booking time — see WardLookupService, whose lookup() call reuses a single cached asset
+   * fetch, so this is one HTTP GET for the whole table regardless of row count, not one per
+   * row. Silent (no chiclet, no warning) for a row with no extractable postcode.
+   */
+  private resolveOutOfArea(): void {
+    const postcodes = new Set<string>();
+    for (const group of this.bookingGroups) {
+      for (const b of group.bookings) {
+        const pc = extractPostcode(b.address ?? '');
+        if (pc) postcodes.add(pc);
+      }
+    }
+    if (postcodes.size === 0) {
+      return;
+    }
+    const uniquePostcodes = Array.from(postcodes);
+
+    this.sub.add(
+      combineLatest([
+        this.featureFlags.supportedBoroughs(),
+        combineLatest(uniquePostcodes.map((pc) => this.wardLookup.lookup(pc))),
+      ]).subscribe(([supported, results]) => {
+        const outOfAreaPostcodes = new Set<string>();
+        uniquePostcodes.forEach((pc, i) => {
+          const result = results[i];
+          const flagged =
+            result.status === 'not-found' ||
+            (result.status === 'resolved' && !supported.some((borough) => borough.code === result.borough.code));
+          if (flagged) {
+            outOfAreaPostcodes.add(pc);
+          }
+        });
+        for (const group of this.bookingGroups) {
+          for (const b of group.bookings) {
+            const pc = extractPostcode(b.address ?? '');
+            b.outOfArea = !!pc && outOfAreaPostcodes.has(pc);
+          }
+        }
+      }),
+    );
   }
 
   deleteBooking(bk: BookingRow, group: BookingGroup): void {
