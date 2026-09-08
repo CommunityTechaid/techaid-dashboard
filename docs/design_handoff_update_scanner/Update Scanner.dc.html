@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Poppins', system-ui, sans-serif; color: #23272f; background: #eef1f6; }
+  a { color: #2050d8; text-decoration: none; }
+  a:hover { color: #14357f; text-decoration: underline; }
+  select:focus, input:focus { outline: none; }
+  @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(32,80,216,.35); } 70% { box-shadow: 0 0 0 8px rgba(32,80,216,0); } 100% { box-shadow: 0 0 0 0 rgba(32,80,216,0); } }
+  @keyframes blink { 0%,60% { opacity: 1; } 61%,100% { opacity: .15; } }
+</style>
+</helmet>
+
+<div style="display:flex; min-height:100vh; background:#eef1f6;">
+
+  <!-- Sidebar -->
+  <aside style="width:92px; flex:0 0 92px; background:#17287e; color:#c7d2f7; display:flex; flex-direction:column; align-items:stretch;">
+    <div style="padding:16px 8px; display:flex; flex-direction:column; align-items:center; gap:6px; border-bottom:1px solid rgba(255,255,255,.08);">
+      <div style="width:34px; height:34px; border-radius:50%; background:#eaf0ff; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-face-smile" style="color:#17287e; font-size:18px;"></i></div>
+      <div style="font-size:11px; font-weight:600; color:#fff; text-align:center; line-height:1.15;">Community<br>TechAid</div>
+    </div>
+    <nav style="display:flex; flex-direction:column; padding:8px 0;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px; color:#fff; background:rgba(255,255,255,.10); border-left:3px solid #ffffff;"><i class="fa-solid fa-laptop" style="font-size:17px;"></i><span style="font-size:10px; font-weight:600;">Devices</span></div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px;"><i class="fa-solid fa-table-cells-large" style="font-size:17px;"></i><span style="font-size:10px; text-align:center; line-height:1.1;">Individual<br>Donors</span></div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px;"><i class="fa-solid fa-sitemap" style="font-size:17px;"></i><span style="font-size:10px; text-align:center; line-height:1.1;">Parent<br>Donors</span></div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px;"><i class="fa-solid fa-id-badge" style="font-size:17px;"></i><span style="font-size:10px;">Orgs</span></div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px;"><i class="fa-solid fa-users" style="font-size:17px;"></i><span style="font-size:10px;">Referees</span></div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px;"><i class="fa-solid fa-hands-holding" style="font-size:17px;"></i><span style="font-size:10px;">Requests</span></div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px;"><i class="fa-solid fa-gift" style="font-size:17px;"></i><span style="font-size:10px; text-align:center; line-height:1.1;">Distributions<br>&amp; Deliveries</span></div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 4px;"><i class="fa-solid fa-right-from-bracket" style="font-size:17px;"></i><span style="font-size:10px;">Logout</span></div>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+
+    <!-- Testing banner -->
+    <div style="background:#f5c33b; padding:14px 26px; display:flex; align-items:center; justify-content:space-between;">
+      <div style="font-weight:700; color:#3a2f05; font-size:15px; letter-spacing:.2px;">TESTING SITE — data here is not live</div>
+      <div style="display:flex; align-items:center; gap:10px; color:#3a2f05;">
+        <span style="font-size:14px;">Tony Anzelmo</span>
+        <div style="width:30px; height:30px; border-radius:50%; background:#c99a1e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:600;">TA</div>
+      </div>
+    </div>
+
+    <!-- Top nav tabs -->
+    <div style="background:#fff; padding:14px 26px; display:flex; gap:26px; border-bottom:1px solid #e4e8ef; font-size:15px;">
+      <a href="#" style="color:#6b7280; font-weight:600; display:flex; align-items:center; gap:7px;"><i class="fa-solid fa-face-smile"></i>Dashboard</a>
+      <a href="#" style="color:#6b7280; display:flex; align-items:center; gap:7px;"><i class="fa-solid fa-sitemap"></i>Request Devices (Admin)</a>
+      <a href="#" style="color:#6b7280; display:flex; align-items:center; gap:7px;"><i class="fa-solid fa-sitemap"></i>Request Devices (Public-facing)</a>
+      <a href="#" style="color:#6b7280; display:flex; align-items:center; gap:7px;"><i class="fa-solid fa-truck"></i>Delivery Booking (Public-facing)</a>
+    </div>
+
+    <!-- Content -->
+    <main style="padding:22px 26px 40px; display:flex; flex-direction:column; gap:20px;">
+
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div>
+          <div style="font-size:12px; color:#8a93a3; font-weight:500; margin-bottom:2px;"><a href="#" style="color:#8a93a3;">Devices</a> <span style="margin:0 4px;">/</span> Update Scanner</div>
+          <h1 style="margin:0; font-size:26px; font-weight:700; color:#1a3fc0; display:flex; align-items:center; gap:11px;"><i class="fa-solid fa-barcode" style="color:#1a3fc0;"></i>Update Scanner</h1>
+        </div>
+        <a href="#" style="display:inline-flex; align-items:center; gap:8px; background:#0f2b6e; color:#fff; padding:9px 16px; border-radius:6px; font-size:13px; font-weight:600;"><i class="fa-solid fa-arrow-left"></i>Back to Devices</a>
+      </div>
+
+      <!-- Scanner panel -->
+      <section style="background:#fff; border:1px solid #dbe2ee; border-top:3px solid #1a3fc0; border-radius:10px; box-shadow:0 1px 3px rgba(16,40,110,.06);">
+        <div style="padding:16px 22px; border-bottom:1px solid #eef1f6; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <div style="font-size:16px; font-weight:600; color:#1a3fc0;">Bench scanner</div>
+          <div style="display:inline-flex; align-items:center; gap:8px; background:#eef4ff; color:#1a3fc0; font-size:12px; font-weight:600; padding:6px 11px; border-radius:20px;"><i class="fa-solid fa-keyboard"></i>Keyboard-only · scanner ready</div>
+        </div>
+
+        <div style="padding:22px; display:grid; grid-template-columns:1.55fr .95fr; gap:22px; align-items:start;">
+
+          <!-- LEFT -->
+          <div style="display:flex; flex-direction:column; gap:18px; min-width:0;">
+
+            <!-- Armed / idle banner -->
+            <div style="display:flex; align-items:center; gap:16px; padding:18px 20px; border-radius:10px; border:1px solid {{ armBorder }}; border-left:7px solid {{ armColor }}; background:{{ armBg }};">
+              <div style="width:52px; height:52px; flex:0 0 52px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center;">
+                <i class="fa-solid fa-crosshairs" style="font-size:24px; color:{{ armColor }};"></i>
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:12px; font-weight:700; letter-spacing:1.2px; color:{{ armColor }}; text-transform:uppercase;">{{ armState }}</div>
+                <div style="font-size:22px; font-weight:700; color:{{ armText }}; line-height:1.2;">{{ armLabel }}</div>
+                <div style="font-size:13px; color:{{ armText }}; opacity:.85; margin-top:2px;">{{ armSub }}</div>
+              </div>
+              <sc-if value="{{ isArmed }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ disarm }}" style="cursor:pointer; background:#fff; border:1px solid #cfd6e2; color:#475569; font-family:inherit; font-size:12px; font-weight:600; padding:8px 13px; border-radius:6px;">Disarm</button>
+              </sc-if>
+            </div>
+
+            <!-- Scan input -->
+            <div>
+              <label style="display:block; font-size:12px; font-weight:600; color:#5b6472; margin-bottom:7px; text-transform:uppercase; letter-spacing:.5px;">Scan here</label>
+              <div style="display:flex; align-items:center; gap:12px; border:2px solid #1a3fc0; border-radius:10px; padding:4px 4px 4px 16px; background:#fff; animation:pulseRing 2.2s infinite;">
+                <i class="fa-solid fa-barcode" style="font-size:22px; color:#1a3fc0;"></i>
+                <input type="text" ref="{{ inputRef }}" onBlur="{{ refocus }}" placeholder="Scan a device barcode…" style="flex:1; border:none; font-family:inherit; font-size:22px; font-weight:600; color:#23272f; padding:12px 4px; background:transparent;">
+                <span style="display:inline-flex; align-items:center; gap:7px; background:#eef4ff; color:#1a3fc0; font-size:11px; font-weight:600; padding:8px 12px; border-radius:7px; white-space:nowrap;"><span style="width:8px; height:8px; border-radius:50%; background:#2e9e5b; animation:blink 1.4s infinite;"></span>Cursor here</span>
+              </div>
+              <div style="font-size:12px; color:#8a93a3; margin-top:8px; display:flex; align-items:center; gap:7px;"><i class="fa-solid fa-arrow-rotate-left" style="font-size:11px;"></i>Focus returns here automatically after every scan — no mouse needed.</div>
+            </div>
+
+            <!-- Waiting area -->
+            <div style="border:2px dashed #cdd5e2; border-radius:10px; background:#f7f9fc; padding:30px 20px; text-align:center;">
+              <div style="height:44px; margin:0 auto 14px; max-width:260px; border-radius:3px; background:repeating-linear-gradient(90deg,#c2cbd8 0 2px,transparent 2px 4px,#c2cbd8 4px 5px,transparent 5px 9px,#c2cbd8 9px 12px,transparent 12px 14px);"></div>
+              <div style="font-size:16px; font-weight:600; color:#5b6472;">Waiting for next scan…</div>
+              <div style="font-size:13px; color:#8a93a3; margin-top:5px;">The scanned device's <strong>id</strong>, <strong>make / model</strong> and <strong>current status</strong> appear here as the change is applied.</div>
+            </div>
+          </div>
+
+          <!-- RIGHT -->
+          <div style="display:flex; flex-direction:column; gap:18px; min-width:0;">
+
+            <!-- Arm a mode -->
+            <div style="border:1px solid #e4e8ef; border-radius:10px; padding:16px;">
+              <div style="font-size:14px; font-weight:600; color:#23272f; margin-bottom:4px;">Arm a mode</div>
+              <div style="font-size:12px; color:#8a93a3; margin-bottom:12px;">Scan a printed mode card, or pick one here:</div>
+              <select onChange="{{ onSelect }}" value="{{ selectValue }}" style="width:100%; font-family:inherit; font-size:14px; font-weight:500; color:#23272f; padding:11px 12px; border:1px solid #cfd6e2; border-radius:8px; background:#fff; cursor:pointer;">
+                <option value="OS-INSTALLED">OS installed</option>
+                <option value="QC-COMPLETE">Quality check completed</option>
+                <option value="ASSESS-CHECK">Assessment check completed</option>
+                <option value="DISARM">— Disarm (pause) —</option>
+              </select>
+
+              <div style="font-size:11px; font-weight:600; color:#8a93a3; text-transform:uppercase; letter-spacing:.5px; margin:16px 0 9px;">Printed mode cards</div>
+              <div style="display:flex; flex-direction:column; gap:9px;">
+                <button onClick="{{ armOS }}" style="cursor:pointer; text-align:left; font-family:inherit; background:#fff; border:1px solid #dbe2ee; border-radius:8px; padding:9px 11px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:13px; font-weight:600; color:#1c6b3f;">OS installed</span><span style="width:9px; height:9px; border-radius:2px; background:#2e9e5b;"></span></div>
+                  <div style="height:22px; margin-top:6px; border-radius:2px; background:repeating-linear-gradient(90deg,#111 0 2px,#fff 2px 4px,#111 4px 5px,#fff 5px 8px);"></div>
+                  <div style="font-family:monospace; font-size:11px; color:#5b6472; margin-top:4px;">CTA*OS-INSTALLED</div>
+                </button>
+                <button onClick="{{ armQC }}" style="cursor:pointer; text-align:left; font-family:inherit; background:#fff; border:1px solid #dbe2ee; border-radius:8px; padding:9px 11px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:13px; font-weight:600; color:#14357f;">Quality check completed</span><span style="width:9px; height:9px; border-radius:2px; background:#2050d8;"></span></div>
+                  <div style="height:22px; margin-top:6px; border-radius:2px; background:repeating-linear-gradient(90deg,#111 0 3px,#fff 3px 5px,#111 5px 6px,#fff 6px 9px);"></div>
+                  <div style="font-family:monospace; font-size:11px; color:#5b6472; margin-top:4px;">CTA*QC-COMPLETE</div>
+                </button>
+                <button onClick="{{ armAC }}" style="cursor:pointer; text-align:left; font-family:inherit; background:#fff; border:1px solid #dbe2ee; border-radius:8px; padding:9px 11px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:13px; font-weight:600; color:#8a6100;">Assessment check completed</span><span style="width:9px; height:9px; border-radius:2px; background:#e3a82b;"></span></div>
+                  <div style="height:22px; margin-top:6px; border-radius:2px; background:repeating-linear-gradient(90deg,#111 0 2px,#fff 2px 5px,#111 5px 7px,#fff 7px 9px);"></div>
+                  <div style="font-family:monospace; font-size:11px; color:#5b6472; margin-top:4px;">CTA*ASSESS-CHECK</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Session tally -->
+            <div style="border:1px solid #e4e8ef; border-radius:10px; padding:16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div style="font-size:14px; font-weight:600; color:#23272f;">This session</div>
+                <div style="font-size:11px; color:#8a93a3;">since 11:32</div>
+              </div>
+              <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:14px;">
+                <div style="font-size:34px; font-weight:700; color:#1a3fc0; line-height:1;">53</div>
+                <div style="font-size:13px; color:#8a93a3;">devices updated</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:9px;">
+                <div style="display:flex; align-items:center; gap:9px; font-size:13px;"><span style="width:9px; height:9px; border-radius:2px; background:#2e9e5b;"></span><span style="flex:1; color:#3f4653;">OS installed</span><span style="font-weight:600; color:#23272f;">34</span></div>
+                <div style="display:flex; align-items:center; gap:9px; font-size:13px;"><span style="width:9px; height:9px; border-radius:2px; background:#2050d8;"></span><span style="flex:1; color:#3f4653;">Quality check completed</span><span style="font-weight:600; color:#23272f;">12</span></div>
+                <div style="display:flex; align-items:center; gap:9px; font-size:13px;"><span style="width:9px; height:9px; border-radius:2px; background:#e3a82b;"></span><span style="flex:1; color:#3f4653;">Acceptance check completed</span><span style="font-weight:600; color:#23272f;">7</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <sc-if value="{{ showDesignNotes }}" hint-placeholder-val="{{ true }}">
+      <!-- DESIGN NOTES -->
+      <section style="display:flex; flex-direction:column; gap:20px;">
+
+        <div style="display:flex; align-items:center; gap:12px; margin-top:6px;">
+          <div style="flex:1; height:1px; background:#d7dde6;"></div>
+          <div style="font-size:12px; font-weight:700; letter-spacing:1.5px; color:#8a93a3; text-transform:uppercase;">Design notes — for the build session</div>
+          <div style="flex:1; height:1px; background:#d7dde6;"></div>
+        </div>
+
+        <!-- Operator messages -->
+        <div style="background:#fff; border:1px solid #dbe2ee; border-radius:10px; padding:22px;">
+          <div style="font-size:17px; font-weight:600; color:#1a3fc0; margin-bottom:4px;">Operator messages — every state</div>
+          <div style="font-size:13px; color:#6b7280; margin-bottom:18px;">Exact copy (shown monospace), on the proven inline-banner pattern. Non-blocking, glanceable, no modals in the scan loop.</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#eef1f6; border:1px solid #d7dde6; border-left:5px solid #64748b;"><i class="fa-solid fa-circle-info" style="color:#64748b; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#64748b; text-transform:uppercase;">Idle</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">Not armed. Scan a mode card or choose a mode to start.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#e7f6ee; border:1px solid #b6e2c8; border-left:5px solid #2e9e5b;"><i class="fa-solid fa-crosshairs" style="color:#2e9e5b; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#1c6b3f; text-transform:uppercase;">Armed</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">Armed: OS installed. Scan devices now — each is set to OS installed.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#eef1f6; border:1px solid #d7dde6; border-left:5px solid #64748b;"><i class="fa-solid fa-spinner" style="color:#64748b; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#64748b; text-transform:uppercase;">Applying (in-flight)</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">#19245 — applying OS installed…</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#e7f6ee; border:1px solid #b6e2c8; border-left:5px solid #2e9e5b;"><i class="fa-solid fa-circle-check" style="color:#2e9e5b; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#1c6b3f; text-transform:uppercase;">Applied</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">#19245 · Dell Latitude 7480 → OS installed ✓</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#fff4d6; border:1px solid #f0d492; border-left:5px solid #d99a1c;"><i class="fa-solid fa-circle-minus" style="color:#d99a1c; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#8a6100; text-transform:uppercase;">Already in status</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">#19245 is already OS installed. No change made.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#eaf0ff; border:1px solid #b9ccf5; border-left:5px solid #2050d8;"><i class="fa-solid fa-clock-rotate-left" style="color:#2050d8; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#14357f; text-transform:uppercase;">Duplicate this session</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">#19245 already set to OS installed at 12:04. No change.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#fbe6e8; border:1px solid #f2c2c8; border-left:5px solid #d64550;"><i class="fa-solid fa-circle-xmark" style="color:#d64550; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#a02531; text-transform:uppercase;">Not found</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">No device found for #19245. Check the label and scan again.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#fbe6e8; border:1px solid #f2c2c8; border-left:5px solid #d64550;"><i class="fa-solid fa-box-archive" style="color:#d64550; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#a02531; text-transform:uppercase;">Archived</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">#19245 is archived and can't be updated.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#eef1f6; border:1px solid #d7dde6; border-left:5px solid #64748b;"><i class="fa-solid fa-hourglass-half" style="color:#64748b; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#64748b; text-transform:uppercase;">Scan while busy</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">Busy — finishing the last scan. That scan was ignored, try again.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#fbe6e8; border:1px solid #f2c2c8; border-left:5px solid #d64550;"><i class="fa-solid fa-triangle-exclamation" style="color:#d64550; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#a02531; text-transform:uppercase;">Unknown scan</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">Didn't recognise 'XZ99'. Not a device barcode or a mode card.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#eaf0ff; border:1px solid #b9ccf5; border-left:5px solid #2050d8;"><i class="fa-solid fa-pause" style="color:#2050d8; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#14357f; text-transform:uppercase;">Disarmed</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">Disarmed. Scanning paused until you arm a mode.</div></div></div>
+
+            <div style="display:flex; gap:12px; padding:13px 15px; border-radius:9px; background:#e7f6ee; border:1px solid #b6e2c8; border-left:5px solid #2e9e5b;"><i class="fa-solid fa-flag-checkered" style="color:#2e9e5b; font-size:15px; margin-top:2px; width:18px; text-align:center;"></i><div><div style="font-size:11px; font-weight:700; letter-spacing:.5px; color:#1c6b3f; text-transform:uppercase;">Session summary</div><div style="font-family:monospace; font-size:13px; color:#334155; margin-top:3px;">Session complete — 53 updated. 34 OS · 12 QC · 7 assessment.</div></div></div>
+
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <!-- Action cards -->
+          <div style="background:#fff; border:1px solid #dbe2ee; border-radius:10px; padding:22px;">
+            <div style="font-size:17px; font-weight:600; color:#1a3fc0; margin-bottom:4px;">Action cards to print</div>
+            <div style="font-size:13px; color:#6b7280; margin-bottom:16px;">Code 128, same printer as device labels. Scanning one arms the sticky target.</div>
+            <table style="width:100%; border-collapse:collapse; font-size:13px;">
+              <thead><tr style="text-align:left; color:#5b6472;"><th style="padding:8px 8px; border-bottom:2px solid #e4e8ef; font-weight:600;">What it does</th><th style="padding:8px 8px; border-bottom:2px solid #e4e8ef; font-weight:600;">Barcode payload</th><th style="padding:8px 8px; border-bottom:2px solid #e4e8ef; font-weight:600;">Status set</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:10px 8px; border-bottom:1px solid #eef1f6;">Arm: OS installed</td><td style="padding:10px 8px; border-bottom:1px solid #eef1f6; font-family:monospace;">CTA*OS-INSTALLED</td><td style="padding:10px 8px; border-bottom:1px solid #eef1f6; font-family:monospace; font-size:12px;">PROCESSING_OS_INSTALLED</td></tr>
+                <tr><td style="padding:10px 8px; border-bottom:1px solid #eef1f6;">Arm: Quality check completed</td><td style="padding:10px 8px; border-bottom:1px solid #eef1f6; font-family:monospace;">CTA*QC-COMPLETE</td><td style="padding:10px 8px; border-bottom:1px solid #eef1f6; font-family:monospace; font-size:12px;">ALLOCATION_QC_COMPLETED</td></tr>
+                <tr><td style="padding:10px 8px; border-bottom:1px solid #eef1f6;">Arm: Assessment check completed</td><td style="padding:10px 8px; border-bottom:1px solid #eef1f6; font-family:monospace;">CTA*ASSESS-CHECK</td><td style="padding:10px 8px; border-bottom:1px solid #eef1f6; font-family:monospace; font-size:12px;">ALLOCATION_READY</td></tr>
+                <tr><td style="padding:10px 8px;">Disarm (pause scanning)</td><td style="padding:10px 8px; font-family:monospace;">CTA*DISARM</td><td style="padding:10px 8px; color:#8a93a3;">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Backend / label work -->
+          <div style="background:#fff; border:1px solid #dbe2ee; border-radius:10px; padding:22px;">
+            <div style="font-size:17px; font-weight:600; color:#1a3fc0; margin-bottom:4px;">Sequence before / alongside build</div>
+            <div style="font-size:13px; color:#6b7280; margin-bottom:16px;">Server &amp; label-printing dependencies.</div>
+            <div style="display:flex; flex-direction:column; gap:12px; font-size:13px; color:#3f4653;">
+              <div style="display:flex; gap:11px;"><i class="fa-solid fa-circle-check" style="color:#2e9e5b; margin-top:2px;"></i><div><strong>Core flow: no backend work.</strong> All three modes are plain statuses — <span style="font-family:monospace; font-size:12px;">updateKits(ids, status)</span> already covers them.</div></div>
+              <div style="display:flex; gap:11px;"><i class="fa-solid fa-circle-check" style="color:#2e9e5b; margin-top:2px;"></i><div><strong>“Assessment check completed” → <span style="font-family:monospace; font-size:12px;">ALLOCATION_READY</span></strong> (confirmed). All three modes now map to known KitStatus enums.</div></div>
+              <div style="display:flex; gap:11px;"><i class="fa-solid fa-print" style="color:#2050d8; margin-top:2px;"></i><div><strong>Print 4 Code 128 mode cards</strong> (above) on the existing label printer; laminate for the bench. No new symbology or scanner config.</div></div>
+              <div style="display:flex; gap:11px;"><i class="fa-solid fa-triangle-exclamation" style="color:#d99a1c; margin-top:2px;"></i><div><strong>Blocking sub-status rule.</strong> QC &amp; Assessment (<span style="font-family:monospace; font-size:12px;">ALLOCATION_*</span>) are refused when a device has <span style="font-family:monospace; font-size:12px;">wipeFailed / installationOfOSFailed / needsFurtherInvestigation / needsSparePart / lockedToUser</span> — mirror <span style="font-family:monospace; font-size:12px;">kit-info</span>'s disabled-status rule; show the “blocked” message.</div></div>
+              <div style="display:flex; gap:11px;"><i class="fa-solid fa-route" style="color:#2050d8; margin-top:2px;"></i><div><strong>Route + gate.</strong> Add <span style="font-family:monospace; font-size:12px;">dashboard/devices/update-scanner</span> <em>before</em> <span style="font-family:monospace; font-size:12px;">:kitId</span> in core-widgets.routes.ts; gate on the <span style="font-family:monospace; font-size:12px;">app:bulkedit</span> authority like the Bulk Update flow.</div></div>
+              <div style="display:flex; gap:11px;"><i class="fa-solid fa-circle-xmark" style="color:#a02531; margin-top:2px;"></i><div><strong>Out of v1:</strong> sub-status flags (wipe failed, needs spare part…) need a new server mutation — <span style="font-family:monospace; font-size:12px;">updateKits</span> can't set them. Sequence separately if wanted.</div></div>
+              <div style="display:flex; gap:11px;"><i class="fa-solid fa-circle-info" style="color:#64748b; margin-top:2px;"></i><div><strong>No undo strip in v1.</strong> If added later it needs no backend (revert = <span style="font-family:monospace; font-size:12px;">updateKits</span> to prior status) but must capture each device's prior status client-side.</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      </sc-if>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;OS installed&quot;,&quot;Quality check completed&quot;,&quot;Assessment check completed&quot;,&quot;None (idle)&quot;],&quot;default&quot;:&quot;OS installed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scanner&quot;},&quot;showDesignNotes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scanner&quot;}}">
+class Component extends DCLogic {
+  MODES = {
+    'OS-INSTALLED': { label: 'OS installed', color: '#2e9e5b', bg: '#e7f6ee', border: '#b6e2c8', text: '#1c6b3f', sub: 'Every device you scan is set to “OS installed”.' },
+    'QC-COMPLETE': { label: 'Quality check completed', color: '#2050d8', bg: '#eaf0ff', border: '#b9ccf5', text: '#14357f', sub: 'Every device you scan is set to “Quality check completed”.' },
+    'ASSESS-CHECK': { label: 'Assessment check completed', color: '#e3a82b', bg: '#fff4d6', border: '#f0d492', text: '#8a6100', sub: 'Every device you scan is set to “Assessment check completed”.' },
+  };
+  inputRef = React.createRef();
+
+  constructor(props) {
+    super(props);
+    const map = { 'OS installed': 'OS-INSTALLED', 'Quality check completed': 'QC-COMPLETE', 'Assessment check completed': 'ASSESS-CHECK', 'None (idle)': null };
+    const dm = props.defaultMode;
+    this.state = { armedKey: dm in map ? map[dm] : 'OS-INSTALLED' };
+  }
+
+  componentDidMount() { this.focusInput(); }
+  focusInput() { const el = this.inputRef.current; if (el) el.focus(); }
+  refocus = () => {
+    // Bench requirement: cursor lives in the scan field. But never yank focus
+    // back while the user is working elsewhere (comment box, another tab/app):
+    // only refocus if this page still holds focus and nothing else is focused.
+    setTimeout(() => {
+      if (!document.hasFocus()) return;
+      const a = document.activeElement;
+      const tag = a && a.tagName;
+      if (a && a !== document.body && a !== this.inputRef.current &&
+          (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || a.isContentEditable)) return;
+      this.focusInput();
+    }, 40);
+  };
+
+  onSelect = (e) => {
+    const v = e.target.value;
+    this.setState({ armedKey: v === 'DISARM' || v === '' ? null : v });
+    this.refocus();
+  };
+  disarm = () => { this.setState({ armedKey: null }); this.refocus(); };
+  arm = (key) => { this.setState({ armedKey: key }); this.refocus(); };
+
+  renderVals() {
+    const m = this.state.armedKey ? this.MODES[this.state.armedKey] : null;
+    const armed = !!m;
+    return {
+      isArmed: armed,
+      armState: armed ? 'Armed' : 'Not armed',
+      armColor: armed ? m.color : '#94a3b8',
+      armBg: armed ? m.bg : '#f2f4f8',
+      armBorder: armed ? m.border : '#d7dde6',
+      armText: armed ? m.text : '#475569',
+      armLabel: armed ? m.label : 'Idle',
+      armSub: armed ? m.sub : 'Scan a mode card, or pick a mode, to begin.',
+      selectValue: this.state.armedKey || 'DISARM',
+      inputRef: this.inputRef,
+      refocus: this.refocus,
+      onSelect: this.onSelect,
+      disarm: this.disarm,
+      armOS: () => this.arm('OS-INSTALLED'),
+      armQC: () => this.arm('QC-COMPLETE'),
+      armAC: () => this.arm('ASSESS-CHECK'),
+      showDesignNotes: this.props.showDesignNotes ?? true,
+    };
+  }
+}
+</script>
+</body>
+</html>
