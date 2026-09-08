@@ -52,3 +52,12 @@ testem.log
 .DS_Store
 Thumbs.db
 /.angular
+# Local working notes and scratch artefacts (never part of the codebase).
+# Root-level underscore-prefixed markdown is the session-handoff / feedback-round
+# note convention; these are working memory, not documentation, and some quote
+# real referee or client detail, so they must not be committable by `git add -A`.
+/_*.md
+# Local-only Playwright config for pointing the suite at production. Referenced by
+# no script, workflow or doc - purely a convenience file, and one `git clean` from
+# being lost, which is why it is ignored rather than left merely untracked.
+playwright.config.prod.ts
