@@ -9,7 +9,6 @@
     "build-production": "node ./build/build-pre.js && ng build --configuration=production --aot --base-href /",
     "build-uat": "node ./build/build-pre.js && ng build --configuration=uat --aot --base-href /",
     "debug": "ng build --base-href /",
-    "server": "node server.js",
     "e2e": "playwright test",
     "e2e:auth": "playwright test --project=setup",
     "e2e:save-token": "node e2e/save-token.mjs",
