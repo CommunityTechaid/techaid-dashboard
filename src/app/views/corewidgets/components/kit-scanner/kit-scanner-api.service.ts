@@ -45,6 +45,24 @@ const UPDATE_KITS = gql`
   }
 `;
 
+/**
+ * The note-carrying variant, sent ONLY when the operator has typed a session
+ * note. Two documents rather than one with a nullable `$note`, because
+ * `BulkKitUpdateInput.note` is newer than this page: against a server that
+ * predates it the document fails GraphQL validation outright, which would
+ * break every scan rather than just the note. Splitting it means an ordinary
+ * note-free session keeps working if the dashboard ever reaches an
+ * environment ahead of its API.
+ */
+const UPDATE_KITS_WITH_NOTE = gql`
+  mutation updateKitsWithNote($ids: [ID!]!, $status: KitStatus, $note: CreateNoteInput) {
+    updateKits(data: { ids: $ids, status: $status, note: $note }) {
+      id
+      status
+    }
+  }
+`;
+
 /** The sub-status flags that block the QC and Assessment statuses. */
 export interface ScannerKitSubStatus {
   wipeFailed?: boolean | null;
@@ -84,12 +102,23 @@ export class KitScannerApiService {
     return res.data?.kit ?? null;
   }
 
-  /** Apply `status` to a single device via the existing bulk mutation. */
-  async applyStatus(id: number, status: string): Promise<{ id: string; status: string } | null> {
+  /**
+   * Apply `status` to a single device via the existing bulk mutation, and —
+   * when the operator has set a session note — append that note to the device
+   * in the same mutation, so a device can never end up with the status change
+   * but not its note.
+   */
+  async applyStatus(
+    id: number,
+    status: string,
+    note?: string | null,
+  ): Promise<{ id: string; status: string } | null> {
     const res = await firstValueFrom(
       this.apollo.mutate<{ updateKits: { id: string; status: string }[] }>({
-        mutation: UPDATE_KITS,
-        variables: { ids: [String(id)], status },
+        mutation: note ? UPDATE_KITS_WITH_NOTE : UPDATE_KITS,
+        variables: note
+          ? { ids: [String(id)], status, note: { content: note } }
+          : { ids: [String(id)], status },
         errorPolicy: 'none',
       }),
     );

@@ -117,6 +117,10 @@ function scanField(page: Page) {
   return page.getByTestId('scanner-field');
 }
 
+function noteField(page: Page) {
+  return page.getByTestId('scanner-note');
+}
+
 async function scan(page: Page, raw: string): Promise<void> {
   const field = scanField(page);
   await field.fill(raw);
@@ -397,5 +401,128 @@ test.describe('update scanner mode and apply @mocked', () => {
 
     await expect(modeBanner(page)).toContainText('Assessment check completed');
     await expect(banner(page)).toContainText('Active: Assessment check completed.');
+  });
+
+  test('the printed mode-card panel is gone; the dropdown is the only picker', async ({ page }) => {
+    // The panel was a picture of the three printed cards, duplicating the
+    // dropdown directly above it. Scanning a real card still works — that is
+    // what the CTA*OS-INSTALLED scans in the tests above exercise.
+    test.setTimeout(60_000);
+    await installMocks(page);
+
+    await openScanner(page);
+    await expect(page.getByTestId('scanner-mode-card-OS-INSTALLED')).toHaveCount(0);
+    await expect(page.getByTestId('scanner-mode-card-QC-COMPLETE')).toHaveCount(0);
+    await expect(page.getByTestId('scanner-mode-card-ASSESS-CHECK')).toHaveCount(0);
+    await expect(page.getByTestId('scanner-mode-select')).toBeVisible();
+  });
+});
+
+test.describe('update scanner session note @mocked', () => {
+  test.beforeEach(async ({ page }) => {
+    await authenticateWithPermissions(page, ['app:bulkedit', 'read:kits', 'write:kits']);
+  });
+
+  test('with no note typed, the mutation carries no note at all', async ({ page }) => {
+    test.setTimeout(60_000);
+    const capturedUpdates: any[] = [];
+    await installMocks(page, { kits: { '19260': kitFixture(19260) }, capturedUpdates });
+
+    await openScanner(page);
+    await scan(page, 'CTA*OS-INSTALLED');
+    await scan(page, '19260');
+    await expect(banner(page)).toContainText('→ OS installed ✓', { timeout: 15_000 });
+
+    expect(capturedUpdates).toHaveLength(1);
+    // Not merely absent from the variables — the note-free document is the one
+    // that was sent, so an API without BulkKitUpdateInput.note still accepts it.
+    expect(capturedUpdates[0].variables.note).toBeUndefined();
+    expect(capturedUpdates[0].query).not.toContain('CreateNoteInput');
+  });
+
+  test('a typed note rides along with every scan and is confirmed in the banner', async ({ page }) => {
+    test.setTimeout(60_000);
+    const capturedUpdates: any[] = [];
+    await installMocks(page, {
+      kits: { '19261': kitFixture(19261), '19262': kitFixture(19262) },
+      capturedUpdates,
+    });
+
+    await openScanner(page);
+    await scan(page, 'CTA*OS-INSTALLED');
+
+    await noteField(page).fill('Batch 42 — refurbished by the Tuesday crew');
+    await expect(page.getByTestId('scanner-note-state')).toContainText('Attached to every scan');
+    // Enter in the note box hands the cursor back to the scanner.
+    await noteField(page).press('Enter');
+    await expect(scanField(page)).toBeFocused();
+
+    await scan(page, '19261');
+    await expect(banner(page)).toContainText('→ OS installed ✓ · note added', { timeout: 15_000 });
+    await scan(page, '19262');
+    await expect(banner(page)).toContainText('#19262', { timeout: 15_000 });
+
+    expect(capturedUpdates).toHaveLength(2);
+    for (const update of capturedUpdates) {
+      expect(update.variables.note).toEqual({ content: 'Batch 42 — refurbished by the Tuesday crew' });
+      expect(update.query).toContain('CreateNoteInput');
+    }
+  });
+
+  test('clearing the note stops it being attached to later scans', async ({ page }) => {
+    test.setTimeout(60_000);
+    const capturedUpdates: any[] = [];
+    await installMocks(page, {
+      kits: { '19263': kitFixture(19263), '19264': kitFixture(19264) },
+      capturedUpdates,
+    });
+
+    await openScanner(page);
+    await scan(page, 'CTA*OS-INSTALLED');
+
+    await noteField(page).fill('Damaged hinge, cosmetic only');
+    await scan(page, '19263');
+    await expect(banner(page)).toContainText('note added', { timeout: 15_000 });
+
+    await page.getByTestId('scanner-note-clear').click();
+    await expect(noteField(page)).toHaveValue('');
+
+    await scan(page, '19264');
+    await expect(banner(page)).toContainText('#19264', { timeout: 15_000 });
+
+    expect(capturedUpdates).toHaveLength(2);
+    expect(capturedUpdates[0].variables.note).toEqual({ content: 'Damaged hinge, cosmetic only' });
+    expect(capturedUpdates[1].variables.note).toBeUndefined();
+  });
+
+  test('whitespace alone is not a note', async ({ page }) => {
+    test.setTimeout(60_000);
+    const capturedUpdates: any[] = [];
+    await installMocks(page, { kits: { '19265': kitFixture(19265) }, capturedUpdates });
+
+    await openScanner(page);
+    await scan(page, 'CTA*OS-INSTALLED');
+    await noteField(page).fill('   ');
+    await scan(page, '19265');
+    await expect(banner(page)).toContainText('→ OS installed ✓', { timeout: 15_000 });
+
+    await expect(banner(page)).not.toContainText('note added');
+    expect(capturedUpdates[0].variables.note).toBeUndefined();
+  });
+
+  test('the note does not survive a page load', async ({ page }) => {
+    // Explicitly requested: session-scoped, so an unrelated note can never be
+    // stamped onto tomorrow's devices on a shared bench laptop.
+    test.setTimeout(60_000);
+    await installMocks(page, { kits: { '19266': kitFixture(19266) } });
+
+    await openScanner(page);
+    await noteField(page).fill('Should not persist');
+    await expect(noteField(page)).toHaveValue('Should not persist');
+
+    await page.reload();
+    await expect(scanField(page)).toBeVisible({ timeout: 15_000 });
+    await expect(noteField(page)).toHaveValue('');
+    await expect(page.getByTestId('scanner-note-state')).toContainText('No note');
   });
 });
