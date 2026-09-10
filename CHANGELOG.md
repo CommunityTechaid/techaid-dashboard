@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.6.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.6.0...v1.6.1) (2026-09-10)
+
+
+### Bug Fixes
+
+* **request:** drop "only" from the borough availability note ([#212](https://github.com/CommunityTechaid/techaid-dashboard/issues/212)) ([2e8dee4](https://github.com/CommunityTechaid/techaid-dashboard/commit/2e8dee43a1924fbdba58a0435adbad1d93afbc67))
+
 ## [1.6.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.5.0...v1.6.0) (2026-09-03)
 
 
