@@ -14,8 +14,11 @@
  *
  *   M3 only picks the endpoint. The token is NOT environment-specific: both dashboards ask
  *   the same Auth0 tenant for the same audience, so one token works against production and
- *   UAT alike. A 403 therefore means the account is not authorised on that API - not that
- *   the token came from the wrong place. See graphql_() below.
+ *   UAT alike.
+ *
+ *   KNOWN LIMITATION: M3 = "UAT" currently fails with HTTP 403. A Cloudflare rule on the
+ *   api-testing hostname refuses Apps Script Google Cloud egress IPs, so the request never
+ *   reaches the API and no token can fix it. Production works. See graphql_() below.
  *
  * THE CLICKABLE LINK IN L1
  *   Insert → Drawing, add a text box reading "Click here to refresh" styled as a link
@@ -57,7 +60,7 @@ var LOOKAHEAD_DAYS = 14;
  * Every refresh now prints this version in its toast - compare it against SCRIPT_VERSION at
  * the top of docs/poc_delivery_schedule_sync/Code.gs before concluding a fix did not work.
  */
-var SCRIPT_VERSION = '2026-09-10';
+var SCRIPT_VERSION = '2026-09-10c';
 
 // Column order and header text must match the "TaDa Import" tab exactly.
 // Columns A-G, written as a block.
@@ -457,21 +460,38 @@ function graphql_(endpoint, token, query, variables) {
 
   var code = res.getResponseCode();
   if (code === 401 || code === 403) {
-    // NOTE: a token is NOT environment-specific. Both dashboards ask the same Auth0 tenant
-    // for the same audience (https://api.communitytechaid.org.uk), so a token copied from
-    // production is accepted by UAT and vice versa - the old "it was issued by the other
-    // environment" advice here was wrong and sent people hunting for the wrong problem.
-    // 401 means the token is expired or malformed. 403 means it was read fine but the
-    // account behind it is not authorised on THAT API, which for UAT usually means the user
-    // record or its roles are missing from the UAT database.
+    var envName = endpoint === ENDPOINTS.PRODUCTION ? 'Production' : 'UAT';
+    // Surface whatever the refusal actually said. A 403 from the API arrives as JSON or an
+    // empty body; a 403 from Cloudflare in front of it arrives as HTML mentioning a Ray ID.
+    // Without this the two are indistinguishable, which is how the UAT 403 stayed a mystery.
+    var detail = String(res.getContentText() || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+    var ray = (res.getAllHeaders() || {})['CF-RAY'] || (res.getAllHeaders() || {})['cf-ray'] || '';
+    // A token is NOT environment-specific. Both dashboards ask the same Auth0 tenant for the
+    // same audience (https://api.communitytechaid.org.uk) and both container apps carry the
+    // identical AUTH0_AUDIENCE / JWT_ISSUER, so a token copied from production is accepted by
+    // UAT and vice versa.
+    //
+    // 401 = the token itself was rejected (expired or malformed) by the API.
+    //
+    // 403 = NOT the token, and NOT the account. This API cannot produce a 403 on /graphql at
+    // all: SecurityConfig is `anyRequest().permitAll()` with method-level @PreAuthorize, so an
+    // unauthorised caller gets HTTP 200 carrying a GraphQL error and a bad token gets 401.
+    // A 403 therefore comes from the Cloudflare edge, BEFORE reaching the API. Confirmed
+    // 2026-09-10 from Cloudflare analytics: Apps Script leaves from Google Cloud egress IPs,
+    // and on api-testing those get 403 at the edge (zero successes ever from a Google IP),
+    // while the same script reaching api. succeeds with 200 from those ranges. It is a
+    // per-hostname WAF/IP rule on the UAT host - fixing it needs a Cloudflare change.
     throw new Error(
-      code === 401
+      (code === 401
         ? 'The token in ' + TOKEN_CELL + ' was rejected as invalid (HTTP 401) - it has most ' +
           'likely expired (they last 24 hours). Paste a fresh one.'
-        : 'The token in ' + TOKEN_CELL + ' was read but refused (HTTP 403): the account it ' +
-          'belongs to is not authorised on the ' + ENV_CELL + ' API. A fresh token will not ' +
-          'help - the same token works against whichever environment your account has ' +
-          'access to. Tokens are not environment-specific.'
+        : 'Blocked by the ' + envName + ' edge before the request reached the API (HTTP ' +
+          '403). This is NOT your token and NOT your account, so a fresh token will not ' +
+          'help. Apps Script calls leave from Google Cloud IPs and a Cloudflare rule on ' +
+          'this hostname refuses them. Fixing it needs a Cloudflare WAF change; syncing ' +
+          'Production still works in the meantime.') +
+      (detail ? ' | response: ' + detail : '') +
+      (ray ? ' | CF-RAY: ' + ray : '')
     );
   }
   if (code !== 200) {

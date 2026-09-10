@@ -146,10 +146,33 @@ and identical in every file under `src/environments/`), so one token is accepted
 production and UAT alike. That means:
 
 - **HTTP 401** — the token is expired or malformed. Paste a fresh one (they last 24h).
-- **HTTP 403** — the token was read fine, but the account behind it is not authorised on
-  *that* API. A fresh token will not help. Against UAT this usually means the user record or
-  its roles are missing from the UAT database, which is a UAT provisioning job, not a token
-  problem.
+- **HTTP 403** — not the token *or* the account. See below.
+
+### Known limitation: `M3 = UAT` fails with HTTP 403
+
+Syncing Production works; syncing UAT does not, and no token will fix it.
+
+The API cannot return a 403 on `/graphql` at all. `SecurityConfig` is
+`anyRequest().permitAll()` with method-level `@PreAuthorize`, so an unauthorised caller gets
+**HTTP 200 carrying a GraphQL error**, and a bad token gets **401**. A 403 therefore comes
+from the **Cloudflare edge, before the request reaches the API**.
+
+Confirmed 2026-09-10 from Cloudflare analytics on `/graphql`:
+
+| Host | From Google Cloud egress IPs (Apps Script) |
+|---|---|
+| `api.communitytechaid.org.uk` | **200** — five successes on 9 Sep (34.116.x, 35.187.x, 107.178.203.x) |
+| `api-testing.communitytechaid.org.uk` | **403** — every attempt, zero successes ever |
+
+Both container apps carry identical `AUTH0_AUDIENCE`, `AUTH0_DOMAIN` and `JWT_ISSUER`
+(verified with `az containerapp show`), and authorities are derived purely from JWT claims
+with no database lookup — so the account cannot differ between environments. It is a
+per-hostname WAF/IP rule on the UAT host.
+
+**To fix:** allow Apps Script to reach `api-testing.communitytechaid.org.uk/graphql` in
+Cloudflare — e.g. a WAF skip rule for that path gated on a shared secret header, rather
+than allow-listing Google's entire egress range. The wrangler OAuth token cannot read or
+write custom rulesets (`zone:read` is insufficient), so this needs the Cloudflare dashboard.
 
 ### Keeping the sheet's copy in step with this repo
 

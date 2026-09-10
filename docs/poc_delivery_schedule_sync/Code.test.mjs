@@ -220,7 +220,8 @@ test('bookings use the same anchoring as requests', () => {
 test('SCRIPT_VERSION is present and looks like a date', () => {
   // The sheet holds a hand-pasted copy of Code.gs, so this stamp is the only way to tell
   // whether a fix has actually reached the driver. Losing it hides the next stale-copy bug.
-  assert.match(code.SCRIPT_VERSION, /^\d{4}-\d{2}-\d{2}$/);
+  // A trailing letter allows more than one release in a day (2026-09-10b).
+  assert.match(code.SCRIPT_VERSION, /^\d{4}-\d{2}-\d{2}[a-z]?$/);
 });
 
 // The assertions above only prove the day is stable for ONE Apps Script project timezone —
