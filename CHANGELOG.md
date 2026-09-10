@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [1.7.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.6.1...v1.7.0) (2026-09-10)
+
+
+### Features
+
+* **scanner:** replace the printed mode cards with a note for every scan ([#214](https://github.com/CommunityTechaid/techaid-dashboard/issues/214)) ([152f4a3](https://github.com/CommunityTechaid/techaid-dashboard/commit/152f4a3d152f6a51a702ae1c067bce8b838e965f))
+
 ## [1.6.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.6.0...v1.6.1) (2026-09-10)
 
 
