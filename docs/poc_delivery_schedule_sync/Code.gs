@@ -12,8 +12,10 @@
  *   3. Fill in M2 and M3.
  *   4. Run TaDa → Refresh TaDa Import once and accept the authorisation prompt.
  *
- *   The token and the environment must agree — a UAT token is rejected by production and
- *   vice versa, which surfaces as the HTTP 401 message in graphql_() below.
+ *   M3 only picks the endpoint. The token is NOT environment-specific: both dashboards ask
+ *   the same Auth0 tenant for the same audience, so one token works against production and
+ *   UAT alike. A 403 therefore means the account is not authorised on that API - not that
+ *   the token came from the wrong place. See graphql_() below.
  *
  * THE CLICKABLE LINK IN L1
  *   Insert → Drawing, add a text box reading "Click here to refresh" styled as a link
@@ -44,6 +46,18 @@ var TOKEN_CELL = 'M2';
 var ENV_CELL = 'M3'; // "Production" or "UAT"
 var LINK_CELL = 'L1';
 var LOOKAHEAD_DAYS = 14;
+
+/**
+ * Bump this whenever this file changes in the repo.
+ *
+ * This script is deployed by copy-pasting it into the spreadsheet's Apps Script editor, so
+ * the sheet holds a COPY that does not track the repo. That went wrong once already: the
+ * off-by-one date fix of 3 Sep 2026 sat in git for a week while the sheet kept running a
+ * pre-fix copy, and the bug was reported as "still broken" because from the outside it was.
+ * Every refresh now prints this version in its toast - compare it against SCRIPT_VERSION at
+ * the top of docs/poc_delivery_schedule_sync/Code.gs before concluding a fix did not work.
+ */
+var SCRIPT_VERSION = '2026-09-10';
 
 // Column order and header text must match the "TaDa Import" tab exactly.
 // Columns A-G, written as a block.
@@ -118,7 +132,25 @@ var DELIVERY_REQUESTS_QUERY =
   '}';
 
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('TaDa').addItem('Refresh TaDa Import', 'refreshTaDaImport').addToUi();
+  SpreadsheetApp.getUi()
+    .createMenu('TaDa')
+    .addItem('Refresh TaDa Import', 'refreshTaDaImport')
+    .addItem('Show script version', 'showScriptVersion')
+    .addToUi();
+}
+
+/**
+ * Lets anyone confirm which copy of this file the sheet is running without doing a sync,
+ * so "we already fixed that" can be checked rather than assumed.
+ */
+function showScriptVersion() {
+  SpreadsheetApp.getUi().alert(
+    'TaDa sync script version ' + SCRIPT_VERSION + '.' +
+    '\n\n' +
+    'Compare this against SCRIPT_VERSION in docs/poc_delivery_schedule_sync/Code.gs in the ' +
+    'techaid-dashboard repo. If the repo is newer, this sheet is running an old copy and ' +
+    'needs the file pasted in again.'
+  );
 }
 
 /**
@@ -190,7 +222,7 @@ function refreshTaDaImport() {
     // knowing about, because the driver gets a row with no referring organisation.
     message += ' (' + unmatched + ' with no matching request, so no Org)';
   }
-  ss.toast(message, 'TaDa Import refreshed', 8);
+  ss.toast(message, 'TaDa Import refreshed (script ' + SCRIPT_VERSION + ')', 8);
 }
 
 // ---------------------------------------------------------------- auth
@@ -259,7 +291,7 @@ function buildRows_(bookings, orgByRequestId) {
     }
     return [
       // A real Date so the sheet's own date formatting applies, matching the weekly tabs.
-      b.date ? new Date(b.date + 'T00:00:00') : '',
+      sheetDate_(b.date),
       b.ctaReference === null || b.ctaReference === undefined ? '' : b.ctaReference,
       // Every row here is a booked delivery of devices to a beneficiary, which is what
       // the driver's sheet calls a Distribution.
@@ -322,7 +354,7 @@ function rowFromRequest_(req) {
   var collectionDate = req.collectionDate ? isoDate_(new Date(req.collectionDate)) : '';
   return [
     // A real Date so the sheet's own date formatting applies, matching the weekly tabs.
-    collectionDate ? new Date(collectionDate + 'T00:00:00') : '',
+    sheetDate_(collectionDate),
     req.id === null || req.id === undefined ? '' : req.id,
     'Distribution',
     name,
@@ -336,6 +368,40 @@ function rowFromRequest_(req) {
 
 function isoDate_(date) {
   return Utilities.formatDate(date, 'Europe/London', 'yyyy-MM-dd');
+}
+
+/**
+ * Turns a plain "yyyy-MM-dd" into a Date the sheet will render as that same calendar day.
+ *
+ * A Date is an instant, not a day, and two separate timezones decide which day the driver
+ * ends up reading:
+ *
+ *   - the SPREADSHEET's timezone (File → Settings), which `setValues` uses to turn the
+ *     instant into a date serial number;
+ *   - the APPS SCRIPT project's timezone (Project Settings), which is what
+ *     `new Date('2026-09-17T00:00:00')` silently resolves against.
+ *
+ * Nothing keeps those two in step, and the old code anchored at midnight in the *script's*
+ * zone - so as soon as the sheet's zone sat behind the script's, every row lost a day. That
+ * is the off-by-one reported on request 6815.
+ *
+ * Anchoring at midday UTC removes the script's timezone from the picture entirely (the
+ * result no longer depends on it at all) and leaves 12 hours of slack against the sheet's,
+ * which covers every zone from UTC-11 to UTC+12 - i.e. Los Angeles through Sydney, and
+ * Europe/London with 11 hours to spare. The cell's date format hides the time.
+ */
+function sheetDate_(ymd) {
+  if (!ymd) return '';
+  var parts = String(ymd).split('-');
+  if (parts.length !== 3) return '';
+  var year = Number(parts[0]);
+  var month = Number(parts[1]);
+  var day = Number(parts[2]);
+  // A malformed value must leave the cell empty rather than write an Invalid Date, which
+  // Sheets renders as the uninterpretable "NaN".
+  if (!isFinite(year) || !isFinite(month) || !isFinite(day)) return '';
+  if (parts[0].length !== 4 || month < 1 || month > 12 || day < 1 || day > 31) return '';
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
 }
 
 // ---------------------------------------------------------------- sheet
@@ -391,9 +457,21 @@ function graphql_(endpoint, token, query, variables) {
 
   var code = res.getResponseCode();
   if (code === 401 || code === 403) {
+    // NOTE: a token is NOT environment-specific. Both dashboards ask the same Auth0 tenant
+    // for the same audience (https://api.communitytechaid.org.uk), so a token copied from
+    // production is accepted by UAT and vice versa - the old "it was issued by the other
+    // environment" advice here was wrong and sent people hunting for the wrong problem.
+    // 401 means the token is expired or malformed. 403 means it was read fine but the
+    // account behind it is not authorised on THAT API, which for UAT usually means the user
+    // record or its roles are missing from the UAT database.
     throw new Error(
-      'The token in ' + TOKEN_CELL + ' was rejected (HTTP ' + code + '). Either it has expired ' +
-      '(they last 24 hours) or it was issued by the other environment — check it matches ' + ENV_CELL + '.'
+      code === 401
+        ? 'The token in ' + TOKEN_CELL + ' was rejected as invalid (HTTP 401) - it has most ' +
+          'likely expired (they last 24 hours). Paste a fresh one.'
+        : 'The token in ' + TOKEN_CELL + ' was read but refused (HTTP 403): the account it ' +
+          'belongs to is not authorised on the ' + ENV_CELL + ' API. A fresh token will not ' +
+          'help - the same token works against whichever environment your account has ' +
+          'access to. Tokens are not environment-specific.'
     );
   }
   if (code !== 200) {

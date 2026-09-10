@@ -16,7 +16,8 @@
     "e2e:headed": "playwright test --headed",
     "e2e:report": "playwright show-report",
     "e2e:fast": "playwright test --grep @mocked",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "test:delivery-script": "node --test docs/poc_delivery_schedule_sync/Code.test.mjs"
   },
   "private": true,
   "main": "main.js",

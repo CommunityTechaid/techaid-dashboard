@@ -138,11 +138,41 @@ Config lives in cells on the "TaDa Import" tab, matching the bulk-insert sheet's
 | `M3` | `Production` or `UAT` — picks `api.` vs `api-testing.` |
 
 `M3` has no default: an empty or unrecognised value stops with an error rather than
-guessing, because guessing wrong either fills the driver's sheet from test data or points a
-UAT token at production. The token and the environment have to agree.
+guessing, because guessing wrong fills the driver's sheet from test data.
+
+The token itself is **not** environment-specific, though. Both dashboards ask the same Auth0
+tenant for the same audience (`https://api.communitytechaid.org.uk`, hardcoded in `main.ts`
+and identical in every file under `src/environments/`), so one token is accepted by
+production and UAT alike. That means:
+
+- **HTTP 401** — the token is expired or malformed. Paste a fresh one (they last 24h).
+- **HTTP 403** — the token was read fine, but the account behind it is not authorised on
+  *that* API. A fresh token will not help. Against UAT this usually means the user record or
+  its roles are missing from the UAT database, which is a UAT provisioning job, not a token
+  problem.
+
+### Keeping the sheet's copy in step with this repo
+
+**This is the failure mode to watch for.** `Code.gs` is deployed by copy-pasting it into the
+spreadsheet, so the sheet holds a snapshot that does not track git. A fix committed here does
+nothing until someone re-pastes the file — and from the driver's seat the bug simply looks
+unfixed.
+
+That has already bitten once: the London-date fix of 3 Sep 2026 sat in the repo for a week
+while the sheet kept running a pre-fix copy, and was reported back as "still off by 1 day".
+
+So, before concluding a fix did not work:
+
+1. In the sheet, **TaDa → Show script version**.
+2. Compare it against `SCRIPT_VERSION` at the top of `Code.gs` in this repo.
+3. If the repo is newer, the sheet is stale — re-paste `Code.gs` and try again.
+
+Every successful refresh also prints the version in its toast. When you change `Code.gs`,
+bump `SCRIPT_VERSION` in the same commit.
 
 1. Open the spreadsheet → **Extensions → Apps Script**, paste `Code.gs` in, save.
-2. Reload the spreadsheet — a **TaDa** menu appears with *Refresh TaDa Import*.
+2. Reload the spreadsheet — a **TaDa** menu appears with *Refresh TaDa Import* and
+   *Show script version*.
 3. Fill in `M2` and `M3`, then run it once from the menu and accept the auth prompt.
 4. For the clickable link in `L1`: **Insert → Drawing**, add a text box reading
    "Click here to refresh" styled blue and underlined, drag it over `L1`, then use the
