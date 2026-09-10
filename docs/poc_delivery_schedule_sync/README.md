@@ -138,11 +138,64 @@ Config lives in cells on the "TaDa Import" tab, matching the bulk-insert sheet's
 | `M3` | `Production` or `UAT` — picks `api.` vs `api-testing.` |
 
 `M3` has no default: an empty or unrecognised value stops with an error rather than
-guessing, because guessing wrong either fills the driver's sheet from test data or points a
-UAT token at production. The token and the environment have to agree.
+guessing, because guessing wrong fills the driver's sheet from test data.
+
+The token itself is **not** environment-specific, though. Both dashboards ask the same Auth0
+tenant for the same audience (`https://api.communitytechaid.org.uk`, hardcoded in `main.ts`
+and identical in every file under `src/environments/`), so one token is accepted by
+production and UAT alike. That means:
+
+- **HTTP 401** — the token is expired or malformed. Paste a fresh one (they last 24h).
+- **HTTP 403** — not the token *or* the account. See below.
+
+### Known limitation: `M3 = UAT` fails with HTTP 403
+
+Syncing Production works; syncing UAT does not, and no token will fix it.
+
+The API cannot return a 403 on `/graphql` at all. `SecurityConfig` is
+`anyRequest().permitAll()` with method-level `@PreAuthorize`, so an unauthorised caller gets
+**HTTP 200 carrying a GraphQL error**, and a bad token gets **401**. A 403 therefore comes
+from the **Cloudflare edge, before the request reaches the API**.
+
+Confirmed 2026-09-10 from Cloudflare analytics on `/graphql`:
+
+| Host | From Google Cloud egress IPs (Apps Script) |
+|---|---|
+| `api.communitytechaid.org.uk` | **200** — five successes on 9 Sep (34.116.x, 35.187.x, 107.178.203.x) |
+| `api-testing.communitytechaid.org.uk` | **403** — every attempt, zero successes ever |
+
+Both container apps carry identical `AUTH0_AUDIENCE`, `AUTH0_DOMAIN` and `JWT_ISSUER`
+(verified with `az containerapp show`), and authorities are derived purely from JWT claims
+with no database lookup — so the account cannot differ between environments. It is a
+per-hostname WAF/IP rule on the UAT host.
+
+**To fix:** allow Apps Script to reach `api-testing.communitytechaid.org.uk/graphql` in
+Cloudflare — e.g. a WAF skip rule for that path gated on a shared secret header, rather
+than allow-listing Google's entire egress range. The wrangler OAuth token cannot read or
+write custom rulesets (`zone:read` is insufficient), so this needs the Cloudflare dashboard.
+
+### Keeping the sheet's copy in step with this repo
+
+**This is the failure mode to watch for.** `Code.gs` is deployed by copy-pasting it into the
+spreadsheet, so the sheet holds a snapshot that does not track git. A fix committed here does
+nothing until someone re-pastes the file — and from the driver's seat the bug simply looks
+unfixed.
+
+That has already bitten once: the London-date fix of 3 Sep 2026 sat in the repo for a week
+while the sheet kept running a pre-fix copy, and was reported back as "still off by 1 day".
+
+So, before concluding a fix did not work:
+
+1. In the sheet, **TaDa → Show script version**.
+2. Compare it against `SCRIPT_VERSION` at the top of `Code.gs` in this repo.
+3. If the repo is newer, the sheet is stale — re-paste `Code.gs` and try again.
+
+Every successful refresh also prints the version in its toast. When you change `Code.gs`,
+bump `SCRIPT_VERSION` in the same commit.
 
 1. Open the spreadsheet → **Extensions → Apps Script**, paste `Code.gs` in, save.
-2. Reload the spreadsheet — a **TaDa** menu appears with *Refresh TaDa Import*.
+2. Reload the spreadsheet — a **TaDa** menu appears with *Refresh TaDa Import* and
+   *Show script version*.
 3. Fill in `M2` and `M3`, then run it once from the menu and accept the auth prompt.
 4. For the clickable link in `L1`: **Insert → Drawing**, add a text box reading
    "Click here to refresh" styled blue and underlined, drag it over `L1`, then use the
