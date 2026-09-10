@@ -135,7 +135,7 @@ export function narrowToAvailability<T extends { value: string }>(
 
 /**
  * The amber note shown under the device-type list when a borough offers less than usual, e.g.
- * "In Tower Hamlets we can currently offer laptops only." Returns null when nothing is narrowed.
+ * "In Tower Hamlets we can currently offer laptops." Returns null when nothing is narrowed.
  *
  * Generated from the config rather than written beside it — the copy and the filtering must not be
  * able to disagree, which is exactly what happens when a sentence naming device types is
@@ -179,5 +179,5 @@ export function availabilityNote(
   const list =
     names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 
-  return `In ${borough} we can currently offer ${list} only.`;
+  return `In ${borough} we can currently offer ${list}.`;
 }
