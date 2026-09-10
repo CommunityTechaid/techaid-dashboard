@@ -130,27 +130,58 @@
                   <option value="">— Inactive / Paused —</option>
                 </select>
 
-                <div class="scanner-label mb-2">Printed mode cards</div>
-                <div class="d-grid gap-2">
-                  @for (mode of modes; track mode.key) {
+                <p class="small text-muted m-0">
+                  A fourth card, <code>CTA*{{ pauseCode }}</code>, pauses scanning.
+                </p>
+              </div>
+            </div>
+
+            <div class="card mb-3">
+              <div class="card-body">
+                <h6 class="font-weight-bold mb-1">Note for every scan</h6>
+                <p class="small text-muted mb-2">
+                  Optional. Added as a note on each device you scan from here on.
+                </p>
+                <input
+                  #noteInput
+                  id="scanner-note"
+                  data-testid="scanner-note"
+                  type="text"
+                  class="form-control form-control-sm scanner-note__input"
+                  placeholder="e.g. Batch 42, refurbished by Tuesday crew"
+                  aria-label="Note added to every scanned device"
+                  autocomplete="off"
+                  [attr.maxlength]="noteMaxLength"
+                  [value]="note()"
+                  (input)="onNoteInput($any($event.target).value)"
+                  (keydown.enter)="commitNote()"
+                />
+                <div class="d-flex justify-content-between align-items-center gap-2 mt-2">
+                  <span
+                    [class]="'scanner-note__state' + (note() ? ' scanner-note__state--armed' : '')"
+                    data-testid="scanner-note-state"
+                  >
+                    @if (note()) {
+                      <i class="fas fa-paperclip me-1"></i>Attached to every scan
+                      · {{ noteMaxLength - note().length }} left
+                    } @else {
+                      No note — scans record the status change only.
+                    }
+                  </span>
+                  @if (note()) {
                     <button
                       type="button"
-                      class="scanner-card"
-                      [class.scanner-card--active]="activeMode()?.key === mode.key"
-                      [attr.data-testid]="'scanner-mode-card-' + mode.code"
-                      (click)="selectMode(mode)"
+                      class="btn btn-outline-secondary btn-sm"
+                      data-testid="scanner-note-clear"
+                      (click)="clearNote()"
                     >
-                      <span class="scanner-card__head">
-                        <span [class]="'scanner-card__name scanner-card__name--' + mode.tone">{{ mode.label }}</span>
-                        <span [class]="'scanner-card__chip scanner-card__chip--' + mode.tone"></span>
-                      </span>
-                      <span class="scanner-card__barcode"></span>
-                      <span class="scanner-card__payload">CTA*{{ mode.code }}</span>
+                      Clear
                     </button>
                   }
                 </div>
-                <p class="small text-muted mt-2 mb-0">
-                  A fourth card, <code>CTA*{{ pauseCode }}</code>, pauses scanning.
+                <p class="small text-muted mb-0 mt-2">
+                  <i class="fas fa-level-down-alt fa-rotate-90 me-1"></i>Press
+                  <kbd>Enter</kbd> to go back to scanning. The note is cleared when you leave the page.
                 </p>
               </div>
             </div>

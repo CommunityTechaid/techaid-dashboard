@@ -34,6 +34,13 @@ export const SCANNER_MODES: ScannerMode[] = [
 export const PAUSE_CODE = 'PAUSED';
 
 /**
+ * Cap on the per-scan note. The `note.content` column holds 4096 chars, but a
+ * bench note is a line, not an essay — and it is repeated onto every device
+ * scanned, so a long one is almost certainly a mis-scan into the note box.
+ */
+export const NOTE_MAX_LENGTH = 240;
+
+/**
  * Statuses `kit-info` refuses to let a flagged device hold. The scanner honours
  * the same rule for the two modes it offers — and it is the ONLY thing enforcing it:
  * `updateKits` applies the status server-side with no sub-status validation
@@ -92,6 +99,16 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
   /** Per-mode session tally, keyed by KitStatus. */
   readonly tally = signal<Record<string, number>>({});
 
+  /**
+   * Free-text note attached to every device the scanner updates from here on.
+   * Deliberately component state and nothing more: it dies with the page, so a
+   * note can never leak into a later session on a shared bench laptop. Empty
+   * means "no note" — the mutation then carries no note field at all.
+   */
+  readonly note = signal('');
+
+  readonly noteMaxLength = NOTE_MAX_LENGTH;
+
   readonly sessionStarted = new Date();
 
   readonly total = computed(() =>
@@ -112,6 +129,8 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
   private readonly seen = new Map<number, { modeKey: string; at: Date }>();
 
   private readonly field = viewChild<ElementRef<HTMLInputElement>>('scanField');
+
+  private readonly noteField = viewChild<ElementRef<HTMLInputElement>>('noteInput');
 
   constructor(
     readonly session: ScanSession,
@@ -181,11 +200,6 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
     this.focusField();
   }
 
-  selectMode(mode: ScannerMode): void {
-    this.setMode(mode);
-    this.focusField();
-  }
-
   pause(): void {
     this.setMode(null);
     this.focusField();
@@ -202,6 +216,32 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
           }
         : { kind: 'neutral', kicker: 'Paused', text: 'Paused. Scanning is inactive until you choose a mode.' },
     );
+  }
+
+  // ── The per-scan note ──────────────────────────────────────────────────────
+
+  /**
+   * Trimmed on the way in, so a note of nothing but spaces stays "no note"
+   * rather than writing an empty Note row against every device scanned.
+   */
+  onNoteInput(value: string): void {
+    this.note.set(value.slice(0, NOTE_MAX_LENGTH).trimStart());
+  }
+
+  /** Enter in the note box means "done typing" — hand the cursor back. */
+  commitNote(): void {
+    this.noteField()?.nativeElement.blur();
+    this.focusField();
+  }
+
+  clearNote(): void {
+    this.note.set('');
+    this.focusField();
+  }
+
+  /** The note as it goes to the server, or null when there isn't one. */
+  private noteForMutation(): string | null {
+    return this.note().trim() || null;
   }
 
   // ── ScanModeStrategy ───────────────────────────────────────────────────────
@@ -331,8 +371,12 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
       text: `#${id} — applying ${mode.label}…`,
     });
 
+    // Read the note once, here: it goes out with this scan even if the operator
+    // starts editing the box while the mutation is in flight.
+    const note = this.noteForMutation();
+
     try {
-      await this.api.applyStatus(id, mode.key);
+      await this.api.applyStatus(id, mode.key, note);
     } catch (err) {
       this.reportFailure(`#${id} was not updated`, err);
       return;
@@ -344,7 +388,7 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
     this.banner.set({
       kind: 'success',
       kicker: 'Applied',
-      text: `#${id} · ${describeKit(kit)} → ${mode.label} ✓`,
+      text: `#${id} · ${describeKit(kit)} → ${mode.label} ✓${note ? ' · note added' : ''}`,
     });
   }
 
