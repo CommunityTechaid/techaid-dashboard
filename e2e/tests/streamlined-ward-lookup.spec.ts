@@ -300,6 +300,11 @@ test.describe('streamlined ward lookup @mocked', () => {
     await expect(note).toBeVisible({ timeout: 15_000 });
     await expect(note).toContainText('Tower Hamlets');
     await expect(note).toContainText('laptops');
+    // The sentence must not end in "only" (Request booking 2.0 tracker, row 10): stakeholders read
+    // "laptops only" as a restriction being imposed rather than a statement of current stock. The
+    // full sentence is pinned, not just the absence of the word, so a reworded note has to come
+    // back through here deliberately.
+    await expect(note).toHaveText(/In Tower Hamlets we can currently offer laptops\.\s*$/);
 
     await advanceToDeviceRequestPage(page);
 
