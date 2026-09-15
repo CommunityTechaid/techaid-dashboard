@@ -56,7 +56,7 @@ const CONFIRMATION = {
   window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm' },
   address: '221B Typed Street, London SW1A 1AA',
   ctaReference: 4298,
-  confirmationSentTo: 'sofia@example.org',
+  confirmationSentTo: 'jane@example.org',
 };
 
 async function fulfillJson(route: import('@playwright/test').Route, body: unknown): Promise<void> {
@@ -225,9 +225,9 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     await reachDetailsStep(page);
 
     const form = page.locator('form.form');
-    await form.locator('input[formControlName="firstName"]').fill('Sofia');
-    await form.locator('input[formControlName="surname"]').fill('Martino');
-    await form.locator('input[formControlName="email"]').fill('sofia@example.org');
+    await form.locator('input[formControlName="firstName"]').fill('Jane');
+    await form.locator('input[formControlName="surname"]').fill('Doe');
+    await form.locator('input[formControlName="email"]').fill('jane@example.org');
     await form.locator('input[formControlName="phone"]').fill('07700900000');
     await form.locator('input[formControlName="addressLine1"]').fill('221B Typed Street');
     await form.locator('input[formControlName="addressLine2"]').fill('London SW1A 1AA');
@@ -363,9 +363,9 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
     // A lookup failure must never block a booking — the visitor fills the postcode
     // themselves and completes the form as normal.
     const form = page.locator('form.form');
-    await form.locator('input[formControlName="firstName"]').fill('Sofia');
-    await form.locator('input[formControlName="surname"]').fill('Martino');
-    await form.locator('input[formControlName="email"]').fill('sofia@example.org');
+    await form.locator('input[formControlName="firstName"]').fill('Jane');
+    await form.locator('input[formControlName="surname"]').fill('Doe');
+    await form.locator('input[formControlName="email"]').fill('jane@example.org');
     await form.locator('input[formControlName="phone"]').fill('07700900000');
     await form.locator('input[formControlName="postcode"]').fill('SW1A 2AA');
 
@@ -395,9 +395,9 @@ test.describe('public delivery-booking address autocomplete @mocked', () => {
 
     const form = page.locator('form.form');
     await form.locator('input[formControlName="buildingDetail"]').fill('Flat 4');
-    await form.locator('input[formControlName="firstName"]').fill('Sofia');
-    await form.locator('input[formControlName="surname"]').fill('Martino');
-    await form.locator('input[formControlName="email"]').fill('sofia@example.org');
+    await form.locator('input[formControlName="firstName"]').fill('Jane');
+    await form.locator('input[formControlName="surname"]').fill('Doe');
+    await form.locator('input[formControlName="email"]').fill('jane@example.org');
     await form.locator('input[formControlName="phone"]').fill('07700900000');
 
     const addressLine1 = page.locator('input[formControlName="addressLine1"]');

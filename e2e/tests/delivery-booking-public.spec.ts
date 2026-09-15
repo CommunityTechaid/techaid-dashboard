@@ -72,7 +72,7 @@ const CONFIRMATION = {
   window: { id: 'win-morning', name: 'Morning window', startTime: '10:00am', endTime: '1:00pm' },
   address: '1 Test Street, London SW9 0AA',
   ctaReference: 4298,
-  confirmationSentTo: 'sofia@example.org',
+  confirmationSentTo: 'jane@example.org',
 };
 
 interface SubmitOutcome {
@@ -200,9 +200,9 @@ async function reachDetailsStepAndFill(page: Page): Promise<void> {
 
   const form = page.locator('form.form');
   await expect(form).toBeVisible({ timeout: 15_000 });
-  await form.locator('input[formControlName="firstName"]').fill('Sofia');
-  await form.locator('input[formControlName="surname"]').fill('Martino');
-  await form.locator('input[formControlName="email"]').fill('sofia@example.org');
+  await form.locator('input[formControlName="firstName"]').fill('Jane');
+  await form.locator('input[formControlName="surname"]').fill('Doe');
+  await form.locator('input[formControlName="email"]').fill('jane@example.org');
   await form.locator('input[formControlName="phone"]').fill('07700900000');
   await form.locator('input[formControlName="addressLine1"]').fill('1 Test Street');
   await form.locator('input[formControlName="addressLine2"]').fill('London SW9 0AA');
