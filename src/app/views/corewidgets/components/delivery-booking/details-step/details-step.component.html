@@ -21,14 +21,14 @@
     <div class="form-row form-row--split">
       <div class="field">
         <label>First name</label>
-        <input formControlName="firstName" placeholder="Sofia" [class.field--invalid]="invalid('firstName')" />
+        <input formControlName="firstName" placeholder="Jane" [class.field--invalid]="invalid('firstName')" />
         @if (invalid('firstName')) {
           <div class="form-error">Enter a first name.</div>
         }
       </div>
       <div class="field">
         <label>Surname</label>
-        <input formControlName="surname" placeholder="Martino" [class.field--invalid]="invalid('surname')" />
+        <input formControlName="surname" placeholder="Doe" [class.field--invalid]="invalid('surname')" />
         @if (invalid('surname')) {
           <div class="form-error">Enter a surname.</div>
         }
