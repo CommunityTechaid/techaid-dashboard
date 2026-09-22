@@ -302,14 +302,29 @@ test.describe('OnPush fan-out — ajax-callback repaint (priority 1) @mocked', (
   });
 });
 
-// Priority 2 (filter-apply markForCheck, e.g. kit-index's applyFilter()) was attempted and
-// found UNPROVABLE: applyFilter() calls markForCheck() and then synchronously triggers
-// `this.table.ajax.reload(...)`, whose own ajax-callback markForCheck() fires moments later
-// and marks the same component dirty again before the next paint. Deleting applyFilter's own
-// markForCheck() (kit-index and, on inspection, the pre-existing donor-index pilot's own
-// applyFilter site) leaves every assertion green — the two sites are never independently
-// observable from the DOM in this codebase's synchronous reload pattern. Per the house rule,
-// no test for this site is committed; see the builder's report for detail.
+// Priority 2 (filter-apply markForCheck, e.g. kit-index's applyFilter()) was investigated
+// thoroughly, including a delayed-reload-response variant of the same technique
+// delivery-slots' load() error-branch test below uses (assert the badge before the reload's
+// own ajax-callback markForCheck can possibly fire) — and confirmed UNPROVABLE, for a more
+// fundamental reason than "the reload's own markForCheck masks it eventually":
+//
+// Every one of these components' filter modal is a plain `<ng-template #filters>` opened via
+// `NgbModal.open(templateRef)`. ng-bootstrap's modal.ts turns that into
+// `templateRef.createEmbeddedView(context)` followed by `this._applicationRef.attachView(viewRef)`
+// — i.e. the modal's content becomes its OWN root view, ticked unconditionally by
+// ApplicationRef on every zone stabilisation, independent of the host component's OnPush
+// dirty flag. A MutationObserver on the badge (temporary instrumentation, not committed —
+// see the builder's report) showed it updating ~6ms after applyFilter() ran — synchronously
+// with the click, not ~1.2s later when a deliberately delayed reload's own markForCheck
+// landed — with applyFilter's own markForCheck() call temporarily deleted. The badge simply
+// never goes stale long enough for any assertion to catch, at any delay. This
+// isn't a masking race to out-clever with better test timing; it's that the guarded call has
+// no observable effect via this event path in this component tree shape. Per the house rule,
+// no test for this site is committed for kit-index or any of the other eight components
+// sharing the identical `<ng-template #filters>` + `NgbModal.open(templateRef)` structure
+// (device-request-index, donor-parent-index, referring-organisation-index,
+// referring-organisation-contact-index, distributions-and-deliveries-index, kit-component,
+// donor-component, referee-component) — see the builder's report for the full record.
 
 test.describe('OnPush fan-out — delivery-slots under its OnPush ancestor (priority 3) @mocked', () => {
   async function openDeliverySlots(page: Page, handlers: Record<string, unknown>): Promise<void> {
