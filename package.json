@@ -37,7 +37,7 @@
     "@apollo/client": "^4.1.7",
     "@auth0/angular-jwt": "^5.2.0",
     "@auth0/auth0-angular": "^2.8.0",
-    "@fortawesome/fontawesome-free": "^5.14.0",
+    "@fortawesome/fontawesome-free": "^7.3.1",
     "@microsoft/applicationinsights-web": "^3.4.1",
     "@ng-bootstrap/ng-bootstrap": "^20.0.0",
     "@ng-select/ng-select": "^21.2.0",
