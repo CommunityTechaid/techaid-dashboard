@@ -39,8 +39,8 @@ Each batch = one checkpoint commit (or a small series), gated on
 
 | Batch | Scope | Issues | Risk |
 |---|---|---|---|
-| **0** | In-range security/patch bumps: Angular 21.2.17→21.2.24 line, `@apollo/client` 4.3.1, `@auth0/auth0-angular` 2.12, App Insights 3.4.4, core-js, postcss, eslint, typescript-eslint, Playwright 1.63 | — (new) | low |
-| **1** | Cheap debt: delete dead `createApi` modals; self-host Poppins and drop Google Fonts from the CSP | #120, #119 | low |
+| **0** | ✅ **DONE** (`420f6e3`) In-range security/patch bumps | — (new) | low |
+| **1** | ✅ **DONE** (`aa00a92`, `6439bb8`) dead `createApi` modals deleted; Poppins self-hosted, Google Fonts out of the CSP | #120, #119 | low |
 | **2** | Linux-regenerated `package-lock.json`, switch all three workflows back to `npm ci` | #121, #157 | low, CI-visible |
 | **3** | FontAwesome 5→7 rename sweep | #116 | medium (visual) |
 | **4** | OnPush fan-out across the remaining index components | #114 | medium |
@@ -61,8 +61,57 @@ mechanical work is delegated to a Sonnet agent with a fully-specified brief. Bat
 `package.json` / `package-lock.json` run **sequentially**; independent file-level work inside a
 batch may run in parallel.
 
+
+## Batch 5 sequencing — peer ranges checked 2026-09-22
+
+Read from the registry, not assumed. Three findings reshape #112:
+
+**TypeScript goes to 6.0.x, not 7.** `@angular/compiler-cli@22.1.7` declares
+`typescript: ">=6.0 <6.1"` — a one-minor window. `npm outdated` advertises TS
+`latest 7.0.2`, which would fail the build outright. Issue #112 said "TypeScript 6"
+and was right.
+
+**Batch 5 splits in two.** These majors do NOT require Angular 22 and can land and be
+verified on the current framework first:
+
+| Package | Target | Peer constraint |
+|---|---|---|
+| `apollo-angular` | 14.2.0 | `@angular/core ^20 \|\| ^21 \|\| ^22`, `graphql ^16 \|\| ^17` |
+| `graphql` | 17.0.2 | — |
+| `@ngx-formly/core` + `bootstrap` | 8.0.0 | `@angular/forms >=19.0.0` |
+| `ngx-progressbar` | 14.0.0 | `@angular/core >=17.3.0` |
+
+Doing them separately matters: Apollo v4's frozen responses and Formly's `resetOnHide`
+are the two fragile seams in this codebase (see `dashboard-architecture-contract`).
+Debugging either against a stable framework beats debugging it inside a twelve-package
+atomic bump.
+
+These are locked to the Angular 22 flip and must move with it:
+`@ngxs/*` 22 (`>=22 <23`), `@ng-bootstrap` 21 (`^22`), `@ng-select` 24 (`^22`),
+`ngx-quill` 31 (`^22`), plus `zone.js` 0.16.3, `angular-eslint` 22.5.0, `@types/node` 26.
+
+**`@angular/cdk` becomes a real dependency.** Both `@ng-select@24` and
+`ngx-progressbar@14` peer-depend on it. It is not in `package.json` today (satisfied
+transitively); after the bump it should be declared explicitly at `^22`.
+
+## Unplanned finding — strict mode is off everywhere
+
+None of `tsconfig.json`, `src/tsconfig.app.json` or `tsconfig.base.json` contains an
+`angularCompilerOptions` block, and `compilerOptions.strict` is absent from all three.
+TypeScript strict mode and Angular `strictTemplates` are both **off** project-wide.
+
+This is why the #120 templates could bind `[fields]="fields"` to properties that do not
+exist on their components, for years, without a single build error — and why unused
+imports accumulate unnoticed. No open issue covers it.
+
+Not folded into this pass: enabling `strictTemplates` across 36 components will surface a
+large error backlog and deserves its own scoped issue. Recorded here as a candidate.
+
 ## Log
 
 | Date | Batch | Outcome |
 |---|---|---|
 | 2026-09-21 | — | Branch cut off `dev` at `08e4abd`; scan recorded above. |
+| 2026-09-22 | 0 | Angular → 21.2.23 (build/cli 21.2.24) + 8 in-range refreshes. `npm audit` 24→8; the four target Angular advisories cleared. Prod build clean. 69 packages moved, 11 added, 21 net lockfile entries removed (nested `@typescript-eslint` dedup). Needed one `npm install --legacy-peer-deps` to get past an ERESOLVE deadlock across the 11 exact-pinned Angular peers — **lockfile therefore generated with peer validation off; re-verify in Batch 2**. Incidentally added `@emnapi/core`/`@emnapi/runtime` 1.11.3 and moved `@emnapi/wasi-threads` to 1.2.3 — exactly the three complaints in #157's `npm ci` failure. |
+| 2026-09-22 | — | e2e baseline re-established: minted a CI-style fake token (`ci.yml`'s own step) into `e2e/.auth/user.json`; `npm run e2e:fast` **141 passed, 0 failed**. Confirms the earlier 42 failures were the stale token alone, and that `auth0-spa-js` 2.22→2.27 did not move the cache format `save-token.mjs` writes. |
+| 2026-09-22 | 1 | #120: dead `createApi` templates removed from `kit-component.html` and `user-index.html` plus orphaned `form`/`model` members and `user-index`'s now-unused `FormlyModule`/`ReactiveFormsModule` component imports. #119: Poppins self-hosted — 12 woff2 (6 combos × latin/latin-ext, 108 kB incl. OFL), `unicode-range` preserved so browsers still fetch only what they need; `fonts.googleapis.com` out of `style-src`, `fonts.gstatic.com` out of `font-src`. Both: prod build clean, e2e 141/141. |
