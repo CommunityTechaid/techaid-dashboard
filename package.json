@@ -16,6 +16,7 @@
     "e2e:headed": "playwright test --headed",
     "e2e:report": "playwright show-report",
     "e2e:fast": "playwright test --grep @mocked",
+    "e2e:csp-probe-local": "node e2e/csp-probe-local.mjs",
     "lint": "ng lint",
     "fa:subset": "node build/fa-subset.mjs",
     "fa:check": "node build/check-fa-icons.mjs",
