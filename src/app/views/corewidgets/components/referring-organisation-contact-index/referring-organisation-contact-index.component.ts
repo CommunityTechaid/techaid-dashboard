@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -73,14 +73,20 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
     selector: 'app-referring-organisation-contact-index',
     templateUrl: './referring-organisation-contact-index.component.html',
     styleUrls: ['./referring-organisation-contact-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe],
+    // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111):
+    // this page's state only changes via the DataTables ajax callback and the
+    // filter modal. Both paths run outside the host template's event tree, so
+    // they call cdr.markForCheck() explicitly.
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReferringOrganisationContactIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private cdr: ChangeDetectorRef
   ) {
 
   }
@@ -233,6 +239,9 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    // Called from the filter modal, whose view lives in NgbModal's window —
+    // the host's filterCount badge won't repaint under OnPush without this.
+    this.cdr.markForCheck();
     this.table.ajax.reload(null, false);
   }
 
@@ -315,6 +324,10 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
             }
             this.entities = data.content;
           }
+          // The rows are rendered by Angular from `entities`, but this promise
+          // resolves outside the host template's event tree — mark for check
+          // or the table body never repaints under OnPush.
+          this.cdr.markForCheck();
 
           callback({
             draw: params.draw,

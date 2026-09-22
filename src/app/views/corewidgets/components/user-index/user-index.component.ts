@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -39,7 +39,11 @@ query findAllUsers($page: PaginationInput!, $term: String) {
     selector: 'user-index',
     styleUrls: ['user-index.scss'],
     templateUrl: './user-index.html',
-    imports: [RouterLink, AppGridDirective_1, AppInitialComponent, DatePipe]
+    imports: [RouterLink, AppGridDirective_1, AppInitialComponent, DatePipe],
+    // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111):
+    // state only changes via the DataTables ajax callback, which resolves
+    // outside the host template's event tree, so it calls cdr.markForCheck().
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
@@ -56,7 +60,8 @@ export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private cdr: ChangeDetectorRef
   ) {
 
   }
@@ -139,6 +144,10 @@ export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
             }
             this.entities = data.content;
           }
+          // The rows are rendered by Angular from `entities`, but this promise
+          // resolves outside the host template's event tree — mark for check
+          // or the table body never repaints under OnPush.
+          this.cdr.markForCheck();
 
           callback({
             draw: params.draw,
