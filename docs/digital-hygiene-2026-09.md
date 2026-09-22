@@ -143,3 +143,38 @@ large error backlog and deserves its own scoped issue. Recorded here as a candid
   hardcodes the same origin in the storage state it writes.
 - **`npm run lint` via the RTK proxy reports ~2600 warnings; `npx ng lint` reports 1327.**
   The proxy appears to double-count. Direct invocation is authoritative.
+
+## Found during pre-deploy validation, NOT fixed — 2026-09-22
+
+**Any GraphQL-stubbing harness must stub `buildInfo`.** The app gates its entire router-outlet
+behind a `buildInfo` health check ("Server is starting up" spinner) on *every* route. The first
+run of the local CSP probe reported zero violations across three pages while actually rendering
+nothing but the global shell — fonts and icons only, never a routed component. A clean result
+from a harness that has not stubbed `buildInfo` is meaningless. `e2e/csp-probe-local.mjs` now
+stubs it everywhere.
+
+**`normalizeData(data) { return data; }` hands Formly a frozen Apollo object.** Apollo v4 freezes
+responses, so a Formly form bound to `this.model` throws
+`Cannot assign to read only property '<field>'` when the user types. Observed as an unhandled
+error while writing `e2e/tests/ngx-quill-richtext.spec.ts` (post-info's Content field); the Save
+flow still completed, so the user-visible impact is unclear and needs establishing.
+
+Pass-through `normalizeData` implementations, all binding a Formly model:
+- `post-info.component.ts:154`
+- `post-data.component.ts:67`
+- `donor-parent-info.component.ts:194`
+- `referring-organisation-info.component.ts:170`
+
+`dashboard-index.component.ts:96` also returns the frozen object, though it mutates `this.styles`
+rather than the response.
+
+**Pre-existing** — `@apollo/client` was already v4 (`^4.1.7`) before this branch, so the upgrade
+did not introduce it. Not fixed here: it spans four components, the correct fix (`return {...data}`
+or a deeper clone where nested fields are edited) needs a per-component judgement about depth, and
+the night before a deploy is the wrong time. See [[project_apollo_v4_freeze]].
+
+**Other follow-ups noted, not actioned:** bundle budgets now overrun by ~11kB initial / ~89kB
+total scripts and should be deliberately reset or investigated; Angular 22 emits new `NG0956`
+track-expression warnings on some `@for`/`*ngFor` usage; `@angular/animations` is deprecated in
+v22 in favour of `animate.enter`/`animate.leave`; `login-callback-guarded-root.spec.ts` and
+`save-token.mjs` both hardcode `localhost:4200`, which breaks port-isolated runs.
