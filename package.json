@@ -17,6 +17,8 @@
     "e2e:report": "playwright show-report",
     "e2e:fast": "playwright test --grep @mocked",
     "lint": "ng lint",
+    "fa:subset": "node build/fa-subset.mjs",
+    "fa:check": "node build/check-fa-icons.mjs",
     "test:delivery-script": "node --test docs/poc_delivery_schedule_sync/Code.test.mjs"
   },
   "private": true,
@@ -83,7 +85,9 @@
     "@types/node": "^20.19.0",
     "angular-eslint": "^21.4.0",
     "eslint": "^10.6.0",
+    "fontkit": "^2.0.4",
     "json-loader": "^0.5.7",
+    "subset-font": "^2.9.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.59.2"

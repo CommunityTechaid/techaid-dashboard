@@ -43,6 +43,9 @@ jobs:
       - name: Lint (errors gate; warnings are the documented legacy baseline)
         run: npx eslint . --quiet
 
+      - name: FontAwesome subset coverage
+        run: npm run fa:check
+
   build:
     runs-on: ubuntu-latest
     steps:

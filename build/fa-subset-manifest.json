@@ -1,0 +1,280 @@
+{
+  "fontAwesomeVersion": "7.3.1",
+  "generatedAt": "2026-09-22T08:37:18.860Z",
+  "icons": [
+    {
+      "name": "fa-address-book",
+      "codepoint": "f2b9"
+    },
+    {
+      "name": "fa-address-card",
+      "codepoint": "f2bb"
+    },
+    {
+      "name": "fa-angle-up",
+      "codepoint": "f106"
+    },
+    {
+      "name": "fa-arrow-left",
+      "codepoint": "f060"
+    },
+    {
+      "name": "fa-barcode",
+      "codepoint": "f02a"
+    },
+    {
+      "name": "fa-bars",
+      "codepoint": "f0c9"
+    },
+    {
+      "name": "fa-blog",
+      "codepoint": "f781"
+    },
+    {
+      "name": "fa-bolt",
+      "codepoint": "f0e7"
+    },
+    {
+      "name": "fa-box",
+      "codepoint": "f466"
+    },
+    {
+      "name": "fa-calendar",
+      "codepoint": "f133"
+    },
+    {
+      "name": "fa-check",
+      "codepoint": "f00c"
+    },
+    {
+      "name": "fa-check-circle",
+      "codepoint": "f058"
+    },
+    {
+      "name": "fa-check-double",
+      "codepoint": "f560"
+    },
+    {
+      "name": "fa-chevron-down",
+      "codepoint": "f078"
+    },
+    {
+      "name": "fa-chevron-up",
+      "codepoint": "f077"
+    },
+    {
+      "name": "fa-circle",
+      "codepoint": "f111"
+    },
+    {
+      "name": "fa-cogs",
+      "codepoint": "f085"
+    },
+    {
+      "name": "fa-crosshairs",
+      "codepoint": "f05b"
+    },
+    {
+      "name": "fa-desktop",
+      "codepoint": "f390"
+    },
+    {
+      "name": "fa-edit",
+      "codepoint": "f044"
+    },
+    {
+      "name": "fa-exclamation-triangle",
+      "codepoint": "f071"
+    },
+    {
+      "name": "fa-file-pdf",
+      "codepoint": "f1c1"
+    },
+    {
+      "name": "fa-filter",
+      "codepoint": "f0b0"
+    },
+    {
+      "name": "fa-forward",
+      "codepoint": "f04e"
+    },
+    {
+      "name": "fa-gift",
+      "codepoint": "f06b"
+    },
+    {
+      "name": "fa-globe",
+      "codepoint": "f0ac"
+    },
+    {
+      "name": "fa-hands",
+      "codepoint": "f2a7"
+    },
+    {
+      "name": "fa-hdd",
+      "codepoint": "f0a0"
+    },
+    {
+      "name": "fa-home",
+      "codepoint": "f015"
+    },
+    {
+      "name": "fa-info-circle",
+      "codepoint": "f05a"
+    },
+    {
+      "name": "fa-keyboard",
+      "codepoint": "f11c"
+    },
+    {
+      "name": "fa-laptop",
+      "codepoint": "f109"
+    },
+    {
+      "name": "fa-laugh-wink",
+      "codepoint": "f59c"
+    },
+    {
+      "name": "fa-level-down-alt",
+      "codepoint": "f3be"
+    },
+    {
+      "name": "fa-link",
+      "codepoint": "f0c1"
+    },
+    {
+      "name": "fa-list-ol",
+      "codepoint": "f0cb"
+    },
+    {
+      "name": "fa-microchip",
+      "codepoint": "f2db"
+    },
+    {
+      "name": "fa-minus",
+      "codepoint": "f068"
+    },
+    {
+      "name": "fa-mobile-alt",
+      "codepoint": "f3cd"
+    },
+    {
+      "name": "fa-paperclip",
+      "codepoint": "f0c6"
+    },
+    {
+      "name": "fa-plus",
+      "codepoint": "002b"
+    },
+    {
+      "name": "fa-plus-circle",
+      "codepoint": "f055"
+    },
+    {
+      "name": "fa-question-circle",
+      "codepoint": "f059"
+    },
+    {
+      "name": "fa-search",
+      "codepoint": "f002"
+    },
+    {
+      "name": "fa-sign-in-alt",
+      "codepoint": "f2f6"
+    },
+    {
+      "name": "fa-sign-out-alt",
+      "codepoint": "f2f5"
+    },
+    {
+      "name": "fa-sitemap",
+      "codepoint": "f0e8"
+    },
+    {
+      "name": "fa-spinner",
+      "codepoint": "f110"
+    },
+    {
+      "name": "fa-table",
+      "codepoint": "f0ce"
+    },
+    {
+      "name": "fa-tablet-alt",
+      "codepoint": "f3fa"
+    },
+    {
+      "name": "fa-times",
+      "codepoint": "f00d"
+    },
+    {
+      "name": "fa-times-circle",
+      "codepoint": "f057"
+    },
+    {
+      "name": "fa-toolbox",
+      "codepoint": "f552"
+    },
+    {
+      "name": "fa-trash-alt",
+      "codepoint": "f2ed"
+    },
+    {
+      "name": "fa-truck",
+      "codepoint": "f0d1"
+    },
+    {
+      "name": "fa-undo",
+      "codepoint": "f0e2"
+    },
+    {
+      "name": "fa-user",
+      "codepoint": "f007"
+    },
+    {
+      "name": "fa-user-lock",
+      "codepoint": "f502"
+    },
+    {
+      "name": "fa-user-plus",
+      "codepoint": "f234"
+    },
+    {
+      "name": "fa-users",
+      "codepoint": "f0c0"
+    },
+    {
+      "name": "fa-users-cog",
+      "codepoint": "f509"
+    },
+    {
+      "name": "fa-wifi",
+      "codepoint": "f1eb"
+    },
+    {
+      "name": "fa-window-close",
+      "codepoint": "f410"
+    }
+  ],
+  "codepointEscapes": [
+    "f104",
+    "f105",
+    "f107"
+  ],
+  "faces": [
+    {
+      "file": "fa-regular-400.woff2",
+      "before": 19512,
+      "after": 2528
+    },
+    {
+      "file": "fa-solid-900.woff2",
+      "before": 119488,
+      "after": 6356
+    },
+    {
+      "file": "fa-brands-400.woff2",
+      "before": 115420,
+      "after": 664
+    }
+  ]
+}
