@@ -33,7 +33,12 @@
               "quill-delta"
             ],
             "assets": [
-              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets",
+                "ignore": ["fonts/**"]
+              },
               "src/staticwebapp.config.json",
               "src/favicon.ico",
               "src/favicon-16x16.png",
