@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
@@ -104,6 +104,7 @@ query findAutocompleteDonorParents($term: String) {
     selector: 'donor-info',
     styleUrls: ['donor-info.scss'],
     templateUrl: './donor-info.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, NgbNavOutlet]
 })
 export class DonorInfoComponent implements OnInit, OnDestroy {

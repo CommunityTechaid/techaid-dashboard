@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -209,6 +209,7 @@ export interface DeviceAssignmentResult {
     selector: 'app-device-request-info',
     templateUrl: './device-request-info.component.html',
     styleUrls: ['./device-request-info.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, KitComponent, DeviceRequestAuditComponent, NgbNavOutlet]
 })
 export class DeviceRequestInfoComponent implements OnInit, OnDestroy {

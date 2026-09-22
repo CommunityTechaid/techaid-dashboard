@@ -1,4 +1,4 @@
-import { Component, TemplateRef } from '@angular/core';
+import { Component, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -50,6 +50,7 @@ mutation deleteReferringOrganisationContactNote($id: ID!) {
   </div>
 </ng-template>
 `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [DatePipe]
 })
 export class FormlyCustomReferringOrganisationContactNote extends FieldType {

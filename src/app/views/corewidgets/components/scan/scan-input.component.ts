@@ -8,6 +8,7 @@ import {
   output,
   signal,
   viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { parseScan, ScanEvent } from './scan-parser';
 import { ScanSession } from './scan-session';
@@ -71,6 +72,7 @@ import { ScanSession } from './scan-session';
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [
     `
       .scan-input {

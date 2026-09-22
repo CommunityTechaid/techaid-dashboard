@@ -6,7 +6,8 @@ import {
   HostListener,
   NgZone,
   Renderer2,
-  ViewChild, OnInit, AfterViewInit, OnDestroy
+  ViewChild, OnInit, AfterViewInit, OnDestroy,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { concat, from, Observable, of, Subject, Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -181,6 +182,7 @@ const QUERY_ADMIN_CONFIG = gql`
     selector: 'org-request',
     styleUrls: ['./org-request.scss'],
     templateUrl: './org-request.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule, PostcodeLocationStepComponent]
 })
 

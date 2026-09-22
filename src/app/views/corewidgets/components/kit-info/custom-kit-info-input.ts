@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
 
 import { ReactiveFormsModule } from '@angular/forms';
@@ -88,6 +88,7 @@ Ideally, the input field should be dynamically rendered using custom selector bu
     </div>
   </ng-template>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [ReactiveFormsModule, FormlyModule]
 })
 export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> implements OnInit, OnDestroy {

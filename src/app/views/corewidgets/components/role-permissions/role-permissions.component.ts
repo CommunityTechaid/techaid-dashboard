@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -55,6 +55,7 @@ query findAutocompletePermissions($appId: String!, $roleId: Int) {
     selector: 'role-permissions',
     styleUrls: ['role-permissions.scss'],
     templateUrl: './role-permissions.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [AppGridDirective_1]
 })
 export class RolePermissionsComponent implements OnInit, OnDestroy, AfterViewInit {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Apollo } from 'apollo-angular';
@@ -119,6 +119,7 @@ interface BookingGroup {
   standalone: true,
   imports: [DatePipe, RouterLink],
   templateUrl: './delivery-slots.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './delivery-slots.component.scss',
   // Stays on the Default strategy (hygiene 6.5, #114) — this component has no
   // filter-modal-only state to make OnPush worthwhile. Its host,

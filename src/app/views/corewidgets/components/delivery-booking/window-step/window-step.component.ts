@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { DeliveryDayAvailability, DeliveryWindow } from '../models';
 
 @Component({
@@ -6,6 +6,7 @@ import { DeliveryDayAvailability, DeliveryWindow } from '../models';
   standalone: true,
   imports: [],
   templateUrl: './window-step.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './window-step.component.scss',
 })
 export class WindowStepComponent {

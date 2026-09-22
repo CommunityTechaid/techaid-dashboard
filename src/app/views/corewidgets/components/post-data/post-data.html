@@ -44,6 +44,6 @@
 }
 @if (model) {
   <main role="main">
-    <div class="col-12" [innerHtml]="model?.content"></div>
+    <div class="col-12" [innerHtml]="$safeNavigationMigration(model?.content)"></div>
   </main>
 }

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, Output, EventEmitter, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { Subscription } from 'rxjs';
 
@@ -61,6 +61,7 @@ import { Subscription } from 'rxjs';
     </div>
   </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: []
 })
 export class GalleryInput extends FieldType implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -73,6 +73,7 @@ query typeaheadFindAllUsers($page: PaginationInput!, $term: String) {
     selector: 'role-users',
     styleUrls: ['role-users.scss'],
     templateUrl: './role-users.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [AppGridDirective_1, AppInitialComponent, RouterLink, ReactiveFormsModule, FormlyModule]
 })
 export class RoleUsersComponent implements OnInit, OnDestroy, AfterViewInit {

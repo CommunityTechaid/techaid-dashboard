@@ -10,6 +10,7 @@ import {
   signal,
   SimpleChanges,
   ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { combineLatest } from 'rxjs';
@@ -83,6 +84,7 @@ function ukPhoneValidator(control: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [ReactiveFormsModule, PlaceAutocompleteDirective],
   templateUrl: './details-step.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './details-step.component.scss',
 })
 export class DetailsStepComponent implements AfterViewInit, OnChanges {

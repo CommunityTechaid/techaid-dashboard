@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 
@@ -10,6 +10,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
     selector: "app-local-css",
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: '<span style="display:none" [innerHTML]="this.safeString"></span>'
 })
 export class AppLocalCSS implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import {
   concat,
   Subject,
@@ -65,6 +65,7 @@ const QUERY_ENTITY = gql`
     selector: 'device-request-audit-component',
     styleUrls: ['device-request-audit-component.scss'],
     templateUrl: './device-request-audit-component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [AppGridDirective_1, DatePipe]
 })
 export class DeviceRequestAuditComponent implements OnInit, OnDestroy {

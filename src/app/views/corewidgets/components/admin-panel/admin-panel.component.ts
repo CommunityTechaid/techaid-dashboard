@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FeatureFlagsComponent } from '../feature-flags/feature-flags.component';
@@ -23,6 +23,7 @@ import { DeliveryConfigurationComponent } from '../delivery-configuration/delive
   selector: 'admin-panel',
   styleUrls: ['admin-panel.component.scss'],
   templateUrl: './admin-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [RouterLink, FeatureFlagsComponent, BoroughAvailabilityComponent, DeliveryConfigurationComponent],
 })
 export class AdminPanelComponent implements OnInit {

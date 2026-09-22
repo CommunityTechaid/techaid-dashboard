@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -13,6 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms';
     <textarea class="form-control" #newNoteContent rows="4" [name]=key [formControl]="formControl" [placeholder]=to.placeholder (keyup.enter)="$event.stopPropagation()"></textarea>
   </div>
  `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [ReactiveFormsModule]
 })
 export class FormlyCustomCreateDeviceRequestNote extends FieldType  {

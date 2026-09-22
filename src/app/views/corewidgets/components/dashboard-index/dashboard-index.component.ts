@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
@@ -53,6 +53,7 @@ query findAll {
     selector: 'dashboard-index',
     styleUrls: ['dashboard-index.scss'],
     templateUrl: './dashboard-index.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NgbProgressbar, AppGridDirective_1, PostIndexComponent]
 })
 export class DashboardIndexComponent implements OnInit, OnDestroy {

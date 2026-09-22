@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
@@ -257,6 +257,7 @@ query findAutocompleteDeviceRequests($term: String, $numericterm: Long) {
     selector: 'kit-info',
     styleUrls: ['kit-info.scss'],
     templateUrl: './kit-info.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, KitAuditComponent, NgbNavOutlet]
 })
 export class KitInfoComponent implements OnInit, OnDestroy {

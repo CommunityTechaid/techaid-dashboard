@@ -1,4 +1,4 @@
-import { forwardRef, Component, ViewChild, ElementRef, HostListener, Input, Output, Renderer2, SimpleChanges, OnChanges } from '@angular/core';
+import { forwardRef, Component, ViewChild, ElementRef, HostListener, Input, Output, Renderer2, SimpleChanges, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, COMPOSITION_BUFFER_MODE, FormControl } from '@angular/forms';
 import { createNumberMask } from './createNumberMask';
 
@@ -35,6 +35,7 @@ export interface MaskOptions {
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     host: {
         '(input)': '_handleInput($event.target.value)'
     }

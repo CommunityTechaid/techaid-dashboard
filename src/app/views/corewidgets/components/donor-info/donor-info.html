@@ -28,7 +28,7 @@
         <div class="card shadow mb-4 mt-1">
           <div class="card-header py-3">
             <div class="d-flex justify-content-between">
-              <h6 class="m-0 font-weight-bold text-primary">{{entityName}} / <a href="#" [routerLink]="['/dashboard/donor-parents', model?.donorParent?.id]">{{model?.donorParent?.name}}</a>
+              <h6 class="m-0 font-weight-bold text-primary">{{entityName}} / <a href="#" [routerLink]="['/dashboard/donor-parents', $safeNavigationMigration(model?.donorParent?.id)]">{{model?.donorParent?.name}}</a>
             </h6>
           </div>
         </div>

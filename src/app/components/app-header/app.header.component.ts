@@ -1,7 +1,7 @@
 import { Select, Store } from '@ngxs/store';
 import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -24,6 +24,7 @@ import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
             border-bottom: 1px solid #f8f9fa;
         }
     `],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [AppInitialComponent, RouterLink, RouterLinkActive, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu]
 })
 export class AppHeader implements OnInit, OnDestroy {

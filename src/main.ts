@@ -1,6 +1,6 @@
 import { enableProdMode, APP_INITIALIZER, LOCALE_ID, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
 import localeEnGb from '@angular/common/locales/en-GB';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -48,7 +48,7 @@ bootstrapApplication(AppComponent, {
     { provide: LOCALE_ID, useValue: 'en-GB' },
     provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
     provideAnimations(),
-    provideHttpClient(withInterceptors([progressInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([progressInterceptor])),
     appStateProviders,
     ...graphqlProviders,
     ...appSharedProviders,

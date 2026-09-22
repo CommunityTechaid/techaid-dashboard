@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { BookingApiError, BookingApiService } from './booking-api.service';
 import {
   DeliveryBookingConfirmation,
@@ -55,6 +55,7 @@ const STEP_LABELS: Record<Exclude<Step, 'confirmation'>, string> = {
     ConfirmationStepComponent,
   ],
   templateUrl: './booking-flow.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './booking-flow.component.scss',
 })
 export class BookingFlowComponent {

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -90,6 +90,7 @@ query findAllOrgs(
     selector: 'device-request-component',
     styleUrls: ['device-request-component.component.scss'],
     templateUrl: './device-request-component.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit {

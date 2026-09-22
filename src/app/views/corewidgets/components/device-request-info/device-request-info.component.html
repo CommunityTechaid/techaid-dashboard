@@ -22,8 +22,8 @@
                 <div>
                   <h6 class="m-0 font-weight-bold text-primary">
                     {{requestId}} -
-                    <a href="#" [routerLink]="['/dashboard/referring-organisations', model?.referringOrganisationContact?.referringOrganisation?.id]">{{model?.referringOrganisationContact?.referringOrganisation?.name}}</a> /
-                    <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', model?.referringOrganisationContact?.id]">{{model?.referringOrganisationContact?.fullName}}</a>
+                    <a href="#" [routerLink]="['/dashboard/referring-organisations', $safeNavigationMigration(model?.referringOrganisationContact?.referringOrganisation?.id)]">{{model?.referringOrganisationContact?.referringOrganisation?.name}}</a> /
+                    <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', $safeNavigationMigration(model?.referringOrganisationContact?.id)]">{{model?.referringOrganisationContact?.fullName}}</a>
                   </h6>
                 </div>
                 <div>

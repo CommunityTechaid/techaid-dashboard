@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd, RouterOutlet, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
@@ -21,6 +21,7 @@ import { AuthenticationService } from '@app/shared/services/authentication.servi
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NgProgressbar, NgProgressRouter, NgProgressHttp, AppSidebar, AppHeader, RouterOutlet, RouterLink]
 })
 export class AppComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, Injectable, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, Injectable, OnInit, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { NgbDateAdapter, NgbDateStruct, NgbDate, NgbInputDatepicker, NgbDatepicker } from '@ng-bootstrap/ng-bootstrap';
 import { FieldType, FormlyModule } from '@ngx-formly/core';
 import { isValid, parse, format as fnsFormat, subYears } from 'date-fns';
@@ -139,6 +139,7 @@ class NgbDateNativeAdapter extends NgbDateAdapter<any> {
 
 </div>
 `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NgbInputDatepicker, ReactiveFormsModule, FormlyModule, NgbDatepicker]
 })
 export class DateInput extends FieldType implements OnInit {

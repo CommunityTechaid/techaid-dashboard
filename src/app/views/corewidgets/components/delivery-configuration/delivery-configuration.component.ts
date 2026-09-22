@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
@@ -129,6 +129,7 @@ const DAY_DEFS = [
   standalone: true,
   imports: [FormsModule, DatePipe],
   templateUrl: './delivery-configuration.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './delivery-configuration.component.scss',
 })
 export class DeliveryConfigurationComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, computed, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, computed, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
@@ -79,6 +79,7 @@ interface LastResult {
   imports: [RouterLink, DatePipe],
   providers: [ScanSession, KitScannerApiService],
   templateUrl: './kit-scanner.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./kit-scanner.component.scss'],
 })
 export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrategy {

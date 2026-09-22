@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { AppLocalCSS } from '../org-request/app-local-css.component';
@@ -19,6 +19,7 @@ import { BookingFlowComponent } from './booking-flow.component';
   standalone: true,
   imports: [BookingFlowComponent, AppLocalCSS],
   templateUrl: './delivery-booking.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './delivery-booking.component.scss',
 })
 export class DeliveryBookingComponent implements OnInit, OnDestroy {
