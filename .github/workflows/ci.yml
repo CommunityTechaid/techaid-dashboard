@@ -38,11 +38,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        # npm install, not npm ci: the Windows-maintained lockfile lacks some
-        # platform-optional entries, so npm ci rejects it on Linux ("Missing:
-        # @emnapi/core from lock file"). Deploy workflows use npm install for
-        # the same reason. Revisit if the lock is regenerated cross-platform.
-        run: npm install
+        run: npm ci
 
       - name: Lint (errors gate; warnings are the documented legacy baseline)
         run: npx eslint . --quiet
@@ -58,11 +54,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        # npm install, not npm ci: the Windows-maintained lockfile lacks some
-        # platform-optional entries, so npm ci rejects it on Linux ("Missing:
-        # @emnapi/core from lock file"). Deploy workflows use npm install for
-        # the same reason. Revisit if the lock is regenerated cross-platform.
-        run: npm install
+        run: npm ci
 
       - name: Production build
         run: npx ng build --configuration production
@@ -78,11 +70,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        # npm install, not npm ci: the Windows-maintained lockfile lacks some
-        # platform-optional entries, so npm ci rejects it on Linux ("Missing:
-        # @emnapi/core from lock file"). Deploy workflows use npm install for
-        # the same reason. Revisit if the lock is regenerated cross-platform.
-        run: npm install
+        run: npm ci
 
       - name: Install Playwright chromium
         run: npx playwright install chromium --with-deps
