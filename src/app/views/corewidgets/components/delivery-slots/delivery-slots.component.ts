@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Apollo } from 'apollo-angular';
@@ -120,6 +120,14 @@ interface BookingGroup {
   imports: [DatePipe, RouterLink],
   templateUrl: './delivery-slots.component.html',
   styleUrl: './delivery-slots.component.scss',
+  // Stays on the Default strategy (hygiene 6.5, #114) — this component has no
+  // filter-modal-only state to make OnPush worthwhile. Its host,
+  // distributions-and-deliveries-index, is OnPush, though: every async
+  // callback here that writes template-bound state calls cdr.markForCheck()
+  // regardless, because that call also walks up and marks the OnPush ancestor
+  // dirty, which is what actually gets this subtree back into the next CD
+  // cycle. Without it, none of this component's own async repaints happen
+  // once it's embedded under an OnPush host.
 })
 export class DeliverySlotsComponent implements OnInit, OnDestroy {
   loading = true;
@@ -138,6 +146,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
     private readonly toastr: ToastrService,
     private readonly featureFlags: FeatureFlagService,
     private readonly wardLookup: WardLookupService,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -153,10 +162,16 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
           next: ({ data }) => {
             this.groupBookings(data.deliveryBookingsAdmin || []);
             this.loading = false;
+            // Renders the bookings table (or keeps the "Loading…" state) via an
+            // OnPush ancestor — mark for check or the load never repaints.
+            this.cdr.markForCheck();
           },
           error: () => {
             this.loading = false;
             this.toastr.error('Could not load delivery slot settings');
+            // Flips `loading` off the same way the success path does — same
+            // OnPush-ancestor reasoning applies.
+            this.cdr.markForCheck();
           },
         }),
     );
@@ -225,6 +240,10 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
             b.outOfArea = !!pc && outOfAreaPostcodes.has(pc);
           }
         }
+        // Drives the "outside delivery area" chiclet, resolved by a separate
+        // async chain from the initial load — mark for check or it never
+        // appears under the OnPush ancestor.
+        this.cdr.markForCheck();
       }),
     );
   }
@@ -260,8 +279,15 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
             this.bookingGroups = this.bookingGroups.filter((g) => g.key !== group.key);
           }
           this.toastr.success('Booking deleted');
+          // Removes the row (and possibly the whole group) from the table —
+          // mark for check or the deleted booking sticks around under the
+          // OnPush ancestor. This is the site delivery-booking-admin-delete.spec.ts
+          // caught.
+          this.cdr.markForCheck();
         },
         error: (err) => {
+          // Only a toastr here — no template-bound state changes, so no
+          // markForCheck needed (toastr renders outside this component's view).
           this.toastr.error(err?.message || 'Could not delete booking');
         },
       });
@@ -292,6 +318,10 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
           }
           this.downloadCsv(this.buildCsv(orgById));
           this.exporting = false;
+          // Re-enables the Export CSV button (`exporting` gates [disabled] and
+          // its label) — mark for check or it stays stuck on "Exporting…"
+          // under the OnPush ancestor.
+          this.cdr.markForCheck();
         },
         error: () => {
           // A failed org lookup shouldn't cost the user the export — every other column is
@@ -299,6 +329,8 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
           this.downloadCsv(this.buildCsv(new Map()));
           this.exporting = false;
           this.toastr.warning('Exported without organisation names — the lookup failed.');
+          // Same `exporting` reset as the success path — same reasoning.
+          this.cdr.markForCheck();
         },
       }),
     );
