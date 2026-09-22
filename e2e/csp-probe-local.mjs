@@ -16,7 +16,16 @@
  * the exact headers from staticwebapp.config.json (read, not hardcoded, so it stays
  * honest if the CSP changes) and drives the public and an authenticated admin surface
  * against it, watching for CSP violations, stray Google Fonts requests, and confirming
- * the fonts/icons that matter actually loaded.
+ * the fonts/icons that matter actually loaded. It also walks the public delivery-booking
+ * flow (the only surface carrying Cloudflare Turnstile — script-src/frame-src both list
+ * challenges.cloudflare.com) far enough to confirm the widget script loads and its
+ * challenge iframe attaches, since a CSP mistake there would leave the public form
+ * unsubmittable while looking fine everywhere else.
+ *
+ * All page.goto calls use waitUntil: 'load' rather than 'networkidle': the UAT build's
+ * baked-in graphql_endpoint (api-testing.communitytechaid.org.uk) doesn't reject CORS as
+ * fast as the production build's does, so 'networkidle' can spin past its own timeout
+ * waiting for background XHRs (telemetry, retries) to go quiet.
  *
  * NOT part of CI (needs a pre-built dist/ and a bearer token for the admin check) and not
  * part of the default e2e run. Run it on demand, same triggers as csp-probe.mjs:
@@ -153,6 +162,39 @@ async function withCspTracking(page) {
   return { violations, googleFontRequests, pageErrors, failedRequests };
 }
 
+/**
+ * Stubs `**\/graphql` POSTs whose body matches one of `matchers` (checked in order,
+ * first match wins) with the given fulfil data; anything else passes through to the
+ * real (CORS-blocked, from this origin) network so the rest of the CSP/asset behaviour
+ * is still exercised against the genuine endpoint.
+ *
+ * `buildInfo` is always stubbed: BackendStatusService polls it app-wide (every route,
+ * not just authenticated ones) and gates the whole router-outlet behind a "Server is
+ * starting up" spinner until it resolves. Left unstubbed, EVERY page in this harness
+ * — including the two public ones — never renders its actual routed component at all,
+ * which would make every check below pass vacuously against a spinner.
+ */
+async function stubGraphQL(page, matchers = []) {
+  await page.route('**/graphql', async (route) => {
+    const postData = route.request().postData() ?? '';
+    if (postData.includes('buildInfo')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: { buildInfo: { version: 'local', commit: 'local', time: new Date().toISOString() } } }),
+      });
+      return;
+    }
+    for (const [test, data] of matchers) {
+      if (test(postData)) {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data }) });
+        return;
+      }
+    }
+    await route.continue();
+  });
+}
+
 async function drain(page, acc) {
   const pageViolations = await page.evaluate(() => window.__cspViolations ?? []);
   for (const v of pageViolations) {
@@ -204,7 +246,8 @@ async function main() {
     const context = await browser.newContext();
     const page = await context.newPage();
     const acc = await withCspTracking(page);
-    await page.goto(`${ORIGIN}/organisation-device-request`, { waitUntil: 'networkidle', timeout: 30_000 });
+    await stubGraphQL(page);
+    await page.goto(`${ORIGIN}/organisation-device-request`, { waitUntil: 'load', timeout: 30_000 });
     await page.waitForTimeout(2_000);
 
     const fontInfo = await page.evaluate(async () => {
@@ -234,16 +277,101 @@ async function main() {
     await context.close();
   }
 
-  // ── Public: delivery-booking page ───────────────────────────────────────
+  // ── Public: delivery-booking page — the only surface carrying Turnstile ────
+  //
+  // deliveryBookingVisibleGuard reads `!isProduction || live`, where `live` comes from
+  // the `featureFlagsPublic` GraphQL query. On a production build `isProduction` is
+  // baked true, so the guard's outcome hinges entirely on that query resolving with the
+  // flag on. From this unlisted origin it never would (real CORS rejection, same as
+  // every other GraphQL call in this harness) — so left unstubbed the guard fails
+  // CLOSED and redirects to /404 regardless of the flag's real value on a live deploy.
+  // Stub it (plus eligibility/availability, so the reference → day → window → details
+  // steps can actually be walked) to reach the page that matters.
   {
     const context = await browser.newContext();
     const page = await context.newPage();
     const acc = await withCspTracking(page);
-    await page.goto(`${ORIGIN}/delivery-booking`, { waitUntil: 'networkidle', timeout: 30_000 }).catch((e) => {
+
+    let turnstileApiResponse = null;
+    let turnstileIframeAttached = false;
+    const isTurnstileUrl = (u) => { try { return new URL(u).hostname === 'challenges.cloudflare.com'; } catch { return false; } };
+    page.on('response', (res) => {
+      if (isTurnstileUrl(res.url()) && new URL(res.url()).pathname === '/turnstile/v0/api.js') turnstileApiResponse = res;
+    });
+    page.on('frameattached', (f) => { if (isTurnstileUrl(f.url())) turnstileIframeAttached = true; });
+    page.on('framenavigated', (f) => { if (isTurnstileUrl(f.url())) turnstileIframeAttached = true; });
+
+    await stubGraphQL(page, [
+      [(d) => d.includes('featureFlagsPublic'), { featureFlagsPublic: [{ key: 'delivery-booking', enabled: true }] }],
+      [(d) => d.includes('deliveryBookingEligibilityPublic'), { deliveryBookingEligibilityPublic: { eligible: true, message: null } }],
+      [(d) => d.includes('deliveryAvailabilityPublic'), {
+        deliveryAvailabilityPublic: [{
+          date: '2099-01-05', dayOfWeek: 'MONDAY', dayLabel: 'Monday 5 January',
+          windows: [{ spotsRemaining: 3, window: { id: 'w1', name: '10 - 4', startTime: '10:00', endTime: '16:00' } }],
+        }],
+      }],
+    ]);
+
+    await page.goto(`${ORIGIN}/delivery-booking`, { waitUntil: 'load', timeout: 30_000 }).catch((e) => {
       results.push(`\nnavigation note: ${e.message}`);
     });
-    await page.waitForTimeout(2_000);
-    results.push(`\nFinal URL: ${page.url()} (gated by deliveryBookingVisibleGuard — /404 is expected here on a production build whose feature flag reads FALSE)`);
+    await page.waitForTimeout(1_000);
+    results.push(`\nFinal URL: ${page.url()}`);
+
+    let flowNote = '';
+    if (/\/404$/.test(page.url())) {
+      flowNote = 'Guard still redirected to /404 even with featureFlagsPublic stubbed enabled — investigate the guard, this is unexpected.';
+    } else {
+      // Step 1: reference. Step 2: day. Step 3: window. Step 4: details (Turnstile).
+      const refInput = page.locator('input[formcontrolname="ctaReference"]');
+      const refReached = await refInput.waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false);
+      if (refReached) {
+        await refInput.fill('4298');
+        await page.locator('button[type=submit]', { hasText: /continue/i }).click();
+        const dayReached = await page.locator('.day-row').first().waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false);
+        if (dayReached) {
+          await page.locator('.day-row').first().click();
+          const windowReached = await page.locator('.window-row').first().waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false);
+          if (windowReached) {
+            await page.locator('.window-row').first().click();
+            const detailsReached = await page.locator('.turnstile__widget').waitFor({ state: 'attached', timeout: 10_000 }).then(() => true).catch(() => false);
+            flowNote = `Reached details step (Turnstile host attached: ${detailsReached}).`;
+            if (detailsReached) {
+              // Exercise the address autocomplete field — a real request to the CF
+              // worker proxy (cta-places-proxy.community-techaid.workers.dev), allowed
+              // by connect-src. Typing, not selecting, is enough to trigger it.
+              const addressInput = page.locator('input[formcontrolname="addressLine1"]');
+              await addressInput.fill('12 Coldharbour Lane');
+              await page.waitForTimeout(1_000); // clears the 300ms debounce
+            }
+          } else {
+            flowNote = 'Day step reached but no .window-row appeared after clicking a day.';
+          }
+        } else {
+          flowNote = 'Reference step submitted but no .day-row appeared — availability stub may not match.';
+        }
+      } else {
+        flowNote = 'Reference-step input never appeared.';
+      }
+    }
+    results.push(flowNote);
+
+    // Give Turnstile's async render + iframe attach a moment even after the page's own
+    // 'load' event (Cloudflare's script does follow-up XHRs after it fires).
+    await page.waitForTimeout(5_000);
+
+    if (turnstileApiResponse) {
+      const status = turnstileApiResponse.status();
+      results.push(status >= 200 && status < 400
+        ? `✓ Turnstile api.js loaded (HTTP ${status}).`
+        : `✗ Turnstile api.js request returned HTTP ${status}.`);
+    } else {
+      results.push('✗ Turnstile api.js never loaded — no network response from challenges.cloudflare.com/turnstile/v0/api.js.');
+    }
+    results.push(turnstileIframeAttached
+      ? '✓ Turnstile challenge iframe attached.'
+      : '✗ No Turnstile challenge iframe attached.');
+
     await drain(page, acc);
     report('delivery-booking (/delivery-booking)', acc);
     await context.close();
@@ -260,28 +388,9 @@ async function main() {
     const context = await browser.newContext({ storageState });
     const page = await context.newPage();
     const acc = await withCspTracking(page);
+    await stubGraphQL(page);
 
-    // The app-shell gates all routed content behind a health-check (BackendStatusService
-    // polling `{ buildInfo }`) that shows a "Server is starting up" spinner until it
-    // succeeds. The real prod API (baked into this production build) does not CORS-allow
-    // http://localhost:4400, so left unstubbed this spins for up to 60s before falling
-    // into its error/Retry state. Stub ONLY that probe — every other GraphQL request (the
-    // actual device-request data) still goes to the real, CORS-blocked endpoint untouched,
-    // so we're still exercising the real CSP/asset behaviour end to end.
-    await page.route('**/graphql', async (route) => {
-      const postData = route.request().postData() ?? '';
-      if (postData.includes('buildInfo')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ data: { buildInfo: { version: 'local', commit: 'local', time: new Date().toISOString() } } }),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    await page.goto(`${ORIGIN}/dashboard/device-requests`, { waitUntil: 'networkidle', timeout: 30_000 });
+    await page.goto(`${ORIGIN}/dashboard/device-requests`, { waitUntil: 'load', timeout: 30_000 });
     await page.waitForTimeout(2_000);
     results.push(`\nFinal URL after auth nav: ${page.url()}`);
 
