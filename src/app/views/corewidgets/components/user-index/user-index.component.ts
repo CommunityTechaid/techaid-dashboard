@@ -39,7 +39,7 @@ query findAllUsers($page: PaginationInput!, $term: String) {
     selector: 'user-index',
     styleUrls: ['user-index.scss'],
     templateUrl: './user-index.html',
-    imports: [RouterLink, AppGridDirective_1, AppInitialComponent, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [RouterLink, AppGridDirective_1, AppInitialComponent, DatePipe]
 })
 export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(AppGridDirective) grid: AppGridDirective;
@@ -50,7 +50,6 @@ export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   selections = {};
   selected = [];
   entities = [];
-  model = {};
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 

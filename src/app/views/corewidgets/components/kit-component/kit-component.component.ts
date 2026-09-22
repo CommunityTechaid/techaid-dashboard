@@ -182,8 +182,6 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
   selections = {};
   selected = [];
   entities = [];
-  form: UntypedFormGroup = new UntypedFormGroup({});
-  model = {};
   ages = {
      0: 'I don\'t know',
      1: 'Less than a year',
