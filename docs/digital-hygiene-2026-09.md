@@ -41,10 +41,11 @@ Each batch = one checkpoint commit (or a small series), gated on
 |---|---|---|---|
 | **0** | ✅ **DONE** (`420f6e3`) In-range security/patch bumps | — (new) | low |
 | **1** | ✅ **DONE** (`aa00a92`, `6439bb8`) dead `createApi` modals deleted; Poppins self-hosted, Google Fonts out of the CSP | #120, #119 | low |
-| **2** | Linux-regenerated `package-lock.json`, switch all three workflows back to `npm ci` | #121, #157 | low, CI-visible |
-| **3** | FontAwesome 5→7 rename sweep | #116 | medium (visual) |
-| **4** | OnPush fan-out across the remaining index components | #114 | medium |
-| **5** | Upgrade train: Angular 22, apollo-angular 14 / graphql 17, NGXS 22, ng-bootstrap 21, ng-select 24, formly 8, TypeScript | #112 | high, multi-day |
+| **2** | ✅ **DONE** (`1b64b8d`) all three workflows back on `npm ci`; lockfile already fixed by batch 0 | #121, #157 | low, CI-visible |
+| **3** | ✅ **DONE** (`88a2609`, `214bd38`) FA 5→7 **and** subset to the 63 icons actually used | #116 | medium (visual) |
+| **4** | ✅ **DONE** (`d7b95e6`, `a666293`, `6aa37f1`) all 12 components + the `delivery-slots` child fix | #114 | medium |
+| **5a** | ✅ **DONE** (`bcf6d08`) apollo-angular 14, graphql 17, formly 8, ngx-progressbar 14 — on Angular 21 | #112 | medium |
+| **5b** | ✅ **DONE** (`92e7387`) Angular 22.1.7, TypeScript 6.0.3, NGXS 22, ng-bootstrap 21, ng-select 24, ngx-quill 31, cdk 22, zone.js 0.16 | #112 | high |
 
 **Deferred out of this pass** (recorded, not attempted):
 
@@ -115,3 +116,30 @@ large error backlog and deserves its own scoped issue. Recorded here as a candid
 | 2026-09-22 | 0 | Angular → 21.2.23 (build/cli 21.2.24) + 8 in-range refreshes. `npm audit` 24→8; the four target Angular advisories cleared. Prod build clean. 69 packages moved, 11 added, 21 net lockfile entries removed (nested `@typescript-eslint` dedup). Needed one `npm install --legacy-peer-deps` to get past an ERESOLVE deadlock across the 11 exact-pinned Angular peers — **lockfile therefore generated with peer validation off; re-verify in Batch 2**. Incidentally added `@emnapi/core`/`@emnapi/runtime` 1.11.3 and moved `@emnapi/wasi-threads` to 1.2.3 — exactly the three complaints in #157's `npm ci` failure. |
 | 2026-09-22 | — | e2e baseline re-established: minted a CI-style fake token (`ci.yml`'s own step) into `e2e/.auth/user.json`; `npm run e2e:fast` **141 passed, 0 failed**. Confirms the earlier 42 failures were the stale token alone, and that `auth0-spa-js` 2.22→2.27 did not move the cache format `save-token.mjs` writes. |
 | 2026-09-22 | 1 | #120: dead `createApi` templates removed from `kit-component.html` and `user-index.html` plus orphaned `form`/`model` members and `user-index`'s now-unused `FormlyModule`/`ReactiveFormsModule` component imports. #119: Poppins self-hosted — 12 woff2 (6 combos × latin/latin-ext, 108 kB incl. OFL), `unicode-range` preserved so browsers still fetch only what they need; `fonts.googleapis.com` out of `style-src`, `fonts.gstatic.com` out of `font-src`. Both: prod build clean, e2e 141/141. |
+| 2026-09-22 | 3 | FA 5.15.4→7.3.1. Five `sb-admin.css` rules hardcoded `'Font Awesome 5 Free'` and would have rendered blank glyphs silently. All 63 glyph tokens validated against FA7 metadata; 0 renames needed, 22 survive via alias. |
+| 2026-09-22 | 3b | **Extra, not originally planned:** subset FA to the icons actually used. Webfonts **254K → 9.5K**. `build/fa-subset.mjs` resolves `fa-*` classes *and* literal `content:"XXXX"` escapes (3 codepoints appear only as escapes — a class-only scan would have dropped them). `build/check-fa-icons.mjs` runs in CI; proved to fail on an unlisted icon and pass once reverted. |
+| 2026-09-22 | 4 | OnPush across all 12 components. `kit-index` needed **5** `markForCheck` sites, not the pilot's 2. `distributions-and-deliveries-index` regressed e2e until `delivery-slots.component.ts` (a Default-strategy child whose subtree an OnPush ancestor silently skips) also got 6 `markForCheck` calls — only 3 of which any spec covers. |
+| 2026-09-22 | tests | 15 `@mocked` specs added (`6b22e58`, `343a0e2`). The 12 ajax-callback repaint tests and the 3 `delivery-slots` tests are red-proved. **Filter-apply is unguardable**: `NgbModal.open(templateRef)` attaches modal content as its own root view via `ApplicationRef.attachView`, so it ticks on zone stabilisation regardless of the host's OnPush state — the badge updates even with `applyFilter()`'s `markForCheck` deleted. Those calls stay because they become load-bearing under zoneless (#115). |
+| 2026-09-22 | 5a | apollo-angular 14 / graphql 17 / formly 8 / ngx-progressbar 14 on Angular 21. Only ngx-progressbar needed app code (11→14 is an API rewrite; `app-ngx-progress-http.ts` deleted for the package's own `ngx-progressbar/http`). Both fragile seams verified intact: Apollo `.map`+spread clones, Formly `resetFieldOnHide` still defaults true with per-field opt-out. `@angular/cdk` declared — npm had been silently resolving it to 22.x, the real cause of batch 0's ERESOLVE. |
+| 2026-09-22 | 5b | Angular 22.1.7 + TypeScript 6.0.3. `ng update` added `ChangeDetectionStrategy.Eager` to 59 files to pin pre-v22 default CD. **TS 6 flipped `strict` to default-true** — `strict: false` set explicitly in `tsconfig.base.json` to hold behaviour (~60-error cascade otherwise). Budget overage grew to +11kB initial / +89kB total. New `NG0956` track-expression warnings noted, not fixed. |
+| 2026-09-22 | cleanup | `@angular/platform-browser-dynamic` dropped (zero imports; app is standalone). `.npmrc` added — **`ngx-toastr` 20.0.5 is the newest release and still peers on Angular ^21**, and `npm ci` DOES validate peers: verified in Docker, ERESOLVE without the file, exit 0 with it. Without `.npmrc` every workflow and both deploys would fail. |
+| 2026-09-22 | sweep | Final gate on the combined tree: lint 0 errors / 1327 warnings (baseline), production **and** uat builds clean, `fa:check` OK, e2e **156/156**, check-skips 0 skipped / 0 flaky. |
+
+## Deferred out of this pass — recorded, with evidence
+
+- **#113** native Angular tables replacing jQuery DataTables — XL, unchanged.
+- **#115** zoneless — now the natural next step: OnPush is complete, and the filter-apply
+  `markForCheck` calls that are inert today become necessary the moment zone.js stops ticking.
+- **#117** Auth0 token cache out of localStorage — unchanged; the e2e harness rework is still the real cost.
+- **#118** quill 2.0.3 XSS — still no upstream fix.
+- **Strict mode is off project-wide.** TypeScript 6 default-flipped `strict` to true and we
+  explicitly set it back to `false` to keep the upgrade tractable. `strictTemplates` is also
+  explicitly `false`. This is now *recorded* in the tsconfigs rather than merely absent — a
+  better starting point for a scoped "turn strict on" issue. No issue filed yet.
+- **FontAwesome alias debt** — 22 of 63 icons resolve only via v5→v6 aliases
+  (`fa-search`→`magnifying-glass` etc.). Works today; will break at FA8.
+- **`login-callback-guarded-root.spec.ts` hardcodes `localhost:4200`**, so it fails on any
+  other port. Found when running the suite on 4300 for parallel isolation. `save-token.mjs`
+  hardcodes the same origin in the storage state it writes.
+- **`npm run lint` via the RTK proxy reports ~2600 warnings; `npx ng lint` reports 1327.**
+  The proxy appears to double-count. Direct invocation is authoritative.
