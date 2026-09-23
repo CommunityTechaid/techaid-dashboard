@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.0.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.7.0...v2.0.0) (2026-09-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* upgrade to Angular 22 and complete the 2026 digital hygiene pass ([#218](https://github.com/CommunityTechaid/techaid-dashboard/issues/218))
+
+### Features
+
+* upgrade to Angular 22 and complete the 2026 digital hygiene pass ([#218](https://github.com/CommunityTechaid/techaid-dashboard/issues/218)) ([066e156](https://github.com/CommunityTechaid/techaid-dashboard/commit/066e1566915de21addec49f631804409cfd39c10))
+
+
+### Bug Fixes
+
+* stale table search results, Devices-tab search by id, frozen Formly models ([#222](https://github.com/CommunityTechaid/techaid-dashboard/issues/222)) ([2e14ab1](https://github.com/CommunityTechaid/techaid-dashboard/commit/2e14ab1801f59386ee29344812981654b3065b5e))
+
+
+### Performance Improvements
+
+* prune FontAwesome CSS, reset JS budget, cross-browser UAT suite, robust CSP probe ([#223](https://github.com/CommunityTechaid/techaid-dashboard/issues/223)) ([5aee48d](https://github.com/CommunityTechaid/techaid-dashboard/commit/5aee48d9a053d6dcc160ce8d061ee2dbaa8abfb9))
+
 ## [1.7.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.6.1...v1.7.0) (2026-09-15)
 
 
