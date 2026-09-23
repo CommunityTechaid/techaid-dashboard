@@ -181,7 +181,9 @@ test.describe('BUG-07: Row click does not turn row opaque blue', () => {
       return;
     }
 
-    await firstRow.click();
+    // Click a cell with no link in it: a bare row click lands on the row's centre, which
+    // (depending on column widths) can be a referee/org link that navigates away instead.
+    await firstRow.locator('td:not(:has(a))').first().click();
 
     // After clicking, the row cells must still have readable text colour
     // (not white-on-blue from DataTables selected). We check that the
@@ -189,8 +191,17 @@ test.describe('BUG-07: Row click does not turn row opaque blue', () => {
     // that DataTables 2.x injects for .selected rows.
     const firstCell = firstRow.locator('td').first();
     const boxShadow = await firstCell.evaluate(el => getComputedStyle(el).boxShadow);
-    // The opaque DT selection is "inset 0 0 0 9999px rgb(13, 110, 253)"
-    expect(boxShadow).not.toContain('9999px');
+    // The opaque DT selection is "inset 0 0 0 9999px rgb(13, 110, 253)". The fix
+    // (src/styles.css, BUG-07 block) keeps the 9999px inset but softens it to
+    // rgba(13, 110, 253, 0.12) — so assert on OPACITY, not on the inset existing.
+    // (This test skipped on a stale selector until 2026-09-23 and had never run
+    // against a selected row; the old `not.toContain('9999px')` contradicted the fix.)
+    await expect(firstRow, 'the click must actually select the row, or this checks nothing').toHaveClass(/\bselected\b/);
+    const rgba = boxShadow.match(/rgba?\(\s*\d+,\s*\d+,\s*\d+(?:,\s*([\d.]+))?\)/);
+    const alpha = rgba ? (rgba[1] === undefined ? 1 : Number(rgba[1])) : 0;
+    expect(alpha, `row selection must be a light tint, got box-shadow "${boxShadow}"`).toBeLessThan(0.5);
+    const color = await firstCell.evaluate(el => getComputedStyle(el).color);
+    expect(color, 'selected-row text must not turn white').not.toBe('rgb(255, 255, 255)');
   });
 });
 
