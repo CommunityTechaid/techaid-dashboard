@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 @Component({
     selector: 'app-initial',
     styleUrls: ['./app-initial.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
     <svg  class="img" xmlns="http://www.w3.org/2000/svg"
         pointer-events="none"

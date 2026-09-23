@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -197,6 +197,7 @@ export interface ExceptionRow {
   standalone: true,
   imports: [FormsModule, NgSelectComponent],
   templateUrl: './borough-availability.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './borough-availability.component.scss',
 })
 export class BoroughAvailabilityComponent implements OnInit, OnDestroy {

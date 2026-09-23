@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
@@ -17,6 +17,7 @@ import { environment } from '@env/environment';
           padding-top: 5px;
         }
     `],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [RouterLink, RouterLinkActive]
 })
 

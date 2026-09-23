@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, ViewChild, ViewContainerRef, ChangeDetectionStrategy } from '@angular/core';
 import { FieldWrapper, FormlyModule } from '@ngx-formly/core';
 
 import { NgbTooltip, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -35,6 +35,7 @@ import { NgbTooltip, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
     }
     </div>
     `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NgbTooltip, NgbPopover, FormlyModule]
 })
 export class AppFormlyWrapperFormField extends FieldWrapper {

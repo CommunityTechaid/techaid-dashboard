@@ -33,7 +33,12 @@
               "quill-delta"
             ],
             "assets": [
-              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets",
+                "ignore": ["fonts/**"]
+              },
               "src/staticwebapp.config.json",
               "src/favicon.ico",
               "src/favicon-16x16.png",
@@ -50,7 +55,7 @@
               "node_modules/ngx-lightbox/lightbox.css",
               "node_modules/@ng-select/ng-select/themes/default.theme.css",
               "node_modules/ngx-toastr/toastr.css",
-              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "src/fontawesome-subset.css",
               "src/styles.css",
               "src/sb-admin.css"
             ],

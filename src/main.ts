@@ -1,6 +1,6 @@
 import { enableProdMode, APP_INITIALIZER, LOCALE_ID, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
 import localeEnGb from '@angular/common/locales/en-GB';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -9,7 +9,7 @@ import { provideRouter, withRouterConfig } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideToastr } from 'ngx-toastr';
 import { provideAuth0 } from '@auth0/auth0-angular';
-import { NgProgressModule } from 'ngx-progressbar';
+import { provideNgProgressHttp, progressInterceptor } from 'ngx-progressbar/http';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { provideFormlyConfig } from '@ngx-formly/core';
 import { QuillModule } from 'ngx-quill';
@@ -22,7 +22,6 @@ import { appStateProviders } from '@app/state/state.module';
 import { graphqlProviders } from './app/graphql.module';
 import { appRoutes } from './app/app.routing.module';
 import { FORMLYCONFIG, formlyProviders } from './app/shared/modules/formly';
-import { provideNgProgressHttp } from '@app/shared/utils/app-ngx-progress-http';
 import { dateRangeValidator, configServiceFactory } from './app/app.module';
 import { FormlyCustomNote } from './app/views/corewidgets/components/kit-info/custom-notes';
 import { FormlyCustomCreateNote } from './app/views/corewidgets/components/kit-info/custom-create-note';
@@ -49,7 +48,7 @@ bootstrapApplication(AppComponent, {
     { provide: LOCALE_ID, useValue: 'en-GB' },
     provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
     provideAnimations(),
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withXhr(), withInterceptors([progressInterceptor])),
     appStateProviders,
     ...graphqlProviders,
     ...appSharedProviders,
@@ -81,12 +80,11 @@ bootstrapApplication(AppComponent, {
       positionClass: 'toast-top-right',
       preventDuplicates: true,
     }),
-    ...provideNgProgressHttp(),
+    provideNgProgressHttp({}),
     importProvidersFrom(
       FormsModule,
       ReactiveFormsModule,
       NgbModule,
-      NgProgressModule,
       FormlyBootstrapModule,
       QuillModule.forRoot(),
     ),

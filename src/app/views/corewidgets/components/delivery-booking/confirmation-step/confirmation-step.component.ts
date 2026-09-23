@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DeliveryBookingConfirmation } from '../models';
 
 @Component({
@@ -6,6 +6,7 @@ import { DeliveryBookingConfirmation } from '../models';
   standalone: true,
   imports: [],
   templateUrl: './confirmation-step.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './confirmation-step.component.scss',
 })
 export class ConfirmationStepComponent {

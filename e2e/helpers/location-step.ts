@@ -57,7 +57,7 @@ export async function advancePastLocationStep(
     await postcodeInput.fill(postcode);
     await page.getByRole('button', { name: 'Check' }).click();
     await expect(page.getByTestId('postcode-covered')).toBeVisible({ timeout: 15_000 });
-    await page.getByRole('button', { name: "That's right" }).click();
+    await page.getByRole('button', { name: 'Submit a request' }).click();
     await expect(postcodeInput).toHaveCount(0);
     return 'streamlined';
   }

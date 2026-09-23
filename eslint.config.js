@@ -62,6 +62,14 @@ module.exports = defineConfig([
       // prove is never reassigned across a try/catch; not worth a targeted
       // source edit for a single site.
       "prefer-const": "warn",
+      // The Angular 22 `ng update` migration schematic added an explicit
+      // `changeDetection: ChangeDetectionStrategy.Eager` to every component
+      // that previously left it unset, to preserve pre-v22 default behavior.
+      // That explicit annotation is now visible to this rule (it wasn't
+      // before, since "unset" isn't an opt-out). Rolling these onto OnPush
+      // is the donor-index-style rollout tracked in #114, not a byproduct of
+      // a framework bump — downgrade to warning rather than mass-convert.
+      "@angular-eslint/prefer-on-push-component-change-detection": "warn",
     },
   },
   {

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -40,6 +40,7 @@ query findPost($slug: String) {
     selector: 'post-data',
     styleUrls: ['post-data.scss'],
     templateUrl: './post-data.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [RouterLink]
 })
 export class PostDataComponent implements OnInit, OnDestroy {

@@ -66,7 +66,7 @@
         </div>
         @if (content?.content) {
           <div class="row justify-content-center">
-            <div [innerHtml]="content?.content"></div>
+            <div [innerHtml]="$safeNavigationMigration(content?.content)"></div>
           </div>
         }
         @if (!wardSubmitted) {

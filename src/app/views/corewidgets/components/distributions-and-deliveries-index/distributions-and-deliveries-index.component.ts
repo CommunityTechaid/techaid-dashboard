@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -76,7 +76,22 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
     selector: 'distributions-and-deliveries-index',
     templateUrl: './distributions-and-deliveries-index.component.html',
     styleUrls: ['./distributions-and-deliveries-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, DeliverySlotsComponent]
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, DeliverySlotsComponent],
+    // OnPush (hygiene 6.5 fan-out, #114). Host-bound state changes via the
+    // DataTables ajax callback, applyFilter() (also reached from the week/status
+    // quick-filter buttons, which are in the host template and don't strictly
+    // need it, but applyFilter marks for check unconditionally to stay correct
+    // for the filter-modal path too) and the deliveryBookingVisibility()
+    // subscription, which gates the Delivery Slots tab and resolves from an
+    // HTTP call outside the host template's event tree.
+    //
+    // The template also embeds <app-delivery-slots>, which stays on the
+    // Default strategy and runs its own independent Apollo queries/mutations.
+    // An OnPush ancestor that's never marked dirty skips that whole subtree on
+    // the child's own async callbacks — see delivery-slots.component.ts, which
+    // now calls cdr.markForCheck() at each of its own async state-assignment
+    // sites for exactly this reason (caught by delivery-booking-admin-delete.spec.ts).
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -87,10 +102,15 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     private modalService: NgbModal,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private featureFlags: FeatureFlagService
+    private featureFlags: FeatureFlagService,
+    private cdr: ChangeDetectorRef
   ) {
     this.featureFlags.deliveryBookingVisibility().subscribe(state => {
       this.deliveryBookingVisible = state.visible;
+      // Gates the Delivery Slots tab in the host template. This resolves
+      // outside the host template's event tree — mark for check or the tab
+      // never appears under OnPush.
+      this.cdr.markForCheck();
     });
   }
   @ViewChild(AppGridDirective) grid: AppGridDirective;
@@ -386,6 +406,9 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    // Called from the filter modal, whose view lives in NgbModal's window —
+    // the host's filterCount badge won't repaint under OnPush without this.
+    this.cdr.markForCheck();
     this.table.ajax.reload(null, true);
   }
 
@@ -463,7 +486,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
           numericterm: isNaN(Number(params['search']['value'])) ? -1 : Number(params['search']['value']),
           filter: this.filter
         };
-        console.log('vars', vars);
+
         queryRef.refetch(vars).then(res => {
           let data: any = {};
           if (res.data) {
@@ -483,6 +506,10 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
               return { ...d, types, kitIds };
             });
           }
+          // The rows are rendered by Angular from `entities`, but this promise
+          // resolves outside the host template's event tree — mark for check
+          // or the table body never repaints under OnPush.
+          this.cdr.markForCheck();
 
           callback({
             draw: params.draw,

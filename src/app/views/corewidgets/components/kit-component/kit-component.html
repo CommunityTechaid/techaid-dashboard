@@ -105,25 +105,6 @@
   </div>
 </div>
 
-<ng-template #createApi let-c="close" let-d="dismiss">
-  <div class="modal-header">
-    <h4 class="modal-title">New Device</h4>
-  </div>
-  <div class="modal-body">
-    <form [formGroup]="form">
-      <formly-form [options]="options" [form]="form" [model]="model" [fields]="fields">
-      </formly-form>
-    </form>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-    <button type="button" class="btn btn-primary btn-sm"
-      (click)="createEntity(form.value); c('Close click')">
-      CREATE
-    </button>
-  </div>
-</ng-template>
-
 <ng-template #filters let-c="close" let-d="dismiss">
   <div class="modal-header">
     <h4 class="modal-title">Device Filters</h4>

@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import {
   concat,
   Subject,
@@ -152,14 +152,22 @@ const FIND_USERS = gql`
     selector: 'kit-component',
     styleUrls: ['kit-component.scss'],
     templateUrl: './kit-component.html',
-    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe],
+    // OnPush (hygiene 6.5 fan-out, #114). Host-bound state changes only via the
+    // DataTables ajax callback and applyFilter(), so both call cdr.markForCheck().
+    // The user$ and deviceRequests$ subscriptions, and the FIND_USERS lookup in
+    // ngAfterViewInit, only ever populate formly field `items`/`hide` consumed by
+    // the filter modal — NgbModal hosts that view in its own Default-strategy
+    // window component, so it repaints on its own.
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private cdr: ChangeDetectorRef
   ) {}
   @Input()
   set where(where: any) {
@@ -182,8 +190,6 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
   selections = {};
   selected = [];
   entities = [];
-  form: UntypedFormGroup = new UntypedFormGroup({});
-  model = {};
   ages = {
      0: 'I don\'t know',
      1: 'Less than a year',
@@ -436,6 +442,9 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
     this.filterCount = count;
     this.filterModel = data;
     this.total = 0;
+    // Called from the filter modal, whose view lives in NgbModal's window —
+    // the host's filterCount badge won't repaint under OnPush without this.
+    this.cdr.markForCheck();
     this.table.ajax.reload(null, false);
   }
 
@@ -576,6 +585,10 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
                 return d.donor ? { ...d, donorName: this.donorName(d.donor) } : d;
               });
             }
+            // The rows are rendered by Angular from `entities`, but this promise
+            // resolves outside the host template's event tree — mark for check
+            // or the table body never repaints under OnPush.
+            this.cdr.markForCheck();
 
             callback({
               draw: params.draw,

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -70,14 +70,20 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
     selector: 'referee-component',
     templateUrl: './referring-organisation-contact-component.component.html',
     styleUrls: ['./referring-organisation-contact-component.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe],
+    // OnPush (hygiene 6.5 fan-out, #114): host-bound state changes only via the
+    // DataTables ajax callback and applyFilter(), so both call cdr.markForCheck().
+    // createEntity()'s mutation subscribe reloads the table immediately, so its
+    // repaint is covered by the ajax callback's own markForCheck.
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReferringOrganisationContactComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private cdr: ChangeDetectorRef
   ) {
 
   }
@@ -245,6 +251,9 @@ export class ReferringOrganisationContactComponent implements OnInit, OnDestroy,
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    // Called from the filter modal, whose view lives in NgbModal's window —
+    // the host's filterCount badge won't repaint under OnPush without this.
+    this.cdr.markForCheck();
     this.table.ajax.reload(null, false);
   }
 
@@ -329,6 +338,10 @@ export class ReferringOrganisationContactComponent implements OnInit, OnDestroy,
             }
             this.entities = data.content;
           }
+          // The rows are rendered by Angular from `entities`, but this promise
+          // resolves outside the host template's event tree — mark for check
+          // or the table body never repaints under OnPush.
+          this.cdr.markForCheck();
 
           callback({
             draw: params.draw,

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgIf, NgFor } from '@angular/common';
@@ -33,6 +33,7 @@ const PLACES_PROXY = 'https://cta-places-proxy.community-techaid.workers.dev';
         </ul>
     </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [ReactiveFormsModule, NgIf, NgFor]
 })
 export class PlaceInput extends FieldType implements OnInit, OnDestroy {

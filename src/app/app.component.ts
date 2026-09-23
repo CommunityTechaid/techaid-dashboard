@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd, RouterOutlet, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
@@ -9,7 +9,9 @@ import { Title } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
 import { AppInsightsService } from '@app/shared/services/app-insights.service';
 import { ConfigService } from '@app/shared/services/config.service';
-import { NgProgressComponent } from 'ngx-progressbar';
+import { NgProgressbar } from 'ngx-progressbar';
+import { NgProgressRouter } from 'ngx-progressbar/router';
+import { NgProgressHttp } from 'ngx-progressbar/http';
 import { AppSidebar } from './components/app-sidebar/app.sidebar.component';
 import { AppHeader } from './components/app-header/app.header.component';
 import { BackendStatusService, BackendStatus } from '@app/shared/services/backend-status.service';
@@ -19,7 +21,8 @@ import { AuthenticationService } from '@app/shared/services/authentication.servi
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    imports: [NgProgressComponent, AppSidebar, AppHeader, RouterOutlet, RouterLink]
+    changeDetection: ChangeDetectionStrategy.Eager,
+    imports: [NgProgressbar, NgProgressRouter, NgProgressHttp, AppSidebar, AppHeader, RouterOutlet, RouterLink]
 })
 export class AppComponent implements OnInit, OnDestroy {
   private actionSub: Subscription;

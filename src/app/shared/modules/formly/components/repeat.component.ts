@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FieldArrayType, FormlyModule } from '@ngx-formly/core';
 
 
@@ -43,6 +43,7 @@ import { FieldArrayType, FormlyModule } from '@ngx-formly/core';
       }
       <hr />
       `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [FormlyModule]
 })
   export class RepeatTypeComponent extends FieldArrayType {

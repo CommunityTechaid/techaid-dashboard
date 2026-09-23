@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { NgClass } from '@angular/common';
 
@@ -16,6 +16,7 @@ import { NgClass } from '@angular/common';
       </button>
     </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NgClass]
 })
 export class FormlyFieldButton extends FieldType implements OnInit  {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { NgSelectComponent } from '@ng-select/ng-select';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -19,6 +19,7 @@ import { ReactiveFormsModule } from '@angular/forms';
         placeholder="{{this.to.placeholder}}">
     </ng-select>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NgSelectComponent, ReactiveFormsModule]
 })
 export class ChoiceInput extends FieldType implements AfterViewInit {

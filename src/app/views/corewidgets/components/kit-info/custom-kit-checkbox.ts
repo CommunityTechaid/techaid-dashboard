@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
 
 import { ReactiveFormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms';
     <input type="checkbox" class="kit-checkbox-input" [formControl]="formControl" [formlyAttributes]="field">
   </div>
   `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [ReactiveFormsModule, FormlyModule]
 })
 export class FormlyCustomKitCheckboxType extends FieldType<FieldTypeConfig> {

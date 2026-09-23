@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { concat, Subject, of, Observable, Subscription, from } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -258,7 +258,15 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
     selector: 'kit-index',
     styleUrls: ['kit-index.scss'],
     templateUrl: './kit-index.html',
-    imports: [RouterLink, AppGridDirective_1, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [RouterLink, AppGridDirective_1, ReactiveFormsModule, FormlyModule, DatePipe],
+    // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111).
+    // Unlike the pilot, this page also has state assigned from two more async
+    // sources that don't roll up into a subsequent ajax reload, so each gets
+    // its own cdr.markForCheck(): the scanner/bulk-edit flag & user
+    // subscriptions in ngOnInit, and lookupIdList()'s own promise (a second,
+    // independent async chain from the DataTables ajax callback). See the
+    // call sites below for why.
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -266,7 +274,8 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     private modalService: NgbModal,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private featureFlags: FeatureFlagService
+    private featureFlags: FeatureFlagService,
+    private cdr: ChangeDetectorRef
   ) {
 
   }
@@ -713,6 +722,9 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
+    // Called from the filter modal, whose view lives in NgbModal's window —
+    // the host's filterCount badge won't repaint under OnPush without this.
+    this.cdr.markForCheck();
     // The matched set is filter-dependent (archived especially), so re-check it.
     if (this.idListIds.length) {
       this.lookupIdList();
@@ -861,6 +873,10 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       this.idListMatched.forEach(k => { found[k.id] = true; });
       this.idListMissingIds = requested.filter(id => !found[id]);
       this.idListLookupFailed = false;
+      // The ID-list banner is rendered by Angular from this state, but this
+      // promise resolves independently of the DataTables ajax callback's own
+      // markForCheck — mark for check or it never repaints under OnPush.
+      this.cdr.markForCheck();
     }, () => {
       if (this.idListIds !== requested) {
         return;
@@ -868,6 +884,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       this.idListMatched = [];
       this.idListMissingIds = [];
       this.idListLookupFailed = true;
+      this.cdr.markForCheck();
     });
   }
 
@@ -945,6 +962,10 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       this.featureFlags.isEnabled(UPDATE_SCANNER_FLAG).subscribe((enabled) => {
         this.updateScannerFlagOn = enabled;
         this.canUseScanner = enabled || this.canBulkEdit;
+        // Gates the Update Scanner link in the host template. This resolves
+        // outside the host template's event tree — mark for check or the
+        // link never appears under OnPush.
+        this.cdr.markForCheck();
       })
     );
 
@@ -957,6 +978,10 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
         this.donorParentField.hide = !this.isDonorParentAdmin;
         this.donorParentTypeField.hide = !this.isDonorParentAdmin;
         this.filterOptions.detectChanges?.(this.filterFields[0]);
+        // Gates the Bulk Update toggle and the Update Scanner link in the
+        // host template. This resolves outside the host template's event
+        // tree — mark for check or those controls never appear under OnPush.
+        this.cdr.markForCheck();
       })
     );
 
@@ -1162,6 +1187,10 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
             }));
             this.allPageSelected = this.entities.length > 0 && this.entities.every(e => !!this.selections[e.id]);
           }
+          // The rows are rendered by Angular from `entities`, but this promise
+          // resolves outside the host template's event tree — mark for check
+          // or the table body never repaints under OnPush.
+          this.cdr.markForCheck();
 
           callback({
             draw: params.draw,

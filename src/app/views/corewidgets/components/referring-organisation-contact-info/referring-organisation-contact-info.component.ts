@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -92,6 +92,7 @@ query findAutocompleteReferringOrganisations($term: String) {
     selector: 'app-referring-organisation-contact-info',
     templateUrl: './referring-organisation-contact-info.component.html',
     styleUrls: ['./referring-organisation-contact-info.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, NgbNavOutlet]
 })
 export class ReferringOrganisationContactInfoComponent implements OnInit, OnDestroy {

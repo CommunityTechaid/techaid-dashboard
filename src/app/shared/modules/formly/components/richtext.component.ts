@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { QuillEditorComponent } from 'ngx-quill';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -15,6 +15,7 @@ import { ReactiveFormsModule } from '@angular/forms';
         </quill-editor>
       </div>
       `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [QuillEditorComponent, ReactiveFormsModule]
 })
 export class RichTextComponent extends FieldType {}

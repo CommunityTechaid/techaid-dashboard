@@ -699,10 +699,15 @@ test.describe('BUG-19: Device-request filter info label has correct totals', () 
       return;
     }
     await firstOption.click();
-    // Close the ng-dropdown overlay — it stays "active" after selection and can
-    // obscure the modal footer Filter button, making the next click time out.
-    await page.keyboard.press('Escape');
-    await page.locator('.ng-dropdown-panel').waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
+    // Close the ng-dropdown overlay if it is still open — it can obscure the modal
+    // footer Filter button. Only press Escape while the panel is visible: since
+    // ng-select 24, Escape on a CLOSED select propagates to NgbModal and dismisses
+    // the whole dialog (upstream change so parent overlays can handle Escape).
+    const panel = page.locator('.ng-dropdown-panel');
+    if (await panel.isVisible()) {
+      await page.keyboard.press('Escape');
+    }
+    await panel.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
 
     // Click the "Filter" button in the modal footer to apply and close.
     // The button's text content is multi-line ("\n      Filter") so an anchored

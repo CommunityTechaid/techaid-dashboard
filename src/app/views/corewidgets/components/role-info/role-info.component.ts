@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -27,6 +27,7 @@ query findRole($id: String!) {
     selector: 'role-info',
     styleUrls: ['role-info.scss'],
     templateUrl: './role-info.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, RoleUsersComponent, RolePermissionsComponent, NgbNavOutlet]
 })
 export class RoleInfoComponent implements OnInit, OnDestroy {

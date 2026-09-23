@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType, FormlyModule } from '@ngx-formly/core';
 import { InputMaskComponent } from '../../../components/input-mask/input-mask.component';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms';
         '[class.d-inline-flex]': 'to.addonLeft || to.addonRight',
         '[class.custom-file]': 'to.addonLeft || to.addonRight',
     },
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [InputMaskComponent, ReactiveFormsModule, FormlyModule]
 })
 export class MaskedInput extends FieldType {

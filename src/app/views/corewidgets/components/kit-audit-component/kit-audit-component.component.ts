@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import {
   concat,
   Subject,
@@ -64,6 +64,7 @@ const QUERY_ENTITY = gql`
     selector: 'kit-audit-component',
     styleUrls: ['kit-audit-component.scss'],
     templateUrl: './kit-audit-component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [AppGridDirective_1, DatePipe]
 })
 export class KitAuditComponent implements OnInit, OnDestroy {

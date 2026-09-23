@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -134,6 +134,7 @@ interface FlagRow extends FlagCopy {
   standalone: true,
   imports: [DatePipe],
   templateUrl: './feature-flags.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './feature-flags.component.scss',
 })
 export class FeatureFlagsComponent implements OnInit, OnDestroy {

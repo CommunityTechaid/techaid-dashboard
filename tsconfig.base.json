@@ -3,6 +3,7 @@
   "compilerOptions": {
     "module": "es2020",
     "outDir": "app/out-tsc",
+    "ignoreDeprecations": "6.0",
     "baseUrl": "./src/",
     "sourceMap": true,
     "declaration": false,
@@ -10,6 +11,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "target": "es2015",
+    "strict": false,
     "typeRoots": [
       "node_modules/@types"
     ], 
