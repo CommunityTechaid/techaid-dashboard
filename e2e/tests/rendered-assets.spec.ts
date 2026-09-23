@@ -112,6 +112,30 @@ async function expectGlyphsCovered(page: Page, fonts: Map<Face, Buffer>, minGlyp
     .filter(g => !hasInkedGlyph(parsed.get(g.face)!, g.codePoint))
     .map(g => `${g.where} U+${g.codePoint.toString(16)} (${g.face})`);
   expect(missing, 'icons missing from the FontAwesome subset').toEqual([]);
+
+  // fontawesome-subset.css is pruned to the icons in use, so an icon whose `.fa-name` rule
+  // was dropped has NO content at all — it never reaches the glyph check above. Catch it here.
+  expect(await blankIcons(page), 'icon elements with no glyph (rule pruned from fontawesome-subset.css?)').toEqual([]);
+}
+
+/** Icon elements (a FontAwesome style class plus an fa-<name> class) whose ::before is empty. */
+async function blankIcons(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const STYLE = /^(fa|fas|far|fab|fa-solid|fa-regular|fa-brands)$/;
+    const MODIFIER = /^fa-(fw|sm|xs|lg|xl|2xs|2xl|[1-9]0?x|spin|pulse|beat|fade|bounce|shake|flip.*|rotate.*|inverse|stack.*|border|pull-.*|li|ul|width-auto)$/;
+    const out: string[] = [];
+    for (const el of Array.from(document.querySelectorAll('i, span'))) {
+      const classes = Array.from(el.classList);
+      if (!classes.some(c => STYLE.test(c))) continue;
+      const iconClasses = classes.filter(c => c.startsWith('fa-') && !STYLE.test(c) && !MODIFIER.test(c));
+      if (!iconClasses.length) continue;
+      const content = getComputedStyle(el, '::before').content;
+      if (!content || content === 'none' || content === 'normal' || content === '""') {
+        out.push(`${el.tagName.toLowerCase()}.${classes.join('.')}`);
+      }
+    }
+    return out;
+  });
 }
 
 async function loadedFamilies(page: Page): Promise<string[]> {

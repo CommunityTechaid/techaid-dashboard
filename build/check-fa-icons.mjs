@@ -49,8 +49,18 @@ function main() {
     }
   }
 
+  // The committed CSS is pruned to the icons in use (fa-subset.mjs), so a newly used
+  // icon also needs its `.fa-name{--fa:...}` rule, not just its glyph.
+  const committedCss = fs.readFileSync(path.join(srcDir, 'fontawesome-subset.css'), 'utf8');
+  const committedRules = buildCodepointMap(committedCss);
+  for (const icon of icons) {
+    if (!committedRules.has(icon.name)) {
+      missing.push(`${icon.name} (no rule in src/fontawesome-subset.css)`);
+    }
+  }
+
   if (missing.length > 0) {
-    console.error('fa:check: the following glyphs are used in src/ but are not in the committed FontAwesome subset:');
+    console.error('fa:check: the following icons are used in src/ but are not in the committed FontAwesome subset:');
     for (const m of missing) console.error(`  ${m}`);
     console.error('\nRun "npm run fa:subset" and commit the regenerated fonts/manifest.');
     process.exit(1);

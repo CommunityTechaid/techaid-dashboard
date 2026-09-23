@@ -1,7 +1,8 @@
 // Subsets @fortawesome/fontawesome-free's three webfonts down to the glyphs
-// this app actually uses, and repoints fontawesome-subset.css at the result.
-// FontAwesome's CSS rules are kept byte-identical; only @font-face src URLs
-// change. See CLAUDE.md / the task this shipped under for the full rationale.
+// this app actually uses, and writes fontawesome-subset.css to match: @font-face
+// src URLs are repointed at the subset files, and the per-icon rules
+// (`.fa-name{--fa:"XXXX"}`, ~2,000 of them) are pruned to the icons in use.
+// Every other rule is kept byte-identical.
 //
 // Usage: node build/fa-subset.mjs
 
@@ -73,7 +74,7 @@ function main() {
       fs.copyFileSync(path.join(faDir, 'webfonts', file), path.join(outDir, file));
     }
 
-    writeCss(allCss, cssOutPath);
+    writeCss(allCss, cssOutPath, new Set(icons.map((i) => i.name)));
     writeManifest(manifestPath, faVersion, icons, codepointEscapes, faceResults);
 
     console.log(`fa-subset: wrote ${cssOutPath} and manifest ${manifestPath}`);
@@ -103,15 +104,25 @@ function verifySubset(fileLabel, originalBuf, subsetBuf, neededCodepoints) {
   console.log(`  ${fileLabel}: verified ${checked} codepoint(s) present in subset cmap`);
 }
 
-function writeCss(allCss, outPath) {
-  // Repoint only the three @font-face src URLs we actually subset. Every
-  // other byte — including the legacy v5/v4-compat @font-face blocks and
-  // every other rule — is preserved verbatim.
+function writeCss(allCss, outPath, usedNames) {
+  // Repoint only the three @font-face src URLs we actually subset (plus the
+  // passthrough file). The legacy v5/v4-compat @font-face blocks and every
+  // non-icon rule are preserved verbatim.
   let css = allCss;
   for (const file of [...FACES.map((f) => f.file), ...PASSTHROUGH_FILES]) {
     const re = new RegExp(`url\\(\\.\\./webfonts/${file}\\)`, 'g');
     css = css.replace(re, `url(./assets/fonts/fa/${file})`);
   }
+  // Prune the per-icon rules to the icons in use. They are ~85% of all.min.css
+  // (~75 kB of the initial styles bundle) and a rule for an icon whose glyph is
+  // not in the subset font could only ever render a blank box anyway. A rule is
+  // kept whole (all its alias selectors) if ANY of its names is used. Same
+  // pattern buildCodepointMap() parses, so the two cannot disagree.
+  const before = css.length;
+  css = css.replace(/((?:\.fa-[a-z0-9-]+,?)+)\{--fa:"([^"]*)"\}/g, (rule, selectors) =>
+    selectors.split(',').some((sel) => usedNames.has(sel.slice(1))) ? rule : '',
+  );
+  console.log(`  fontawesome-subset.css: ${before} -> ${css.length} bytes (icon rules pruned to ${usedNames.size} used name(s))`);
   fs.writeFileSync(outPath, css);
 }
 
