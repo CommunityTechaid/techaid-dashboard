@@ -16,7 +16,7 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
-import { warnIfFormInvalid } from '@app/shared/utils';
+import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorParentWhereInput!) {
@@ -80,6 +80,9 @@ mutation createDonorParent($data: CreateDonorParentInput!) {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DonorParentIndexComponent implements OnInit, OnDestroy, AfterViewInit {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
+
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -286,6 +289,7 @@ export class DonorParentIndexComponent implements OnInit, OnDestroy, AfterViewIn
       processing: true,
       searching: true,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
@@ -304,6 +308,9 @@ export class DonorParentIndexComponent implements OnInit, OnDestroy, AfterViewIn
         };
 
         queryRef.refetch(vars).then(res => {
+          if (this.draws.isStale(drawToken)) {
+            return;
+          }
           let data: any = {};
           if (res.data) {
             data = res['data']['donorParentsConnection'];

@@ -13,7 +13,7 @@ import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from '
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
-import { warnIfFormInvalid } from '@app/shared/utils';
+import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllReferringOrgContacts(
@@ -78,6 +78,8 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReferringOrganisationContactComponent implements OnInit, OnDestroy, AfterViewInit {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
 
   constructor(
     private modalService: NgbModal,
@@ -311,6 +313,7 @@ export class ReferringOrganisationContactComponent implements OnInit, OnDestroy,
       searching: true,
       stateDuration: -1,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
@@ -330,6 +333,9 @@ export class ReferringOrganisationContactComponent implements OnInit, OnDestroy,
         };
 
         queryRef.refetch(vars).then(res => {
+          if (this.draws.isStale(drawToken)) {
+            return;
+          }
           let data: any = {};
           if (res.data) {
             data = res['data']['referringOrganisationContactsConnection'];

@@ -8,7 +8,7 @@ import {
   from,
 } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
+import { KIT_TYPES, warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -162,6 +162,8 @@ const FIND_USERS = gql`
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
 
   constructor(
     private modalService: NgbModal,
@@ -555,6 +557,7 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
       searching: true,
       stateDuration: -1,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
@@ -575,6 +578,9 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
 
         queryRef.refetch(vars).then(
           (res) => {
+            if (this.draws.isStale(drawToken)) {
+              return;
+            }
             let data: any = {};
             if (res.data) {
               data = res['data']['kitsConnection'];

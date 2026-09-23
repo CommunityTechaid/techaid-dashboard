@@ -12,7 +12,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from '
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { warnIfFormInvalid } from '@app/shared/utils';
+import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
 
 
 const QUERY_PERMISSIONS = gql`
@@ -127,6 +127,9 @@ query findAutocompletePermissions($appId: String!, $userId: Int) {
     imports: [AppGridDirective_1, NgbPopover, ReactiveFormsModule, FormlyModule]
 })
 export class UserPermissionsComponent implements OnInit, OnDestroy, AfterViewInit {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
+
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -293,6 +296,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy, AfterViewIni
       processing: true,
       searching: true,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
@@ -312,6 +316,9 @@ export class UserPermissionsComponent implements OnInit, OnDestroy, AfterViewIni
 
 
         queryRef.refetch(vars).then(res => {
+          if (this.draws.isStale(drawToken)) {
+            return;
+          }
           let data: any = {};
           if (res && res.data) {
             data = res['data']?.['user']?.['permissions'] || { totalElements: 0, content: [] };

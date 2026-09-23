@@ -11,7 +11,7 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
-import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, LatestDraw } from '@app/shared/utils';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
@@ -94,6 +94,8 @@ query findAllOrgs(
     imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
 })
 export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
 
   constructor(
     private modalService: NgbModal,
@@ -337,6 +339,7 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
       processing: true,
       searching: true,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
@@ -356,6 +359,9 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
         };
 
         queryRef.refetch(vars).then(res => {
+          if (this.draws.isStale(drawToken)) {
+            return;
+          }
           let data: any = {};
           if (res.data) {
             data = res['data']['deviceRequestConnection'];

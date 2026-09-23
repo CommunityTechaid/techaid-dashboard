@@ -28,6 +28,7 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { DatePipe } from '@angular/common';
+import { LatestDraw } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
   query getAuditTrail($id: Long!) {
@@ -68,6 +69,8 @@ const QUERY_ENTITY = gql`
     imports: [AppGridDirective_1, DatePipe]
 })
 export class KitAuditComponent implements OnInit, OnDestroy {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
 
   constructor(
     private modalService: NgbModal,
@@ -177,6 +180,7 @@ export class KitAuditComponent implements OnInit, OnDestroy {
       searching: false,
       stateDuration: -1,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
@@ -195,6 +199,9 @@ export class KitAuditComponent implements OnInit, OnDestroy {
 
         queryRef.refetch(vars).then(
           (res) => {
+            if (this.draws.isStale(drawToken)) {
+              return;
+            }
             let data: any = {};
             if (res.data) {
               data = res['data']['kitAudits'];
