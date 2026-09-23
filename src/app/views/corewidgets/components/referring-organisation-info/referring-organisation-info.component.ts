@@ -167,8 +167,9 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
   }
 
   private normalizeData(data: any) {
-    // Not currently doing any normalization
-    return data;
+    // Apollo v4 freezes query results; Formly writes into its model, so bind a copy (#219).
+    // Every form key is a top-level scalar, so a shallow copy is enough.
+    return { ...data };
   }
 
   private fetchData() {

@@ -20,6 +20,7 @@ import { FeatureFlagService, UPDATE_SCANNER_FLAG } from '@app/shared/services/fe
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { LatestDraw } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -269,6 +270,8 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
 
   constructor(
     private modalService: NgbModal,
@@ -1153,6 +1156,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       processing: true,
       searching: true,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
@@ -1175,6 +1179,9 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
         };
 
         queryRef.refetch(vars).then(res => {
+          if (this.draws.isStale(drawToken)) {
+            return;
+          }
           let data: any = {};
           if (res.data) {
             data = res['data']['kitsConnection'];

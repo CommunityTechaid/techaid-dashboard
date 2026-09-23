@@ -48,12 +48,10 @@ import { UatGraphQLClient } from '../helpers/graphql';
  * unrelated worker; capturing right before the search that consumes it shrinks that window
  * to a single round trip.
  *
- * REAL APP BUG FOUND while writing this spec: kit-component.component.ts's QUERY_ENTITY
- * (~line 36) ANDs `model` and `location` together instead of OR-ing them, and omits `id`/
- * `serialNo` entirely (unlike kit-index's own, correctly OR-based, search) — see the
- * comment at its call site below. Its search box is effectively non-functional for any
- * single real-world term; phase (c) is skipped there rather than asserting a search that
- * cannot pass by design. Not fixed here — this spec's task is coverage, not that repair.
+ * APP BUG FOUND while writing this spec: kit-component.component.ts's QUERY_ENTITY searched
+ * only `model` and `location`, never `id`/`serialNo`, so the Devices tab could not find a kit
+ * by the id badge it displays. Fixed 2026-09-23; the kit-component test's phase (c) searches
+ * by id and is the regression cover.
  */
 
 function getBearerToken(): string {
@@ -266,12 +264,10 @@ test.describe('OnPush live repaint — child tables embedded in detail pages (li
     await kitsResp;
 
     await expect(page.locator(`#${tableId}`)).toBeVisible({ timeout: 10_000 });
-    // skipTermSearch: real app bug (see header comment) — kit-component's own QUERY_ENTITY
-    // ANDs `model` and `location` together and never references `id`/`serialNo`, unlike
-    // kit-index's correctly OR-based search, so no single real-world term can ever match.
-    // Phases (a)/(b) still prove the live repaint; phase (c) would only prove a bug exists,
-    // which isn't this spec's job.
-    await assertSearchRepaint(page, tableId, 0, `zzqx-no-match-${Date.now()}`, true);
+    // Anchor 0 is the kit's id badge, so phase (c) searches by id — which kit-component's
+    // QUERY_ENTITY did not search until 2026-09-23 (only model/location). This phase is the
+    // regression cover for that fix.
+    await assertSearchRepaint(page, tableId, 0, `zzqx-no-match-${Date.now()}`);
   });
 
   test('donor-component (Individual Donors tab on a donor-parent detail page): repaints on live reload', async ({ page }) => {

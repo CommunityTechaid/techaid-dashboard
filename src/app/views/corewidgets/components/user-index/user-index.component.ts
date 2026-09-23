@@ -15,6 +15,7 @@ import { RouterLink } from '@angular/router';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { DatePipe } from '@angular/common';
 import { AppInitialComponent } from '../../../../shared/components/app-initial/app-initial.component';
+import { LatestDraw } from '@app/shared/utils';
 
 const QUERY_USERS = gql`
 query findAllUsers($page: PaginationInput!, $term: String) {
@@ -46,6 +47,9 @@ query findAllUsers($page: PaginationInput!, $term: String) {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
+
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -119,6 +123,7 @@ export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       processing: true,
       searching: true,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: sorted[`${this.dtOptions.columns[o.column].data}`],
@@ -136,6 +141,9 @@ export class UserIndexComponent implements OnInit, OnDestroy, AfterViewInit {
         };
 
         queryRef.refetch(vars).then(res => {
+          if (this.draws.isStale(drawToken)) {
+            return;
+          }
           let data: any = {};
           if (res.data) {
             data = res['data']['users'];

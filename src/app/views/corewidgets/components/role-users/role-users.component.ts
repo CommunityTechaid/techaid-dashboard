@@ -12,7 +12,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from '
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { warnIfFormInvalid } from '@app/shared/utils';
+import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
 
 import { AppInitialComponent } from '../../../../shared/components/app-initial/app-initial.component';
 import { RouterLink } from '@angular/router';
@@ -77,6 +77,9 @@ query typeaheadFindAllUsers($page: PaginationInput!, $term: String) {
     imports: [AppGridDirective_1, AppInitialComponent, RouterLink, ReactiveFormsModule, FormlyModule]
 })
 export class RoleUsersComponent implements OnInit, OnDestroy, AfterViewInit {
+  /** Drops out-of-order ajax responses — see LatestDraw. */
+  private readonly draws = new LatestDraw();
+
   @ViewChild(AppGridDirective) grid: AppGridDirective;
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
@@ -232,6 +235,7 @@ export class RoleUsersComponent implements OnInit, OnDestroy, AfterViewInit {
       processing: true,
       searching: true,
       ajax: (params: any, callback) => {
+        const drawToken = this.draws.start();
         const sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
@@ -250,6 +254,9 @@ export class RoleUsersComponent implements OnInit, OnDestroy, AfterViewInit {
         };
 
         queryRef.refetch(vars).then(res => {
+          if (this.draws.isStale(drawToken)) {
+            return;
+          }
           let data: any = {};
           if (res && res.data) {
             data = res['data']?.['role']?.['users'] || { totalElements: 0, content: [] };
