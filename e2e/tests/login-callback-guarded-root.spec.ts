@@ -50,12 +50,14 @@ async function stubAuth0(page: Page): Promise<Tenant> {
     const url = new URL(route.request().url());
     nonce = url.searchParams.get('nonce') ?? '';
     const state = url.searchParams.get('state') ?? '';
-    // Stand in for "user logs in successfully" — bounce straight back with an auth code.
+    // Stand in for "user logs in successfully" — bounce straight back with an auth code, to
+    // whatever redirect_uri the app asked for (so this runs on any port or deployed origin).
+    const callback = new URL(url.searchParams.get('redirect_uri') ?? '/');
+    callback.searchParams.set('code', `e2e_code_${authorizeHits}`);
+    callback.searchParams.set('state', state);
     await route.fulfill({
       status: 302,
-      headers: {
-        Location: `http://localhost:4200/?code=e2e_code_${authorizeHits}&state=${encodeURIComponent(state)}`,
-      },
+      headers: { Location: callback.toString() },
       body: '',
     });
   });
@@ -146,7 +148,7 @@ test.describe('Auth0 login callback through the guarded root @mocked', () => {
   // Clean context: no cached session, so the guard has to drive a real login.
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('landing on / logs in once and renders the dashboard', async ({ page }) => {
+  test('landing on / logs in once and renders the dashboard', async ({ page, baseURL }) => {
     test.setTimeout(90_000);
     const tenant = await stubAuth0(page);
     await stubGraphQL(page);
@@ -155,7 +157,7 @@ test.describe('Auth0 login callback through the guarded root @mocked', () => {
 
     // The tiles only render once the guard has admitted us AND findAll resolved.
     await expect(page.getByText('42', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
-    await expect(page).toHaveURL('http://localhost:4200/');
+    await expect(page).toHaveURL(new URL('/', baseURL).toString());
 
     expect(tenant.authorizeHits()).toBe(1); // >1 would be a login loop
     expect(tenant.tokenHits()).toBe(1);
@@ -170,6 +172,10 @@ test.describe('Auth0 login callback through the guarded root @mocked', () => {
     // before appState.target forwards it on. That transit is the risk being pinned here.
     await page.goto('/dashboard/devices');
 
+    // The URL already reads /dashboard/devices BEFORE the guard redirects to Auth0, so a URL
+    // assertion alone can pass on the pre-login page (it did against the fast deployed build).
+    // Wait for the round trip to complete first, then check where it landed.
+    await expect.poll(() => tenant.tokenHits(), { timeout: 30_000 }).toBe(1);
     await expect(page).toHaveURL(/\/dashboard\/devices$/, { timeout: 30_000 });
     expect(tenant.authorizeHits()).toBe(1);
   });
