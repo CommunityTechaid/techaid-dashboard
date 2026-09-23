@@ -79,7 +79,11 @@ test.describe('BUG-02: Device record pages load', () => {
     await page.goto('/dashboard/devices');
 
     // Wait for at least one device link in the table
-    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    // [routerLink] is an Angular property binding, not a plain HTML attribute — it never
+    // renders as `routerlink="..."` in the DOM. RouterLink's host binding instead resolves
+    // and writes the real navigable `href` (e.g. "/dashboard/devices/123"), so that's what
+    // must be matched.
+    const linkLocator = page.locator('table tbody tr td a[href*="/dashboard/devices/"]');
     const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
       .then(() => true).catch(() => false);
 
@@ -154,17 +158,32 @@ test.describe('BUG-07: Row click does not turn row opaque blue', () => {
 
   test('clicking a device-request row does not cover text with solid blue', async ({ page }) => {
     await withAuthInterceptor(page);
+    // device-request-index leaves DataTables' OWN native placeholder <tbody> (the
+    // "No matching records found" zeroRecords row) in the DOM alongside the SEPARATE
+    // Angular-rendered <tbody> that holds the real rows — the app always returns
+    // `data: []` to DataTables itself (Angular owns row rendering from `entities`), so
+    // DataTables' native empty-tbody is inserted on every draw and simply never removed.
+    // A bare `table tbody tr` locator's .first() matches THAT placeholder row, not a
+    // real data row, causing a false "No rows" skip even with data present. Scope to a
+    // row that actually contains a record link instead.
+    const dataLoaded = page.waitForResponse(
+      r => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('findAllDeviceRequests') && r.status() === 200,
+      { timeout: 20_000 },
+    ).catch(() => null);
     await page.goto('/dashboard/device-requests');
     await expect(page.locator('table.dataTable')).toBeVisible({ timeout: 15_000 });
+    await dataLoaded;
 
-    const firstRow = page.locator('table tbody tr').first();
+    const firstRow = page.locator('table tbody tr', { has: page.locator('td a[href]') }).first();
     await firstRow.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
     if (!(await firstRow.isVisible())) {
       test.skip(true, 'No rows — skipping');
       return;
     }
 
-    await firstRow.click();
+    // Click a cell with no link in it: a bare row click lands on the row's centre, which
+    // (depending on column widths) can be a referee/org link that navigates away instead.
+    await firstRow.locator('td:not(:has(a))').first().click();
 
     // After clicking, the row cells must still have readable text colour
     // (not white-on-blue from DataTables selected). We check that the
@@ -172,8 +191,17 @@ test.describe('BUG-07: Row click does not turn row opaque blue', () => {
     // that DataTables 2.x injects for .selected rows.
     const firstCell = firstRow.locator('td').first();
     const boxShadow = await firstCell.evaluate(el => getComputedStyle(el).boxShadow);
-    // The opaque DT selection is "inset 0 0 0 9999px rgb(13, 110, 253)"
-    expect(boxShadow).not.toContain('9999px');
+    // The opaque DT selection is "inset 0 0 0 9999px rgb(13, 110, 253)". The fix
+    // (src/styles.css, BUG-07 block) keeps the 9999px inset but softens it to
+    // rgba(13, 110, 253, 0.12) — so assert on OPACITY, not on the inset existing.
+    // (This test skipped on a stale selector until 2026-09-23 and had never run
+    // against a selected row; the old `not.toContain('9999px')` contradicted the fix.)
+    await expect(firstRow, 'the click must actually select the row, or this checks nothing').toHaveClass(/\bselected\b/);
+    const rgba = boxShadow.match(/rgba?\(\s*\d+,\s*\d+,\s*\d+(?:,\s*([\d.]+))?\)/);
+    const alpha = rgba ? (rgba[1] === undefined ? 1 : Number(rgba[1])) : 0;
+    expect(alpha, `row selection must be a light tint, got box-shadow "${boxShadow}"`).toBeLessThan(0.5);
+    const color = await firstCell.evaluate(el => getComputedStyle(el).color);
+    expect(color, 'selected-row text must not turn white').not.toBe('rgb(255, 255, 255)');
   });
 });
 
@@ -213,7 +241,11 @@ test.describe('BUG-15: Device hardware details row is laid out horizontally', ()
     await withAuthInterceptor(page);
     await page.goto('/dashboard/devices');
 
-    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    // [routerLink] is an Angular property binding, not a plain HTML attribute — it never
+    // renders as `routerlink="..."` in the DOM. RouterLink's host binding instead resolves
+    // and writes the real navigable `href` (e.g. "/dashboard/devices/123"), so that's what
+    // must be matched.
+    const linkLocator = page.locator('table tbody tr td a[href*="/dashboard/devices/"]');
     const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
       .then(() => true).catch(() => false);
 
@@ -263,7 +295,11 @@ test.describe('BUG-16: Device status radio blocks have the correct coloured back
     await withAuthInterceptor(page);
     await page.goto('/dashboard/devices');
 
-    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    // [routerLink] is an Angular property binding, not a plain HTML attribute — it never
+    // renders as `routerlink="..."` in the DOM. RouterLink's host binding instead resolves
+    // and writes the real navigable `href` (e.g. "/dashboard/devices/123"), so that's what
+    // must be matched.
+    const linkLocator = page.locator('table tbody tr td a[href*="/dashboard/devices/"]');
     const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
       .then(() => true).catch(() => false);
 
@@ -298,7 +334,11 @@ test.describe('BUG-16: Device status radio blocks have the correct coloured back
     await withAuthInterceptor(page);
     await page.goto('/dashboard/devices');
 
-    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    // [routerLink] is an Angular property binding, not a plain HTML attribute — it never
+    // renders as `routerlink="..."` in the DOM. RouterLink's host binding instead resolves
+    // and writes the real navigable `href` (e.g. "/dashboard/devices/123"), so that's what
+    // must be matched.
+    const linkLocator = page.locator('table tbody tr td a[href*="/dashboard/devices/"]');
     const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
       .then(() => true).catch(() => false);
 
@@ -312,7 +352,12 @@ test.describe('BUG-16: Device status radio blocks have the correct coloured back
     await page.goto(href);
     await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
 
+    // KIT_STATUS_LABELS is a fixed, data-independent 11-option list, so all 11
+    // .form-check blocks always render eventually — but formly renders the field
+    // asynchronously once the kit's own data query resolves, after ul.nav-tabs is
+    // already visible. Wait for the 11th block before counting, instead of racing it.
     const blocks = page.locator('.kit-status .form-check');
+    await blocks.nth(10).waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
     const blockCount = await blocks.count();
     if (blockCount < 11) {
       test.skip(true, 'Fewer than 11 kit-status blocks found — skipping');
@@ -339,7 +384,11 @@ test.describe('BUG-17: Device audit table shows rows rather than "No data!"', ()
     await withAuthInterceptor(page);
     await page.goto('/dashboard/devices');
 
-    const linkLocator = page.locator('table tbody tr td a[routerlink*="/dashboard/devices/"]');
+    // [routerLink] is an Angular property binding, not a plain HTML attribute — it never
+    // renders as `routerlink="..."` in the DOM. RouterLink's host binding instead resolves
+    // and writes the real navigable `href` (e.g. "/dashboard/devices/123"), so that's what
+    // must be matched.
+    const linkLocator = page.locator('table tbody tr td a[href*="/dashboard/devices/"]');
     const appeared = await linkLocator.first().waitFor({ state: 'visible', timeout: 15_000 })
       .then(() => true).catch(() => false);
 
@@ -353,8 +402,14 @@ test.describe('BUG-17: Device audit table shows rows rather than "No data!"', ()
     await page.goto(href);
     await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
 
+    // The tab is gated on `model?.id && user?.authorities['admin:kits']` — model.id only
+    // resolves after the record's own GraphQL query returns, which lands after
+    // `ul.nav-tabs` itself first renders. An instant isVisible() check here raced that
+    // and skipped even though the current token DOES carry admin:kits.
     const auditTab = page.locator('ul.nav-tabs .nav-link', { hasText: 'Audit Table' });
-    if (!(await auditTab.isVisible())) {
+    const auditTabAppeared = await auditTab.waitFor({ state: 'visible', timeout: 10_000 })
+      .then(() => true).catch(() => false);
+    if (!auditTabAppeared) {
       test.skip(true, 'Audit Table tab not found (no admin:kits authority) — skipping');
       return;
     }
@@ -518,8 +573,13 @@ test.describe('BUG-09: Device request audit table loads correctly', () => {
     await page.goto(href);
     await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
 
+    // Same race as BUG-17: the tab is gated on `model?.id && user?.authorities['admin:organisations']`,
+    // which only resolves once the record's own GraphQL query returns — after
+    // `ul.nav-tabs` first renders. Wait for the tab itself rather than checking instantly.
     const auditTab = page.locator('ul.nav-tabs .nav-link', { hasText: 'Audit Table' });
-    if (!(await auditTab.isVisible())) {
+    const auditTabAppeared = await auditTab.waitFor({ state: 'visible', timeout: 10_000 })
+      .then(() => true).catch(() => false);
+    if (!auditTabAppeared) {
       test.skip(true, 'Audit Table tab not found — skipping');
       return;
     }
@@ -1110,6 +1170,17 @@ test.describe('BUG-20: Devices tab on device-request record shows assigned kits'
       return;
     }
 
+    // Bump page size to 100 so we scan a wider slice of UAT data — the default 10-row
+    // page rarely happens to include a request with assigned kits (same fix as BUG-21).
+    // DataTables 2.x has no `name="..._length"` attribute (that was the 1.x convention) —
+    // the length <select> instead carries `aria-controls="<tableId>"`, same as the search box.
+    const pageSizeSelect20 = page.locator('select[aria-controls="device-request-index"]').first();
+    if (await pageSizeSelect20.count() > 0) {
+      const pageSizeReload20 = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
+      await pageSizeSelect20.selectOption('100').catch(() => {});
+      await pageSizeReload20;
+    }
+
     // Find a row whose "Requests" (2nd) column cell contains kit-ID badge links
     // (rendered as `a.badge-light[href*="/dashboard/devices/"]`). These badges
     // only appear when kits are actually assigned to the request, so picking such
@@ -1186,9 +1257,24 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
   });
 
   test('device-request-component inside kit-info loads the linked request row', async ({ page }) => {
+    // Scanning up to 50 kits, each with its own short wait for the async tab, can run
+    // past the default 60s test timeout.
+    test.setTimeout(120_000);
     // Navigate to the devices list and find one that has a device request linked.
     // kit-info shows a "Device Requests" tab only when model.deviceRequest.id is truthy.
     await withAuthInterceptor(page);
+    // Seed a fully-empty filter so the default {archived:[false]} filter doesn't
+    // exclude archived devices — devices only pick up a linked deviceRequest once
+    // they've moved through to distribution, by which point many have been archived.
+    await page.addInitScript(() => {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('kitFilters-')) {
+          localStorage.removeItem(key);
+        }
+      }
+      localStorage.setItem('kitFilters-kit-index', JSON.stringify({}));
+    });
     await page.goto('/dashboard/devices');
     const tableLoaded = await page.locator('table.dataTable').waitFor({ state: 'visible', timeout: 20_000 })
       .then(() => true).catch(() => false);
@@ -1213,7 +1299,9 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
 
     // Bump page size to 100 so we scan a wider slice of UAT data — the first 10
     // kits (default page size) on UAT rarely include one with a linked request.
-    const pageSizeSelect = page.locator('select[name$="_length"]').first();
+    // DataTables 2.x has no `name="..._length"` attribute (that was the 1.x convention) —
+    // the length <select> instead carries `aria-controls="<tableId>"`, same as the search box.
+    const pageSizeSelect = page.locator('select[aria-controls="kit-index"]').first();
     if (await pageSizeSelect.count() > 0) {
       const pageSizeReload = page.waitForResponse(r => r.url().includes('/graphql') && r.status() === 200, { timeout: 15_000 }).catch(() => null);
       await pageSizeSelect.selectOption('100').catch(() => {});
@@ -1242,8 +1330,15 @@ test.describe('BUG-21: Device Requests tab on kit record shows linked device req
         .then(() => true).catch(() => false);
       if (!tabsLoaded) break; // auth likely failed — stop iterating
 
+      // Same race as the Audit Table tab elsewhere in this file: the tab is gated on
+      // `model?.deviceRequest?.id`, which only resolves after the kit's own GraphQL
+      // query returns — after ul.nav-tabs itself is already visible. An instant
+      // isVisible() check here would make EVERY kit look tab-less regardless of its
+      // actual data, since none of them would ever win that race.
       const requestsTab = page.locator('ul.nav-tabs .nav-link', { hasText: 'Device Requests' });
-      if (await requestsTab.isVisible()) {
+      const tabAppeared = await requestsTab.waitFor({ state: 'visible', timeout: 1_500 })
+        .then(() => true).catch(() => false);
+      if (tabAppeared) {
         foundHref = href;
         break;
       }

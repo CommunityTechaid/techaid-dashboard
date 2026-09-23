@@ -70,8 +70,11 @@ test.describe('Exclude statuses filter (kit-index, issue #64)', () => {
 
     // Wait for table rows to appear — each row is a device.
     // The Status column is the 8th <td> (0-indexed: index 7), matching the <th>Status</th> header.
-    const rowLocator = page.locator('table tbody tr');
-    const appeared = await rowLocator.first().waitFor({ state: 'visible', timeout: 20_000 })
+    // Scoped to rows holding a record link: DataTables leaves its own placeholder <tbody>
+    // (the "No matching records" row) alongside Angular's real one, and a bare
+    // `table tbody tr` can match that placeholder — a false "No devices" skip under load.
+    const rowLocator = page.locator('#kit-index tbody tr', { has: page.locator('td a[href]') });
+    const appeared = await rowLocator.first().waitFor({ state: 'visible', timeout: 30_000 })
       .then(() => true)
       .catch(() => false);
 

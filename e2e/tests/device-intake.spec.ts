@@ -136,7 +136,9 @@ test.describe('Device intake write-flow (kit create → index → edit → persi
     test.setTimeout(90_000);
     await withAuthInterceptor(page);
 
-    const stamp = Date.now();
+    // Worker index appended: parallel workers can start in the same millisecond, and two
+    // kits with one model make the index search match two rows (strict-mode violation).
+    const stamp = Number(`${Date.now()}${test.info().parallelIndex}`);
     const uniqueModel = sampleName('Kit', stamp);
     const createMake = `Kit ${E2E_SAMPLE_MARKER} make ${stamp}`;
     const editedMake = `Kit ${E2E_SAMPLE_MARKER} make ${stamp} edited`;
@@ -185,6 +187,10 @@ test.describe('Device intake write-flow (kit create → index → edit → persi
     // timeout even though a later search would succeed. Retry the whole
     // round-trip (re-fill the search box, which re-triggers DataTables' own
     // debounced ajax call, then re-check) until the row appears or we give up.
+    const kitQuery = (predicate: (body: string) => boolean, timeout: number) => page.waitForResponse(
+      r => r.url().includes('/graphql') && predicate(r.request().postData() ?? ''),
+      { timeout },
+    ).catch(() => null);
     await expect(async () => {
       // Clear first so re-filling the same string is a genuine value change —
       // DataTables only re-searches when the input's value actually changes.
@@ -192,9 +198,21 @@ test.describe('Device intake write-flow (kit create → index → edit → persi
       // result set, and the refill's input event does not reliably re-trigger the
       // server-side query, so without this the retry can leave the term sitting
       // in the box against unfiltered rows and never recover.
-      await searchInput.fill('');
+      //
+      // The clear fires its own UNFILTERED query. Wait for it to land before
+      // searching: under load the two responses can arrive out of order, and the
+      // table renders whichever lands last — the unfiltered rows, with the term
+      // still in the box (seen ~2 in 6 runs at 3 workers, on the pre-2.0 code too).
+      if (await searchInput.inputValue() !== '') {
+        const cleared = kitQuery(b => b.includes('findAllKits') && !b.includes(uniqueModel), 15_000);
+        await searchInput.fill('');
+        await searchInput.press('Enter');
+        await cleared;
+      }
+      const searched = kitQuery(b => b.includes(uniqueModel), 15_000);
       await searchInput.fill(uniqueModel);
       await searchInput.press('Enter');
+      await searched;
       await expect(row, 'the created device should be findable in the index by its model').toBeVisible({
         timeout: 5_000,
       });

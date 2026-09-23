@@ -19,6 +19,10 @@
  *   node e2e/csp-probe.mjs                                   # UAT (default)
  *   node e2e/csp-probe.mjs https://app.communitytechaid.org.uk   # production
  *
+ * Needs an ELIGIBLE request ID to get past the first step (see resolveCtaReference):
+ * discovered automatically with the token in e2e/.auth/user.json, or pass
+ * CSP_PROBE_REF=<id>. Nothing is ever submitted.
+ *
  * GATED ORIGINS: the /delivery-booking route sits behind deliveryBookingVisibleGuard,
  * which redirects to /404 on production while the `delivery-booking` feature flag is off
  * (feature-flag.service.ts: `visible: !isProduction || live`). That is a deliberate
@@ -33,12 +37,57 @@
  * Exit code 1 = something failed; the printed report says what.
  */
 
+import { readFileSync } from 'fs';
 import { chromium } from 'playwright';
 
 const DEFAULT_ORIGIN = 'https://app-testing.communitytechaid.org.uk';
 const BOOKING_PATH = '/delivery-booking';
 const origin = (process.argv[2] ?? DEFAULT_ORIGIN).replace(/\/+$/, '');
 const url = `${origin}${BOOKING_PATH}`;
+
+/** Informational lines printed at the top of the report. */
+const probeNotes = [];
+
+/** Which API each dashboard origin talks to (environment.*.ts `graphql_endpoint`). */
+const API_FOR_ORIGIN = {
+  'https://app-testing.communitytechaid.org.uk': 'https://api-testing.communitytechaid.org.uk/graphql',
+  'https://app.communitytechaid.org.uk': 'https://api.communitytechaid.org.uk/graphql',
+};
+
+/**
+ * A request ID the reference step will accept. Only a device request in status
+ * PROCESSING_EQUALITIES_DATA_COMPLETE is eligible, and they come and go, so none can be
+ * hardcoded. In order:
+ *   1. CSP_PROBE_REF=<id>  — explicit, e.g. for an origin with no mapped API
+ *   2. discovered via the admin API with the bearer token in e2e/.auth/user.json
+ *      (the same token save-token.mjs writes; the admin query is not rate-limited,
+ *      unlike the public eligibility check)
+ */
+async function resolveCtaReference() {
+  if (process.env.CSP_PROBE_REF) return { id: Number(process.env.CSP_PROBE_REF), source: 'CSP_PROBE_REF' };
+  const api = process.env.CSP_PROBE_API ?? API_FOR_ORIGIN[origin];
+  if (!api) throw new Error(`no API known for ${origin} — set CSP_PROBE_REF=<eligible request id> or CSP_PROBE_API`);
+  let token;
+  try {
+    const state = JSON.parse(readFileSync(new URL('./.auth/user.json', import.meta.url), 'utf8'));
+    for (const o of state.origins ?? []) for (const item of o.localStorage ?? []) {
+      if (item.name.startsWith('@@auth0spajs@@')) token ??= JSON.parse(item.value)?.body?.access_token;
+    }
+  } catch { /* handled below */ }
+  if (!token) throw new Error('no bearer token in e2e/.auth/user.json — run e2e/save-token.mjs, or set CSP_PROBE_REF');
+  const res = await fetch(api, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      query: `query { deviceRequestConnection(page: { size: 1 }, where: { status: { _eq: PROCESSING_EQUALITIES_DATA_COMPLETE } }) { content { id } } }`,
+    }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.errors) throw new Error(`eligible-request lookup failed: HTTP ${res.status} ${JSON.stringify(json.errors ?? '')}`);
+  const id = json.data?.deviceRequestConnection?.content?.[0]?.id;
+  if (!id) throw new Error(`no request in PROCESSING_EQUALITIES_DATA_COMPLETE on ${api} — nothing can reach the details step; set CSP_PROBE_REF`);
+  return { id: Number(id), source: `discovered via ${new URL(api).host}` };
+}
 
 /** CSP-violation records collected via both the securitypolicyviolation event and console text. */
 const violations = [];
@@ -48,7 +97,7 @@ let turnstileIframeAttached = false;
 function report(ok, lines, gated = false) {
   console.log('\n=== CSP probe report ===');
   console.log(`Target: ${url}`);
-  for (const line of lines) console.log(line);
+  for (const line of [...probeNotes, ...lines]) console.log(line);
   if (ok && gated) {
     console.log('\nRESULT: PASS (booking route gated — Turnstile checks skipped)');
     return;
@@ -129,8 +178,9 @@ async function main() {
     // visibility guard's /404 redirect (flag off on production). Racing the two avoids
     // burning the full .day-row timeout on a gated origin. Both branches are legitimate
     // outcomes, so a timeout here is not itself an error — the checks below decide.
+    const referenceInput = page.locator('input[formcontrolname="ctaReference"]');
     await Promise.race([
-      page.locator('.day-row').first().waitFor({ state: 'visible', timeout: 15_000 }),
+      referenceInput.waitFor({ state: 'visible', timeout: 15_000 }),
       page.waitForURL(isNotFoundUrl, { timeout: 15_000 }),
     ]).catch(() => {});
 
@@ -140,9 +190,24 @@ async function main() {
       // would be a false failure. CSP is still checked on the loaded page below.
       bookingGated = true;
     } else {
+      // Since #202 the flow starts with the request ID: reference → day → window →
+      // details. The day list only appears for a request the server says is eligible,
+      // so the probe needs a real one (see resolveCtaReference). Nothing is submitted —
+      // the probe stops once the details step has mounted Turnstile.
+      const ref = await resolveCtaReference();
+      probeNotes.push(`Using request ID ${ref.id} (${ref.source}).`);
+      await referenceInput.fill(String(ref.id));
+      await page.getByRole('button', { name: /continue/i }).click();
+      const refError = page.locator('.status--error');
+      await Promise.race([
+        page.locator('.day-row').first().waitFor({ state: 'visible', timeout: 15_000 }),
+        refError.waitFor({ state: 'visible', timeout: 15_000 }),
+      ]).catch(() => {});
+      if (await refError.isVisible()) {
+        throw new Error(`request ID ${ref.id} was rejected at the reference step: "${(await refError.innerText()).trim()}"`);
+      }
       // Turnstile is lazily loaded by the details-step component (see
-      // turnstile.service.ts) — it never loads on the day-picker step. Click through
-      // day → window to reach details, same path a real visitor takes.
+      // turnstile.service.ts) — it never loads on the earlier steps.
       await page.locator('.day-row').first().click({ timeout: 15_000 });
       await page.locator('.window-row').first().click({ timeout: 15_000 });
       // The widget host only appears once the details form has a siteKey configured.
