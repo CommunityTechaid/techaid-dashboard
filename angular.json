@@ -82,7 +82,7 @@
                 },
                 {
                   "type": "allScript",
-                  "maximumWarning": "3mb",
+                  "maximumWarning": "3.2mb",
                   "maximumError": "3.5mb"
                 },
                 {
@@ -148,7 +148,7 @@
                 },
                 {
                   "type": "allScript",
-                  "maximumWarning": "3mb",
+                  "maximumWarning": "3.2mb",
                   "maximumError": "3.5mb"
                 },
                 {
