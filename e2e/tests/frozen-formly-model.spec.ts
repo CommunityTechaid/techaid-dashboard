@@ -17,7 +17,13 @@
  * @mocked — every GraphQL operation is page.route-stubbed; no bearer token required.
  */
 import { test, expect, Page, Route } from '@playwright/test';
+import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
+const WRITE_PERMISSIONS = [
+  'read:organisations', 'write:organisations',
+  'read:donorParents', 'write:donorParents',
+  'read:content', 'write:content',
+];
 const READ_ONLY = /Cannot assign to read only property|object is not extensible/i;
 
 async function fulfill(route: Route, data: unknown): Promise<void> {
@@ -109,6 +115,8 @@ test.describe('detail forms are not bound to frozen Apollo objects (#219) @mocke
       page.on('console', m => { if (m.type() === 'error' && READ_ONLY.test(m.text())) errors.push(m.text().split('\n')[0]); });
       const mutations: string[] = [];
       await installMocks(page, c, mutations);
+      // CI's fake token has `permissions: []`, which renders these forms disabled.
+      await authenticateWithPermissions(page, WRITE_PERMISSIONS);
 
       await page.goto(c.path);
       if (c.tab) await page.getByRole('tab', { name: c.tab }).click();
