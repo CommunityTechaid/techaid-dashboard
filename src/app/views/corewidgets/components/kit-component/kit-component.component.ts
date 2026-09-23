@@ -43,13 +43,20 @@ const QUERY_ENTITY = gql`
     kitsConnection(
       page: $page
       where: {
-        AND: {
-          model: { _contains: $term }
-          AND: [$where, $filter]
-          OR: [
-            { location: { _contains: $term }, AND: [$where, $filter] }
+        AND: [
+          $where,
+          $filter,
+          {
+            # Same searchable fields as kit-index, plus location. The id and serialNo branches
+            # were missing, so the Devices tab could not find a kit by the id badge it shows.
+            OR: [
+              { model: { _contains: $term } },
+              { location: { _contains: $term } },
+              { serialNo: { _contains: $term } },
+              { id: { _contains: $term } }
             ]
-        }
+          }
+        ]
       }
     ) {
       totalElements
