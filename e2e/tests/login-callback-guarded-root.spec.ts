@@ -148,7 +148,13 @@ test.describe('Auth0 login callback through the guarded root @mocked', () => {
   // Clean context: no cached session, so the guard has to drive a real login.
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('landing on / logs in once and renders the dashboard', async ({ page, baseURL }) => {
+  test('landing on / logs in once and renders the dashboard', async ({ page, baseURL, browserName }) => {
+    // Playwright's WebKit protocol implementation (WKRouteImpl.fulfill in
+    // playwright-core) hard-rejects any route.fulfill() with a 3xx status —
+    // "Cannot fulfill with redirect status" — which is exactly how stubAuth0
+    // simulates Auth0's /authorize redirect. Chromium and Firefox's route
+    // implementations allow it. Tool limitation, not an app bug.
+    test.skip(browserName === 'webkit', 'WebKit route.fulfill() cannot serve a redirect status (3xx) response — see WKRouteImpl.fulfill in playwright-core/lib/coreBundle.js');
     test.setTimeout(90_000);
     const tenant = await stubAuth0(page);
     await stubGraphQL(page);
@@ -163,7 +169,9 @@ test.describe('Auth0 login callback through the guarded root @mocked', () => {
     expect(tenant.tokenHits()).toBe(1);
   });
 
-  test('a deep link survives the callback and lands on its target, not /', async ({ page }) => {
+  test('a deep link survives the callback and lands on its target, not /', async ({ page, browserName }) => {
+    // Same WebKit route.fulfill() 3xx limitation as the test above.
+    test.skip(browserName === 'webkit', 'WebKit route.fulfill() cannot serve a redirect status (3xx) response — see WKRouteImpl.fulfill in playwright-core/lib/coreBundle.js');
     test.setTimeout(90_000);
     const tenant = await stubAuth0(page);
     await stubGraphQL(page);
