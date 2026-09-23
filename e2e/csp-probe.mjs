@@ -172,7 +172,10 @@ async function main() {
   let navigationError = null;
   let bookingGated = false;
   try {
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30_000 });
+    // domcontentloaded, not networkidle: an SPA with Turnstile and background XHRs can take
+    // >30s to go network-idle (timed out once right after a deploy, 2026-09-23). The
+    // Promise.race on the reference input / /404 below is the real readiness signal.
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
 
     // Settle into whichever state this origin is in: the booking UI rendered, or the
     // visibility guard's /404 redirect (flag off on production). Racing the two avoids
