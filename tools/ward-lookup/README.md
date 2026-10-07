@@ -3,6 +3,10 @@
 Generates the lookup table the public device request page uses to answer "which borough and
 ward is this postcode in, and do we cover it?".
 
+> **Retired 2026-10-07:** the legacy `ward_lookup.html` page (now a redirect) and the
+> `cta-maps-proxy` Worker that served it were retired, and the `streamlined-ward-lookup` flag is
+> permanently on in the dashboard. Everything below describing the old lookup is history.
+
 ## What this replaced, and why
 
 The old lookup lived in the `communitytechaid.github.io` repo as `ward_lookup.html`, embedded

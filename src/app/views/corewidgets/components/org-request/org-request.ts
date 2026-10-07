@@ -3,7 +3,6 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
-  HostListener,
   NgZone,
   Renderer2,
   ViewChild, OnInit, AfterViewInit, OnDestroy,
@@ -25,10 +24,7 @@ import { User } from '@app/state/user/user.state';
 
 import { AppLocalCSS } from './app-local-css.component';
 import { PostcodeLocationStepComponent } from './postcode-location-step.component';
-import {
-  FeatureFlagService,
-  STREAMLINED_WARD_LOOKUP_FLAG,
-} from '@app/shared/services/feature-flag.service';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { Borough, boroughListSentence, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
 import {
   availabilityNote,
@@ -216,17 +212,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   ward = "";
   unsupported = false;
 
-  /**
-   * Which location step to render: `true` = the in-app postcode step, `false` = the legacy
-   * github.io iframe, `null` = the flag has not resolved yet, so render NEITHER.
-   *
-   * The null state is the point. Defaulting to either step would flash the wrong one on load
-   * and, on the legacy side, would fire off a request to a third-party origin we may have just
-   * been told not to use. In practice the flags resolve during the backend health check that
-   * already gates this whole page, so the null window is not visible.
-   */
-  streamlinedWardLookup: boolean | null = null;
-
   /** The accepted boroughs, from the flags. Passed to the postcode step so it can decide
    *  whether a resolved borough is one we actually take referrals from. */
   supportedBoroughList: Borough[] = [...CORE_BOROUGHS];
@@ -328,22 +313,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         this.supportedBoroughList = boroughs;
         this.supportedBoroughSentence = boroughListSentence(boroughs, 'or');
         this.applySupportedBoroughCopy();
-      })
-    );
-
-    // Which location step to render. Resolved before either step paints rather than with an
-    // async pipe on the template branch — an async pipe would render the falsy branch (the
-    // iframe) for a tick and hit github.io on every load, including when the streamlined step
-    // is the one selected.
-    //
-    // No detectChanges() here on purpose: the flags arrive on an HTTP response inside the
-    // Angular zone and this component uses default change detection, so the repaint is
-    // automatic — whereas a synchronous detectChanges() would throw if the shared
-    // shareReplay(1) cache is already warm (the header reads the same flags) and replays into
-    // this subscribe synchronously.
-    this.flagsSub.add(
-      this.featureFlags.isEnabled(STREAMLINED_WARD_LOOKUP_FLAG).subscribe(enabled => {
-        this.streamlinedWardLookup = enabled;
       })
     );
 
@@ -1289,48 +1258,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     // The borough is only known now, and it narrows which device types are on offer.
     this.applyDeviceAvailability();
   }
-
-  @HostListener('window:message', ['$event'])
-  messageEvent(event: MessageEvent) {
-
-    // With the streamlined step selected the iframe is never rendered, so nothing should be
-    // posting to us. Ignoring messages explicitly means a stray postMessage from an extension
-    // or a stale tab cannot drive the page down the legacy path behind the flag's back.
-    if (this.streamlinedWardLookup) {
-      return;
-    }
-
-    if (event.origin !== 'https://communitytechaid.github.io') {
-      return;
-    }
-
-    if (
-      typeof event.data !== 'object' ||
-      event.data === null ||
-      !event.data.borough ||
-      !event.data.ward
-    ) {
-      alert("Unknown error. Please contact support.");
-      return;
-    }
-
-    if (event.data.ward === "unsupported" || event.data.borough === "unsupported") {
-      this.unsupported = true;
-      this.wardSubmitted = true;
-      this.showNotSupportedPage();
-      return
-    }
-
-    this.ward = event.data.ward;
-    this.borough = event.data.borough;
-    this.wardSubmitted = true;
-    // Same call as onLocationConfirmed(), for the same reason. A no-op in practice today —
-    // the legacy lookup can only ever return Lambeth or Southwark, and neither is restricted —
-    // but leaving it out would make the two paths diverge the moment a restriction is added.
-    this.applyDeviceAvailability();
-  }
-
-
 
   ngAfterViewInit() {
 

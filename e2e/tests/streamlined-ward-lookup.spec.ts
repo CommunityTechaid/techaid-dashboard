@@ -1,7 +1,8 @@
 /**
  * Mocked coverage for the streamlined postcode-first location step (#178):
  * postcode-location-step.component.ts + ward-lookup.service.ts, gated by the
- * `streamlined-ward-lookup` flag.
+ * `streamlined-ward-lookup` flag (retired 2026-10-07: the step is now unconditional, whatever
+ * the flag says).
  *
  * The component's own contract (see its header comment) is: the lookup table holds only the
  * three supported boroughs, so a resolved-but-unsupported postcode and a genuinely absent one
@@ -9,8 +10,8 @@
  * path. A well-formed-but-unknown postcode ('malformed') and a failed table fetch
  * ('unavailable') are two further, distinct dead ends — none of the four states may bleed into
  * another. This spec pins all four, plus the borough-scoped device narrowing (served by
- * boroughAvailabilityPublic, see BoroughAvailabilityService) and the legacy iframe fallback when
- * the flag is off.
+ * boroughAvailabilityPublic, see BoroughAvailabilityService) and that no legacy iframe renders
+ * even with the flag mocked off.
  *
  * Real postcodes, verified against the shipped table (src/assets/ward-lookup/postcode-index.may-2026.json):
  *   - SE15 5TD -> Peckham ward, Southwark (covered)
@@ -392,14 +393,13 @@ test.describe('streamlined ward lookup @mocked', () => {
     await expect(page.getByTestId('postcode-covered')).toHaveCount(0);
   });
 
-  test('legacy iframe path still renders when the flag is off', async ({ page }) => {
+  test('postcode step still renders, with no iframe, when the retired flag reads off', async ({ page }) => {
     test.setTimeout(90_000);
     await installMocks(page, { towerHamlets: false, streamlinedLookup: false });
     await openReadyPage(page);
 
-    const iframe = page.locator('iframe[src^="https://communitytechaid.github.io/ward_lookup.html"]');
-    await expect(iframe).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('postcode-location-step')).toHaveCount(0);
-    await expect(page.locator('#postcode')).toHaveCount(0);
+    await expect(page.locator('#postcode')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('postcode-location-step')).toHaveCount(1);
+    await expect(page.locator('iframe[src*="ward_lookup"]')).toHaveCount(0);
   });
 });

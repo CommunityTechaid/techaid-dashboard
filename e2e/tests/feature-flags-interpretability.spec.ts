@@ -109,24 +109,25 @@ test.describe('feature flags interpretability @mocked', () => {
     await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('Streamlined Ward Lookup');
   });
 
-  test('says that the two ward-lookup flags depend on each other', async ({ page }) => {
+  test('shows the retired streamlined-ward-lookup flag as permanently on and locked', async ({ page }) => {
     test.setTimeout(60_000);
-    await installMocks(page);
+    const capturedUpdates: string[] = [];
+    // The server row says OFF; the page must still render it checked and disabled.
+    await installMocks(page, { capturedUpdates });
     await openFlagsTab(page);
 
-    // These two are not independent: the legacy lookup has no Tower Hamlets boundary data,
-    // so turning the lookup flag off un-supports the borough however the borough flag is
-    // set. Nothing in a pair of on/off switches conveys that, and the failure is silent —
-    // referrals simply stop being accepted from a borough we have announced. If this
-    // wording is lost, the only warning goes with it.
-    await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('Tower Hamlets');
-    await expect(rowFor(page, 'tower-hamlets-borough-support')).toContainText(
-      'only has an effect while Streamlined Ward Lookup is on',
+    const row = rowFor(page, 'streamlined-ward-lookup');
+    const toggle = row.locator('input[type=checkbox]');
+    await expect(toggle).toBeChecked();
+    await expect(toggle).toBeDisabled();
+    await expect(row).toContainText(
+      'Permanently on — the legacy ward-lookup page was retired on 2026-10-07; this switch no longer has any effect.',
     );
+    await expect(row).not.toContainText('still fully working');
 
-    // Off here means "the other implementation", not "feature hidden". A reader who takes
-    // it as a feature hide will not expect the public page to keep working.
-    await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('still fully working');
+    // Locked means no toggle is ever sent, even if the click is forced through.
+    await toggle.click({ force: true }).catch(() => undefined);
+    expect(capturedUpdates).toHaveLength(0);
   });
 
   test('says that OFF is shadow mode for the two enforcement guards', async ({ page }) => {
