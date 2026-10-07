@@ -17,15 +17,19 @@ jobs:
         # on — dispatch from master and you run whatever copy of this pipeline
         # master happens to carry, which is by definition the previously
         # deployed one. Fail fast rather than deploy with a stale pipeline.
-        if: github.ref_name != 'dev'
+        #
+        # HOTFIX BRANCH ONLY: this copy also accepts hotfix/* so a surgical fix
+        # can be built from what prod runs (master + cherry-picks) without
+        # shipping the unreleased work on dev. dev's copy is unchanged.
+        if: github.ref_name != 'dev' && !startsWith(github.ref_name, 'hotfix/')
         run: |
-          echo "::error::Dispatched from '${{ github.ref_name }}'. Re-run with 'dev' selected in the branch dropdown — releases and deploys are always dev-based; master only records what is already live."
+          echo "::error::Dispatched from '${{ github.ref_name }}'. Re-run with 'dev' (or a hotfix/* branch) selected in the branch dropdown."
           exit 1
 
-      - name: Checkout dev branch
+      - name: Checkout dispatched branch (dev or hotfix/*)
         uses: actions/checkout@v4
         with:
-          ref: dev
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -172,6 +176,10 @@ jobs:
             }
 
       - name: Fast-forward master to deployed commit
+        # Skipped for hotfixes: master stays an ancestor of dev, so the next
+        # normal dev deploy (which already contains the same fix) still
+        # fast-forwards cleanly. The deploy/prod/* tag records the hotfix build.
+        if: github.ref_name == 'dev'
         run: |
           # HEAD is the dev commit just deployed to prod. A plain push
           # (no --force) only succeeds if master is strictly behind, so
