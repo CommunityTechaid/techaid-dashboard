@@ -256,8 +256,14 @@ test.describe('BUG-15: Device hardware details row is laid out horizontally', ()
 
     const href = await linkLocator.first().getAttribute('href');
     await withAuthInterceptor(page);
+    // Arm BEFORE navigating: the tab label depends on this specific query resolving.
+    const countResp20 = page.waitForResponse(
+      r => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('countDevicesForRequest'),
+      { timeout: 30_000 },
+    ).catch(() => null);
     await page.goto(href);
-    await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('ul.nav-tabs')).toBeVisible({ timeout: 30_000 });
+    await countResp20;
     await expect(page.locator('formly-form')).toBeVisible({ timeout: 10_000 });
     await page.locator('formly-group').first().locator('formly-field').first().waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
 
@@ -1216,7 +1222,7 @@ test.describe('BUG-20: Devices tab on device-request record shows assigned kits'
     // placeholder — otherwise we read the placeholder before the count query
     // resolves and skip spuriously.
     const devicesTab = page.locator('ul.nav-tabs .nav-link', { hasText: /\d+ Device.*Assigned/i });
-    await expect(devicesTab).toBeVisible({ timeout: 15_000 });
+    await expect(devicesTab).toBeVisible({ timeout: 30_000 });
 
     const kitsResp = page.waitForResponse(
       r => r.url().includes('/graphql') && (r.request().postData() ?? '').includes('findAllKits') && r.status() === 200,

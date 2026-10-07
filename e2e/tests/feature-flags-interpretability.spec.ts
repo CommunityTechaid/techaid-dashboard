@@ -22,7 +22,7 @@
  * @mocked — every GraphQL operation is page.route-stubbed and the Auth0 cache is written
  * directly, so no token is needed.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { test, expect, Locator, Page, Route } from '@playwright/test';
 import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
@@ -54,6 +54,12 @@ async function installMocks(page: Page, opts: MockOpts = {}): Promise<void> {
   const flags = opts.flags ?? SERVER_FLAGS;
   await page.route('**/graphql', async (route) => {
     const body = route.request().postData() ?? '';
+    // The app's backend-status probe: an empty reply makes it show "Server is starting up" and
+    // tear down the routed page ~0.5s after it first rendered (the toggle-click flake on
+    // WebKit: the row vanished mid-click). Answer it like a healthy server.
+    if (body.includes('buildInfo')) {
+      return fulfillJson(route, { data: { buildInfo: { version: '0.0.0-e2e', commit: 'e2e', time: '2026-01-01T00:00:00Z' } } });
+    }
     if (body.includes('updateFeatureFlag')) {
       opts.capturedUpdates?.push(body);
       if (opts.updateError) {
@@ -90,6 +96,19 @@ async function openFlagsTab(page: Page): Promise<void> {
 /** The row block for a given flag key, located via the raw key the page now renders. */
 function rowFor(page: Page, key: string) {
   return page.locator('app-feature-flags .border-bottom').filter({ has: page.locator('.flag-key', { hasText: key }) });
+}
+
+/**
+ * Clicks the toggle until the updateFeatureFlag mutation has actually left the page. Under
+ * load (WebKit especially) the row's input can be re-created between actionability checks, so
+ * a single click may time out or land on a detached node. Never clicks again once a mutation
+ * has been captured, so exact-count assertions stay valid.
+ */
+async function clickUntilSent(toggle: Locator, capturedUpdates: string[]): Promise<void> {
+  await expect(async () => {
+    if (capturedUpdates.length === 0) await toggle.click({ timeout: 5_000 });
+    await expect.poll(() => capturedUpdates.length, { timeout: 3_000 }).toBeGreaterThan(0);
+  }).toPass({ timeout: 40_000 });
 }
 
 test.describe('feature flags interpretability @mocked', () => {
@@ -153,7 +172,7 @@ test.describe('feature flags interpretability @mocked', () => {
     let dialogSeen = false;
     page.on('dialog', (dialog) => { dialogSeen = true; return dialog.accept(); });
 
-    await rowFor(page, 'delivery-booking').locator('input[type="checkbox"]').click();
+    await clickUntilSent(rowFor(page, 'delivery-booking').locator('input[type="checkbox"]'), capturedUpdates);
     await expect.poll(() => capturedUpdates.length).toBe(1);
     expect(dialogSeen).toBe(false);
   });
@@ -163,14 +182,16 @@ test.describe('feature flags interpretability @mocked', () => {
     // `[checked]` is a one-way binding, so a rejected write leaves the DOM switch flipped
     // while the stored value is unchanged — the switch would report a state the server
     // does not hold. Guards the manual restore in toggle().
-    await installMocks(page, { updateError: 'nope' });
+    const capturedUpdates: string[] = [];
+    await installMocks(page, { updateError: 'nope', capturedUpdates });
     await openFlagsTab(page);
 
     const row = rowFor(page, 'delivery-booking');
     const toggleInput = row.locator('input[type="checkbox"]');
     await expect(toggleInput).not.toBeChecked();
 
-    await toggleInput.click();
+    // The mutation must really have been sent (and rejected), or the assertion below is vacuous.
+    await clickUntilSent(toggleInput, capturedUpdates);
     await expect(toggleInput).not.toBeChecked();
   });
 
