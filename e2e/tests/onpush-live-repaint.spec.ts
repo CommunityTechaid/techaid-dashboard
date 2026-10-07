@@ -129,7 +129,16 @@ async function distinctiveText(page: Page, tableId: string, anchorIndex: number)
 
 async function searchAndReload(page: Page, tableId: string, term: string): Promise<void> {
   const input = page.locator(`input[aria-controls="${tableId}"]`);
-  const reload = waitForAnyGraphqlResponse(page);
+  // Wait for the response to THIS search (its request carries the term), not just any graphql
+  // traffic: a stray in-flight/background response would otherwise satisfy the wait early and
+  // let the following assertions race the real response.
+  const needle = JSON.stringify(term);
+  const reload = term
+    ? page.waitForResponse(
+        r => r.url().includes('/graphql') && r.status() === 200 && (r.request().postData() ?? '').includes(needle),
+        { timeout: 20_000 },
+      ).catch(() => null)
+    : waitForAnyGraphqlResponse(page);
   await input.fill(term);
   await input.press('Enter');
   await reload;
