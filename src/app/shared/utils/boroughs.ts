@@ -43,26 +43,17 @@ export const ALL_BOROUGHS: readonly Borough[] = [LAMBETH, SOUTHWARK, TOWER_HAMLE
 export interface BoroughSupportFlags {
   /** `tower-hamlets-borough-support` — do we accept Tower Hamlets referrals at all? */
   towerHamlets: boolean;
-  /** `streamlined-ward-lookup` — is the in-app postcode step selected over the iframe? */
-  streamlinedLookup: boolean;
 }
 
 /**
  * The boroughs accepted right now — the effective set, not the intended one.
  *
- * Tower Hamlets needs BOTH flags. The borough flag is the intent, but the legacy iframe
- * lookup cannot resolve a Tower Hamlets postcode at any setting: its borough list and its
- * boundary data (in the communitytechaid.github.io repo) cover Lambeth and Southwark only.
- * So while the legacy lookup is selected, Tower Hamlets is unsupported in practice however
- * the borough flag is set.
- *
- * That gap is known and accepted (issue #177). It is encoded here, once, rather than left
- * as prose for each caller to remember — a caller that asks this function what we support
- * gets the truth, including the awkward case where the two flags disagree.
+ * Tower Hamlets follows the borough flag alone. The legacy iframe lookup, which could not
+ * resolve a Tower Hamlets postcode, was retired on 2026-10-07 and the `streamlined-ward-lookup`
+ * flag is permanently on, so it no longer gates anything.
  */
 export function supportedBoroughs(flags: BoroughSupportFlags): Borough[] {
-  const towerHamletsUsable = flags.towerHamlets && flags.streamlinedLookup;
-  return towerHamletsUsable ? [...CORE_BOROUGHS, TOWER_HAMLETS] : [...CORE_BOROUGHS];
+  return flags.towerHamlets ? [...CORE_BOROUGHS, TOWER_HAMLETS] : [...CORE_BOROUGHS];
 }
 
 /**

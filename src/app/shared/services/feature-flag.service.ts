@@ -17,24 +17,7 @@ export const DELIVERY_BOOKING_FLAG = 'delivery-booking';
 export const UPDATE_SCANNER_FLAG = 'update-scanner';
 
 /**
- * Which ward-lookup implementation the public device request page uses. Unlike the flags
- * above this is not a feature hide but a two-way substitution between two working steps:
- * off → the legacy iframe onto communitytechaid.github.io, on → the streamlined
- * postcode-first step built into the page. Either can be selected at any time, in either
- * direction, with no deploy.
- *
- * Off is today's behaviour, so it is both the default and the safe failure mode: when the
- * flags cannot be read at all (see the catchError below) every flag reads false and the
- * page behaves exactly as it does now.
- */
-export const STREAMLINED_WARD_LOOKUP_FLAG = 'streamlined-ward-lookup';
-
-/**
  * Whether Tower Hamlets is accepted as a referral area. Off → Lambeth and Southwark only.
- *
- * Only meaningful while STREAMLINED_WARD_LOOKUP_FLAG is on: the legacy lookup cannot
- * resolve a Tower Hamlets postcode at any setting, so selecting it un-supports the borough
- * regardless of this flag. Known and accepted — see issue #177.
  */
 export const TOWER_HAMLETS_BOROUGH_FLAG = 'tower-hamlets-borough-support';
 
@@ -121,18 +104,11 @@ export class FeatureFlagService {
    * The one place anything should ask "which boroughs do we support?" — the ward lookup,
    * the borough × device-type admin config and the device request list filter all read
    * this rather than keeping their own list.
-   *
-   * Reads both flags, because Tower Hamlets needs both: the legacy ward lookup has no
-   * Tower Hamlets data, so selecting it un-supports the borough whatever the borough flag
-   * says. supportedBoroughs() in shared/utils/boroughs.ts holds that rule.
    */
   supportedBoroughs(): Observable<Borough[]> {
     return this.loadPublicFlags().pipe(
       map((flags) =>
-        boroughsFor({
-          towerHamlets: !!flags[TOWER_HAMLETS_BOROUGH_FLAG],
-          streamlinedLookup: !!flags[STREAMLINED_WARD_LOOKUP_FLAG],
-        }),
+        boroughsFor({ towerHamlets: !!flags[TOWER_HAMLETS_BOROUGH_FLAG] }),
       ),
     );
   }

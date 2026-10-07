@@ -860,13 +860,13 @@ test.describe('ORG-B2: Email lookup shows not-found prompt when email absent', (
   });
 });
 
-// ─── ORG-B3: Next button transitions to typeform (not silent no-op) ──────────
-test.describe('ORG-B3: Device request Next button shows typeform after success', () => {
-  test('after createDeviceRequest succeeds, showTypeform becomes true and the form section hides', async ({ page }) => {
+// ─── ORG-B3: legacy ward-lookup iframe is gone; its postMessage cannot drive the page ───
+test.describe('ORG-B3: Device request page ignores the retired ward-lookup iframe', () => {
+  test('no iframe renders and a github.io postMessage does not advance past the location step', async ({ page }) => {
     await page.goto('/organisation-device-request');
     await expect(page.locator('org-request')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('#postcode')).toBeVisible({ timeout: 15_000 });
 
-    // Simulate wardSubmitted=true by dispatching a postMessage from the allowed origin
     await page.evaluate(() => {
       window.dispatchEvent(new MessageEvent('message', {
         origin: 'https://communitytechaid.github.io',
@@ -874,15 +874,8 @@ test.describe('ORG-B3: Device request Next button shows typeform after success',
       }));
     });
 
-    // After the ward message, the ward iframe should be gone and the form visible
-    await expect(page.locator('form[formgroup], form[formGroup]').first()).toBeVisible({ timeout: 5_000 })
-      .catch(() => { /* form may not be visible without a logged-in backend — that's ok */ });
-
-    // Verify that wardSubmitted gate is properly driven by the message handler:
-    // Before the message, the iframe is visible; after, it should be hidden.
-    const iframeVisible = await page.locator('iframe[src*="ward_lookup"]').isVisible();
-    // After dispatch, wardSubmitted=true so iframe should be hidden
-    expect(iframeVisible).toBe(false);
+    await expect(page.locator('iframe[src*="ward_lookup"]')).toHaveCount(0);
+    await expect(page.locator('#postcode')).toBeVisible();
   });
 });
 
@@ -1445,9 +1438,8 @@ test.describe('ORG-B2: Find Email with unknown email shows not-found prompt', ()
     // Wait for backend ready state (spinner gone)
     await page.waitForFunction(() => !document.querySelector('.spinner-border'), null, { timeout: 30_000 });
 
-    // Get past the location step, whichever one is live. This test is about the Find Email
-    // prompt; which lookup the streamlined-ward-lookup flag selects is incidental to it, and
-    // hard-coding either one breaks the moment that flag is flipped. See the helper.
+    // Get past the location step. This test is about the Find Email prompt; the location
+    // step is incidental to it. See the helper.
     await advancePastLocationStep(page);
 
     // The form then either shows the Lambeth/Southwark radio question or goes straight to the

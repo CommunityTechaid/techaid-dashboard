@@ -21,12 +21,9 @@ type StepState =
  * ward picker and no map: the user tells us where their client lives, we tell them whether we
  * cover it. See issue #178.
  *
- * This is the streamlined half of a two-way substitution — the legacy `communitytechaid.github.io`
- * iframe is still live behind the same flag, and both halves must leave the page in an identical
- * state. That is why this component's whole output surface is two events carrying plain strings:
- * `confirmed` mirrors what the iframe's postMessage delivers, `notSupported` mirrors its
- * "unsupported" sentinel. Resist enriching them — a richer location object that only this path
- * produces is exactly what would make the two paths diverge.
+ * It replaced the legacy `communitytechaid.github.io` iframe, which was retired on 2026-10-07.
+ * The output is deliberately plain strings (borough and ward names), the same shape the iframe
+ * used to post, so the rest of the request form did not need to change.
  */
 @Component({
   selector: 'postcode-location-step',
@@ -167,15 +164,11 @@ export class PostcodeLocationStepComponent implements OnInit {
   @Input() supportedBoroughs: readonly Borough[] = CORE_BOROUGHS;
 
   /**
-   * Emitted on "Submit a request". Payload matches what the legacy iframe posts, so the parent's
-   * handler for the two paths is the same code.
+   * Emitted on "Submit a request".
    *
-   * There is deliberately no matching "out of area" output. The legacy path answers that case by
-   * setting `wardSubmitted` and swapping the whole page for a terminal Formly out-of-area screen;
-   * this path keeps the user on the step and shows the card inline, per design 1b, so a mistyped
-   * postcode can simply be retyped instead of dead-ending the visitor. Both block progress, which
-   * is what the convergence requirement is actually about — nothing downstream of a *successful*
-   * location can tell which path ran.
+   * There is deliberately no "out of area" output: the step keeps the user where they are and
+   * shows the card inline, per design 1b, so a mistyped postcode can simply be retyped instead
+   * of dead-ending the visitor.
    */
   @Output() confirmed = new EventEmitter<{ borough: string; ward: string }>();
 

@@ -32,6 +32,9 @@ interface FlagCopy {
   offMeaning: string;
   /** Off has consequences beyond hiding a feature — warn, and confirm before disabling. */
   critical?: boolean;
+  /** Retired flag: permanently on, shown checked and disabled, never toggled. `lockedReason` is shown in place of `offMeaning`. */
+  lockedOn?: boolean;
+  lockedReason?: string;
 }
 
 // Friendly copy for known flags; unknown keys fall back to the raw key. Descriptions are
@@ -79,15 +82,12 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
   'streamlined-ward-lookup': {
     label: 'Streamlined Ward Lookup',
     description:
-      'Choose which location step the public device request page uses. On: the streamlined step built ' +
-      'into the page — the referrer types a postcode and we derive the borough and ward. Off: the older ' +
-      'step, an embedded map page loaded from communitytechaid.github.io. Both work; this switches ' +
-      'between them and can be changed back at any time without a deploy.',
-    offMeaning:
-      'Off is not "feature hidden" — it is the older map-based lookup, still fully working. A change ' +
-      'reaches someone already on the page only when they next load it. Careful: the older lookup cannot ' +
-      'handle Tower Hamlets postcodes, so switching off also stops Tower Hamlets referrals even when the ' +
-      'borough flag below is on.',
+      'The in-app postcode step on the public device request page: the referrer types a postcode and we ' +
+      'derive the borough and ward. It replaced the older embedded map page loaded from communitytechaid.github.io.',
+    offMeaning: '',
+    lockedOn: true,
+    lockedReason:
+      'Permanently on — the legacy ward-lookup page was retired on 2026-10-07; this switch no longer has any effect.',
   },
   'tower-hamlets-borough-support': {
     label: 'Tower Hamlets Borough Support',
@@ -96,8 +96,7 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
       'Applies to the public request page: with this on, a Tower Hamlets postcode resolves and the ' +
       'request can continue; with it off, it is treated as outside our area.',
     offMeaning:
-      'Off = Lambeth and Southwark only. This flag only has an effect while Streamlined Ward Lookup ' +
-      'is on — the older lookup has no Tower Hamlets data and rejects those postcodes either way.',
+      'Off = Lambeth and Southwark only.',
   },
   'borough-availability-rules': {
     label: 'Borough Availability Rules',
@@ -161,6 +160,10 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
             ...f,
             ...(FLAG_LABELS[f.key] || { ...UNDESCRIBED, label: f.key }),
           }));
+          // A retired flag is on whatever the server row says.
+          this.flags.forEach((f) => {
+            if (f.lockedOn) f.enabled = true;
+          });
           this.loading = false;
         },
         error: () => {
@@ -179,6 +182,7 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
    * switch shows a state the server does not hold.
    */
   toggle(row: FlagRow, event: Event): void {
+    if (row.lockedOn) return;
     const input = event.target as HTMLInputElement;
     const next = !row.enabled;
     // Switching a critical flag OFF stops something that is meant to be running, rather than

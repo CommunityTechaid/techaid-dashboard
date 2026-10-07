@@ -28,7 +28,11 @@
                  conversations — keep it visible so the two can be matched up. -->
             <div class="flag-key small mt-1">{{ flag.key }}</div>
             <div class="text-muted small mt-1">{{ flag.description }}</div>
-            @if (flag.offMeaning) {
+            @if (flag.lockedOn) {
+              <div class="small mt-1 text-muted" data-testid="flag-locked-reason">
+                <strong>{{ flag.lockedReason }}</strong>
+              </div>
+            } @else if (flag.offMeaning) {
               <div class="small mt-1" [class.text-danger]="flag.critical" [class.text-muted]="!flag.critical">
                 <strong>{{ flag.offMeaning }}</strong>
               </div>
@@ -43,7 +47,7 @@
               type="checkbox"
               role="switch"
               [checked]="flag.enabled"
-              [disabled]="flag.saving"
+              [disabled]="flag.saving || flag.lockedOn"
               (change)="toggle(flag, $event)"
             />
             <label class="form-check-label small">{{ flag.enabled ? 'On' : 'Off' }}</label>
