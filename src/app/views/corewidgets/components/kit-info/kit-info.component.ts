@@ -445,7 +445,8 @@ export class KitInfoComponent implements OnInit, OnDestroy {
           defaultValue: '',
           templateOptions: {
             label: "TPM Version",
-            type: "number",
+            // String in kits.graphqls (e.g. "2.0"); a number input is parseInt()-coerced and rejected by the server
+            type: "text",
             descriptor: ""
           },
           hideExpression: (model, state, field) => {
