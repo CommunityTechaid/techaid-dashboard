@@ -144,12 +144,6 @@ const CREATE_DEVICE_REQUEST = gql`
   }
 `;
 
-const DELETE_CORRELATION_ID = gql`
-  mutation deleteCorrelationId($id: ID!) {
-    deleteCorrelationId(id: $id)
-  }
-`;
-
 const QUERY_ADMIN_CONFIG = gql`
   query {
     adminConfig {
@@ -1197,29 +1191,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   ngAfterViewInit() {
 
 
-    // Submit function for TypeForm
-    (window as any).submit = ({ formId, responseId }) => {
-      console.log(`Form ${formId} submitted, response id: ${responseId}`);
-      return this.apollo.mutate({
-        mutation: DELETE_CORRELATION_ID,
-        variables: { id: this.deviceRequestId }
-      }).toPromise().then(res => {
-
-        const result = res?.data["deleteCorrelationId"];
-        if (result === true) {
-          this.toastr.success("Request created successfully.");
-          return true;
-        }
-
-        this.toastr.error("There was an error with the request. Please try again or contact support.");
-        return false;
-
-      }).catch(error => {
-        const parsed = this.parseApolloError(error);
-        this.toastr.error(parsed.message);
-        return false;
-      });
-    };
 
     /*// Create the script element dynamically
     const script = this.renderer.createElement('script');

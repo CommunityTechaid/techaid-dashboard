@@ -34,24 +34,6 @@ query findPermissions($page: PaginationInput, $roleId: String!) {
 }
 `;
 
-const AUTOCOMPLETE_PERMISSIONS = gql`
-query findAutocompletePermissions($appId: String!, $roleId: Int) {
-  permissions(appId: $appId, where: {
-    NOT: {
-      role: {
-        id: {
-          _eq: $roleId
-        }
-      }
-    }
-  }){
-    id
-    name
-    description
-  }
-}
-`;
-
 @Component({
     selector: 'role-permissions',
     styleUrls: ['role-permissions.scss'],
@@ -215,40 +197,6 @@ export class RolePermissionsComponent implements OnInit, OnDestroy, AfterViewIni
     if (this.sub) {
       this.sub.unsubscribe();
     }
-  }
-
-  updatePermissions(appId: string) {
-    if (!appId) {
-      return;
-    }
-
-    const apiRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_PERMISSIONS,
-        variables: {}
-      });
-
-    apiRef.refetch({
-      appId: appId,
-      roleId: this._roleId
-    }).then(res => {
-      const data = res['data']['permissions'].map(v => {
-        return {
-          label: `${v.name}`, value: {
-            name: v.name,
-            description: v.description
-          }
-        };
-      });
-    }, err => {
-      this.toastr.warning(`
-      <small>${err.message}</small>
-    `, 'GraphQL Error', {
-          enableHtml: true,
-          timeOut: 15000,
-          disableTimeOut: true
-        });
-    });
   }
 
   ngAfterViewInit() {
