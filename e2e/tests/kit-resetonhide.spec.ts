@@ -38,7 +38,7 @@ const KIT_BASE = {
   ramCapacity: 16,
   cpuType: 'i7',
   cpuCores: 4,
-  tpmVersion: 2,
+  tpmVersion: '2.0', // String in kits.graphqls
   batteryHealth: 85,
   lotId: null,
   locationCode: 'A1',
@@ -150,7 +150,7 @@ test.describe('kit-info conditional-field value retention @mocked', () => {
     // (numbers get coerced to null by the kit-info-input change handler).
     expect(sentData.typeOfStorage, 'typeOfStorage must be retained').toBe('SSD');
     expect(sentData.storageCapacity, 'storageCapacity must be retained').toBe(256);
-    expect(sentData.tpmVersion, 'tpmVersion must be retained').toBe(2);
+    expect(sentData.tpmVersion, 'tpmVersion must be retained').toBe('2.0');
     expect(sentData.batteryHealth, 'batteryHealth must be retained').toBe(85);
   });
 });
