@@ -7,18 +7,6 @@ import { DatePipe } from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 
-const UPDATE_NOTE = gql`
-mutation updateNote($data: UpdateNoteInput!) {
-  updateNote(data: $data){
-      content
-      volunteer
-      createdAt
-      updatedAt
-      id
-  }
-}
-`;
-
 const DELETE_NOTE = gql`
 mutation deleteNote($id: ID!) {
   deleteNote(id: $id)
@@ -80,31 +68,6 @@ export class FormlyCustomNote extends FieldType {
 
     
 
-    //Update note feature is note being implemented for the moment. It is not very important anyway. You can always just delete and recreate. 
-    /*
-    updateNote(data: any) {
-
-        this.apollo.mutate({
-            mutation: UPDATE_NOTE,
-            variables: {
-                data: data
-            }
-        }).subscribe(res => {
-            this.toastr.info(`
-          <small>Successfully updated note</small>
-          `, 'Updated Note', {
-                enableHtml: true
-            });
-            location.reload();
-        }, err => {
-            this.toastr.error(`
-          <small>${err.message}</small>
-          `, 'Update Error', {
-                enableHtml: true
-            });
-        });
-    }
- */
     /* Delete note calls the delete mutation directly and reloads the page to refresh the listings. There might be a way to prevent reload but it's too complicated. Also KISS/YAGNI 
      */
     confirmDeleteNote(id: any, content: TemplateRef<any>) {

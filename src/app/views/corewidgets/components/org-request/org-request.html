@@ -85,7 +85,7 @@
             </div>
           }
           <form [formGroup]="form">
-            <formly-form [options]="options" (ngSubmit)="form.valid && createEntity(form.value)" [form]="form"
+            <formly-form [options]="options" [form]="form"
               [model]="model" [fields]="fields">
             </formly-form>
             @if (submiting) {

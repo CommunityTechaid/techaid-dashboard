@@ -1,21 +1,6 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
-import { ToastrService } from 'ngx-toastr';
-import gql from 'graphql-tag';
-import { Apollo } from 'apollo-angular';
 import { ReactiveFormsModule } from '@angular/forms';
-
-const CREATE_NOTE = gql`
-mutation createNote($data: CreateNoteInput!) {
-  createNote(data: $data){
-      content
-      volunteer
-      createdAt
-      updatedAt
-      id
-  }
-}
-`;
 
 @Component({
     selector: 'formly-field-create-note',
@@ -31,38 +16,8 @@ mutation createNote($data: CreateNoteInput!) {
 export class FormlyCustomCreateNote extends FieldType  {
 
 
-    /* constructor(
-        private toastr: ToastrService,
-        private apollo: Apollo
-    ) {
-        super();
-    } */
-
   
     //Creation of note is handled by the save button of the UpdateKit mutation
-    /* createNote(data: any) {
-
-        this.apollo.mutate({
-            mutation: CREATE_NOTE,
-            variables: {
-                data
-            }
-        }).subscribe(res => {
-            this.toastr.info(`
-          <small>Successfully created note</small>
-          `, 'Created Note', {
-                enableHtml: true
-            });
-            location.reload();
-        }, err => {
-            this.toastr.error(`
-          <small>${err.message}</small>
-          `, 'Create Error', {
-                enableHtml: true
-            });
-        });
-    }
- */
 
    
 }

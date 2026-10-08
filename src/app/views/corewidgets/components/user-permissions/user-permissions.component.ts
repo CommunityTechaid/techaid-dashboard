@@ -1,18 +1,15 @@
 import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
-import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
-import { FormControl, UntypedFormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { LatestDraw } from '@app/shared/utils';
 
 
 const QUERY_PERMISSIONS = gql`
@@ -43,78 +40,12 @@ query findPermissions($userId: String!, $page: PaginationInput) {
 }
 `;
 
-const CREATE_PERMISSION = gql`
-mutation assignPermissions($data: AddUserPermissionsInput!) {
-  addUserPermissions(data: $data){
-    added {
-      name
-    }
-  }
-}
-`;
-
-const DELETE_PERMISSION = gql`
-mutation removeRolePermissions($data: AddUserPermissionsInput!) {
-  removeUserPermissions(data: $data){
-     removed {
-       name
-     }
-  }
-}
-`;
-
-const QUERY_API = gql`
-query typeaheadFindApis($appId: String, $term: String) {
-  allApisConnection(page: {
-    size: 50
-  },
-    where: {
-      tenant: {
-        id: {
-          _eq: $appId
-        }
-      }
-      id: {
-        _contains: $term
-      }
-      OR: [{
-        name: {
-          _contains: $term
-        }
-      }]
-    }
-    ){
-    content{
-     id: identifier
-     name
-    }
-  }
-}
-`;
-
-const AUTOCOMPLETE_PERMISSIONS = gql`
-query findAutocompletePermissions($appId: String!, $userId: Int) {
-  permissions(appId: $appId, where: {
-    NOT: {
-      user: {
-        id: {
-          _eq: $userId
-        }
-      }
-      OR: {
-        role: {
-          user: {
-            id: {
-              _eq: $userId
-            }
-          }
-        }
-      }
-    }
-  }){
-    id
-    name
-    description
+// The server identifies a permission by resourceServerId + name, but its
+// PermissionInput binds all four fields as non-null, so send them all.
+const REMOVE_PERMISSIONS = gql`
+mutation removePermissions($userId: String!, $permissions: [PermissionInput!]!) {
+  removePermissions(userId: $userId, permissions: $permissions){
+    userId
   }
 }
 `;
@@ -124,7 +55,7 @@ query findAutocompletePermissions($appId: String!, $userId: Int) {
     styleUrls: ['user-permissions.scss'],
     templateUrl: './user-permissions.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [AppGridDirective_1, NgbPopover, ReactiveFormsModule, FormlyModule]
+    imports: [AppGridDirective_1, NgbPopover]
 })
 export class UserPermissionsComponent implements OnInit, OnDestroy, AfterViewInit {
   /** Drops out-of-order ajax responses — see LatestDraw. */
@@ -138,57 +69,9 @@ export class UserPermissionsComponent implements OnInit, OnDestroy, AfterViewIni
   selections = {};
   selected = [];
   entities = [];
-  form: UntypedFormGroup = new UntypedFormGroup({});
-  model = {};
 
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
-
-  apis$: Observable<any>;
-  apis: any[] = [];
-  apiInput$ = new Subject<string>();
-  apiLoading = false;
-  appField: FormlyFieldConfig = {
-    key: 'appId',
-    type: 'choice',
-    className: 'col-md-12',
-    hooks: {
-      onInit: (field) => {
-        field.formControl.valueChanges.subscribe(v => {
-          this.updatePermissions(v);
-        });
-      }
-    },
-    templateOptions: {
-      label: '',
-      loading: this.apiLoading,
-      typeahead: this.apiInput$,
-      placeholder: 'Select an API',
-      searchable: true,
-      items: this.apis,
-      required: true
-    },
-  };
-
-  permissionField: FormlyFieldConfig = {
-    key: 'permissions',
-    type: 'choice',
-    className: 'col-md-12',
-    templateOptions: {
-      label: 'Select Permissions',
-      placeholder: '',
-      searchable: true,
-      multiple: true,
-      items: this.apis,
-      required: true
-    },
-  };
-
-
-  fields: FormlyFieldConfig[] = [
-    this.appField,
-    this.permissionField
-  ];
 
   constructor(
     private modalService: NgbModal,
@@ -247,40 +130,6 @@ export class UserPermissionsComponent implements OnInit, OnDestroy, AfterViewIni
         query: QUERY_PERMISSIONS,
         variables: {}
       });
-
-    const apiRef = this.apollo
-      .watchQuery({
-        query: QUERY_API,
-        variables: {}
-      });
-
-    this.apis$ = concat(
-      of([]),
-      this.apiInput$.pipe(
-        debounceTime(200),
-        distinctUntilChanged(),
-        tap(() => this.apiLoading = true),
-        switchMap(term => from(apiRef.refetch({
-          term: term,
-        })).pipe(
-          catchError(() => {
-            this.toastr.error('Failed to load APIs for filter');
-            return of([]);
-          }),
-          tap(() => this.apiLoading = false),
-          switchMap(res => {
-            const data = res['data']['allApisConnection']['content'].map(v => {
-              return { label: `${v.name} (${v.id})`, value: v.id };
-            });
-            return of(data);
-          })
-        ))
-      )
-    );
-
-    this.sub.add(this.apis$.subscribe(data => {
-      this.appField.templateOptions['items'] = data;
-    }));
 
     this.dtOptions = {
       pagingType: 'full_numbers',
@@ -389,86 +238,30 @@ export class UserPermissionsComponent implements OnInit, OnDestroy, AfterViewIni
     }
   }
 
-  updatePermissions(appId: string) {
-    if (!appId) {
-      return;
-    }
-
-    const apiRef = this.apollo
-      .watchQuery({
-        query: AUTOCOMPLETE_PERMISSIONS,
-        variables: {}
-      });
-
-    apiRef.refetch({
-      appId: appId,
-      userId: this._userId
-    }).then(res => {
-      const data = res['data']['permissions'].map(v => {
-        return {
-          label: `${v.name}`, value: {
-            name: v.name,
-            description: v.description
-          }
-        };
-      });
-      this.permissionField.templateOptions['items'] = data;
-    }, err => {
-      this.toastr.warning(`
-      <small>${err.message}</small>
-    `, 'GraphQL Error', {
-          enableHtml: true,
-          timeOut: 15000,
-          disableTimeOut: true
-        });
-    });
-  }
-
   ngAfterViewInit() {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
     });
   }
 
-  assignPermissions(data: any) {
-    if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
-    data.users = [this._userId];
-    this.apollo.mutate({
-      mutation: CREATE_PERMISSION,
-      variables: { data }
-    }).subscribe(data => {
-
-      this.model = {};
-      if (this.table) {
-        this.table.ajax.reload(null, false);
-      }
-    }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Create Permission Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
-    });
-  }
-
   deletePermission(permission: any) {
     this.apollo.mutate({
-      mutation: DELETE_PERMISSION,
+      mutation: REMOVE_PERMISSIONS,
       variables: {
-        data: {
-          appId: permission['apiName'],
-          users: [this._userId],
-          permission: permission['name'],
-          permissions: []
-        }
+        userId: this._userId,
+        permissions: [{
+          resourceServerId: permission.resourceServerId,
+          resourceServerName: permission.resourceServerName ?? '',
+          name: permission.name,
+          description: permission.description ?? ''
+        }]
       }
     }).subscribe(res => {
       this.table.ajax.reload(null, false);
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
-      `, 'Error Deleting Role', {
+      `, 'Error Removing Permission', {
           enableHtml: true
         });
     });

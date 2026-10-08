@@ -81,14 +81,6 @@ const requestLimitCopy = (detail: RequestLimitDetail | null): string => {
   return `<p class="">It looks like you already have ${detail.open} open ${requests}${where}. The limit is ${detail.limit}.</br> ${tail}</p>`;
 };
 
-const CREATE_ENTITY = gql`
-  mutation createOrganisation($data: CreateOrganisationInput!) {
-    createOrganisation(data: $data){
-      id
-    }
-  }
-`;
-
 const QUERY_CONTENT = gql`
   query findContent {
     post(where: {slug: {_eq: "/organisation-device-request"}}){
@@ -141,12 +133,6 @@ const CREATE_DEVICE_REQUEST = gql`
       id,
       correlationId
     }
-  }
-`;
-
-const DELETE_CORRELATION_ID = gql`
-  mutation deleteCorrelationId($id: ID!) {
-    deleteCorrelationId(id: $id)
   }
 `;
 
@@ -1051,47 +1037,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   private flagsSub: Subscription;
 
-  private normalizeData(data: any) {
-    data = { ...data, attributes: { ...data.attributes } }; // Apollo v3 freezes query results in dev mode; copy before mutating
-    data.attributes.request = {
-      'laptops': 0,
-      'phones': 0,
-      'commsDevices': 0,
-      'tablets': 0,
-      'desktops': 0,
-      'broadbandHubs': 0
-    };
-    data.items.forEach(i => {
-      data.attributes.request[i] = data.attributes.request[i] + 1;
-    });
-
-    // the accepts attribute appears to be just an upcased and de-duped array of
-    // requested items
-    data.attributes.accepts =
-      Array.from(new Set(data.items.map(i => i.toUpperCase())));
-    delete data.items;
-
-    // This is a bit kludgey, but it turns out to be far easier to deal with
-    // clients' needs as a list of needs rather than yes/know/don't know for each
-    // item (mainly because of the don't know), but at the same time we want to
-    // make it a mandatory field. So we transform the individual items:
-    const needs = [];
-    if (data.hasInternetHome == 'no') {
-      needs.push('internet');
-    }
-    if (data.hasMobilityNeeds == 'yes') {
-      needs.push('mobility');
-    }
-    if (data.hasTrainingNeeds == 'yes') {
-      needs.push('training');
-    }
-    data.attributes.needs = needs;
-    delete data.hasInternetHome;
-    delete data.hasMobilityNeeds;
-    delete data.hasTrainingNeeds;
-
-    return data;
-  }
 
   organisationName(data) {
     return `${data.name || ''}||${data.id || ''}`
@@ -1197,29 +1142,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   ngAfterViewInit() {
 
 
-    // Submit function for TypeForm
-    (window as any).submit = ({ formId, responseId }) => {
-      console.log(`Form ${formId} submitted, response id: ${responseId}`);
-      return this.apollo.mutate({
-        mutation: DELETE_CORRELATION_ID,
-        variables: { id: this.deviceRequestId }
-      }).toPromise().then(res => {
-
-        const result = res?.data["deleteCorrelationId"];
-        if (result === true) {
-          this.toastr.success("Request created successfully.");
-          return true;
-        }
-
-        this.toastr.error("There was an error with the request. Please try again or contact support.");
-        return false;
-
-      }).catch(error => {
-        const parsed = this.parseApolloError(error);
-        this.toastr.error(parsed.message);
-        return false;
-      });
-    };
 
     /*// Create the script element dynamically
     const script = this.renderer.createElement('script');
@@ -1660,30 +1582,4 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   }
 
-  createEntity(data: any) {
-    data = this.normalizeData(data);
-    //    console.log(data);
-
-    if (this.form.invalid) {
-      this.model.showErrorState = true;
-      return false;
-    }
-    this.submitting = true;
-    this.apollo.mutate({
-      mutation: CREATE_ENTITY,
-      variables: { data }
-    }).subscribe(data => {
-      this.submited = true;
-      this.submitting = false;
-      this.model = {};
-    }, err => {
-      this.submitting = false;
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Create Organisation Error', {
-        enableHtml: true,
-        timeOut: 15000
-      });
-    });
-  }
 }
