@@ -20,6 +20,8 @@ import { User } from '@app/state/user/user.state';
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 import { KitAuditComponent } from '../kit-audit-component/kit-audit-component.component';
 
+export const BATTERY_HEALTH_OK_ABOVE = 50;
+
 export const KIT_STATUS = {
   'DONATION_NEW': 'New device registered',
   'PROCESSING_START': 'Device received into CTA',
@@ -471,15 +473,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
             'templateOptions.bgcolor': (model, state, field) => {
               const data = field.parent.formControl.value || {};
               const health = data['batteryHealth'];
-              if (health >= 75) {
-                return 'green';
-              } else if(health >= 50) {
-                return 'yellow';
-              } else if(health >= 25) {
-                return 'orange';
-              } else {
-                return 'red';
-              }
+              return health > BATTERY_HEALTH_OK_ABOVE ? 'green' : 'red';
             }
           },
           hideExpression: (model, state, field) => {
