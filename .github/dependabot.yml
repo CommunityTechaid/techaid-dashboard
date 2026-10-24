@@ -1,0 +1,67 @@
+# Dependabot configuration.
+#
+# Mirrors techaid-server's. Two settings matter more than the rest:
+#   target-branch: dev   - master is a record of what shipped (deploy-prod.yml fast-forwards it),
+#                          never a source. Version-update PRs must point at dev.
+#   commit-message       - release-please reads conventional commits; `chore(deps)` keeps bumps
+#                          out of the release notes' feature list.
+#
+# Security-update PRs ignore target-branch and always open against the default branch (master).
+# Do not merge those there: re-apply the bump on dev and let it ship through UAT.
+#
+# Majors are ignored for Angular and TypeScript: an Angular major is a migration (ng update),
+# not a routine PR, and TypeScript is pinned to the range the Angular compiler supports.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/London
+    target-branch: dev
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      # Angular packages are released in lockstep and do not build when bumped separately.
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+      test-infrastructure:
+        patterns:
+          - "@playwright/*"
+          - "*eslint*"
+    ignore:
+      - dependency-name: "@angular/*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@angular-devkit/*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "typescript"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+      timezone: Europe/London
+    target-branch: dev
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(ci)"
+    ignore:
+      # deploy-prod.yml deploys to production; an action major is a tracked change.
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
