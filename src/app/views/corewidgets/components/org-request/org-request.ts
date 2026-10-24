@@ -119,14 +119,6 @@ const FIND_ORGANISATION_CONTACT = gql`
   }
 `;
 
-const CREATE_REFERRING_ORGANISATION_CONTACT = gql`
-  mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
-    createReferringOrganisationContact(data: $data){
-      id
-    }
-  }
-`;
-
 const CREATE_DEVICE_REQUEST = gql`
   mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
     createDeviceRequest(data: $data){
@@ -180,7 +172,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
 
   isOrganisationExists = true;
-  isContactExists = true;
   newOrganisationName = ""
   showTypeform = false;
   borough = "";
@@ -480,7 +471,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
             this.sub.add(field.formControl.valueChanges.subscribe(v => {
               this.referringOrganisationContactProceedButton.hide = false;
               this.referringContactIdField.formControl.setValue(v)
-              this.isContactExists = true;
             }));
           }
         }
@@ -489,70 +479,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     ]
 
   }
-
-  referringOrganisationContactDetailFormGroup: FormlyFieldConfig = {
-    fieldGroupClassName: 'row',
-    hideExpression: this.isOrganisationExists && this.isContactExists,
-    fieldGroup: [
-      {
-        hideExpression: !this.isOrganisationExists,
-        className: 'col-md-12',
-        template: `<div class="border-bottom-info card mb-3 p-3">
-        <p>It looks like you haven’t made a request with us before, please check your details and fill in some additional information below.</p>
-  </div>`
-      },
-      {
-        key: 'referringOrganisationContact.phoneNumber',
-        type: 'input',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: '',
-          pattern: /^(((\+44\s?\d{4}|\(?0\d{4}\)?)\s?\d{3}\s?\d{3})|((\+44\s?\d{3}|\(?0\d{3}\)?)\s?\d{3}\s?\d{4})|((\+44\s?\d{2}|\(?0\d{2}\)?)\s?\d{4}\s?\d{4}))(\s?\#(\d{4}|\d{3}))?$/,
-          placeholder: 'Your phone number',
-          required: true
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': (model) => !!model?.showErrorState,
-        }
-      },
-      {
-        key: 'referringOrganisationContact.address',
-        type: 'place',
-        className: 'col-md-12',
-        defaultValue: '',
-        templateOptions: {
-          label: '',
-          placeholder: 'Your address',
-          required: true
-        },
-        validation: {
-          show: false
-        },
-        expressionProperties: {
-          'validation.show': (model) => !!model?.showErrorState,
-        }
-      },
-      {
-        type: 'button',
-        templateOptions: {
-          text: 'Next',
-          onClick: () => {
-            this.saveNewReferringOrganisationContact().then(success => {
-              if (success) {
-                this.isContactExists = true;
-                this.showRequestPage();
-              }
-            });
-          }
-        },
-      }
-    ]
-  };
-
 
   /**
    * REFERRING ORGANISATION CONTACT FULL NAME AND EMAIL
@@ -571,9 +497,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       onInit: (field) => {
         this.sub.add(field.formControl.valueChanges.subscribe(v => {
           if (this.isOrganisationExists) {
-            this.isContactExists = true;
             this.refContactSubmitButton.hideExpression = false
-            this.referringOrganisationContactDetailFormGroup.hideExpression = true;
           }
         }));
       }
@@ -597,17 +521,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
       required: true
     },
-    /* hooks: {
-      onInit: (field) => {
-        this.sub.add(field.formControl.valueChanges.subscribe(v => {
-          if (this.isOrganisationExists) {
-            this.isContactExists = true;
-            this.refContactSubmitButton.hideExpression = false
-            this.referringOrganisationContactDetailFormGroup.hideExpression = true;
-          }
-        }));
-      }
-    }, */
     validation: {
       show: false
     },
@@ -656,8 +569,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         ]
       },
       this.referringOrganisationContactsDropDown,
-      this.createNewOrganisationContactPrompt,
-      this.referringOrganisationContactDetailFormGroup
+      this.createNewOrganisationContactPrompt
     ]
   };
 
@@ -1071,7 +983,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         }
         ),
         switchMap(term => {
-          this.referringOrganisationContactDetailFormGroup.hideExpression = true
           if (term && term.length >= 3) {
             return from(orgRef.refetch({
               term: term
@@ -1169,50 +1080,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     }, 1000);
   }
 
-  async saveNewReferringOrganisationContact(): Promise<boolean> {
-
-    const contactFormControl = this.referringOrganisationContactDetailFormGroup.formControl;
-
-    let isValid = true
-    for (const field of this.referringOrganisationContactDetailFormGroup.fieldGroup) {
-      if (field.formControl.errors) {
-        isValid = false;
-        field.validation.show = true
-      }
-    }
-
-    if (!isValid) {
-      return
-
-    }
-
-    const contactDetails: any = contactFormControl.value.referringOrganisationContact;
-    contactDetails.referringOrganisation = this.referringOrgIdField.formControl.value
-    const data = contactDetails;
-    Object.keys(data).forEach(k => data[k] = typeof data[k] == 'string' ? data[k].trim() : data[k]);
-    return this.apollo.mutate({
-      mutation: CREATE_REFERRING_ORGANISATION_CONTACT,
-      variables: { data }
-    }).toPromise().then(res => {
-
-      const data = res["data"]["createReferringOrganisationContact"]["id"];
-      if (data) {
-        this.toastr.info("Your contact details were saved.")
-        this.referringContactIdField.formControl.setValue(data);
-        return true;
-      } else {
-        this.toastr.error("Could not save your contact details.");
-        return false;
-      }
-    }).catch(error => {
-      const parsed = this.parseApolloError(error);
-      this.toastr.error(parsed.message);
-      console.error(error);
-      return false;
-    });
-
-  }
-
   getRefContact() {
 
     if (this.emailField.formControl.errors) {
@@ -1246,7 +1113,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
       } else if (data && data.length == 1) {
         this.referringContactIdField.formControl.setValue(data[0].id);
-        this.isContactExists = true;
         this.showRequestPage();
       } else {
         this.createNewOrganisationContactPrompt.hide = false;
@@ -1319,26 +1185,14 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
     this.refContactPage.hideExpression = false;
 
-    if (!this.isContactExists) {
-      this.referringOrganisationContactDetailFormGroup.hideExpression = false;
-      this.refContactSubmitButton.hideExpression = true;
-    } else {
-      this.refContactSubmitButton.hideExpression = false;
-    }
+    this.refContactSubmitButton.hideExpression = false;
   }
 
   hideNewOrganisationField(hide: boolean) {
     this.isOrganisationExists = hide;
-    this.isContactExists = hide;
     this.createNewOrganisationPrompt.hideExpression = hide;
     this.refContactPage.hideExpression = !this.isOrganisationExists;
   }
-
-  hideNewContactRefDetailsField(hide: boolean) {
-    this.isContactExists = hide;
-    this.referringOrganisationContactDetailFormGroup.hideExpression = this.isContactExists;
-  }
-
 
   ngOnDestroy() {
     if (this.sub) {
