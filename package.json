@@ -56,7 +56,7 @@
     "core-js": "^3.49.0",
     "datatables.net": "^2.3.7",
     "datatables.net-bs5": "^2.3.7",
-    "datatables.net-responsive": "^3.0.8",
+    "datatables.net-responsive": "^4.1.1",
     "datatables.net-rowreorder": "^1.5.1",
     "date-fns": "^4.1.0",
     "graphql": "^17.0.2",
