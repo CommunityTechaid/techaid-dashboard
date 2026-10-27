@@ -33,7 +33,7 @@ and the skill needs fixing.
 | `dashboard-architecture-contract` | Load-bearing design decisions (standalone Angular 21 + esbuild, Apollo v4 frozen responses, Formly resetOnHide, users-sort quirk, OnPush pilot, CSP-constrained NGXS, manually-deployed Places Worker), the invariants a diff must not break, known weak points |
 | `dashboard-debugging-playbook` | Symptom → first check → trap → discriminating experiment for every known dashboard failure mode |
 | `dashboard-testing-and-e2e` | Red/green rule, the @mocked/live-UAT Playwright split, the certified 30-spec inventory, hygiene tooling, known flakes, acceptance ladder |
-| `dashboard-release-and-deploy` | Pipeline anatomy, release-please, the cross-repo release cut, master fast-forward failure branches, rollback reality, the out-of-band Worker deploy |
+| `dashboard-release-and-deploy` | Pipeline anatomy, release-please, the cross-repo release cut, main fast-forward failure branches, rollback reality, the out-of-band Worker deploy |
 | `triage-issues` | The structured GitHub issue-triage loop (replicate on UAT, red/green fix or needs-info, adjacent-pattern flagging) |
 | `dashboard-roadmap-and-frontier` | Vetted open improvement candidates under the maintainer's advancement definition (platform health + staff efficiency UX), with dependencies, statuses, and falsifiable milestones |
 

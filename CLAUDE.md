@@ -40,7 +40,7 @@ Environment configs live in `src/environments/` (dev, prod, uat, local).
 
 ## Release Workflow
 
-`master` represents the latest state deployed to production. Releases are
+`main` represents the latest state deployed to production. Releases are
 driven by [release-please](https://github.com/googleapis/release-please)
 running on `dev` (see `.github/workflows/release-please.yml` and
 `release-please-config.json`).
@@ -64,24 +64,23 @@ How it works:
    changelog section as the body.
 4. Run the `Deploy to Production SWA` workflow (`workflow_dispatch`) to
    deploy the new version from `dev` to production. **Select `dev` in the
-   branch dropdown** — it defaults to `master` because that is the repo's
-   default branch, and GitHub runs the workflow *file* from the ref you
-   dispatch on, which on `master` is always the previously deployed copy.
+   branch dropdown** — GitHub runs the workflow *file* from the ref you
+   dispatch on, which on `main` is always the previously deployed copy.
    The workflow fails fast with an explanatory error if dispatched from
    anything other than `dev`. On success the
-   workflow itself fast-forwards `master` to the deployed commit and
+   workflow itself fast-forwards `main` to the deployed commit and
    pushes — no manual step required. The push is a plain (non-force)
-   push, so if `master` has somehow diverged from `dev` the workflow
+   push, so if `main` has somehow diverged from `dev` the workflow
    will fail at that step (the prod deploy itself will have already
-   succeeded; recover by inspecting why `master` diverged and fixing it
+   succeeded; recover by inspecting why `main` diverged and fixing it
    by hand).
 
-   Manual fallback, if you ever need to FF `master` yourself:
+   Manual fallback, if you ever need to FF `main` yourself:
    ```bash
    git fetch origin
-   git checkout master
+   git checkout main
    git merge --ff-only origin/dev
-   git push origin master
+   git push origin main
    ```
 
 ### Release cut runbook (cross-repo order of operations)
@@ -101,7 +100,7 @@ then ship; API before UI:
    release-please tags; `deploy-dev.yml` redeploys UAT with the bumped version.
 4. **Dashboard**: run `Deploy to Production SWA` (`deploy-prod.yml`,
    `workflow_dispatch`), selecting **`dev`** in the branch dropdown. On
-   success it fast-forwards `master` itself.
+   success it fast-forwards `main` itself.
 5. Post-deploy: `node e2e/csp-probe.mjs https://app.communitytechaid.org.uk`
    verifies the booking page's Turnstile/CSP on the prod origin.
 
@@ -117,7 +116,8 @@ refactors, test-only changes, and CI tweaks (`chore:`, `test:`, `ci:`,
 `refactor:`) won't trigger a version bump or appear in the changelog.
 
 Safety rails:
-- Never push to `master` other than the fast-forward described above.
+- Never push to `main` other than the fast-forward described above.
+- The `master` branch was renamed to `main` on 2026-10-27; `dev` is the default branch.
 - Never create `v*` tags manually — release-please owns those.
 - The `deploy/dev/*` and `deploy/prod/*` tags created by the deploy
   workflows are deployment markers (separate from release tags) and
@@ -194,7 +194,7 @@ all GitHub interactions.
 
 5. **Open the PR and update the issue.**
    - `gh pr create --base dev --title "fix: <summary> (#<num>)" --body ...`. Base is `dev`,
-     not `master` — every prior `claude/*` PR has merged into `dev` and master is reserved
+     not `main` — every prior `claude/*` PR has merged into `dev` and main is reserved
      for release cuts. PR body must include `Fixes #<num>`, a one-paragraph root-cause
      explanation, and a "Test plan" section pointing at the new spec.
    - Post a comment on the issue: short summary of the cause, link to the PR, note that it
@@ -231,7 +231,7 @@ all GitHub interactions.
    only places where the same root cause clearly applies.
 
 Safety rails for the scheduled task:
-- Never force-push, never push to `master` or `dev`, never merge a PR.
+- Never force-push, never push to `main` or `dev`, never merge a PR.
 - Never commit a bearer token, `.auth/user.json`, or anything under `e2e/.auth/`.
 - One PR per issue. Do not open follow-up / sweep / refactor PRs autonomously — see step 7.
 - If the build is already broken on `dev` before you start, stop and post a comment on the

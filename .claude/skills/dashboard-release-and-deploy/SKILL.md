@@ -2,12 +2,12 @@
 name: dashboard-release-and-deploy
 description: >
   How techaid-dashboard ships: the CI gate, the dev→UAT auto-deploy, the manual prod deploy
-  (workflow_dispatch → master auto-fast-forward), release-please mechanics, the cross-repo
+  (workflow_dispatch → main auto-fast-forward), release-please mechanics, the cross-repo
   release-cut order with techaid-server, and — the part CLAUDE.md doesn't cover — what to do
-  when the master fast-forward fails, what rollback actually is (and isn't) on this repo, why
+  when the main fast-forward fails, what rollback actually is (and isn't) on this repo, why
   "Fixes #N" doesn't auto-close on a dev merge, how to verify what's live, and the
   out-of-band Cloudflare Worker deploy. Load this for anything about release-please PRs,
-  deploy-dev.yml, deploy-prod.yml, the master fast-forward, version.ts, rollback, or "is the
+  deploy-dev.yml, deploy-prod.yml, the main fast-forward, version.ts, rollback, or "is the
   right build live".
 ---
 
@@ -42,7 +42,7 @@ from the repo.
 | `deploy/dev/*`, `deploy/prod/*` | Git tags the deploy workflows push after every successful deploy (`YYYY-MM-DD-<sha7>`) — deployment markers, separate from release tags |
 | `v*` tag | Release-please's tag on the release-PR merge commit (e.g. `v1.1.0`) — **never create these by hand** |
 | release PR | The single open PR release-please maintains on `dev` (`chore(dev): release X.Y.Z`), auto-updated as conventional commits land |
-| FF (fast-forward) | The plain, non-force `git push origin HEAD:refs/heads/master` `deploy-prod.yml` runs after a successful prod deploy |
+| FF (fast-forward) | The plain, non-force `git push origin HEAD:refs/heads/main` `deploy-prod.yml` runs after a successful prod deploy |
 | `version.ts` triple | `{version, build, commit}` stamped into `src/environments/version.ts` at build time — see §4 for where it's visible |
 | workflow_dispatch | A workflow triggered manually from the Actions tab (or `gh workflow run`) |
 
@@ -55,7 +55,7 @@ Four workflows in `.github/workflows/` (read in full 2026-07-19):
 | PR → `dev` | `ci.yml` | lint (`eslint --quiet`) + production build + `e2e-mocked` (@mocked Playwright, self-mints a fake JWT, no secrets). All three gate the PR; `e2e-mocked` also enforces a >40% skip-ratio ceiling |
 | push → `dev` | `deploy-dev.yml` | `npm install` → stamp `version.ts` → inject `env.js` (App Insights conn string) → `ng build --configuration uat` → deploy to UAT SWA → sync project board ("In UAT") → tag `deploy/dev/<date>-<sha7>` |
 | push → `dev` | `release-please.yml` | maintains the single open release PR (§2) |
-| manual (Actions tab) | `deploy-prod.yml` | checkout `ref: dev` → `npm ci` → stamp `version.ts` → `ng build --configuration production` → deploy to prod SWA → tag `deploy/prod/<date>-<sha7>` → label linked issues "shipped" → fast-forward master (§1a) |
+| manual (Actions tab) | `deploy-prod.yml` | checkout `ref: dev` → `npm ci` → stamp `version.ts` → `ng build --configuration production` → deploy to prod SWA → tag `deploy/prod/<date>-<sha7>` → label linked issues "shipped" → fast-forward main (§1a) |
 
 `ci.yml` and `deploy-dev.yml` use `npm install`, not `npm ci` — a comment in `ci.yml` explains
 why: the Windows-maintained lockfile is missing platform-optional entries (`@emnapi/core`), so
@@ -68,15 +68,15 @@ releases), while `build` (`YY.MM.DD-HHMM` UTC) and `commit` (7-char SHA) are uni
 That's how a Tuesday UAT build and a Wednesday one are distinguishable even though
 `version.version` reads the same `1.1.0` both times.
 
-**§1a — the master fast-forward.** `deploy-prod.yml`'s last step is:
+**§1a — the main fast-forward.** `deploy-prod.yml`'s last step is:
 
 ```bash
-git push origin HEAD:refs/heads/master
+git push origin HEAD:refs/heads/main
 ```
 
 `HEAD` at that point is the `dev` commit that was just built and deployed to prod. This is a
-**plain push, not `--force`** — deliberately, so it only succeeds if `master` is strictly
-behind `HEAD` (i.e. an ancestor). If `master` has diverged for any reason, this step fails —
+**plain push, not `--force`** — deliberately, so it only succeeds if `main` is strictly
+behind `HEAD` (i.e. an ancestor). If `main` has diverged for any reason, this step fails —
 see §4 for what that looks like and how to recover. Also note: **`deploy-prod.yml` has no
 GitHub environment approval gate** — unlike techaid-server's `promote.yml` (which pauses for a
 named reviewer), triggering this workflow deploys immediately. The "gate" here is entirely
@@ -134,7 +134,7 @@ only to anchor where this repo's steps sit in the larger picture:
 2. techaid-server: run `promote.yml` with blank `image_tag` (prod API deploy — promotes
    whatever image UAT is currently running)
 3. techaid-dashboard: merge its release PR → `dev` (tags release; `deploy-dev.yml` redeploys UAT)
-4. techaid-dashboard: run `deploy-prod.yml` (prod UI deploy — auto-FFs master on success)
+4. techaid-dashboard: run `deploy-prod.yml` (prod UI deploy — auto-FFs main on success)
 5. `node e2e/csp-probe.mjs https://app.communitytechaid.org.uk` — post-deploy CSP/Turnstile check
 
 **Why API before UI:** the dashboard's UI features can depend on server-side GraphQL mutations
@@ -152,26 +152,26 @@ duplicate them here.
 
 ## 4. Failure branches and recovery
 
-### 4a. The master fast-forward fails
+### 4a. The main fast-forward fails
 
 **By the time you see this failure, prod is already live** — the FF push is the *last* step
 of `deploy-prod.yml`, after the SWA deploy and the deploy tag already succeeded. This is not
-an incident; it's a bookkeeping problem. Diagnose why `master` has a commit that isn't an
-ancestor of `dev` (someone committed to `master` directly, or a previous FF was worked around
+an incident; it's a bookkeeping problem. Diagnose why `main` has a commit that isn't an
+ancestor of `dev` (someone committed to `main` directly, or a previous FF was worked around
 some other way), then use the manual fallback from `CLAUDE.md`:
 
 ```bash
 git fetch origin
-git checkout master
+git checkout main
 git merge --ff-only origin/dev
-git push origin master
+git push origin main
 ```
 
-If `merge --ff-only` itself refuses (genuine divergence, not just a stale local `master`),
-do **not** force-push — `master` is a protected branch with force-push disabled, so
+If `merge --ff-only` itself refuses (genuine divergence, not just a stale local `main`),
+do **not** force-push — `main` is a protected branch with force-push disabled, so
 `git push --force` would fail anyway with `GH006 Protected branch update failed`, and even if
 it didn't, force-pushing a shared branch is exactly the kind of history rewrite that breaks
-every collaborator's local `master`.
+every collaborator's local `main`.
 
 **History (as of 2026-06-01):** this happened for real — `master` had diverged from `dev` by
 15 commits, still holding the old pre-upgrade production state (legacy CircleCI/Dockerfile/
@@ -183,7 +183,7 @@ workflow's plain push would have failed. The fix was **not** a force-push; it wa
 latter would merge the legacy files back into the tree), recording `master` as a merged
 ancestor while leaving `dev`'s tree byte-for-byte unchanged (verified empty `git diff
 origin/dev HEAD` at the time). That made `master` an ancestor of `dev` again, so the next FF
-push succeeded (`deploy/prod/2026-06-01-97a3120`). **If `master` ever diverges again, this is
+push succeeded (`deploy/prod/2026-06-01-97a3120`). **If `main` ever diverges again, this is
 the precedent to study** — but confirm *why* it diverged first; `-s ours` is a full
 merge-conflict-resolution decision, not a rote command to replay blindly.
 
@@ -209,7 +209,7 @@ The only verified rollback path, given that constraint:
 2. Push the revert to `dev` — this alone auto-redeploys UAT (`deploy-dev.yml`) and gives you
    free confirmation that the reverted build is what you expect, before touching prod.
 3. Run `deploy-prod.yml` again. It builds `dev`'s new HEAD (the revert) and deploys it,
-   FF-ing `master` on success as normal.
+   FF-ing `main` on success as normal.
 
 This is slower than techaid-server's tag-pin rollback (minutes of CI/build time, not an
 instant image swap) — no faster verified option exists. A truly instant rollback would need a
@@ -219,13 +219,12 @@ don't invent one that isn't there.
 ### 4c. "Fixes #N" didn't close the issue
 
 GitHub's auto-close keywords (`Fixes`/`Closes`/`Resolves #N`) only fire on a merge into the
-repo's **default branch**, `master` — not `dev`. Every triage PR merges into `dev` (per
-`CLAUDE.md`'s issue-triage workflow), so a `Fixes #N` PR body leaves the issue open after
-merge; GitHub doesn't even post the usual "linked PR" auto-comment. **Verified 2026-05-27**
+repo's **default branch**, now `dev` (it was `master` until 2026-10-27). Every triage PR merges into `dev` (per
+`CLAUDE.md`'s issue-triage workflow), so a `Fixes #N` PR body left the issue open after
+merge (while the default branch was `master`); GitHub doesn't even post the usual "linked PR" auto-comment. **Verified 2026-05-27**
 across PRs #66/#68/#69: all three merged to `dev` with `Fixes #N`, all three issues stayed
 open until closed manually. Close by hand after merging: `gh issue close <num> --comment "..."
---reason completed`. The keyword *will* eventually fire once the release reaches `master` via
-§4a's FF, but that can be weeks away — don't leave the issue looking unaddressed until then.
+--reason completed`. Since the default branch is now `dev`, the keyword should fire on merge — verify, and close by hand if it doesn't.
 
 ## 5. Verifying what's live
 
@@ -240,7 +239,7 @@ Independent confirmation, if you can't reach the running app:
 
 ```bash
 git tag -l "deploy/prod/*" --sort=-creatordate | head -5   # deploy tags, newest first
-git log -1 origin/master                                    # what the last FF landed
+git log -1 origin/main                                    # what the last FF landed
 gh run list --workflow=deploy-prod.yml -L 5                 # recent prod-deploy runs
 ```
 
@@ -272,7 +271,7 @@ by any deploy workflow here) — don't go looking for it in `deploy-prod.yml` or
 
 ## 7. Safety rails
 
-- **Never push to `master` except the automated FF.** Every direct commit is a future §4a
+- **Never push to `main` except the automated FF.** Every direct commit is a future §4a
   divergence — see the 2026-06-01 history above for what recovering from that actually costs.
 - **Never create `v*` tags by hand** — release-please owns the tag/changelog/version mapping;
   a hand-made tag desyncs it with no clean way back.
@@ -298,7 +297,7 @@ edited since. Operational history (master reconcile, release-please PR-permissio
 Re-verify before trusting:
 - Pipeline steps: `cat .github/workflows/deploy-dev.yml .github/workflows/deploy-prod.yml`
 - Release-please state: `gh pr list --state open` (look for `chore(dev): release …`) + `cat .release-please-manifest.json`
-- Master/dev drift: `git fetch origin && git log origin/master..origin/dev --oneline | wc -l`
+- Master/dev drift: `git fetch origin && git log origin/main..origin/dev --oneline | wc -l`
 - Deploy tags: `git tag -l "deploy/prod/*" --sort=-creatordate | head -5`
 - Approval gate / ref input on the FF: `grep -n "environment:\|inputs:" .github/workflows/deploy-prod.yml` (expect no matches, as of writing)
 - Worker deploy currency: `cd workers/cta-places-proxy && npx wrangler deploy --dry-run`
