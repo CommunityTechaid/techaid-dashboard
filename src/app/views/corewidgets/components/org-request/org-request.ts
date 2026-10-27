@@ -24,6 +24,12 @@ import { User } from '@app/state/user/user.state';
 
 import { AppLocalCSS } from './app-local-css.component';
 import { PostcodeLocationStepComponent } from './postcode-location-step.component';
+import { MembershipNoticeComponent } from './membership-notice.component';
+import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
+import {
+  MEMBERSHIP_FLAG, MEMBERSHIP_LIMIT_MARKERS, MEMBERSHIP_PUBLIC_SELECTION, MEMBERSHIP_SELECTION, MembershipNotice,
+  MembershipOverLimitMode, MembershipPublic, membershipNotice,
+} from '@app/shared/membership/membership';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { Borough, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
 import {
@@ -106,7 +112,7 @@ const AUTOCOMPLETE_REFERRING_ORGANISATION = gql`
   }
 `;
 
-const FIND_ORGANISATION_CONTACT = gql`
+const findOrganisationContact = (membership: string) => gql`
   query findOrganisationContact($email: String, $refOrgId: Long) {
     referringOrganisationContactsPublic( where: {
       email: { _ilike: $email }
@@ -115,15 +121,48 @@ const FIND_ORGANISATION_CONTACT = gql`
     }){
       id
       fullName
+      ${membership}
     }
   }
 `;
 
-const CREATE_DEVICE_REQUEST = gql`
+const createDeviceRequest = (membership: string) => gql`
   mutation createDeviceRequest($data: CreateDeviceRequestInput!) {
     createDeviceRequest(data: $data){
       id,
       correlationId
+      ${membership}
+    }
+  }
+`;
+
+// Membership fields (techaid-server#311) are requested only while the membership flag is on.
+// The allowance hangs off the referee lookup, which already requires the email to belong to the
+// chosen organisation; that match is what lets an anonymous visitor see it.
+const FIND_ORGANISATION_CONTACT = findOrganisationContact('');
+const FIND_ORGANISATION_CONTACT_MEMBERSHIP = findOrganisationContact(MEMBERSHIP_PUBLIC_SELECTION);
+const CREATE_DEVICE_REQUEST = createDeviceRequest('');
+const CREATE_DEVICE_REQUEST_MEMBERSHIP = createDeviceRequest('membershipGraceIndex');
+
+// Read separately from QUERY_ADMIN_CONFIG, which doubles as the cold-start health check and
+// must keep working against a server without these fields.
+const QUERY_MEMBERSHIP_CONFIG = gql`
+  query findMembershipConfig {
+    adminConfig {
+      membershipOverLimitMode
+      membershipGraceRequests
+    }
+  }
+`;
+
+// Admin form only (signed-in staff): the organisation's staff-facing allowance and contacts.
+const QUERY_ORG_MEMBERSHIP = gql`
+  query findOrganisationMembership($id: Long) {
+    referringOrganisation(where: { id: { _eq: $id } }) {
+      id
+      name
+      ${MEMBERSHIP_SELECTION}
+      membershipContacts { id fullName }
     }
   }
 `;
@@ -146,7 +185,7 @@ const QUERY_ADMIN_CONFIG = gql`
     styleUrls: ['./org-request.scss'],
     templateUrl: './org-request.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule, PostcodeLocationStepComponent]
+    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule, PostcodeLocationStepComponent, MembershipNoticeComponent, MembershipBadgesComponent]
 })
 
 export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewInit, OnDestroy {
@@ -198,6 +237,50 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
    * applyDeviceAvailability() cannot quietly bring it back.
    */
   requestLimitReached = false;
+
+  /** Membership flag (techaid-server#311); off means nothing below is queried or shown. */
+  membershipEnabled = false;
+  /** Server config: what happens over the allowance. null until read, or if the read fails. */
+  membershipOverLimitMode: MembershipOverLimitMode | null = null;
+  membershipGraceRequests: number | null = null;
+  /** The organisation's allowance, from the referee lookup. */
+  membershipAllowance: MembershipPublic | null = null;
+  /** Staff form only: the organisation's membership record, for its name and contacts. */
+  adminOrgMembership: any = null;
+  /** Set when the server refused the submit for the allowance, whatever the pre-check said. */
+  membershipServerBlocked = false;
+  /** The request page (Your client's needs) is showing. */
+  onRequestPage = false;
+
+  get membershipNoticeKind(): MembershipNotice {
+    if (this.membershipServerBlocked) {
+      return 'block';
+    }
+    return membershipNotice(this.membershipAllowance, this.membershipOverLimitMode);
+  }
+
+  /** Disables the request fieldset and Submit. Seam for a future staff override. */
+  get membershipBlocked(): boolean {
+    return this.membershipEnabled && this.membershipNoticeKind === 'block';
+  }
+
+  get selectedOrganisationName(): string | null {
+    if (this.adminOrgMembership?.name) {
+      return this.adminOrgMembership.name;
+    }
+    const id = this.referringOrgIdField.formControl?.value;
+    const items: { label: string; value: any }[] = this.referringOrgField.templateOptions?.['items'] || [];
+    return items.find(i => i.value == id)?.label ?? null;
+  }
+
+  get selectedContactIsMembershipContact(): boolean {
+    const id = this.referringContactIdField.formControl?.value;
+    return !!this.adminOrgMembership?.membershipContacts?.some((c: any) => c.id == id);
+  }
+
+  get membershipContactName(): string | null {
+    return this.adminOrgMembership?.membershipContacts?.[0]?.fullName ?? null;
+  }
 
   /**
    * Server-resolved availability, keyed by normalised borough name. Empty until it loads, and
@@ -275,6 +358,15 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
    */
   private loadFeatureFlags(): void {
     this.flagsSub.add(
+      this.featureFlags.isEnabled(MEMBERSHIP_FLAG).subscribe(enabled => {
+        this.membershipEnabled = enabled;
+        if (enabled) {
+          this.loadMembershipConfig();
+        }
+      })
+    );
+
+    this.flagsSub.add(
       this.featureFlags.supportedBoroughs().subscribe(boroughs => {
         this.supportedBoroughList = boroughs;
       })
@@ -292,6 +384,20 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         this.applyDeviceAvailability();
       })
     );
+  }
+
+  private loadMembershipConfig(): void {
+    this.apollo.query({
+      query: QUERY_MEMBERSHIP_CONFIG,
+      fetchPolicy: 'network-only'
+    }).toPromise().then(res => {
+      const config = res?.data?.['adminConfig'];
+      this.membershipOverLimitMode = config?.membershipOverLimitMode ?? null;
+      this.membershipGraceRequests = config?.membershipGraceRequests ?? null;
+    }).catch(err => {
+      // No mode means no pre-emptive notice at the limit; the server still decides on submit.
+      console.warn('Could not read membership config:', err);
+    });
   }
 
   private processAdminConfig(config: any) {
@@ -1092,8 +1198,10 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.createNewOrganisationContactPrompt.hide = true;
     this.options.detectChanges?.(this.fields[0]);
 
+    this.membershipAllowance = null;
+    this.membershipServerBlocked = false;
     this.apollo.query({
-      query: FIND_ORGANISATION_CONTACT,
+      query: this.membershipEnabled ? FIND_ORGANISATION_CONTACT_MEMBERSHIP : FIND_ORGANISATION_CONTACT,
       variables: {
         email: this.emailField.formControl.value.trim(),
         refOrgId: this.referringOrgIdField.formControl.value
@@ -1101,6 +1209,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     }).toPromise().then(res => {
 
       const data = res["data"]["referringOrganisationContactsPublic"];
+      // Organisation-level, so every matching contact carries the same allowance.
+      this.membershipAllowance = (data && data[0] && data[0].membershipAllowance) || null;
 
       if (data && data.length > 1) {
         const contacts = data.map((r) => {
@@ -1169,12 +1279,37 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
 
   showRequestPage() {
+    this.onRequestPage = true;
+    this.loadAdminOrgMembership();
     this.isLambethPage.hide = true;
     this.referringOrgField.hide = true;
     this.refOrganisationPage.hide = true;
     this.refContactPage.hide = true;
     this.requestPage.hide = false;
     this.options.detectChanges?.(this.fields[0]);
+  }
+
+  private loadAdminOrgMembership(): void {
+    const id = this.referringOrgIdField.formControl?.value;
+    if (!this.membershipEnabled || !this.isOrgAdmin || !id) {
+      return;
+    }
+    this.apollo.query({
+      query: QUERY_ORG_MEMBERSHIP,
+      variables: { id },
+      fetchPolicy: 'network-only'
+    }).toPromise().then(res => {
+      this.adminOrgMembership = res?.data?.['referringOrganisation'] ?? null;
+    }).catch(err => console.warn('Could not read organisation membership:', err));
+  }
+
+  private isMembershipLimitError(error: unknown): boolean {
+    const haystack = [
+      ...graphQLErrorMessages(error),
+      errorText(error),
+      JSON.stringify((error as any)?.errors ?? ''),
+    ].join(' ');
+    return MEMBERSHIP_LIMIT_MARKERS.some(m => haystack.includes(m));
   }
 
   showOrganisationPage() {
@@ -1314,12 +1449,15 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   private submitDeviceRequest(data: any) {
     return this.apollo.mutate({
-      mutation: CREATE_DEVICE_REQUEST,
+      mutation: this.membershipEnabled ? CREATE_DEVICE_REQUEST_MEMBERSHIP : CREATE_DEVICE_REQUEST,
       variables: { data }
     }).toPromise();
   }
 
   async createNewDeviceRequest(): Promise<boolean> {
+    if (this.membershipBlocked) {
+      return false;
+    }
     this.deviceRequestCreateButton.templateOptions.disabled = true;
     const deviceRequest: any = this.requestPage.formControl.value;
 
@@ -1359,6 +1497,10 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       const created = res && res.data && res.data['createDeviceRequest'];
       if (created && created.id) {
         this.deviceRequestId = created.id;
+        if (created.membershipGraceIndex) {
+          const total = this.membershipGraceRequests ? ` of ${this.membershipGraceRequests}` : '';
+          this.toastr.warning(`This is grace request ${created.membershipGraceIndex}${total} for your organisation.`, 'Membership');
+        }
         this.displayTypeForm(created.correlationId);
         this.toastr.info("Please fill in the equalities data");
         return true;
@@ -1373,6 +1515,11 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     } catch (firstError) {
       console.warn('createDeviceRequest failed (first attempt):', firstError);
       const parsed = this.parseApolloError(firstError);
+
+      if (this.membershipEnabled && this.isMembershipLimitError(firstError)) {
+        this.membershipServerBlocked = true;
+        return false;
+      }
 
       if (parsed.isLimit) {
         this.showMoreThanThreeRequestsPage(parsed.limit);
@@ -1398,6 +1545,10 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       } catch (retryError) {
         console.warn('createDeviceRequest failed (retry):', retryError);
         const retryParsed = this.parseApolloError(retryError);
+        if (this.membershipEnabled && this.isMembershipLimitError(retryError)) {
+          this.membershipServerBlocked = true;
+          return false;
+        }
         if (retryParsed.isLimit) {
           this.showMoreThanThreeRequestsPage(retryParsed.limit);
           return false;

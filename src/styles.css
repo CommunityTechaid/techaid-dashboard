@@ -733,3 +733,5 @@ table.table.dataTable > tbody > tr.selected a {
 .cta-alert-warning > .fas { color: #4a3a00; }
 .cta-alert-danger { background: #fbcbc0; border-color: #e74a3b; }
 .cta-alert-danger > .fas { color: #8a1c10; }
+
+.cta-disabled { opacity: .45; }

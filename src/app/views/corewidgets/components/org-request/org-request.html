@@ -84,10 +84,28 @@
               {{ deviceAvailabilityNote }}
             </div>
           }
+          @if (membershipEnabled && onRequestPage && !requestLimitReached) {
+            @if (isOrgAdmin && adminOrgMembership?.membership) {
+              <div class="d-flex flex-wrap align-items-center gap-2 mb-3" data-testid="admin-membership-badges">
+                <strong>{{ adminOrgMembership.name }}</strong>
+                <membership-badges [membership]="adminOrgMembership.membership" [showUsage]="true"></membership-badges>
+                @if (selectedContactIsMembershipContact) {
+                  <membership-badges [contact]="true"></membership-badges>
+                }
+              </div>
+            }
+            <membership-notice [notice]="membershipNoticeKind" [allowance]="membershipAllowance"
+              [organisationName]="selectedOrganisationName" [graceTotal]="membershipGraceRequests"
+              [overLimitMode]="membershipOverLimitMode" [contactName]="membershipContactName"
+              [staff]="isOrgAdmin"></membership-notice>
+          }
           <form [formGroup]="form">
+            <!-- Over the membership limit (hard block): the whole request fieldset, Submit included, is disabled. -->
+            <fieldset [disabled]="membershipBlocked" [class.cta-disabled]="membershipBlocked" class="border-0 p-0 m-0" data-testid="request-fieldset">
             <formly-form [options]="options" [form]="form"
               [model]="model" [fields]="fields">
             </formly-form>
+            </fieldset>
             @if (submiting) {
               <button [disabled]="true" class="btn btn-info btn-sm p-2">
                 <i class="fas fa-spinner fa-spin"></i> Saving ...

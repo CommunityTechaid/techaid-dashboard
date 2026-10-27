@@ -14,8 +14,12 @@ import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
 import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { take } from 'rxjs/operators';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION } from '@app/shared/membership/membership';
+import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 
-const QUERY_ENTITY = gql`
+const queryEntity = (contact: string, org: string) => gql`
 query findAllReferringOrgContacts(
   $page: PaginationInput,, $term: String, $filter: ReferringOrganisationContactWhereInput!) {
   referringOrganisationContactsConnection(page: $page, where: {
@@ -49,9 +53,11 @@ query findAllReferringOrgContacts(
      email
      phoneNumber
      requestCount
+     ${contact}
      referringOrganisation {
       id
       name
+      ${org}
      }
      createdAt
      updatedAt
@@ -60,6 +66,10 @@ query findAllReferringOrgContacts(
   }
 }
 `;
+
+// Membership fields are requested only while the membership flag is on (techaid-server#311).
+const QUERY_ENTITY = queryEntity('', '');
+const QUERY_ENTITY_MEMBERSHIP = queryEntity('isMembershipContact', `membershipTier ${MEMBERSHIP_SELECTION}`);
 
 const CREATE_ENTITY = gql`
 mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
@@ -73,7 +83,7 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
     selector: 'app-referring-organisation-contact-index',
     templateUrl: './referring-organisation-contact-index.component.html',
     styleUrls: ['./referring-organisation-contact-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe],
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent],
     // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111):
     // this page's state only changes via the DataTables ajax callback and the
     // filter modal. Both paths run outside the host template's event tree, so
@@ -88,7 +98,8 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
     private modalService: NgbModal,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private flags: FeatureFlagService
   ) {
 
   }
@@ -219,10 +230,26 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
             ],
             required: false,
           }
+        },
+        {
+          key: 'membershipContactsOnly',
+          type: 'checkbox',
+          className: 'col-sm-4',
+          // Values survive the flag being off; applyFilter ignores them then.
+          resetOnHide: false,
+          hideExpression: () => !this.membershipEnabled,
+          templateOptions: {
+            label: 'Membership contacts only',
+            required: false,
+            attributes: { 'data-testid': 'referee-filter-membership-contacts' },
+          }
         }
       ]
     }
   ];
+
+  /** Membership flag (techaid-server#311). */
+  membershipEnabled = false;
 
   @Input()
   tableId = 'referring-org-contact-index';
@@ -235,6 +262,11 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
     if (data.archived && data.archived.length) {
       count += data.archived.length;
       filter['archived'] = {_in: data.archived};
+    }
+
+    if (this.membershipEnabled && data.membershipContactsOnly) {
+      count++;
+      filter['isMembershipContact'] = {_eq: true};
     }
 
     localStorage.setItem(`referringOrgContactFilters-${this.tableId}`, JSON.stringify(data));
@@ -278,6 +310,11 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
         query: QUERY_ENTITY,
         variables: {}
       });
+    const membershipQueryRef = this.apollo
+      .watchQuery({
+        query: QUERY_ENTITY_MEMBERSHIP,
+        variables: {}
+      });
 
     this.sub = this.search$.subscribe(query => {
       if (this.table) {
@@ -318,7 +355,14 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
           filter: this.filter
         };
 
-        queryRef.refetch(vars).then(res => {
+        this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
+        this.membershipEnabled = enabled;
+        if (!enabled && vars.filter.isMembershipContact) {
+          // The server doesn't know the field while the flag is off; don't let a saved filter break the table.
+          const { isMembershipContact, ...rest } = vars.filter;
+          vars.filter = rest;
+        }
+        (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
           if (this.draws.isStale(drawToken)) {
             return;
           }
@@ -358,6 +402,7 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
               timeOut: 15000,
               disableTimeOut: true
             });
+        });
         });
       },
       columns: [

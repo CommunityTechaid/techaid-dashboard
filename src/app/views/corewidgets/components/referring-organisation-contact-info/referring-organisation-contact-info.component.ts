@@ -12,9 +12,13 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 
+import { take } from 'rxjs/operators';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION } from '@app/shared/membership/membership';
+import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 
-const QUERY_ENTITY = gql`
+const queryEntity = (contact: string, org: string) => gql`
   query findReferringOrganisationContact($id: Long) {
     referringOrganisationContact(where: { id: { _eq: $id } }) {
       id
@@ -25,9 +29,11 @@ const QUERY_ENTITY = gql`
       createdAt
       updatedAt
       archived
+      ${contact}
       referringOrganisation {
         id
         name
+        ${org}
       }
       notes {
         id
@@ -40,7 +46,7 @@ const QUERY_ENTITY = gql`
   }
 `;
 
-const UPDATE_ENTITY = gql`
+const updateEntity = (contact: string, org: string) => gql`
   mutation updateReferringOrganisation($data: UpdateReferringOrganisationContactInput!) {
     updateReferringOrganisationContact(data: $data) {
       id
@@ -49,9 +55,11 @@ const UPDATE_ENTITY = gql`
       phoneNumber
       address
       archived
+      ${contact}
       referringOrganisation {
         id
         name
+        ${org}
       }
       notes {
         id
@@ -63,6 +71,37 @@ const UPDATE_ENTITY = gql`
     }
   }
 `;
+
+// Membership fields are requested only while the membership flag is on (techaid-server#311).
+const QUERY_ENTITY = queryEntity('', '');
+const QUERY_ENTITY_MEMBERSHIP = queryEntity('isMembershipContact', MEMBERSHIP_SELECTION);
+const UPDATE_ENTITY = updateEntity('', '');
+const UPDATE_ENTITY_MEMBERSHIP = updateEntity('isMembershipContact', MEMBERSHIP_SELECTION);
+
+const MEMBERSHIP_CONTACT_GROUP: FormlyFieldConfig = {
+  fieldGroupClassName: 'row',
+  fieldGroup: [
+    {
+      key: 'isMembershipContact',
+      type: 'radio',
+      className: 'col-md-6',
+      templateOptions: {
+        type: 'array',
+        label: 'Is membership contact?',
+        description: "Membership contacts hear about the organisation's membership and renewals. An organisation can have more than one.",
+        options: [
+          {label: 'Not a membership contact', value: false },
+          {label: 'Membership contact for this organisation', value: true },
+        ],
+        required: true,
+        attributes: { 'data-testid': 'referee-membership-contact' },
+      },
+      expressionProperties: {
+        'templateOptions.disabled': (model, formState) => !!formState?.disabled,
+      },
+    }
+  ],
+};
 
 const DELETE_ENTITY = gql`
   mutation deleteReferringOrganisationContact($id: ID!) {
@@ -93,7 +132,7 @@ query findAutocompleteReferringOrganisations($term: String) {
     templateUrl: './referring-organisation-contact-info.component.html',
     styleUrls: ['./referring-organisation-contact-info.component.scss'],
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, NgbNavOutlet]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, NgbNavOutlet, MembershipBadgesComponent]
 })
 export class ReferringOrganisationContactInfoComponent implements OnInit, OnDestroy {
 
@@ -102,7 +141,8 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private flags: FeatureFlagService
   ) {}
   sub: Subscription;
   form: UntypedFormGroup = new UntypedFormGroup({});
@@ -272,8 +312,16 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
   ];
 
 
+  /** Membership flag; null until the flag has loaded. */
+  membershipEnabled: boolean | null = null;
+
   private queryRef = this.apollo.watchQuery({
     query: QUERY_ENTITY,
+    variables: {},
+  });
+
+  private membershipQueryRef = this.apollo.watchQuery({
+    query: QUERY_ENTITY_MEMBERSHIP,
     variables: {},
   });
 
@@ -307,11 +355,11 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
   }
 
   private fetchData() {
-    if (!this.refereeId) {
+    if (!this.refereeId || this.membershipEnabled === null) {
       return;
     }
 
-    this.queryRef
+    (this.membershipEnabled ? this.membershipQueryRef : this.queryRef)
       .refetch({
         id: this.refereeId,
       })
@@ -383,6 +431,17 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
     });
 
     this.sub.add(
+      this.flags.isEnabled(MEMBERSHIP_FLAG).subscribe((enabled) => {
+        this.membershipEnabled = enabled;
+        if (enabled) {
+          // Between Address and Archived: Archived is the second-to-last group (notes are last).
+          this.fields = [...this.fields.slice(0, -2), MEMBERSHIP_CONTACT_GROUP, ...this.fields.slice(-2)];
+        }
+        this.fetchData();
+      })
+    );
+
+    this.sub.add(
       this.user$.subscribe((user) => {
         this.user = user;
         this.options.formState.disabled = !(user && user.authorities && user.authorities['write:organisations']);
@@ -421,7 +480,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
 
     this.apollo
       .mutate({
-        mutation: UPDATE_ENTITY,
+        mutation: this.membershipEnabled ? UPDATE_ENTITY_MEMBERSHIP : UPDATE_ENTITY,
         variables: {
           data,
         },

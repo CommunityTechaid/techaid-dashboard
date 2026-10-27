@@ -63,13 +63,24 @@
                             <div>
                               <a href="#" [routerLink]="['./', dt.id]">{{ dt.fullName }}</a>
                             </div>
+                            @if (dt.isMembershipContact) {
+                              <div class="mt-1">
+                                <membership-badges [contact]="true"></membership-badges>
+                              </div>
+                            }
                           </div>
                         </div>
                       </td>
                       <td>{{dt.email}}</td>
                       <td>{{dt.phoneNumber}}</td>
                       <td>{{dt.requestCount}}</td>
-                      <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisation.id]">{{dt.referringOrganisation.name}}</a></td>
+                      <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisation.id]">{{dt.referringOrganisation.name}}</a>
+                        @if (dt.referringOrganisation.membership) {
+                          <div class="mt-1">
+                            <membership-badges [membership]="dt.referringOrganisation.membership"></membership-badges>
+                          </div>
+                        }
+                      </td>
                       <td  [title]="dt.createdAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.createdAt | date:'full'}}" triggers="click:blur">
                         {{ dt.createdAt | date:'medium' }}
                       </td>
