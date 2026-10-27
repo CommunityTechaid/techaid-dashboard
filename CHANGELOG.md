@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.0.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.0.0...v2.0.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** bump Angular to 22.2.1 for router CVEs ([#239](https://github.com/CommunityTechaid/techaid-dashboard/issues/239)) ([d43a184](https://github.com/CommunityTechaid/techaid-dashboard/commit/d43a184e8f5566451b4cf8b3cd866baf676f5bd4))
+
 ## [2.0.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v1.7.0...v2.0.0) (2026-10-14)
 
 
