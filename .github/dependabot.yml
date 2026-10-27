@@ -33,6 +33,11 @@ updates:
         patterns:
           - "@angular/*"
           - "@angular-devkit/*"
+      # DataTables plugins depend on a specific core major; bumped alone, npm nests a second core
+      # that the plugin attaches to instead of ours (see #247, #250).
+      datatables:
+        patterns:
+          - "datatables.net*"
       test-infrastructure:
         patterns:
           - "@playwright/*"
