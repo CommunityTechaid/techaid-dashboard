@@ -67,7 +67,7 @@
     "ngx-progressbar": "^14.0.0",
     "ngx-quill": "^31.0.1",
     "ngx-toastr": "^20.0.5",
-    "postcss": "^8.5.14",
+    "postcss": "^8.5.31",
     "prismjs": "^1.30.0",
     "quill": "^2.0.3",
     "rxjs": "^7.8.2",
