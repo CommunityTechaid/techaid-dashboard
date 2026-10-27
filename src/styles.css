@@ -704,3 +704,32 @@ table.table.dataTable > tbody > tr.selected a {
     margin-top: 0.25em;
     margin-left: -2.5em;
 }
+
+/* Membership support (design handoff: docs/design_handoff_membership/mockups/cta.css).
+   Colours chosen to pass AA with dark text — don't swap to white text on success/info/danger. */
+.membership-badges { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .3rem; }
+.badge-tier-free { color: #3a3b45; background: #f8f9fc; border: 1px solid #858796; }
+.badge-tier-paid { color: #fff; background: var(--ctablue, #002590); }
+.badge-last { color: #21251d; background: #f6c23e; }
+.badge-limit { color: #8a1c10; background: #fbcbc0; border: 1px solid #e74a3b; }
+.badge-contact { color: var(--ctablue, #002590); background: #fff; border: 1px solid var(--ctablue, #002590); }
+.badge-grace { color: #21251d; background: #ffeab3; border: 1px solid #c99a1c; }
+.badge-lg { font-size: .85rem; padding: .35em .6em; }
+
+.cta-meter { display: flex; flex-direction: column; gap: .4rem; }
+.cta-meter-track { height: .7rem; border-radius: 10rem; background: #e3e6f0; overflow: hidden; display: flex; }
+.cta-meter-fill { background: var(--ctablue, #002590); border-radius: 10rem; }
+.cta-meter-fill.warn { background: #c99a1c; }
+.cta-meter-fill.full { background: #e74a3b; }
+.cta-meter-row { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+.cta-meter-row strong { font-size: 1.15rem; }
+
+.cta-alert { display: flex; gap: .9rem; align-items: flex-start; padding: 1rem 1.15rem; border-radius: .35rem; border: 1px solid; color: #21251d; }
+.cta-alert > .fas { flex: none; font-size: 1.4rem; margin-top: .1rem; }
+.cta-alert h3 { margin: 0 0 .3rem; font-size: 1.05rem; font-weight: 700; line-height: 1.35; color: inherit; }
+.cta-alert p { margin: 0 0 .4rem; }
+.cta-alert p:last-child { margin-bottom: 0; }
+.cta-alert-warning { background: #ffeab3; border-color: #c99a1c; }
+.cta-alert-warning > .fas { color: #4a3a00; }
+.cta-alert-danger { background: #fbcbc0; border-color: #e74a3b; }
+.cta-alert-danger > .fas { color: #8a1c10; }

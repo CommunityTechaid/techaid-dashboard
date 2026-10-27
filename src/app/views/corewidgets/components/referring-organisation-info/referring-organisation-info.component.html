@@ -21,8 +21,11 @@
         <ng-template ngbNavContent>
           <div class="card shadow mb-4 mt-1">
             <div class="card-header py-3">
-              <div class="d-flex justify-content-between">
+              <div class="d-flex justify-content-start align-items-center gap-2">
                 <h6 class="m-0 font-weight-bold text-primary">{{name}}</h6>
+                @if (model?.membership) {
+                  <membership-badges [tier]="model.membership.tier" [large]="true"></membership-badges>
+                }
               </div>
             </div>
             <div class="card-body">
@@ -30,6 +33,27 @@
                 <formly-form [options]="options" (ngSubmit)="updateEntity(form.value)"
                   [form]="form" [model]="model" [fields]="fields">
                 </formly-form>
+                @if (model?.membership) {
+                  <div class="row mb-4" data-testid="org-membership-summary">
+                    <div class="col-md-6">
+                      <membership-meter [membership]="model.membership"></membership-meter>
+                    </div>
+                    <div class="col-md-6" data-testid="org-membership-contacts">
+                      <span class="form-label">Membership contact</span>
+                      @if (model.membershipContacts?.length) {
+                        <ul class="list-unstyled mb-1">
+                          @for (c of model.membershipContacts; track c.id) {
+                            <li><a [routerLink]="['/dashboard/referring-organisation-contacts', c.id]">{{ c.fullName }}</a></li>
+                          }
+                        </ul>
+                      } @else {
+                        <div class="text-muted">None set</div>
+                      }
+                      <small class="text-muted">Mark a referee as a membership contact on their record, under the
+                        <a href="#" (click)="nav.select('referees'); false">Referees</a> tab.</small>
+                    </div>
+                  </div>
+                }
                 @if (!options.formState.disabled) {
                   <button data-testid="org-save" style="width: 150px" (click)="updateEntity(form.value)"
                     type="submit" class="btn btn-primary btn-sm p-2">
@@ -69,7 +93,7 @@
         <email-threads [email]="model.email"></email-threads>
       </ng-template>
     </li> -->
-    <li ngbNavItem>
+    <li ngbNavItem="referees">
       <a ngbNavLink>Referees</a>
       <ng-template ngbNavContent>
         <div class="mt-2">

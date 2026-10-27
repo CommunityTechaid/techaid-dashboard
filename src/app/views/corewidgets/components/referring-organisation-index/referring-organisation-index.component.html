@@ -29,6 +29,15 @@
         </div>
       </div>
       <div class="card-body">
+        @if (membershipEnabled) {
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-3 small text-muted" data-testid="membership-badge-key">
+            <span>Membership:</span>
+            <membership-badges tier="FREE"></membership-badges> free tier
+            <membership-badges tier="TIER_1"></membership-badges> paid tier
+            <membership-badges state="LAST_REQUEST"></membership-badges> one request left
+            <membership-badges state="LIMIT_REACHED"></membership-badges> allowance used up
+          </div>
+        }
         <div class="w-100">
           <div class="table-responsive">
             <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable
@@ -62,6 +71,11 @@
                             <div>
                               <a href="#" [routerLink]="['./', dt.id]">{{ dt.name }}</a>
                             </div>
+                            @if (dt.membership) {
+                              <div class="mt-1">
+                                <membership-badges [membership]="dt.membership" [showUsage]="true"></membership-badges>
+                              </div>
+                            }
                           </div>
                         </div>
                       </td>
