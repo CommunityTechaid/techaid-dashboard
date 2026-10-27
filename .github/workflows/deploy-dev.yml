@@ -19,9 +19,9 @@ jobs:
         with:
           # Always build `dev`, never the ref the run was triggered on. The push
           # trigger only ever fires on dev, but this workflow is ALSO
-          # workflow_dispatch-able, and that dropdown defaults to the repo's
-          # default branch (master) — without this pin, "re-run the UAT deploy"
-          # from the Actions UI would build and deploy master to UAT.
+          # workflow_dispatch-able, and that dropdown can be set to any branch
+          # (e.g. main) — without this pin, "re-run the UAT deploy"
+          # from the Actions UI would build and deploy main to UAT.
           # Deployments are always dev-based.
           ref: dev
 

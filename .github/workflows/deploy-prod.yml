@@ -14,12 +14,12 @@ jobs:
       - name: Enforce dev-based deploys
         # The checkout below is pinned to `dev`, so the BUILD is always correct.
         # But GitHub runs the workflow FILE from the ref the run was dispatched
-        # on — dispatch from master and you run whatever copy of this pipeline
-        # master happens to carry, which is by definition the previously
+        # on — dispatch from main and you run whatever copy of this pipeline
+        # main happens to carry, which is by definition the previously
         # deployed one. Fail fast rather than deploy with a stale pipeline.
         if: github.ref_name != 'dev'
         run: |
-          echo "::error::Dispatched from '${{ github.ref_name }}'. Re-run with 'dev' selected in the branch dropdown — releases and deploys are always dev-based; master only records what is already live."
+          echo "::error::Dispatched from '${{ github.ref_name }}'. Re-run with 'dev' selected in the branch dropdown — releases and deploys are always dev-based; main only records what is already live."
           exit 1
 
       - name: Checkout dev branch
@@ -43,7 +43,7 @@ jobs:
           # Read the sha from the checkout, NOT $GITHUB_SHA. On workflow_dispatch
           # $GITHUB_SHA is the sha of the ref the run was dispatched from (the
           # default branch), while the checkout step above explicitly pulls `dev`.
-          # Because the final step fast-forwards master to each deployed commit,
+          # Because the final step fast-forwards main to each deployed commit,
           # the dispatch ref is always the PREVIOUS deploy — so the app reported
           # the last release's commit, every time.
           COMMIT=$(git rev-parse --short=7 HEAD)
@@ -96,7 +96,7 @@ jobs:
           git push origin "$TAG"
 
       - name: Label linked issues as shipped
-        continue-on-error: true   # board sync must never block the master fast-forward
+        continue-on-error: true   # board sync must never block the main fast-forward
         uses: actions/github-script@v7
         env:
           # Read before the new deploy tag existed — see the Tag deployment step.
@@ -165,11 +165,11 @@ jobs:
               }
             }
 
-      - name: Fast-forward master to deployed commit
+      - name: Fast-forward main to deployed commit
         run: |
           # HEAD is the dev commit just deployed to prod. A plain push
-          # (no --force) only succeeds if master is strictly behind, so
-          # this preserves the "master never diverges from dev" rule.
-          # If this step fails, master needs manual investigation — the
+          # (no --force) only succeeds if main is strictly behind, so
+          # this preserves the "main never diverges from dev" rule.
+          # If this step fails, main needs manual investigation — the
           # prod deploy itself has already succeeded.
-          git push origin HEAD:refs/heads/master
+          git push origin HEAD:refs/heads/main
