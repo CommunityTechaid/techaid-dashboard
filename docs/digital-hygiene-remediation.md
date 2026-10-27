@@ -205,4 +205,4 @@ Pitfalls: button textContent whitespace, ng-select overlay, device-request-index
 - `ng build --configuration production` + `npx playwright test` against UAT before each PR.
 - Behavior fixes: spec red on `dev`, green on branch.
 - Conventional commit titles so release-please versions correctly.
-- Never push `master`/`dev` directly; human review merges every PR.
+- Never push `main`/`dev` directly; human review merges every PR.

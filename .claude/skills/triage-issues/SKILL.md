@@ -76,9 +76,8 @@ for review first).
 ## Safety rails (from CLAUDE.md)
 
 - One PR per issue; never fan out into sweep/refactor PRs autonomously.
-- Base fix PRs on `dev`, never `master`/`dev` direct pushes, never merge a PR yourself.
-- `Fixes #N` does **not** auto-close from a `dev` merge (default branch is `master`) — note that
-  human review + manual close is expected.
+- Base fix PRs on `dev`, never `main`/`dev` direct pushes, never merge a PR yourself.
+- `Fixes #N` should auto-close from a `dev` merge now that `dev` is the default branch (it was `master` until 2026-10-27) — verify, and close manually if it doesn't.
 - Never commit a bearer token or anything under `e2e/.auth/`.
 - If `dev` build is already broken before you start, stop and say so — don't pile on.
 

@@ -484,7 +484,7 @@ No item here self-authorises. The route is always:
 4. **Red/green it** — every behaviour change ships a failing-first Playwright spec now green
    (`dashboard-testing-and-e2e`); `ng build --configuration production` is the structural gate.
 5. **Ship to `dev` → UAT**, then leave the prod-cut decision to the release workflow
-   (`dashboard-release-and-deploy`). PRs never target `master`.
+   (`dashboard-release-and-deploy`). PRs never target `main`.
 
 When an item finishes or is rejected, update **this file** (status → done/retired with the PR
 number) and close the GitHub issue (remember: `Fixes #N` does **not** auto-close on a `dev` merge —
@@ -509,5 +509,5 @@ Dates and line numbers drift — re-verify before acting:
 - **PH8** Poppins still remote: `grep -n googleapis src/sb-admin.css src/staticwebapp.config.json`
 - **PH9/PH10**: `gh issue view 120` / `gh issue view 121`
 - **SE1**: `gh issue list --state open --search "B-0 in:title"`
-- **Release gate**: `git rev-list --count origin/master..origin/dev` and `gh pr view 125 --json state`
+- **Release gate**: `git rev-list --count origin/main..origin/dev` and `gh pr view 125 --json state`
 - **SE2 barcode gate (row 20)** and all sheet items: the staff backlog spreadsheet (external, 2026-07-18)
