@@ -16,8 +16,9 @@
  * Free rows are skipped by default: FREE is every organisation's default, so loading them changes
  * nothing. Pass --include-free to also set FREE on organisations that currently have a paid tier.
  *
- * The membership start date is left at the server default (1 February) unless --start is given.
- * The sheet's "Date paid" is when the invoice was paid, not when the membership year starts.
+ * Start date: for a paid tier, the sheet's "Date paid" becomes the organisation's membership start
+ * date (decision 2026-10-28), so its year runs from the day it paid. A paid row with no date paid,
+ * and every Free row, keeps the server default (1 February). --start overrides all of that.
  *
  * Needs techaid-server#311 (PR #313) deployed to the target environment; without it the dry run
  * still matches names but reports that tiers cannot be read or written yet.
@@ -96,9 +97,25 @@ export function readTierRows(text) {
     // The legend line ("Free = 0-10 Requests, ...") closes the table.
     if (!name || /^free\s*=/i.test(name)) continue;
     const tierText = (r[1] || '').trim();
-    out.push({ name, tierText, tier: TIERS[tierText.toLowerCase()] ?? null, notes: (r[5] || '').trim() });
+    out.push({
+      name,
+      tierText,
+      tier: TIERS[tierText.toLowerCase()] ?? null,
+      datePaid: ukDateToIso(r[4]),
+      notes: (r[5] || '').trim(),
+    });
   }
   return out;
+}
+
+/** "18/12/2025" → "2025-12-18"; anything else → null. */
+export function ukDateToIso(text) {
+  const m = /^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*$/.exec(text || '');
+  if (!m) return null;
+  const [, d, mo, y] = m;
+  const iso = `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  const check = new Date(`${iso}T12:00:00Z`);
+  return Number.isNaN(check.getTime()) || check.toISOString().slice(0, 10) !== iso ? null : iso;
 }
 
 export function normaliseName(name) {
@@ -218,7 +235,7 @@ async function main() {
   const report = [];
   const done = new Set();
   for (const row of rows) {
-    const out = { sheetName: row.name, sheetTier: row.tierText, id: '', taDaName: '', current: '', action: '', detail: '' };
+    const out = { sheetName: row.name, sheetTier: row.tierText, id: '', taDaName: '', current: '', start: '', action: '', detail: '' };
     report.push(out);
     const key = normaliseName(row.name);
     if (!row.tier) { out.action = 'skip'; out.detail = `unknown tier "${row.tierText}"`; continue; }
@@ -252,7 +269,9 @@ async function main() {
     Object.assign(out, { id: org.id, taDaName: org.name, current: org.membershipTier ?? '' });
     if (org.archived) out.detail = 'archived in TaDa';
     if (row.tier === 'FREE' && !args.includeFree) { out.action = 'skip'; out.detail = 'free is the default'; continue; }
-    const startChanges = args.start && org.membershipStartDate !== args.start;
+    const start = args.start ?? (row.tier !== 'FREE' ? row.datePaid : null);
+    out.start = start ?? '';
+    const startChanges = start && org.membershipStartDate !== start;
     if (membership && org.membershipTier === row.tier && !startChanges) { out.action = 'unchanged'; continue; }
     out.action = membership ? 'update' : 'update (pending #311)';
     if (!args.apply || !membership) continue;
@@ -264,7 +283,7 @@ async function main() {
       name: org.name,
       website: org.website,
       membershipTier: row.tier,
-      ...(args.start ? { membershipStartDate: args.start } : {}),
+      ...(start ? { membershipStartDate: start } : {}),
     };
     const body = await gql(args.env, token, UPDATE_MUTATION, { data });
     if (body.errors) { out.action = 'error'; out.detail = JSON.stringify(body.errors).slice(0, 300); continue; }
@@ -274,14 +293,14 @@ async function main() {
   const counts = {};
   for (const r of report) counts[r.action] = (counts[r.action] ?? 0) + 1;
   for (const r of report.filter(r => !['skip', 'unchanged'].includes(r.action) || r.detail === 'duplicate row')) {
-    console.log(`${r.action.padEnd(21)} ${r.sheetTier.padEnd(7)} ${r.sheetName}${r.id ? ` → ${r.id} "${r.taDaName}"` : ''}${r.current ? ` [now ${r.current}]` : ''}${r.detail ? ` — ${r.detail}` : ''}`);
+    console.log(`${r.action.padEnd(21)} ${r.sheetTier.padEnd(7)} ${r.sheetName}${r.id ? ` → ${r.id} "${r.taDaName}"` : ''}${r.current ? ` [now ${r.current}]` : ''}${r.start ? ` from ${r.start}` : ''}${r.detail ? ` — ${r.detail}` : ''}`);
   }
   console.log('\nSummary:', JSON.stringify(counts));
   if (!args.apply) console.log('Dry run: nothing written. Re-run with --apply to write.');
 
   if (args.out) {
     const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const cols = ['sheetName', 'sheetTier', 'id', 'taDaName', 'current', 'action', 'detail'];
+    const cols = ['sheetName', 'sheetTier', 'id', 'taDaName', 'current', 'start', 'action', 'detail'];
     writeFileSync(args.out, [cols.join(','), ...report.map(r => cols.map(c => esc(r[c])).join(','))].join('\n') + '\n');
     console.log(`Report written to ${args.out}`);
   }
