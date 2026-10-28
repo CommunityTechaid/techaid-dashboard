@@ -20,6 +20,10 @@
            (click)="selectTab('flags'); $event.preventDefault()">Feature Flags</a>
       </li>
       <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'membership'" href="#"
+           (click)="selectTab('membership'); $event.preventDefault()">Membership</a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'delivery'" href="#"
            (click)="selectTab('delivery'); $event.preventDefault()">Delivery Configuration</a>
       </li>
@@ -40,6 +44,11 @@
     <!-- Feature Flags tab -->
     <div [hidden]="activeTab !== 'flags'">
       <app-feature-flags></app-feature-flags>
+    </div>
+
+    <!-- Membership tab (not flag-gated: admins configure it before enabling the flag) -->
+    <div [hidden]="activeTab !== 'membership'">
+      <app-membership-settings></app-membership-settings>
     </div>
 
     <!-- Delivery Configuration tab -->
