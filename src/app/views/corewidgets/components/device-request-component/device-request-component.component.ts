@@ -15,8 +15,12 @@ import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, LatestDraw } from '@app/shared/utils'
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
+import { take } from 'rxjs/operators';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { MEMBERSHIP_FLAG } from '@app/shared/membership/membership';
+import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 
-const QUERY_ENTITY = gql`
+const queryEntity = (request: string) => gql`
 query findAllOrgs(
   $page: PaginationInput,
   $where: DeviceRequestWhereInput!,
@@ -81,7 +85,20 @@ query findAllOrgs(
         other
         broadbandHubs
       }
+      ${request}
     }
+  }
+}
+`;
+
+// Membership fields are requested only while the membership flag is on (techaid-server#311).
+const QUERY_ENTITY = queryEntity('');
+const QUERY_ENTITY_MEMBERSHIP = queryEntity('membershipGraceIndex');
+
+const GRACE_CONFIG = gql`
+query findMembershipGraceRequests {
+  adminConfig {
+    membershipGraceRequests
   }
 }
 `;
@@ -91,7 +108,7 @@ query findAllOrgs(
     styleUrls: ['device-request-component.component.scss'],
     templateUrl: './device-request-component.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe]
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent]
 })
 export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit {
   /** Drops out-of-order ajax responses — see LatestDraw. */
@@ -100,8 +117,12 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private flags: FeatureFlagService
   ) { }
+
+  /** Grace allowance M for "Grace N of M"; undefined until fetched (flag on only). */
+  graceTotal: number | undefined;
 
   @Input()
   set where(where: any) {
@@ -317,6 +338,11 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
         query: QUERY_ENTITY,
         variables: {}
       });
+    const membershipQueryRef = this.apollo
+      .watchQuery({
+        query: QUERY_ENTITY_MEMBERSHIP,
+        variables: {}
+      });
 
     this.sub = this.search$.subscribe(query => {
       if (this.table) {
@@ -358,7 +384,17 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
           filter: this._where || this.filter
         };
 
-        queryRef.refetch(vars).then(res => {
+        this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
+        if (enabled && this.graceTotal === undefined) {
+          // Optional: without it the badge just reads "Grace N".
+          this.apollo.query<any>({ query: GRACE_CONFIG }).subscribe({
+            next: r => {
+              this.graceTotal = r.data?.adminConfig?.membershipGraceRequests ?? undefined;
+            },
+            error: () => {},
+          });
+        }
+        (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
           if (this.draws.isStale(drawToken)) {
             return;
           }
@@ -404,6 +440,7 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
               timeOut: 15000,
               disableTimeOut: true
             });
+        });
         });
       },
       columns: [

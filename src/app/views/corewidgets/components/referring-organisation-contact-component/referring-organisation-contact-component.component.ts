@@ -14,8 +14,12 @@ import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
 import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { take } from 'rxjs/operators';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { MEMBERSHIP_FLAG } from '@app/shared/membership/membership';
+import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 
-const QUERY_ENTITY = gql`
+const queryEntity = (contact: string) => gql`
 query findAllReferringOrgContacts(
   $page: PaginationInput,
   $where: ReferringOrganisationContactWhereInput!,
@@ -53,10 +57,15 @@ query findAllReferringOrgContacts(
      }
      createdAt
      updatedAt
+     ${contact}
     }
   }
 }
 `;
+
+// Membership fields are requested only while the membership flag is on (techaid-server#311).
+const QUERY_ENTITY = queryEntity('');
+const QUERY_ENTITY_MEMBERSHIP = queryEntity('isMembershipContact');
 
 const CREATE_ENTITY = gql`
 mutation createReferringOrganisationContact($data: CreateReferringOrganisationContactInput!) {
@@ -70,7 +79,7 @@ mutation createReferringOrganisationContact($data: CreateReferringOrganisationCo
     selector: 'referee-component',
     templateUrl: './referring-organisation-contact-component.component.html',
     styleUrls: ['./referring-organisation-contact-component.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe],
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent],
     // OnPush (hygiene 6.5 fan-out, #114): host-bound state changes only via the
     // DataTables ajax callback and applyFilter(), so both call cdr.markForCheck().
     // createEntity()'s mutation subscribe reloads the table immediately, so its
@@ -85,7 +94,8 @@ export class ReferringOrganisationContactComponent implements OnInit, OnDestroy,
     private modalService: NgbModal,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private flags: FeatureFlagService
   ) {
 
   }
@@ -290,6 +300,11 @@ export class ReferringOrganisationContactComponent implements OnInit, OnDestroy,
         query: QUERY_ENTITY,
         variables: {}
       });
+    const membershipQueryRef = this.apollo
+      .watchQuery({
+        query: QUERY_ENTITY_MEMBERSHIP,
+        variables: {}
+      });
 
     this.sub = this.search$.subscribe(query => {
       if (this.table) {
@@ -332,7 +347,8 @@ export class ReferringOrganisationContactComponent implements OnInit, OnDestroy,
           filter: this.filter
         };
 
-        queryRef.refetch(vars).then(res => {
+        this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
+        (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
           if (this.draws.isStale(drawToken)) {
             return;
           }
@@ -372,6 +388,7 @@ export class ReferringOrganisationContactComponent implements OnInit, OnDestroy,
               timeOut: 15000,
               disableTimeOut: true
             });
+        });
         });
       },
       columns: [

@@ -100,7 +100,8 @@ async function installMocks(page: Page, flag: boolean): Promise<Record<string, s
         },
       });
     }
-    if (raw.includes('findAllDeviceRequests')) {
+    // The embedded request table on the organisation/referee pages runs as findAllOrgs.
+    if (raw.includes('findAllDeviceRequests') || raw.includes('findAllOrgs')) {
       record('requests', raw);
       return json({
         deviceRequestConnection: {
@@ -193,6 +194,20 @@ test.describe('membership badges @mocked', () => {
     await expect(row).toBeVisible({ timeout: 30_000 });
     await expect(row.getByTestId('badge-grace')).toHaveText('Grace 1 of 2');
     await expect(row.getByTestId('badge-limit')).toHaveText('Limit reached');
+  });
+
+  test('organisation detail tabs: embedded referee and request tables carry the badges', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installMocks(page, true);
+    await page.goto('/dashboard/referring-organisations/2');
+    await expect(page.getByTestId('membership-meter')).toBeVisible({ timeout: 30_000 });
+
+    await page.getByRole('tab', { name: 'Referees' }).click();
+    const referee = page.locator('tbody tr', { hasText: 'Bola Adeniji' });
+    await expect(referee.getByTestId('badge-contact')).toHaveText('Membership contact', { timeout: 15_000 });
+
+    await page.getByRole('tab', { name: 'Device Requests' }).click();
+    await expect(page.getByTestId('badge-grace').first()).toHaveText('Grace 1 of 2', { timeout: 15_000 });
   });
 
   test('flag off: no badges, and the tables request no membership fields', async ({ page }) => {

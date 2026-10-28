@@ -121,6 +121,11 @@
                                 </span>
                               }
                             </div>
+                            @if (dt.membershipGraceIndex != null) {
+                              <div class="mt-1">
+                                <membership-badges [graceIndex]="dt.membershipGraceIndex" [graceTotal]="graceTotal"></membership-badges>
+                              </div>
+                            }
                             @if (dt.types && (dt.types['OTHER'] > 0 || dt.types['LAPTOPS'] > 0 || dt.types['TABLETS'] > 0 || dt.types['ALLINONES'] > 0 || dt.types['DESKTOPS'] > 0 || dt.types['PHONES'] > 0 || dt.types['COMMSDEVICES'] > 0 || dt.types['BROADBANDHUBS'] > 0)) {
                               <div class="mt-2">
                                 <small>
@@ -254,13 +259,7 @@
       <td [title]="dt.updatedAt" class="cursor-hand" placement="left" ngbTooltip="{{dt.updatedAt | date:'full'}}" triggers="click:blur">
         {{ dt.updatedAt | date:'medium' }}
       </td>
-      <td><a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a>
-        @if (dt.membershipGraceIndex != null) {
-          <div class="mt-1">
-            <membership-badges [graceIndex]="dt.membershipGraceIndex" [graceTotal]="graceTotal"></membership-badges>
-          </div>
-        }
-      </td>
+      <td><a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a></td>
       <td><input type="checkbox" [checked]="dt.isPrepped" onclick="return false;"></td>
     </tr>
   }

@@ -120,6 +120,11 @@
                                 </span>
                               }
                             </div>
+                            @if (dt.membershipGraceIndex != null) {
+                              <div class="mt-1">
+                                <membership-badges [graceIndex]="dt.membershipGraceIndex" [graceTotal]="graceTotal"></membership-badges>
+                              </div>
+                            }
                           </div>
                         </div>
                       </td>
