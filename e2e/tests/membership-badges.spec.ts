@@ -9,6 +9,7 @@
  * @mocked — all GraphQL stubbed, no token needed.
  */
 import { test, expect, Page } from '@playwright/test';
+import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const membership = (tier: string, state: string, used: number, cap: number | null) => ({
   tier,
@@ -212,6 +213,9 @@ test.describe('membership badges @mocked', () => {
 
   test('organisation detail: changing the start date re-defaults the end date', async ({ page }) => {
     test.setTimeout(60_000);
+    // The form is read-only without write:organisations, and CI's fake token carries no
+    // permissions (passes locally against a real token, times out in CI without this).
+    await authenticateWithPermissions(page, ['read:organisations', 'write:organisations']);
     await installMocks(page, true);
     await page.goto('/dashboard/referring-organisations/2');
     await expect(page.locator('[data-testid="org-membership-end"]')).toHaveValue('2027-01-31', { timeout: 30_000 });
