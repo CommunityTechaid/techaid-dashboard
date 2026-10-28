@@ -19,11 +19,29 @@ const membership = (tier: string, state: string, used: number, cap: number | nul
   remaining: cap == null ? null : cap - used,
   state,
   graceUsed: 0,
+  expired: false,
+  lapsedTier: null,
+  lapsedOn: null,
 });
 
 const FREE_OK = membership('FREE', 'OK', 3, 10);
 const TIER1_LAST = membership('TIER_1', 'LAST_REQUEST', 19, 20);
 const FREE_LIMIT = membership('FREE', 'LIMIT_REACHED', 10, 10);
+
+const EXPIRED = {
+  ...membership('FREE', 'OK', 3, 10),
+  expired: true,
+  lapsedTier: 'TIER_2',
+  lapsedOn: '2026-09-30',
+};
+
+/** Stored (staff-set) tier and dates; `membership` is the server's effective view. */
+const STORED: Record<number, any> = {
+  1: { membershipTier: 'FREE' },
+  2: { membershipTier: 'TIER_1', membershipStartDate: '2026-02-01', membershipEndDate: '2027-01-31' },
+  3: { membershipTier: 'FREE' },
+  4: { membershipTier: 'TIER_2', membershipStartDate: '2025-10-01', membershipEndDate: '2026-09-30' },
+};
 
 const org = (id: number, name: string, m: any) => ({
   id,
@@ -35,6 +53,7 @@ const org = (id: number, name: string, m: any) => ({
   updatedAt: '2026-01-01T00:00:00Z',
   archived: false,
   membershipTier: m.tier,
+  ...STORED[id],
   membership: m,
 });
 
@@ -61,21 +80,25 @@ async function installMocks(page: Page, flag: boolean): Promise<Record<string, s
       record('orgs', raw);
       return json({
         referringOrganisationsConnection: {
-          totalElements: 3,
+          totalElements: 4,
           content: [
             org(1, 'MEMBER-FREE-ORG', FREE_OK),
             org(2, 'MEMBER-LAST-ORG', TIER1_LAST),
             org(3, 'MEMBER-LIMIT-ORG', FREE_LIMIT),
+            org(4, 'MEMBER-EXPIRED-ORG', EXPIRED),
           ],
         },
       });
     }
     if (raw.includes('findReferringOrganisation(')) {
       record('org', raw);
+      const id = +(/"id":\s*"?(\d+)/.exec(raw)?.[1] ?? 2);
+      const byId: Record<number, [string, any]> = {
+        1: ['MEMBER-FREE-ORG', FREE_OK], 2: ['MEMBER-LAST-ORG', TIER1_LAST], 4: ['MEMBER-EXPIRED-ORG', EXPIRED],
+      };
       return json({
         referringOrganisation: {
-          ...org(2, 'MEMBER-LAST-ORG', TIER1_LAST),
-          membershipStartDate: '2026-02-01',
+          ...org(id, ...byId[id]),
           membershipContacts: [{ id: 7, fullName: 'Bola Adeniji' }],
         },
       });
@@ -167,9 +190,45 @@ test.describe('membership badges @mocked', () => {
     await expect(page.getByTestId('membership-meter').locator('.cta-meter-fill')).toHaveClass(/warn/);
     await expect(page.getByTestId('org-membership-contacts')).toContainText('Bola Adeniji');
     await expect(page.locator('[data-testid="org-membership-start"]')).toHaveValue('2026-02-01');
-    // Read-only, computed: start + 1 year − 1 day.
     await expect(page.locator('[data-testid="org-membership-end"]')).toHaveValue('2027-01-31');
-    await expect(page.locator('[data-testid="org-membership-end"]')).toBeDisabled();
+    await expect(page.getByTestId('org-membership-expired')).toHaveCount(0);
+  });
+
+  test('expired paid membership: Expired badge on the table and a warning on the detail page', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installMocks(page, true);
+    await page.goto('/dashboard/referring-organisations');
+    const row = page.locator('#referring-org-index tbody tr', { hasText: 'MEMBER-EXPIRED-ORG' });
+    await expect(row).toBeVisible({ timeout: 30_000 });
+    await expect(row.getByTestId('badge-tier')).toHaveText('Free');
+    await expect(row.getByTestId('badge-expired')).toHaveText('Expired');
+
+    await page.goto('/dashboard/referring-organisations/4');
+    await expect(page.getByTestId('org-membership-expired')).toContainText('Tier 2 membership ended on 30 Sep 2026', {
+      timeout: 30_000,
+    });
+    await expect(page.locator('[data-testid="org-membership-end"]')).toHaveValue('2026-09-30');
+  });
+
+  test('organisation detail: changing the start date re-defaults the end date', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installMocks(page, true);
+    await page.goto('/dashboard/referring-organisations/2');
+    await expect(page.locator('[data-testid="org-membership-end"]')).toHaveValue('2027-01-31', { timeout: 30_000 });
+    await page.locator('[data-testid="org-membership-start"]').fill('2026-06-15');
+    await expect(page.locator('[data-testid="org-membership-end"]')).toHaveValue('2027-06-14');
+    await expect(page.locator('[data-testid="org-membership-end"]')).toBeEnabled();
+  });
+
+  test('organisation detail: a free organisation hides the dates and shows the 1 February note', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installMocks(page, true);
+    await page.goto('/dashboard/referring-organisations/1');
+    await expect(page.getByText('Free tier: uses the standard membership year')).toContainText('1 February to 31 January', {
+      timeout: 30_000,
+    });
+    await expect(page.locator('[data-testid="org-membership-start"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="org-membership-end"]')).toHaveCount(0);
   });
 
   test('referee table: Membership contact badge and the organisation state', async ({ page }) => {

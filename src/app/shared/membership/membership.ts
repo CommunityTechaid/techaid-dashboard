@@ -25,6 +25,10 @@ export interface Membership {
   remaining: number | null;
   state: MembershipState;
   graceUsed: number;
+  /** A paid membership has lapsed; `tier` is then the effective tier (FREE). */
+  expired: boolean;
+  lapsedTier: MembershipTier | null;
+  lapsedOn: string | null;
 }
 
 /** Anonymous allowance on the public form (`ReferringOrganisationContactPublic.membershipAllowance`). */
@@ -37,14 +41,15 @@ export interface MembershipPublic {
   periodEnd: string;
   graceUsed: number;
   graceRemaining: number;
+  expired: boolean;
 }
 
 /** Selection set for `Membership` — interpolate into a gql document. */
-export const MEMBERSHIP_SELECTION = `membership { tier periodStart periodEnd cap used remaining state graceUsed }`;
+export const MEMBERSHIP_SELECTION = `membership { tier periodStart periodEnd cap used remaining state graceUsed expired lapsedTier lapsedOn }`;
 
 /** Selection set for `MembershipPublic`. */
 export const MEMBERSHIP_PUBLIC_SELECTION =
-  `membershipAllowance { tier state cap used remaining periodEnd graceUsed graceRemaining }`;
+  `membershipAllowance { tier state cap used remaining periodEnd graceUsed graceRemaining expired }`;
 
 export const MEMBERSHIP_TIERS: { value: MembershipTier; label: string; range: string; fee: string }[] = [
   { value: 'FREE', label: 'Free', range: '1–10 requests a year', fee: 'Free' },

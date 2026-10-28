@@ -24,11 +24,20 @@
               <div class="d-flex justify-content-start align-items-center gap-2">
                 <h6 class="m-0 font-weight-bold text-primary">{{name}}</h6>
                 @if (model?.membership) {
-                  <membership-badges [tier]="model.membership.tier" [large]="true"></membership-badges>
+                  <membership-badges [tier]="model.membership.tier" [expired]="model.membership.expired" [large]="true"></membership-badges>
                 }
               </div>
             </div>
             <div class="card-body">
+              @if (model?.membership?.expired) {
+                <div class="cta-alert cta-alert-danger mb-4" role="alert" data-testid="org-membership-expired">
+                  <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                  <div>
+                    <h3>Membership expired</h3>
+                    <p>{{ lapsedLabel }} membership ended on {{ lapsedOn }}. This organisation is back on the free tier ({{ model.membership.cap }} requests a year) until it renews. To renew, set a new start and end date below.</p>
+                  </div>
+                </div>
+              }
               <form [formGroup]="form">
                 <formly-form [options]="options" (ngSubmit)="updateEntity(form.value)"
                   [form]="form" [model]="model" [fields]="fields">

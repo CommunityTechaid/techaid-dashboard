@@ -1,5 +1,6 @@
 import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
+import { pairwise, startWith } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -13,7 +14,7 @@ import { User } from '@app/state/user/user.state';
 
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import {
-  MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION, MEMBERSHIP_TIERS, membershipPeriodEnd,
+  MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION, MEMBERSHIP_TIERS, formatMembershipDate, membershipPeriodEnd, tierLabel,
 } from '@app/shared/membership/membership';
 import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 import { MembershipMeterComponent } from '@app/shared/membership/membership-meter.component';
@@ -51,11 +52,16 @@ const updateEntity = (membership: string) => gql`
 
 // Membership fields exist only once techaid-server#311 is deployed, so they are requested
 // only while the membership flag is on (see shared/membership/membership.ts).
-const ORG_MEMBERSHIP_FIELDS = `membershipTier membershipStartDate ${MEMBERSHIP_SELECTION} membershipContacts { id fullName }`;
+const ORG_MEMBERSHIP_FIELDS = `membershipTier membershipStartDate membershipEndDate ${MEMBERSHIP_SELECTION} membershipContacts { id fullName }`;
 const QUERY_ENTITY = queryEntity('');
 const QUERY_ENTITY_MEMBERSHIP = queryEntity(ORG_MEMBERSHIP_FIELDS);
 const UPDATE_ENTITY = updateEntity('');
 const UPDATE_ENTITY_MEMBERSHIP = updateEntity(ORG_MEMBERSHIP_FIELDS);
+
+const localToday = () => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+};
 
 const MEMBERSHIP_FIELD_GROUP: FormlyFieldConfig = {
   fieldGroupClassName: 'row membership-section',
@@ -80,6 +86,22 @@ const MEMBERSHIP_FIELD_GROUP: FormlyFieldConfig = {
         required: true,
         attributes: { 'data-testid': 'org-membership-tier' },
       },
+      hooks: {
+        // Rule: when staff (not a model load, hence `dirty`) switch FREE -> paid and the start
+        // is empty or already in the past, the membership starts today and ends a year on.
+        onInit: (field) => {
+          field.formControl.valueChanges.pipe(startWith(field.formControl.value), pairwise()).subscribe(([prev, next]) => {
+            const m = field.model;
+            if (field.formControl.dirty && prev === 'FREE' && next && next !== 'FREE') {
+              const today = localToday();
+              if (!m.membershipStartDate || m.membershipStartDate < today) {
+                m.membershipStartDate = today;
+                m.membershipEndDate = membershipPeriodEnd(today);
+              }
+            }
+          });
+        },
+      },
       expressionProperties: {
         'templateOptions.disabled': (model, formState) => !!formState?.disabled,
       },
@@ -88,32 +110,50 @@ const MEMBERSHIP_FIELD_GROUP: FormlyFieldConfig = {
       key: 'membershipStartDate',
       type: 'input',
       className: 'col-md-4',
+      // Hidden for FREE (the free tier uses the 1 February year). resetOnHide must stay false
+      // or Formly wipes the stored dates on the first build (see project_formly_stale_controls).
+      hideExpression: 'model.membershipTier === "FREE"',
+      resetOnHide: false,
       templateOptions: {
         type: 'date',
         label: 'Membership start date',
-        description: 'Defaults to 1 February. Change it for an organisation that joins or upgrades mid-year.',
+        description: 'The day this paid membership starts.',
         required: true,
         attributes: { 'data-testid': 'org-membership-start' },
+        // DOM change only (not model loads): re-default the end to start + 1 year - 1 day.
+        // It stays editable afterwards.
+        change: (field) => {
+          const end = membershipPeriodEnd(field.model?.membershipStartDate);
+          if (end) {
+            field.model.membershipEndDate = end;
+            field.form.get('membershipEndDate')?.setValue(end);
+          }
+        },
       },
       expressionProperties: {
         'templateOptions.disabled': (model, formState) => !!formState?.disabled,
       },
     },
     {
-      // Display only: disabled controls are left out of form.value, so this is never sent.
       key: 'membershipEndDate',
       type: 'input',
       className: 'col-md-4',
+      hideExpression: 'model.membershipTier === "FREE"',
+      resetOnHide: false,
       templateOptions: {
         type: 'date',
         label: 'Membership end date',
-        description: 'Set to one year after the start date. The allowance renews the next day.',
-        disabled: true,
+        description: 'Defaults to one year after the start date. After this date the organisation goes back to the free tier until it renews.',
         attributes: { 'data-testid': 'org-membership-end' },
       },
       expressionProperties: {
-        'model.membershipEndDate': (model) => membershipPeriodEnd(model?.membershipStartDate),
+        'templateOptions.disabled': (model, formState) => !!formState?.disabled,
       },
+    },
+    {
+      className: 'col-md-8',
+      hideExpression: 'model.membershipTier !== "FREE"',
+      template: '<p class="text-muted mb-3">Free tier: uses the standard membership year, 1 February to 31 January.</p>',
     },
   ],
 };
@@ -249,6 +289,14 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
     variables: {},
   });
 
+  get lapsedLabel(): string {
+    return tierLabel(this.model?.membership?.lapsedTier);
+  }
+
+  get lapsedOn(): string {
+    return formatMembershipDate(this.model?.membership?.lapsedOn);
+  }
+
   modal(content) {
     this.modalService.open(content, { centered: true });
   }
@@ -328,6 +376,13 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
     if (!this.form.valid) {
       this.model['showErrorState'] = true;
       return;
+    }
+    if (data.membershipStartDate && data.membershipEndDate && data.membershipEndDate < data.membershipStartDate) {
+      this.toastr.error('<small>The membership end date cannot be before the start date.</small>', 'Invalid membership dates', { enableHtml: true });
+      return;
+    }
+    if (data.membershipEndDate === '') {
+      data.membershipEndDate = null;
     }
     data.id = this.orgId;
 
