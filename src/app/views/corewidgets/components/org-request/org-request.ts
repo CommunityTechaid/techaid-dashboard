@@ -268,10 +268,10 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     if (this.adminOrgMembership?.name) {
       return this.adminOrgMembership.name;
     }
-    const id = this.referringOrgIdField.formControl?.value;
-    const items: { label: string; value: any }[] = this.referringOrgField.templateOptions?.['items'] || [];
-    return items.find(i => i.value == id)?.label ?? null;
+    return this.selectedOrganisationLabel;
   }
+
+  private selectedOrganisationLabel: string | null = null;
 
   get selectedContactIsMembershipContact(): boolean {
     const id = this.referringContactIdField.formControl?.value;
@@ -502,6 +502,12 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
           this.createNewOrganisationContactPrompt.hide = true;
           if (this.isOrganisationExists) {
             this.referringOrgIdField.formControl.setValue(v)
+          }
+          // Keep the chosen name now: the field is cleared when it is hidden on the way to the
+          // request page, so it can't be read back later.
+          if (v != null) {
+            const items: { label: string; value: any }[] = this.referringOrgField.templateOptions?.['items'] || [];
+            this.selectedOrganisationLabel = items.find(i => i.value == v)?.label ?? null;
           }
         }));
       }
