@@ -191,10 +191,13 @@ const UPDATE_MUTATION = `
 function resolveRow(row, orgs, byNorm, map) {
   const mapped = map[row.name];
   if (mapped !== undefined) {
-    const hit = typeof mapped === 'number' || /^\d+$/.test(String(mapped))
-      ? orgs.filter(o => String(o.id) === String(mapped))
-      : byNorm.get(normaliseName(mapped)) ?? [];
-    return { matches: hit, via: 'map' };
+    // An array maps one sheet row to several TaDa records (duplicates of the same organisation);
+    // each gets the tier, since an allowance is counted per record.
+    const targets = Array.isArray(mapped) ? mapped : [mapped];
+    const hit = targets.flatMap(t => typeof t === 'number' || /^\d+$/.test(String(t))
+      ? orgs.filter(o => String(o.id) === String(t))
+      : byNorm.get(normaliseName(t)) ?? []);
+    return { matches: hit, via: Array.isArray(mapped) ? 'map-many' : 'map' };
   }
   return { matches: byNorm.get(normaliseName(row.name)) ?? [], via: 'name' };
 }
@@ -235,8 +238,9 @@ async function main() {
   const report = [];
   const done = new Set();
   for (const row of rows) {
-    const out = { sheetName: row.name, sheetTier: row.tierText, id: '', taDaName: '', current: '', start: '', action: '', detail: '' };
-    report.push(out);
+    const first = { sheetName: row.name, sheetTier: row.tierText, id: '', taDaName: '', current: '', start: '', action: '', detail: '' };
+    const out = first;
+    report.push(first);
     const key = normaliseName(row.name);
     if (!row.tier) { out.action = 'skip'; out.detail = `unknown tier "${row.tierText}"`; continue; }
     if (new Set(seen.get(key)).size > 1) { out.action = 'conflict'; out.detail = 'listed more than once with different tiers'; continue; }
@@ -259,15 +263,18 @@ async function main() {
       out.detail = near.length ? `closest: ${near.join('; ')}` : (via === 'map' ? 'map target not found' : '');
       continue;
     }
-    if (matches.length > 1) {
+    if (matches.length > 1 && via !== 'map-many') {
       out.action = 'ambiguous';
       out.detail = matches.map(o => `${o.id} "${o.name}"${o.archived ? ' (archived)' : ''}`).join('; ');
       continue;
     }
 
-    const org = matches[0];
-    Object.assign(out, { id: org.id, taDaName: org.name, current: org.membershipTier ?? '' });
+    for (const [i, org] of matches.entries()) {
+    const out = i === 0 ? first : { ...first };
+    if (i > 0) report.push(out);
+    Object.assign(out, { id: org.id, taDaName: org.name, current: org.membershipTier ?? '', detail: '' });
     if (org.archived) out.detail = 'archived in TaDa';
+    if (via === 'map-many') out.detail = `one of ${matches.length} TaDa records for this organisation`;
     if (row.tier === 'FREE' && !args.includeFree) { out.action = 'skip'; out.detail = 'free is the default'; continue; }
     const start = args.start ?? (row.tier !== 'FREE' ? row.datePaid : null);
     out.start = start ?? '';
@@ -288,6 +295,7 @@ async function main() {
     const body = await gql(args.env, token, UPDATE_MUTATION, { data });
     if (body.errors) { out.action = 'error'; out.detail = JSON.stringify(body.errors).slice(0, 300); continue; }
     out.action = 'updated';
+    }
   }
 
   const counts = {};
