@@ -11,10 +11,17 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import {
+  MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION, MEMBERSHIP_TIERS, membershipPeriodEnd,
+} from '@app/shared/membership/membership';
+import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
+import { MembershipMeterComponent } from '@app/shared/membership/membership-meter.component';
+
 import { ReferringOrganisationContactComponent } from '../referring-organisation-contact-component/referring-organisation-contact-component.component';
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 
-const QUERY_ENTITY = gql`
+const queryEntity = (membership: string) => gql`
   query findReferringOrganisation($id: Long) {
     referringOrganisation(where: { id: { _eq: $id } }) {
       id
@@ -24,11 +31,12 @@ const QUERY_ENTITY = gql`
       archived
       createdAt
       updatedAt
+      ${membership}
     }
   }
 `;
 
-const UPDATE_ENTITY = gql`
+const updateEntity = (membership: string) => gql`
   mutation updateReferringOrganisation($data: UpdateReferringOrganisationInput!) {
     updateReferringOrganisation(data: $data) {
       id
@@ -36,9 +44,79 @@ const UPDATE_ENTITY = gql`
       name
       website
       archived
+      ${membership}
     }
   }
 `;
+
+// Membership fields exist only once techaid-server#311 is deployed, so they are requested
+// only while the membership flag is on (see shared/membership/membership.ts).
+const ORG_MEMBERSHIP_FIELDS = `membershipTier membershipStartDate ${MEMBERSHIP_SELECTION} membershipContacts { id fullName }`;
+const QUERY_ENTITY = queryEntity('');
+const QUERY_ENTITY_MEMBERSHIP = queryEntity(ORG_MEMBERSHIP_FIELDS);
+const UPDATE_ENTITY = updateEntity('');
+const UPDATE_ENTITY_MEMBERSHIP = updateEntity(ORG_MEMBERSHIP_FIELDS);
+
+const MEMBERSHIP_FIELD_GROUP: FormlyFieldConfig = {
+  fieldGroupClassName: 'row membership-section',
+  fieldGroup: [
+    {
+      className: 'col-12',
+      template: '<h6 class="font-weight-bold text-primary mb-2">Membership</h6>',
+    },
+    {
+      key: 'membershipTier',
+      type: 'select',
+      className: 'col-md-4',
+      templateOptions: {
+        label: 'Membership tier',
+        description: 'Every organisation starts on the free tier.',
+        options: MEMBERSHIP_TIERS.map(t => ({
+          value: t.value,
+          label: t.value === 'FREE' ? 'Free tier — up to 10 requests a year'
+            : t.value === 'TIER_3' ? `${t.label} — 41+ requests a year (${t.fee})`
+            : `${t.label} — up to ${t.value === 'TIER_1' ? 20 : 40} requests a year (${t.fee})`,
+        })),
+        required: true,
+        attributes: { 'data-testid': 'org-membership-tier' },
+      },
+      expressionProperties: {
+        'templateOptions.disabled': (model, formState) => !!formState?.disabled,
+      },
+    },
+    {
+      key: 'membershipStartDate',
+      type: 'input',
+      className: 'col-md-4',
+      templateOptions: {
+        type: 'date',
+        label: 'Membership start date',
+        description: 'Defaults to 1 February. Change it for an organisation that joins or upgrades mid-year.',
+        required: true,
+        attributes: { 'data-testid': 'org-membership-start' },
+      },
+      expressionProperties: {
+        'templateOptions.disabled': (model, formState) => !!formState?.disabled,
+      },
+    },
+    {
+      // Display only: disabled controls are left out of form.value, so this is never sent.
+      key: 'membershipEndDate',
+      type: 'input',
+      className: 'col-md-4',
+      templateOptions: {
+        type: 'date',
+        label: 'Membership end date',
+        description: 'Set to one year after the start date. The allowance renews the next day.',
+        disabled: true,
+        attributes: { 'data-testid': 'org-membership-end' },
+      },
+      expressionProperties: {
+        'model.membershipEndDate': (model) => membershipPeriodEnd(model?.membershipStartDate),
+      },
+    },
+  ],
+};
 
 const DELETE_ENTITY = gql`
   mutation deleteReferringOrganisation($id: ID!) {
@@ -51,7 +129,7 @@ const DELETE_ENTITY = gql`
     templateUrl: './referring-organisation-info.component.html',
     styleUrls: ['./referring-organisation-info.component.scss'],
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet, MembershipBadgesComponent, MembershipMeterComponent]
 })
 export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
 
@@ -60,7 +138,8 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
-    private apollo: Apollo
+    private apollo: Apollo,
+    private flags: FeatureFlagService
   ) {}
   sub: Subscription;
   form: UntypedFormGroup = new UntypedFormGroup({});
@@ -157,8 +236,16 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
   ];
 
 
+  /** Membership flag; null until the flag has loaded. */
+  membershipEnabled: boolean | null = null;
+
   private queryRef = this.apollo.watchQuery({
     query: QUERY_ENTITY,
+    variables: {},
+  });
+
+  private membershipQueryRef = this.apollo.watchQuery({
+    query: QUERY_ENTITY_MEMBERSHIP,
     variables: {},
   });
 
@@ -173,11 +260,11 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
   }
 
   private fetchData() {
-    if (!this.orgId) {
+    if (!this.orgId || this.membershipEnabled === null) {
       return;
     }
 
-    this.queryRef
+    (this.membershipEnabled ? this.membershipQueryRef : this.queryRef)
       .refetch({
         id: this.orgId,
       })
@@ -214,6 +301,16 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
       this.fetchData();
     });
     this.sub.add(
+      this.flags.isEnabled(MEMBERSHIP_FLAG).subscribe((enabled) => {
+        this.membershipEnabled = enabled;
+        if (enabled) {
+          // Between Phone and Archived, which is the last group.
+          this.fields = [...this.fields.slice(0, -1), MEMBERSHIP_FIELD_GROUP, ...this.fields.slice(-1)];
+        }
+        this.fetchData();
+      })
+    );
+    this.sub.add(
       this.user$.subscribe((user) => {
         this.user = user;
         this.options.formState.disabled = !(user && user.authorities && user.authorities['write:organisations']);
@@ -236,7 +333,7 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
 
     this.apollo
       .mutate({
-        mutation: UPDATE_ENTITY,
+        mutation: this.membershipEnabled ? UPDATE_ENTITY_MEMBERSHIP : UPDATE_ENTITY,
         variables: {
           data,
         },

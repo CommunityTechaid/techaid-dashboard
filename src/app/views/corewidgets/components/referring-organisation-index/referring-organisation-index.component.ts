@@ -14,6 +14,10 @@ import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
 import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { take } from 'rxjs/operators';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION, MEMBERSHIP_TIERS } from '@app/shared/membership/membership';
+import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 
 const CREATE_ENTITY = gql`
 mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
@@ -23,7 +27,7 @@ mutation createReferringOrganisation($data: CreateReferringOrganisationInput!) {
 }
 `;
 
-const QUERY_ENTITY = gql`
+const queryEntity = (membership: string) => gql`
 query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: ReferringOrganisationWhereInput!) {
   referringOrganisationsConnection(page: $page, where: {
     AND: {
@@ -53,16 +57,21 @@ query findAllReferringOrgs($page: PaginationInput,, $term: String, $filter: Refe
      createdAt
      updatedAt
      archived
+     ${membership}
     }
   }
 }
 `;
 
+// Membership fields are requested only while the membership flag is on (techaid-server#311).
+const QUERY_ENTITY = queryEntity('');
+const QUERY_ENTITY_MEMBERSHIP = queryEntity(MEMBERSHIP_SELECTION);
+
 @Component({
     selector: 'app-referring-organisation-index',
     templateUrl: './referring-organisation-index.component.html',
     styleUrls: ['./referring-organisation-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe],
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent],
     // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111):
     // this page's state only changes via the DataTables ajax callback and the
     // filter modal. Both paths run outside the host template's event tree, so
@@ -77,7 +86,8 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
     private modalService: NgbModal,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private flags: FeatureFlagService
   ) {
 
   }
@@ -175,10 +185,27 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
             ],
             required: false,
           }
+        },
+        {
+          key: 'membershipTier',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          // Values survive the flag being off; applyFilter ignores them then.
+          resetOnHide: false,
+          hideExpression: () => !this.membershipEnabled,
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Membership tier',
+            options: MEMBERSHIP_TIERS.map(t => ({ label: t.label, value: t.value })),
+            required: false,
+          }
         }
       ]
     }
   ];
+
+  /** Membership flag (techaid-server#311). */
+  membershipEnabled = false;
 
   @Input()
   tableId = 'referring-org-index';
@@ -191,6 +218,11 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
     if (data.archived && data.archived.length) {
       count += data.archived.length;
       filter['archived'] = {_in: data.archived};
+    }
+
+    if (data.membershipTier && data.membershipTier.length) {
+      count += data.membershipTier.length;
+      filter['membershipTier'] = {_in: data.membershipTier};
     }
 
     localStorage.setItem(`referringOrgFilters-${this.tableId}`, JSON.stringify(data));
@@ -234,6 +266,11 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
         query: QUERY_ENTITY,
         variables: {}
       });
+    const membershipQueryRef = this.apollo
+      .watchQuery({
+        query: QUERY_ENTITY_MEMBERSHIP,
+        variables: {}
+      });
 
     this.sub = this.search$.subscribe(query => {
       if (this.table) {
@@ -274,7 +311,14 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
           filter: this.filter
         };
 
-        queryRef.refetch(vars).then(res => {
+        this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
+        this.membershipEnabled = enabled;
+        if (!enabled && vars.filter.membershipTier) {
+          // The server doesn't know the field while the flag is off; don't let a saved filter break the table.
+          const { membershipTier, ...rest } = vars.filter;
+          vars.filter = rest;
+        }
+        (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
           if (this.draws.isStale(drawToken)) {
             return;
           }
@@ -314,6 +358,7 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
               timeOut: 15000,
               disableTimeOut: true
             });
+        });
         });
       },
       columns: [

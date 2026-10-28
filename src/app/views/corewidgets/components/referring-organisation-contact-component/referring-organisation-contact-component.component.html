@@ -63,6 +63,11 @@
                             <div>
                               <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.id]">{{ dt.fullName }}</a>
                             </div>
+                            @if (dt.isMembershipContact) {
+                              <div class="mt-1">
+                                <membership-badges [contact]="true"></membership-badges>
+                              </div>
+                            }
                           </div>
                         </div>
                       </td>

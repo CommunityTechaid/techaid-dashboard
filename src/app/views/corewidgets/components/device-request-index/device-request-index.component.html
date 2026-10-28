@@ -121,6 +121,11 @@
                                 </span>
                               }
                             </div>
+                            @if (dt.membershipGraceIndex != null) {
+                              <div class="mt-1">
+                                <membership-badges [graceIndex]="dt.membershipGraceIndex" [graceTotal]="graceTotal"></membership-badges>
+                              </div>
+                            }
                             @if (dt.types && (dt.types['OTHER'] > 0 || dt.types['LAPTOPS'] > 0 || dt.types['TABLETS'] > 0 || dt.types['ALLINONES'] > 0 || dt.types['DESKTOPS'] > 0 || dt.types['PHONES'] > 0 || dt.types['COMMSDEVICES'] > 0 || dt.types['BROADBANDHUBS'] > 0)) {
                               <div class="mt-2">
                                 <small>
@@ -227,7 +232,13 @@
         </div>
       </td>
       <td><a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', dt.referringOrganisationContact.id]">{{dt.referringOrganisationContact.fullName}}</a></td>
-      <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a></td>
+      <td><a href="#" [routerLink]="['/dashboard/referring-organisations', dt.referringOrganisationContact.referringOrganisation.id]">{{dt.referringOrganisationContact.referringOrganisation.name}}</a>
+        @if (dt.referringOrganisationContact.referringOrganisation.membership) {
+          <div class="mt-1">
+            <membership-badges [membership]="dt.referringOrganisationContact.referringOrganisation.membership"></membership-badges>
+          </div>
+        }
+      </td>
       <!-- Borough. Blank for every request created before the ward-lookup step existed, and for
            anything staff create in the admin form where the field is read-only — those rows hold
            an empty string, not null. Say so rather than rendering an empty cell that reads like a

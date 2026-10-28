@@ -15,6 +15,10 @@ import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, ALL_BOROUGHS, LatestDraw } from '@app
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
 import { RouterLink } from '@angular/router';
+import { take } from 'rxjs/operators';
+import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION } from '@app/shared/membership/membership';
+import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 
 /**
  * The value used for "borough was never captured".
@@ -37,7 +41,7 @@ const BOROUGH_FILTER_OPTIONS = [
   { label: 'Not recorded', value: BOROUGH_NOT_RECORDED },
 ];
 
-const QUERY_ENTITY = gql`
+const queryEntity = (request: string, org: string) => gql`
 query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
   deviceRequestConnection(page: $page, where: {
       OR: [
@@ -81,12 +85,26 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
       referringOrganisation {
         id
         name
+        ${org}
       }
      }
      isPrepped
      createdAt
      updatedAt
+     ${request}
     }
+  }
+}
+`;
+
+// Membership fields are requested only while the membership flag is on (techaid-server#311).
+const QUERY_ENTITY = queryEntity('', '');
+const QUERY_ENTITY_MEMBERSHIP = queryEntity('membershipGraceIndex', MEMBERSHIP_SELECTION);
+
+const GRACE_CONFIG = gql`
+query findMembershipGraceRequests {
+  adminConfig {
+    membershipGraceRequests
   }
 }
 `;
@@ -95,7 +113,7 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
     selector: 'app-device-request-index',
     templateUrl: './device-request-index.component.html',
     styleUrls: ['./device-request-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe],
+    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent],
     // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111):
     // this page's state only changes via the DataTables ajax callback and the
     // filter modal. Both paths run outside the host template's event tree, so
@@ -110,7 +128,8 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
     private modalService: NgbModal,
     private toastr: ToastrService,
     private apollo: Apollo,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private flags: FeatureFlagService
   ) {
 
   }
@@ -126,6 +145,9 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
 
   statusTypes: any = DEVICE_REQUEST_STATUS;
 
+
+  /** Grace allowance M for "Grace N of M"; undefined until fetched (flag on only). */
+  graceTotal: number | undefined;
 
   filter: any = {};
   filterCount = 0;
@@ -311,6 +333,11 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
         query: QUERY_ENTITY,
         variables: {}
       });
+    const membershipQueryRef = this.apollo
+      .watchQuery({
+        query: QUERY_ENTITY_MEMBERSHIP,
+        variables: {}
+      });
 
     this.sub = this.search$.subscribe(query => {
       if (this.table) {
@@ -371,7 +398,18 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
           filter: this.filter
         };
         console.log('vars', vars);
-        queryRef.refetch(vars).then(res => {
+        this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
+        if (enabled && this.graceTotal === undefined) {
+          // Optional: without it the badge just reads "Grace N".
+          this.apollo.query<any>({ query: GRACE_CONFIG }).subscribe({
+            next: r => {
+              this.graceTotal = r.data?.adminConfig?.membershipGraceRequests ?? undefined;
+              this.cdr.markForCheck();
+            },
+            error: () => {},
+          });
+        }
+        (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
           if (this.draws.isStale(drawToken)) {
             return;
           }
@@ -424,6 +462,7 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
               timeOut: 15000,
               disableTimeOut: true
             });
+        });
         });
       },
       columns: [

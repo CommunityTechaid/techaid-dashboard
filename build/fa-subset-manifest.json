@@ -1,6 +1,6 @@
 {
   "fontAwesomeVersion": "7.3.1",
-  "generatedAt": "2026-09-22T08:37:18.860Z",
+  "generatedAt": "2026-10-28T07:36:34.617Z",
   "icons": [
     {
       "name": "fa-address-book",
@@ -17,6 +17,10 @@
     {
       "name": "fa-arrow-left",
       "codepoint": "f060"
+    },
+    {
+      "name": "fa-ban",
+      "codepoint": "f05e"
     },
     {
       "name": "fa-barcode",
@@ -269,7 +273,7 @@
     {
       "file": "fa-solid-900.woff2",
       "before": 119488,
-      "after": 6356
+      "after": 6412
     },
     {
       "file": "fa-brands-400.woff2",

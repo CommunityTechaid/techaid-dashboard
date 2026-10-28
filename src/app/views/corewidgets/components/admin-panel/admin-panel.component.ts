@@ -4,6 +4,7 @@ import { Title } from '@angular/platform-browser';
 import { FeatureFlagsComponent } from '../feature-flags/feature-flags.component';
 import { BoroughAvailabilityComponent } from '../borough-availability/borough-availability.component';
 import { DeliveryConfigurationComponent } from '../delivery-configuration/delivery-configuration.component';
+import { MembershipSettingsComponent } from '../membership-settings/membership-settings.component';
 
 /**
  * The admin panel is now two tabs, not three.
@@ -24,10 +25,16 @@ import { DeliveryConfigurationComponent } from '../delivery-configuration/delive
   styleUrls: ['admin-panel.component.scss'],
   templateUrl: './admin-panel.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [RouterLink, FeatureFlagsComponent, BoroughAvailabilityComponent, DeliveryConfigurationComponent],
+  imports: [
+    RouterLink,
+    FeatureFlagsComponent,
+    BoroughAvailabilityComponent,
+    DeliveryConfigurationComponent,
+    MembershipSettingsComponent,
+  ],
 })
 export class AdminPanelComponent implements OnInit {
-  activeTab: 'availability' | 'flags' | 'delivery' = 'availability';
+  activeTab: 'availability' | 'flags' | 'membership' | 'delivery' ='availability';
 
   @ViewChild(BoroughAvailabilityComponent) availabilityTab?: BoroughAvailabilityComponent;
 
@@ -45,7 +52,7 @@ export class AdminPanelComponent implements OnInit {
    * the admin had spent time on — its own Discard button asks for confirmation, so the far easier
    * path was the destructive one.
    */
-  selectTab(tab: 'availability' | 'flags' | 'delivery'): void {
+  selectTab(tab: 'availability' | 'flags' | 'membership' | 'delivery'): void {
     if (this.activeTab === 'availability' && tab !== 'availability' && this.availabilityTab?.dirty) {
       const unsaved = this.availabilityTab.unsavedCount;
       const confirmed = window.confirm(

@@ -21,6 +21,12 @@ export const UPDATE_SCANNER_FLAG = 'update-scanner';
  */
 export const TOWER_HAMLETS_BOROUGH_FLAG = 'tower-hamlets-borough-support';
 
+/**
+ * Membership support (tiers, yearly allowance, membership contacts — techaid-server#311).
+ * Off → the dashboard neither shows nor queries any membership field.
+ */
+export { MEMBERSHIP_FLAG } from '../membership/membership';
+
 const PUBLIC_FLAGS_QUERY = `query FeatureFlagsPublic { featureFlagsPublic { key enabled } }`;
 
 /**
