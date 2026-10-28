@@ -21,6 +21,9 @@ import { MembershipState, MembershipTier, tierLabel } from './membership';
         <span class="badge" [class.badge-tier-free]="tier === 'FREE'" [class.badge-tier-paid]="tier !== 'FREE'"
           [class.badge-lg]="large" data-testid="badge-tier">{{ label }}</span>
       }
+      @if (expired) {
+        <span class="badge badge-limit" [class.badge-lg]="large" data-testid="badge-expired">Expired</span>
+      }
       @if (state === 'LAST_REQUEST') {
         <span class="badge badge-last" [class.badge-lg]="large" data-testid="badge-last">Last request</span>
       }
@@ -43,9 +46,10 @@ export class MembershipBadgesComponent {
   @Input() graceIndex: number | null = null;
   @Input() graceTotal: number | null = null;
   @Input() large = false;
+  @Input() expired = false;
 
   /** Convenience: spread a `Membership` / `MembershipPublic` onto the inputs. */
-  @Input() set membership(m: { tier?: MembershipTier; state?: MembershipState; used?: number; cap?: number | null } | null) {
+  @Input() set membership(m: { tier?: MembershipTier; state?: MembershipState; used?: number; cap?: number | null; expired?: boolean } | null) {
     if (!m) {
       return;
     }
@@ -53,6 +57,7 @@ export class MembershipBadgesComponent {
     this.state = m.state ?? null;
     this.used = m.used ?? null;
     this.cap = m.cap ?? null;
+    this.expired = !!m.expired;
   }
 
   get label(): string {

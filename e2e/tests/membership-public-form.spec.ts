@@ -31,6 +31,7 @@ interface Scenario {
     periodEnd: string;
     graceUsed: number;
     graceRemaining: number;
+    expired: boolean;
   } | null;
 }
 
@@ -43,6 +44,7 @@ const allowance = (state: string, used: number, graceUsed = 0, graceRemaining = 
   periodEnd: '2027-01-31',
   graceUsed,
   graceRemaining,
+  expired: false,
 });
 
 async function installMocks(page: Page, s: Scenario): Promise<string[]> {
