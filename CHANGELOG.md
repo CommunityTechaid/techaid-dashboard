@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.1.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.0.1...v2.1.0) (2026-10-29)
+
+
+### Features
+
+* membership end date and expiry; free tier uses the 1 February year ([#259](https://github.com/CommunityTechaid/techaid-dashboard/issues/259)) ([2bd53e2](https://github.com/CommunityTechaid/techaid-dashboard/commit/2bd53e229422a49599e9d5ff2f28e6cc68c3a0fe))
+* membership tiers, yearly allowance and contacts (behind membership-support flag) ([#257](https://github.com/CommunityTechaid/techaid-dashboard/issues/257)) ([05cdee2](https://github.com/CommunityTechaid/techaid-dashboard/commit/05cdee2f4573a759bb1ec19b958df3ec7ece16ba))
+
+
+### Bug Fixes
+
+* **auth:** log in through a separate Auth0 client outside production ([#263](https://github.com/CommunityTechaid/techaid-dashboard/issues/263)) ([f02088e](https://github.com/CommunityTechaid/techaid-dashboard/commit/f02088e2150acdac220a26ea5d859068f5c767ad))
+
 ## [2.0.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.0.0...v2.0.1) (2026-10-27)
 
 
