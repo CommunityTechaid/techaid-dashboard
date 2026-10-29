@@ -76,7 +76,9 @@ console.log(`Token expires at: ${new Date(expiresAt * 1000).toISOString()} (${Ma
 // the refresh-token path — which a synthetic entry cannot satisfy ("Missing
 // Refresh Token" → redirect to login). We write the offline_access key as the
 // primary entry and keep the plain-scope key for compatibility.
-const clientId  = 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX';
+// Both files written here are for non-production builds (localhost and app-testing), which
+// use the Dev & UAT client — keep in step with e2e/helpers/auth0-clients.ts.
+const clientId  = 'ANqygfpxC0j2pEmErFb5rWOIUnfnkk5O';
 const audience  = 'https://api.communitytechaid.org.uk';
 const scope     = 'openid profile email offline_access';
 const legacyScope = 'openid profile email';

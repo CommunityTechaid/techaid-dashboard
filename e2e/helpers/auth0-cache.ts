@@ -11,8 +11,10 @@
  * reuse it rather than copy 80 lines of cache-shape trivia.
  */
 import { Page } from '@playwright/test';
+import { DEV_CLIENT_ID } from './auth0-clients';
 
-const CLIENT_ID = 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX';
+// Specs run against non-production builds, which use the Dev & UAT client.
+const CLIENT_ID = DEV_CLIENT_ID;
 const AUDIENCE = 'https://api.communitytechaid.org.uk';
 const SCOPE = 'openid profile email offline_access';
 const LEGACY_SCOPE = 'openid profile email';

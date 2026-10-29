@@ -6,6 +6,8 @@ export interface ConfigParams {
     remote_config: boolean;
     auth_endpoint?: string;
     auth_audience: string;
+    /** Auth0 SPA client: Production in prod builds, Dev & UAT everywhere else. */
+    auth_client_id: string;
     version: any;
     pusher?: any;
     pdf_generator_url: string;
