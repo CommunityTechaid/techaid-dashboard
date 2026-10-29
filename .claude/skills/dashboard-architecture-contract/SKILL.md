@@ -169,7 +169,7 @@ DataTables callback, an NgbModal footer, or any non-template async path needs an
 
 | Env file | `graphql_endpoint` | How it reaches the API |
 |---|---|---|
-| `environment.ts` (dev, `ng serve`) | `/api/graphql` | `src/proxy.conf.json`: `/api` → `http://techaid-server-web-1:8080` (Docker), strips `/api` |
+| `environment.ts` (dev, `ng serve`) | `/api/graphql` | `src/proxy.conf.json`: `/api` → `http://localhost:8080` (techaid-server `docker compose` API), strips `/api` |
 | `environment.uat-local.ts` (Playwright) | `/graphql` | `src/proxy.conf.uat.json`: `/graphql` + `/auth` → `https://api-testing.communitytechaid.org.uk` (sets `Origin` to dodge CORS) |
 | `environment.uat.ts` | `/graphql` | UAT SWA same-origin |
 | `environment.prod.ts` | `https://api.communitytechaid.org.uk/graphql` | direct |

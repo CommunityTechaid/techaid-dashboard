@@ -16,7 +16,7 @@ ng build --configuration production   # use this to verify correctness — it's 
 ng serve
 ```
 
-The dev server proxies `/api` → `http://techaid-server-web-1:8080` (a Docker container). To load real data you need the API running in Docker. Without it:
+The dev server proxies `/api` → `http://localhost:8080` (the techaid-server API run via its `docker compose`; see README). To load data you need that API running. Without it:
 - Auth0 login still works — it uses the real `techaid-auth.eu.auth0.com` tenant, no API required
 - All GraphQL queries will fail with network errors — lists and tables will be empty or error
 

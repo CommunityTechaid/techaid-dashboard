@@ -7,17 +7,38 @@ release workflow, e2e testing, and issue-triage process.
 
 ## Run locally
 
-Requires **Node 20**. Angular **21** — the CLI is a devDependency, so use `npx ng` (no global
-install needed).
+Requires a current **Node LTS** (22 or newer) for Angular **22** — the CLI is a devDependency, so
+use `npx ng` (no global install needed).
 
 ```bash
 npm install        # NOT `npm ci` — the lockfile is Windows-maintained; `npm ci` fails on Linux
-npx ng serve       # http://localhost:4200
 ```
 
-`/api` is proxied to the backend Docker container (`techaid-server-web-1:8080`) — see "Setting up
-the Dev environment" below. Without the API running, Auth0 login still works (real
-`techaid-auth.eu.auth0.com` tenant, no API needed) but all GraphQL queries error and tables show
+There are two ways to run the dashboard locally. Both need `http://localhost:4200` registered on
+the Auth0 SPA application (Allowed Callback URLs, Logout URLs and Web Origins), and an Auth0 user
+with the roles you need. Login uses the shared `techaid-auth.eu.auth0.com` tenant in both.
+
+### Option B — against UAT (quickest, front-end work)
+
+```bash
+npm run start:uat  # = npx ng serve --configuration uat-local → http://localhost:4200
+```
+
+`src/proxy.conf.uat.json` forwards `/graphql` and `/auth` to `https://api-testing.communitytechaid.org.uk`.
+You are reading and writing the **shared UAT data** — treat it as such.
+
+### Option A — against a local API and database (back-end or risky work)
+
+1. Start the API and Postgres from `techaid-server` — follow "Local development" in its README
+   (`docker compose up -d`, then `bootRun` inside the `techaid-server-web-1` container).
+2. Check it is up: `curl -s localhost:8080/actuator/health`.
+3. `npx ng serve` → http://localhost:4200. `src/proxy.conf.json` forwards `/api` to
+   `http://localhost:8080` and strips the prefix.
+
+The local database starts empty (schema only), so lists are empty until you add test data. Never
+load a production or UAT dump onto a laptop — it contains personal data.
+
+Without the API running, Auth0 login still works but all GraphQL queries error and tables show
 empty.
 
 ## If the dashboard shows no data
@@ -43,18 +64,3 @@ when you bump a major.
 
 Run `npx ng generate component component-name` to generate a new component. You can also use
 `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Setting up the Dev environment
-
-The setup branch contains the docker files and modifications necessary for setting up a local dev environment. This may be moved to a submodule later. 
-
-Steps to follow: 
-
-- Ensure that the `techaid-server-web-1` container is running (this is the backend. Follow the instructions on the repo to set it up). This container uses the same network as the backend container. 
-- Run `docker compose up -d`
-
-You should now be good to go. 
-
-### Issues and Notes:
-- For `ng serve` to work correctly without CORS issues, we use `proxy.conf.json` where we define the proxy for the backend api. Currently this is set to the name of the backend container. Change this if your backend url changes. 
-- The way these containers are setup, the backend API is contacted using the name of the container running the backend API. This is because the containers are connected to the same virtual docker network in the docker compose file. If running on Linux, the frontend container can be started in the "host network mode" to access `localhost:8080` directly (assuming the backend container is available on 8080 on the host machine. Host network mode is not supported on Windows/Mac). On Windows/Mac, this can be achieved using `host.docker.internal:8080` domain. This might be useful when configuring nginx or to change the configuration in `proxy.conf.json` to steer clear of depending on container name.  
