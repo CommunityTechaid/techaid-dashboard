@@ -23,9 +23,10 @@
  * The assertion that matters is authorizeHits === 1. Two or more means a loop.
  */
 import { test, expect, Page, Route } from '@playwright/test';
+import { DEV_CLIENT_ID } from '../helpers/auth0-clients';
 
 const TENANT = 'techaid-auth.eu.auth0.com';
-const CLIENT_ID = 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX';
+const CLIENT_ID = DEV_CLIENT_ID; // non-production builds use the Dev & UAT client
 const b64url = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
 
 interface Tenant {

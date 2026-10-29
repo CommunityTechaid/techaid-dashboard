@@ -68,7 +68,7 @@ bootstrapApplication(AppComponent, {
     }),
     provideAuth0({
       domain: 'techaid-auth.eu.auth0.com',
-      clientId: 'puJcT35DydtxJUsOfjNFVg7MBf19UDzX',
+      clientId: environment.auth_client_id,
       authorizationParams: {
         redirect_uri: window.location.origin,
         audience: 'https://api.communitytechaid.org.uk',
