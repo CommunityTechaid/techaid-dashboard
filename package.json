@@ -5,6 +5,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:uat": "ng serve --configuration uat-local",
     "build": "node ./build/build-pre.js && ng build --configuration=production --aot --base-href /",
     "build-production": "node ./build/build-pre.js && ng build --configuration=production --aot --base-href /",
     "build-uat": "node ./build/build-pre.js && ng build --configuration=uat --aot --base-href /",

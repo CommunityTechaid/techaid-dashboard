@@ -78,13 +78,13 @@ the invariant) → `dashboard-architecture-contract` §2.
 
 **First check** — this is almost always the dev proxy target, not the app. Plain `ng serve` uses
 `environment.ts` (`graphql_endpoint: /api/graphql`) and `src/proxy.conf.json`, which forwards `/api` to
-the Docker container `techaid-server-web-1:8080`. If that container isn't running, every query fails
+the local API at `http://localhost:8080` (techaid-server `docker compose`). If that container isn't running, every query fails
 with a network error while **Auth0 login still works** (it hits the real
 `techaid-auth.eu.auth0.com` tenant, no API needed).
 
 ```bash
-grep -n "target" src/proxy.conf.json          # http://techaid-server-web-1:8080 (Docker)
-docker ps | grep techaid-server-web-1          # is the API container up?
+grep -n "target" src/proxy.conf.json          # http://localhost:8080 (local API)
+curl -s localhost:8080/actuator/health       # is the local API up?
 ```
 
 **The trap:** login working makes it look like everything is wired, so a dead-lists symptom gets
