@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { advancePastLocationStep } from '../helpers/location-step';

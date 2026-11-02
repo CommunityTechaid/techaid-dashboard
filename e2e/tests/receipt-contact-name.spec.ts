@@ -7,7 +7,7 @@
  * prefix rendered as "Contact Name: Referee: Steve Woolnough" (reported from UAT
  * testing on request 3214).
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 async function fulfillSimple(route: import('@playwright/test').Route, data: any) {
   await route.fulfill({

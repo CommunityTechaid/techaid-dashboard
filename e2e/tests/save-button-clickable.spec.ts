@@ -16,7 +16,7 @@
  * submit surfaces a toast, and — critically — no mutation fires) rather than
  * the disabled-attribute-only smoke check above.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 async function fulfillSimple(route: import('@playwright/test').Route, data: any) {
   await route.fulfill({

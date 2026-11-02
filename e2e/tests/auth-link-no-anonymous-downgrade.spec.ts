@@ -60,7 +60,7 @@
  *
  * @mocked — all GraphQL and the Auth0 tenant are stubbed, no token needed; runs in CI's gate.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions, buildAuth0CacheEntries } from '../helpers/auth0-cache';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';

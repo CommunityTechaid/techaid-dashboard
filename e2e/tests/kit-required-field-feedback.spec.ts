@@ -13,7 +13,7 @@
  *     required fields and does NOT fire the updateKit mutation.
  *   - Clicking it on a valid form still fires updateKit as before.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const KIT_BASE = {
   id: 20031,

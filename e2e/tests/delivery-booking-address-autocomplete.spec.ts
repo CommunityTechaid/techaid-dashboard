@@ -31,7 +31,8 @@
  *
  * @mocked — no token, all GraphQL and Places-proxy traffic stubbed.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { stubPlacesProxy, PlacesProxyOutcome } from '../helpers/places-proxy';
 
 /** One bookable day with one window that has spots — enough to reach the details step. */

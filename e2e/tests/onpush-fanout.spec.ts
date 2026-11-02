@@ -24,7 +24,8 @@
  * @mocked — every GraphQL operation is page.route-stubbed; no bearer token
  * required.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 async function fulfillJson(route: Route, data: unknown): Promise<void> {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data }) });

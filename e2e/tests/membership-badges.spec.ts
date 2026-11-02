@@ -8,7 +8,8 @@
  *
  * @mocked — all GraphQL stubbed, no token needed.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const membership = (tier: string, state: string, used: number, cap: number | null) => ({

@@ -43,7 +43,8 @@
  *
  * @mocked — no token, all GraphQL stubbed.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { stubPlacesProxy } from '../helpers/places-proxy';
 
 /** The exact rejection copy the server returns as a BAD_REQUEST, `<ref>` interpolated in. */

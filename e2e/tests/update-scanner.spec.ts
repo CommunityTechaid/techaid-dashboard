@@ -16,7 +16,8 @@
  * is written directly, because the page is gated on the `app:bulkedit`
  * authority which the CI fake token deliberately does not carry.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const SCANNER_PATH = '/dashboard/devices/update-scanner';

@@ -13,7 +13,8 @@
  *
  * @mocked — all GraphQL stubbed, no token needed.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';
 

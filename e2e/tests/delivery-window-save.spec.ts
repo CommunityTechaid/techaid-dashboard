@@ -15,7 +15,8 @@
  *
  * @mocked — no token, all GraphQL stubbed, fake JWT from CI/save-token.mjs satisfies AuthGuard.
  */
-import { test, expect, Page, Route, Locator } from '@playwright/test';
+import { Page, Route, Locator } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
 

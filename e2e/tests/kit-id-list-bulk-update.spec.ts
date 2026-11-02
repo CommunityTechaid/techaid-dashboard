@@ -16,7 +16,8 @@
  * is written directly, because the bulk-edit UI is gated on the `app:bulkedit`
  * authority which the CI fake token deliberately does not carry.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions as seedAuth0Cache } from '../helpers/auth0-cache';
 
 /**

@@ -13,7 +13,8 @@
  *
  * Mocked: a real run would change a real Auth0 user's permissions.
  */
-import { test, expect, Route } from '@playwright/test';
+import { Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const USER_ID = 'auth0|e2e-permission-user';
 

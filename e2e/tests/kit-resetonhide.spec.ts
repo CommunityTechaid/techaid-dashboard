@@ -18,7 +18,7 @@
  * Fully page.route-mocked — same KIT_BASE / mock-installer approach as
  * kit-locked-status.spec.ts, no live API dependency.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const KIT_BASE = {
   id: 2129,

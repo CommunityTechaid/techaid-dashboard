@@ -15,7 +15,7 @@
  * red: rows never paint / the badge never appears. @mocked so it runs in the
  * CI gate on every PR.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 async function fulfillSimple(route: import('@playwright/test').Route, data: any) {
   await route.fulfill({

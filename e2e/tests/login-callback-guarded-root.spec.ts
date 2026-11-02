@@ -22,7 +22,8 @@
  *
  * The assertion that matters is authorizeHits === 1. Two or more means a loop.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { DEV_CLIENT_ID } from '../helpers/auth0-clients';
 
 const TENANT = 'techaid-auth.eu.auth0.com';
