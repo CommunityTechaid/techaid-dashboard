@@ -1,0 +1,96 @@
+<app-local-css
+  [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}'"
+></app-local-css>
+
+<div class="page-shell">
+  <div class="form-column">
+    <div class="prototype-banner" data-testid="prototype-banner">
+      <strong>Prototype.</strong> A native version of the equalities form for review. Answers are
+      <strong>not saved or sent anywhere</strong>.
+    </div>
+
+    <div class="card-shell">
+      @if (!submitted()) {
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-fill" [style.width.%]="progress()"></div>
+        </div>
+      }
+
+      @if (submitted()) {
+        <section class="screen" data-testid="thank-you">
+          <h1>Thank you!</h1>
+          <p>
+            Your request has been placed and you should receive a confirmation email shortly. If you do not receive
+            one within a few minutes, please check your spam folder or get in touch:
+            <a href="mailto:distributions@communitytechaid.org.uk">distributions&#64;communitytechaid.org.uk</a>
+          </p>
+
+          <details class="payload" data-testid="payload">
+            <summary>Demo: what a real submission would send to the equalities Sheet</summary>
+            <table>
+              <tbody>
+                <tr><th>corr_id</th><td>{{ payload().hidden.corr_id || '—' }}</td></tr>
+                <tr><th>borough</th><td>{{ payload().hidden.borough || '—' }}</td></tr>
+                <tr><th>ward</th><td>{{ payload().hidden.ward || '—' }}</td></tr>
+                @for (row of payload().answers; track row.ref) {
+                  <tr><th>{{ row.question }}</th><td>{{ row.answer }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </details>
+
+          <button type="button" class="btn-primary-cta" (click)="restart()">Start again</button>
+        </section>
+      } @else if (position() === -1) {
+        <section class="screen" data-testid="welcome">
+          <h1>Equalities information</h1>
+          <p>{{ intro }}</p>
+          <button type="button" class="btn-primary-cta" (click)="start()" data-testid="start">
+            Start <span class="hint">press Enter ↵</span>
+          </button>
+        </section>
+      } @else if (current(); as q) {
+        <section class="screen" data-testid="question">
+          <div class="counter">{{ position() + 1 }} / {{ visibleQuestions().length }}</div>
+          <h1 data-testid="question-title">{{ q.title }}</h1>
+          @if (q.description) {
+            <p class="description">{{ q.description }}</p>
+          }
+
+          <div class="choices" role="radiogroup" [attr.aria-label]="q.title">
+            @for (choice of q.choices; track choice; let i = $index) {
+              <button
+                type="button"
+                class="choice"
+                role="radio"
+                [class.selected]="answers()[q.key] === choice"
+                [attr.aria-checked]="answers()[q.key] === choice"
+                (click)="choose(choice)"
+              >
+                <span class="key">{{ letters[i] }}</span>
+                <span class="label">{{ choice }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="nav">
+            <button type="button" class="btn-link-cta" (click)="back()">← Back</button>
+            @if (isLast()) {
+              <button
+                type="button"
+                class="btn-primary-cta"
+                [disabled]="!answers()[q.key]"
+                (click)="submit()"
+                data-testid="submit"
+              >
+                Submit
+              </button>
+            } @else if (answers()[q.key]) {
+              <button type="button" class="btn-primary-cta" (click)="next()">OK</button>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </div>
+</div>
