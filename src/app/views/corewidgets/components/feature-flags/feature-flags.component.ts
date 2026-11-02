@@ -35,6 +35,13 @@ interface FlagCopy {
   /** Retired flag: permanently on, shown checked and disabled, never toggled. `lockedReason` is shown in place of `offMeaning`. */
   lockedOn?: boolean;
   lockedReason?: string;
+  /**
+   * Not shown on the tab: the flag is permanently on in production and nobody should switch it
+   * off from here. Hiding is display-only. The server row stays and the code still reads it, so
+   * do NOT delete the row: a missing row reads as OFF. Retire it properly by removing the code
+   * that reads it first, then dropping the row in a server migration.
+   */
+  hidden?: boolean;
 }
 
 // Friendly copy for known flags; unknown keys fall back to the raw key. Descriptions are
@@ -88,6 +95,7 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
     lockedOn: true,
     lockedReason:
       'Permanently on — the legacy ward-lookup page was retired on 2026-10-07; this switch no longer has any effect.',
+    hidden: true,
   },
   'tower-hamlets-borough-support': {
     label: 'Tower Hamlets Borough Support',
@@ -97,6 +105,9 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
       'request can continue; with it off, it is treated as outside our area.',
     offMeaning:
       'Off = Lambeth and Southwark only.',
+    // On in production since the Tower Hamlets launch (2026-09-21); switching it off would turn
+    // Tower Hamlets referrers away.
+    hidden: true,
   },
   'borough-availability-rules': {
     label: 'Borough Availability Rules',
@@ -110,6 +121,19 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
       'none of it reaches the public page. Editing borough configuration while this is off changes ' +
       'nothing a referrer sees, which is deliberate: it lets the configuration be built and checked ' +
       'before anyone is affected by it.',
+  },
+  'membership-support': {
+    label: 'Membership Support',
+    description:
+      'Turn on organisation memberships: membership tiers and dates, the yearly device-request allowance ' +
+      '(Free tier: 10 requests per year, counted from 1 February), and the membership badges and fields ' +
+      'across the dashboard. When on, new device requests are checked against the organisation’s ' +
+      'allowance, and an organisation over its limit is given grace or refused according to the ' +
+      'over-limit setting.',
+    offMeaning:
+      'Off = no membership fields or badges, and no allowance check on new requests. Every organisation ' +
+      'started on the Free tier when this was released, so set the real tiers before turning it on, or ' +
+      'established organisations will start hitting the 10-a-year limit.',
   },
 };
 
@@ -156,10 +180,12 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.apollo.query<{ featureFlags: FlagRow[] }>({ query: FLAGS_QUERY, fetchPolicy: 'network-only' }).subscribe({
         next: ({ data }) => {
-          this.flags = (data.featureFlags || []).map((f) => ({
-            ...f,
-            ...(FLAG_LABELS[f.key] || { ...UNDESCRIBED, label: f.key }),
-          }));
+          this.flags = (data.featureFlags || [])
+            .map((f) => ({
+              ...f,
+              ...(FLAG_LABELS[f.key] || { ...UNDESCRIBED, label: f.key }),
+            }))
+            .filter((f) => !f.hidden);
           // A retired flag is on whatever the server row says.
           this.flags.forEach((f) => {
             if (f.lockedOn) f.enabled = true;
