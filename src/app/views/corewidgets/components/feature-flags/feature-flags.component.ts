@@ -111,6 +111,19 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
       'nothing a referrer sees, which is deliberate: it lets the configuration be built and checked ' +
       'before anyone is affected by it.',
   },
+  'membership-support': {
+    label: 'Membership Support',
+    description:
+      'Turn on organisation memberships: membership tiers and dates, the yearly device-request allowance ' +
+      '(Free tier: 10 requests per year, counted from 1 February), and the membership badges and fields ' +
+      'across the dashboard. When on, new device requests are checked against the organisation’s ' +
+      'allowance, and an organisation over its limit is given grace or refused according to the ' +
+      'over-limit setting.',
+    offMeaning:
+      'Off = no membership fields or badges, and no allowance check on new requests. Every organisation ' +
+      'started on the Free tier when this was released, so set the real tiers before turning it on, or ' +
+      'established organisations will start hitting the 10-a-year limit.',
+  },
 };
 
 // Shown instead of a blank line for a flag with no entry above — a flag added server-side

@@ -36,6 +36,8 @@ const SERVER_FLAGS = [
   { key: 'blocking-flag-enforcement', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
   { key: 'tower-hamlets-borough-support', enabled: false, updatedAt: '2026-08-13T10:00:00Z' },
   { key: 'streamlined-ward-lookup', enabled: false, updatedAt: '2026-08-14T10:00:00Z' },
+  { key: 'borough-availability-rules', enabled: false, updatedAt: '2026-08-17T10:00:00Z' },
+  { key: 'membership-support', enabled: false, updatedAt: '2026-11-02T10:00:00Z' },
 ];
 
 async function fulfillJson(route: Route, body: unknown): Promise<void> {
@@ -126,6 +128,8 @@ test.describe('feature flags interpretability @mocked', () => {
     await expect(rowFor(page, 'blocking-flag-enforcement')).toContainText('Block Allocation of Flagged Devices');
     await expect(rowFor(page, 'tower-hamlets-borough-support')).toContainText('Tower Hamlets Borough Support');
     await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('Streamlined Ward Lookup');
+    // Seeded by techaid-server V26.10.28.1010 and shipped in 5.1.0 with no copy here.
+    await expect(rowFor(page, 'membership-support')).toContainText('Membership Support');
   });
 
   test('shows the retired streamlined-ward-lookup flag as permanently on and locked', async ({ page }) => {
