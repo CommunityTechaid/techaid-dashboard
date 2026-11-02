@@ -12,7 +12,7 @@
  * value for a `String` input field returns that error (HTTP 200 + errors) instead of
  * echoing the client's variables back, so this spec cannot be fooled by a lenient mock.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const KIT = {
   id: 2129,

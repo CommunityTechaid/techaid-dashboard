@@ -7,7 +7,7 @@
  * Only the /authorize request is observed; it is answered with an empty page, so no login
  * completes and nothing else is stubbed.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { DEV_CLIENT_ID } from '../helpers/auth0-clients';
 
 const TENANT = 'techaid-auth.eu.auth0.com';

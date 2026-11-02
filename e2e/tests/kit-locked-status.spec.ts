@@ -23,7 +23,7 @@
  * The mock kit below stands in for the real UAT device 2129 the original bug
  * was filed against — same shape, same lock flag, no live API dependency.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const KIT_BASE = {
   id: 2129,

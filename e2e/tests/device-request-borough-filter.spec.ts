@@ -19,7 +19,8 @@
  *
  * @mocked — no bearer token needed; runs under `npm run e2e:fast`.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions as seedAuth0Cache } from '../helpers/auth0-cache';
 
 const INDEX_PATH = '/dashboard/device-requests';

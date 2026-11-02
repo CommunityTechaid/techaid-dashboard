@@ -32,7 +32,7 @@
  *
  * @mocked so both run in the CI gate.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';

@@ -13,7 +13,8 @@
  * so a future refactor that trims the payload fails red instead of silently
  * clearing fields like `deviceRequestNote` or `collectionDate` in production.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 interface MockRequest {
   id: string;

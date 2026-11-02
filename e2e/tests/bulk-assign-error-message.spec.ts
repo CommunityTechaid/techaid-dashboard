@@ -20,7 +20,7 @@
  * Green (after the fix): `errorText` recovers `errors[0].message` from `HttpErrorResponse.error`
  *   and the operator reads what the server actually said.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const FAKE_ID = 99997;

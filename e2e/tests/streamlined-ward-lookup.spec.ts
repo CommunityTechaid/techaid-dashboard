@@ -20,7 +20,8 @@
  *
  * @mocked — all GraphQL stubbed, no token needed; runs in CI's e2e-mocked gate.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';
 const WARD_LOOKUP_ORIGIN = '**://communitytechaid.github.io/**';

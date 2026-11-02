@@ -10,7 +10,8 @@
  *
  * @mocked — no token, all GraphQL stubbed.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const ROUTE = '/preview/equalities-491d341f15';
 

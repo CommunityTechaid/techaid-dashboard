@@ -3,7 +3,8 @@
  *
  * @mocked — all GraphQL stubbed.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';

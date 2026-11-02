@@ -16,7 +16,7 @@
  * Red (before fix): the toast renders the full raw message (>200 chars).
  * Green (after fix): the toast is capped and contains the truncation marker.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const FAKE_ID = 99998;
 

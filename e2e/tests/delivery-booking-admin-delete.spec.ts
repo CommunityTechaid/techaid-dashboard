@@ -10,7 +10,8 @@
  * Not yet deployed to UAT, so this spec is fully mocked (@mocked) — no live
  * backend dependency, runs in the fast CI suite.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 async function fulfillSimple(route: Route, data: any) {
   await route.fulfill({

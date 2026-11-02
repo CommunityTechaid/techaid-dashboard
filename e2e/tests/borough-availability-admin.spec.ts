@@ -14,7 +14,8 @@
  * @mocked — every GraphQL operation is page.route-stubbed and the Auth0 cache is written
  * directly, so no token is needed.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';

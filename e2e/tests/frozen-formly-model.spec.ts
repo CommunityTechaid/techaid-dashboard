@@ -16,7 +16,8 @@
  *
  * @mocked — every GraphQL operation is page.route-stubbed; no bearer token required.
  */
-import { test, expect, Page, Route } from '@playwright/test';
+import { Page, Route } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const WRITE_PERMISSIONS = [

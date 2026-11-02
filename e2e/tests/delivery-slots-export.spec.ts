@@ -15,7 +15,8 @@
  *
  * @mocked — no token (fake JWT satisfies AuthGuard), all GraphQL stubbed.
  */
-import { test, expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 async function fulfillJson(route: import('@playwright/test').Route, body: unknown): Promise<void> {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });

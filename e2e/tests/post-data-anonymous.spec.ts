@@ -18,7 +18,7 @@
  * @mocked — GraphQL stubbed and the Auth0 tenant intercepted; no token needed, runs in CI's
  * e2e-mocked gate.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';
 const SLUG = 'about-our-work';

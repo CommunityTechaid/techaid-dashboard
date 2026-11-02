@@ -6,7 +6,7 @@
  * they render in full, colour green, and round-trip through updateKit as an Int
  * (kits.graphqls `batteryHealth: Int`, column `integer`, no range check server-side).
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/csp';
 
 const KIT = {
   id: 2130,
