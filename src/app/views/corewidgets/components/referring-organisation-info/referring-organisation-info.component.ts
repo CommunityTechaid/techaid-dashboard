@@ -112,7 +112,9 @@ const MEMBERSHIP_FIELD_GROUP: FormlyFieldConfig = {
       className: 'col-md-4',
       // Hidden for FREE (the free tier uses the 1 February year). resetOnHide must stay false
       // or Formly wipes the stored dates on the first build (see project_formly_stale_controls).
-      hideExpression: 'model.membershipTier === "FREE"',
+      // A function, never a string: Formly compiles string expressions with new Function(), which
+      // the production CSP (no 'unsafe-eval') blocks, so a string never hides anything once deployed.
+      hideExpression: (model: any) => model?.membershipTier === 'FREE',
       resetOnHide: false,
       templateOptions: {
         type: 'date',
@@ -138,7 +140,9 @@ const MEMBERSHIP_FIELD_GROUP: FormlyFieldConfig = {
       key: 'membershipEndDate',
       type: 'input',
       className: 'col-md-4',
-      hideExpression: 'model.membershipTier === "FREE"',
+      // A function, never a string: Formly compiles string expressions with new Function(), which
+      // the production CSP (no 'unsafe-eval') blocks, so a string never hides anything once deployed.
+      hideExpression: (model: any) => model?.membershipTier === 'FREE',
       resetOnHide: false,
       templateOptions: {
         type: 'date',
@@ -152,7 +156,7 @@ const MEMBERSHIP_FIELD_GROUP: FormlyFieldConfig = {
     },
     {
       className: 'col-md-8',
-      hideExpression: 'model.membershipTier !== "FREE"',
+      hideExpression: (model: any) => model?.membershipTier !== 'FREE',
       template: '<p class="text-muted mb-3">Free tier: uses the standard membership year, 1 February to 31 January.</p>',
     },
   ],
