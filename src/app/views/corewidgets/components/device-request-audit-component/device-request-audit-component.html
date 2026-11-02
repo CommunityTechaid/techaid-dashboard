@@ -53,7 +53,7 @@
                       <td>{{ dt.entity.deviceRequestItems?.commsDevices || 0 }}</td>
                       <td>{{ dt.entity.deviceRequestItems?.broadbandHubs || 0 }}</td>
                       <td>{{ dt.entity.deviceRequestItems?.other || 0 }}</td>
-                      <td><input type="checkbox" [checked]="dt.entity.isSales" onclick="return false;"></td>
+                      <td><input type="checkbox" [checked]="dt.entity.isSales" (click)="$event.preventDefault()"></td>
                     </tr>
                   }
                 </tbody>

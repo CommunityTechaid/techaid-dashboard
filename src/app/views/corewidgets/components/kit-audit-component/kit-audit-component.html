@@ -52,11 +52,11 @@
                       <td>{{ dt.revision.customUser?.split("|")[1] || 'System' }}</td>
                       <td>{{ dt.entity.model }}</td>
                       <td>{{ statusTypes[dt.entity.status] || dt.entity.status }}</td>
-                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.installationOfOSFailed)" onclick="return false;"></td>
-                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.wipeFailed)" onclick="return false;"></td>
-                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.needsSparePart)" onclick="return false;"></td>
-                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.needsFurtherInvestigation)" onclick="return false;"></td>
-                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.lockedToUser)" onclick="return false;"></td>
+                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.installationOfOSFailed)" (click)="$event.preventDefault()"></td>
+                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.wipeFailed)" (click)="$event.preventDefault()"></td>
+                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.needsSparePart)" (click)="$event.preventDefault()"></td>
+                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.needsFurtherInvestigation)" (click)="$event.preventDefault()"></td>
+                      <td><input type="checkbox" [checked]="$safeNavigationMigration(dt.entity.subStatus?.lockedToUser)" (click)="$event.preventDefault()"></td>
                       <td>{{ dt.entity.serialNo }}</td>
                     </tr>
                   }

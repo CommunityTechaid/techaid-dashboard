@@ -443,3 +443,30 @@ test.describe('OnPush fan-out — delivery-slots under its OnPush ancestor (prio
     await expect(button).toBeEnabled();
   });
 });
+
+// Read-only display checkboxes used `onclick="return false;"`, an inline event handler the production
+// CSP blocks (no 'unsafe-inline'). Chrome only reports it, and ignores it, on the first click, so
+// the checkbox silently became toggleable in UAT/prod and the csp fixture flagged every test that
+// clicked in a table that had one. Fixed with an Angular (click) binding.
+test.describe('read-only table checkboxes stay read-only under the production CSP @mocked', () => {
+  test('referring-organisation-index: clicking the archived checkbox does not toggle it', async ({ page }) => {
+    test.setTimeout(60_000);
+    await installMocks(page, {
+      findAllReferringOrgs: {
+        referringOrganisationsConnection: {
+          totalElements: 1,
+          content: [{
+            id: 1, phoneNumber: '07700900000', name: 'READONLY-ORG', website: '', requestCount: 0,
+            createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z', archived: false,
+          }],
+        },
+      },
+    });
+    await page.goto('/dashboard/referring-organisations');
+    const row = page.locator('#referring-org-index tbody tr', { hasText: 'READONLY-ORG' });
+    await expect(row).toBeVisible({ timeout: 30_000 });
+    const archived = row.locator('input[type=checkbox]');
+    await archived.click({ force: true });
+    await expect(archived).not.toBeChecked();
+  });
+});
