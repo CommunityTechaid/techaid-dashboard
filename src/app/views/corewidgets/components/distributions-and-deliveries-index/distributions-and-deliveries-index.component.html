@@ -271,7 +271,7 @@
         {{ dt.updatedAt | date:'medium' }}
       </td>
       <td><a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a></td>
-      <td><input type="checkbox" [checked]="dt.isPrepped" onclick="return false;"></td>
+      <td><input type="checkbox" [checked]="dt.isPrepped" (click)="$event.preventDefault()"></td>
     </tr>
   }
 </tbody>
