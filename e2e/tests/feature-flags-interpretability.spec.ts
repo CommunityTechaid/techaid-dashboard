@@ -40,6 +40,10 @@ const SERVER_FLAGS = [
   { key: 'membership-support', enabled: false, updatedAt: '2026-11-02T10:00:00Z' },
 ];
 
+/** Permanently on in production and hidden from the tab (see `hidden` in FLAG_LABELS). Their
+ *  server rows still exist and the code still reads them, so they stay in SERVER_FLAGS. */
+const HIDDEN_FLAGS = ['streamlined-ward-lookup', 'tower-hamlets-borough-support'];
+
 async function fulfillJson(route: Route, body: unknown): Promise<void> {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
 }
@@ -126,31 +130,23 @@ test.describe('feature flags interpretability @mocked', () => {
     // Before #174 these three rendered their kebab key as the heading.
     await expect(rowFor(page, 'wipe-cert-enforcement')).toContainText('Require Wipe Certificate Before Allocation');
     await expect(rowFor(page, 'blocking-flag-enforcement')).toContainText('Block Allocation of Flagged Devices');
-    await expect(rowFor(page, 'tower-hamlets-borough-support')).toContainText('Tower Hamlets Borough Support');
-    await expect(rowFor(page, 'streamlined-ward-lookup')).toContainText('Streamlined Ward Lookup');
     // Seeded by techaid-server V26.10.28.1010 and shipped in 5.1.0 with no copy here.
     await expect(rowFor(page, 'membership-support')).toContainText('Membership Support');
   });
 
-  test('shows the retired streamlined-ward-lookup flag as permanently on and locked', async ({ page }) => {
+  test('hides flags that are permanently on, so nobody can switch them off from here', async ({ page }) => {
     test.setTimeout(60_000);
-    const capturedUpdates: string[] = [];
-    // The server row says OFF; the page must still render it checked and disabled.
-    await installMocks(page, { capturedUpdates });
+    await installMocks(page);
     await openFlagsTab(page);
 
-    const row = rowFor(page, 'streamlined-ward-lookup');
-    const toggle = row.locator('input[type=checkbox]');
-    await expect(toggle).toBeChecked();
-    await expect(toggle).toBeDisabled();
-    await expect(row).toContainText(
-      'Permanently on — the legacy ward-lookup page was retired on 2026-10-07; this switch no longer has any effect.',
-    );
-    await expect(row).not.toContainText('still fully working');
-
-    // Locked means no toggle is ever sent, even if the click is forced through.
-    await toggle.click({ force: true }).catch(() => undefined);
-    expect(capturedUpdates).toHaveLength(0);
+    // The server still returns them; the tab must not render them.
+    for (const key of HIDDEN_FLAGS) {
+      await expect(rowFor(page, key)).toHaveCount(0);
+    }
+    await expect(page.locator('app-feature-flags .border-bottom')).toHaveCount(SERVER_FLAGS.length - HIDDEN_FLAGS.length);
+    // Hiding must not swallow the live switches next to them.
+    await expect(rowFor(page, 'borough-availability-rules')).toHaveCount(1);
+    await expect(rowFor(page, 'delivery-booking')).toHaveCount(1);
   });
 
   test('says that OFF is shadow mode for the two enforcement guards', async ({ page }) => {
@@ -206,10 +202,11 @@ test.describe('feature flags interpretability @mocked', () => {
     await installMocks(page, { flags });
     await openFlagsTab(page);
 
+    const visible = flags.filter(({ key }) => !HIDDEN_FLAGS.includes(key));
     const rows = page.locator('app-feature-flags .border-bottom');
-    await expect(rows).toHaveCount(flags.length);
+    await expect(rows).toHaveCount(visible.length);
 
-    for (const { key } of flags) {
+    for (const { key } of visible) {
       const row = rowFor(page, key);
       await expect(row).toHaveCount(1);
       // The description sits between the key and the toggle; assert it is real text and
