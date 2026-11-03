@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.1.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.1.0...v2.1.1) (2026-11-03)
+
+
+### Bug Fixes
+
+* **csp:** replace inline onclick on read-only checkboxes with a click binding ([#272](https://github.com/CommunityTechaid/techaid-dashboard/issues/272)) ([868d677](https://github.com/CommunityTechaid/techaid-dashboard/commit/868d6772f37bb6794fad66b7181b43d77f34b472))
+* **feature-flags:** label membership-support and hide flags that are permanently on ([#271](https://github.com/CommunityTechaid/techaid-dashboard/issues/271)) ([b4dce1d](https://github.com/CommunityTechaid/techaid-dashboard/commit/b4dce1d9c1112e61342d4272e2f4bf465fcdc8a8))
+* **membership:** hide the paid-only date fields for free organisations under the production CSP ([#267](https://github.com/CommunityTechaid/techaid-dashboard/issues/267)) ([0c08f6c](https://github.com/CommunityTechaid/techaid-dashboard/commit/0c08f6cbc21370d8d772c2e218954b3465b7aa0c))
+
 ## [2.1.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.0.1...v2.1.0) (2026-11-02)
 
 
