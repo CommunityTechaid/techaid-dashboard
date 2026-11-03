@@ -1,10 +1,15 @@
 import { Component, ViewChild, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
+import { AsyncPipe } from '@angular/common';
+import { Select } from '@ngxs/store';
+import { Observable } from 'rxjs';
+import { User, UserState } from '@app/state/user/user.state';
 import { FeatureFlagsComponent } from '../feature-flags/feature-flags.component';
 import { BoroughAvailabilityComponent } from '../borough-availability/borough-availability.component';
 import { DeliveryConfigurationComponent } from '../delivery-configuration/delivery-configuration.component';
 import { MembershipSettingsComponent } from '../membership-settings/membership-settings.component';
+import { SettingsHistoryComponent } from '../settings-history/settings-history.component';
 
 /**
  * The admin panel is now two tabs, not three.
@@ -31,10 +36,14 @@ import { MembershipSettingsComponent } from '../membership-settings/membership-s
     BoroughAvailabilityComponent,
     DeliveryConfigurationComponent,
     MembershipSettingsComponent,
+    SettingsHistoryComponent,
+    AsyncPipe,
   ],
 })
 export class AdminPanelComponent implements OnInit {
-  activeTab: 'availability' | 'flags' | 'membership' | 'delivery' ='availability';
+  activeTab: 'availability' | 'flags' | 'membership' | 'delivery' | 'history' = 'availability';
+
+  @Select(UserState.user) user$: Observable<User>;
 
   @ViewChild(BoroughAvailabilityComponent) availabilityTab?: BoroughAvailabilityComponent;
 
@@ -52,7 +61,7 @@ export class AdminPanelComponent implements OnInit {
    * the admin had spent time on — its own Discard button asks for confirmation, so the far easier
    * path was the destructive one.
    */
-  selectTab(tab: 'availability' | 'flags' | 'membership' | 'delivery'): void {
+  selectTab(tab: 'availability' | 'flags' | 'membership' | 'delivery' | 'history'): void {
     if (this.activeTab === 'availability' && tab !== 'availability' && this.availabilityTab?.dirty) {
       const unsaved = this.availabilityTab.unsavedCount;
       const confirmed = window.confirm(
