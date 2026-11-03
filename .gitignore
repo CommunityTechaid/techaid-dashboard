@@ -61,3 +61,9 @@ Thumbs.db
 # no script, workflow or doc - purely a convenience file, and one `git clean` from
 # being lost, which is why it is ignored rather than left merely untracked.
 playwright.config.prod.ts
+
+# Local-only archive of finished session handoffs and working notes (see /_*.md above)
+/_archive/
+# Large design decks, and the membership mockups (they contain real contact details), stay out of git
+docs/design_handoff_*/*.pdf
+docs/design_handoff_membership/mockups/
