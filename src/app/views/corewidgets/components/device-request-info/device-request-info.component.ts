@@ -912,7 +912,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.user$.subscribe((user) => {
         this.user = user;
-        this.options.formState.disabled = !(user && user.authorities && user.authorities['write:organisations']);
+        this.options.formState.disabled = !(user && user.authorities && (user.authorities['write:requests'] || user.authorities['write:organisations']));
       })
     );
 
