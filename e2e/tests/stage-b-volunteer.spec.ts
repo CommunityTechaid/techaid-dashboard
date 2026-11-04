@@ -233,14 +233,22 @@ test.describe('Post-Stage-B volunteer permissions (live UAT)', () => {
     expect(errors, `GraphQL errors while loading D&D: ${errors.join(' | ')}`).toEqual([]);
   });
 
-  // Dashboard PR for issue #294 (gate the booking Delete button on its delete authority) may not be
-  // merged yet. Once it is, drop the fixme.
-  test.fixme('delivery booking Delete button is absent for the volunteer', async ({ page }) => {
+  // #294 / PR #297: the booking Delete button needs write:organisations, which Stage B takes from volunteers.
+  test('delivery booking Delete button is absent for the volunteer', async ({ page }) => {
+    // A count of 0 only means something if bookings are actually rendered, so anchor on a real one.
+    const { deliveryBookingsAdmin: bookings } = await uat.request<{ deliveryBookingsAdmin: { id: string }[] }>(
+      `query { deliveryBookingsAdmin { id } }`,
+    );
+    test.skip(bookings.length === 0, 'UAT has no delivery bookings, so there is no row to check the button on');
+
     await withAuthInterceptor(page);
     await page.goto('/dashboard/distributions-and-deliveries');
     await page.locator('a.nav-link', { hasText: /slots/i }).first().click();
-    await expect(page.locator('app-delivery-slots')).toBeVisible({ timeout: 20_000 });
-    await expect(page.locator('app-delivery-slots').getByRole('button', { name: /delete/i })).toHaveCount(0);
+    const slots = page.locator('app-delivery-slots');
+    await expect(slots).toBeVisible({ timeout: 20_000 });
+    await expect(slots.locator('tbody tr').first()).toBeVisible({ timeout: 20_000 });
+    await expect(slots.locator('[data-testid="delete-booking"]')).toHaveCount(0);
+    await expect(slots.getByRole('button', { name: /^delete$/i })).toHaveCount(0);
   });
 
   test('API denies organisation/referee writes and booking delete, allows booking reads', async () => {
