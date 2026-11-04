@@ -6,6 +6,14 @@
       Delivery settings, windows and blocked dates have moved to
       <a [routerLink]="['/dashboard/admin-panel']">Admin Panel → Delivery Configuration</a>.
     </div>
+    @if (canAddException) {
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary flex-shrink-0 ms-auto"
+        data-testid="add-exception-booking"
+        (click)="toggleExceptionForm()"
+      >{{ showExceptionForm ? 'Cancel exception booking' : 'Add exception booking' }}</button>
+    }
     <button
       type="button"
       class="btn btn-sm btn-primary flex-shrink-0 ms-3"
@@ -16,6 +24,51 @@
       {{ exporting ? 'Exporting…' : 'Export CSV' }}
     </button>
   </div>
+
+  @if (showExceptionForm) {
+    <!-- Admin exception booking (techaid-server#73): any day, any window, doesn't take a slot. -->
+    <div class="card shadow-sm mb-4" data-testid="exception-booking-form">
+      <div class="card-header py-2">
+        <span class="font-weight-bold text-primary">Exception booking</span>
+        <span class="text-muted small ms-2">Admins only. Any day and any window, even a full one. It doesn't take a public slot, and the normal confirmation email is sent.</span>
+      </div>
+      <div class="card-body">
+        <form (ngSubmit)="submitExceptionBooking()">
+          <div class="row g-2">
+            <div class="col-md-3"><label class="small mb-0" for="exception-date">Date</label>
+              <input type="date" class="form-control form-control-sm" id="exception-date" name="date" [(ngModel)]="exceptionForm.date" required /></div>
+            <div class="col-md-3"><label class="small mb-0" for="exception-windowId">Window</label>
+              <select class="form-control form-control-sm" id="exception-windowId" name="windowId" [(ngModel)]="exceptionForm.windowId" required>
+                <option value="">Choose…</option>
+                @for (w of windows; track w.id) {
+                  <option [value]="w.id">{{ w.name }}{{ w.active ? '' : ' (inactive)' }}</option>
+                }
+              </select></div>
+            <div class="col-md-2"><label class="small mb-0" for="exception-ctaReference">CTA ref</label>
+              <input type="number" class="form-control form-control-sm" id="exception-ctaReference" name="ctaReference" [(ngModel)]="exceptionForm.ctaReference" required /></div>
+            <div class="col-md-2"><label class="small mb-0" for="exception-firstName">First name</label>
+              <input class="form-control form-control-sm" id="exception-firstName" name="firstName" [(ngModel)]="exceptionForm.firstName" required /></div>
+            <div class="col-md-2"><label class="small mb-0" for="exception-surname">Surname</label>
+              <input class="form-control form-control-sm" id="exception-surname" name="surname" [(ngModel)]="exceptionForm.surname" required /></div>
+            <div class="col-md-3"><label class="small mb-0" for="exception-email">Email</label>
+              <input type="email" class="form-control form-control-sm" id="exception-email" name="email" [(ngModel)]="exceptionForm.email" required /></div>
+            <div class="col-md-3"><label class="small mb-0" for="exception-phone">Phone</label>
+              <input class="form-control form-control-sm" id="exception-phone" name="phone" [(ngModel)]="exceptionForm.phone" required /></div>
+            <div class="col-md-6"><label class="small mb-0" for="exception-address">Address</label>
+              <textarea class="form-control form-control-sm" rows="2" id="exception-address" name="address" [(ngModel)]="exceptionForm.address" required></textarea></div>
+            <div class="col-md-6"><label class="small mb-0" for="exception-accessNotes">Access notes</label>
+              <textarea class="form-control form-control-sm" rows="2" id="exception-accessNotes" name="accessNotes" [(ngModel)]="exceptionForm.accessNotes"></textarea></div>
+            <div class="col-md-6"><label class="small mb-0" for="exception-exceptionReason">Reason for the exception</label>
+              <textarea class="form-control form-control-sm" rows="2" id="exception-exceptionReason" name="exceptionReason" [(ngModel)]="exceptionForm.exceptionReason"
+                placeholder="e.g. missed delivery, referee called to rebook"></textarea></div>
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary mt-3" [disabled]="savingException">
+            {{ savingException ? 'Booking…' : 'Book exception' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  }
 
   <!-- Bookings -->
   <div class="card shadow-sm mb-4">
@@ -56,6 +109,9 @@
                       <td class="wrap-cell">{{ bk.firstName }} {{ bk.surname }}</td>
                       <td>
                         {{ bk.ctaReference }}
+                        @if (bk.adminException) {
+                          <span class="badge badge-info ms-1" data-testid="admin-exception-badge" [title]="exceptionTitle(bk)">admin exception</span>
+                        }
                         @if (!bk.matchedRequestId) {
                           <span class="badge badge-warning ms-1" title="No device request found with this id">unmatched</span>
                         } @else if (bk.matchedRequestOpen === false) {
