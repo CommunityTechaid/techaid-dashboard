@@ -5,7 +5,7 @@
  */
 import { Page } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
 
@@ -46,7 +46,7 @@ async function openTab(page: Page) {
 
 test.describe('membership settings @mocked', () => {
   test.beforeEach(async ({ page }) => {
-    await authenticateWithPermissions(page, ['app:admin']);
+    await loginWith(page, ['app:admin']);
   });
 
   test('loads with BLOCK and grace 2, grace input disabled', async ({ page }) => {

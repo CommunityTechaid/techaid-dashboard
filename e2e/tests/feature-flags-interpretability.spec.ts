@@ -24,7 +24,7 @@
  */
 import { Locator, Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
 
@@ -120,7 +120,7 @@ async function clickUntilSent(toggle: Locator, capturedUpdates: string[]): Promi
 
 test.describe('feature flags interpretability @mocked', () => {
   test.beforeEach(async ({ page }) => {
-    await authenticateWithPermissions(page, ['app:admin']);
+    await loginWith(page, ['app:admin']);
   });
 
   test('renders a human-readable label, not the raw key, for every seeded flag', async ({ page }) => {

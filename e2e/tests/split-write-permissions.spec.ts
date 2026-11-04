@@ -6,7 +6,7 @@
  */
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const TS = '2026-01-01T00:00:00Z';
 
@@ -74,7 +74,7 @@ test.describe('split write permissions (#233) @mocked', () => {
       test(`[${s.perms}] ${p.name} is ${s.editable[i] ? 'editable' : 'read-only'}`, async ({ page }) => {
         test.setTimeout(60_000);
         await installMocks(page);
-        await authenticateWithPermissions(page, ['read:organisations', 'read:requests', 'read:referees', 'app:bulkedit', ...s.perms]);
+        await loginWith(page, ['read:organisations', 'read:requests', 'read:referees', 'app:bulkedit', ...s.perms]);
         await page.goto(p.path);
         const input = page.locator('formly-form').first().getByLabel(p.field).first();
         await expect(input).toHaveValue(p.value, { timeout: 30_000 });
@@ -107,7 +107,7 @@ test.describe('split write permissions (#233) @mocked', () => {
       test(`[${s.perms}] delete button on ${p.name} is ${s.visible[i] ? 'shown' : 'hidden'} (#288)`, async ({ page }) => {
         test.setTimeout(60_000);
         await installMocks(page);
-        await authenticateWithPermissions(page, ['read:organisations', ...s.perms, 'app:bulkedit']);
+        await loginWith(page, ['read:organisations', ...s.perms, 'app:bulkedit']);
         await page.goto(p.path);
         await expect(page.locator('formly-form').first().getByLabel(p.field).first()).toHaveValue(p.value, { timeout: 30_000 });
         await expect(DELETE_BTN(page)).toHaveCount(s.visible[i] ? 1 : 0);
@@ -127,7 +127,7 @@ test.describe('split write permissions (#233) @mocked', () => {
     test(`[${s.perms}] sidebar entries (#288)`, async ({ page }) => {
       test.setTimeout(60_000);
       await installMocks(page);
-      await authenticateWithPermissions(page, [...BASE, ...s.perms]);
+      await loginWith(page, [...BASE, ...s.perms]);
       await page.goto('/dashboard/devices');
       const nav = page.locator('app-sidebar, .sidebar').first();
       await expect(nav.locator('.nav-link span', { hasText: /^Devices/ }).first()).toBeVisible({ timeout: 30_000 });
@@ -143,7 +143,7 @@ test.describe('split write permissions (#233) @mocked', () => {
     test.setTimeout(60_000);
     const seen: string[] = [];
     await installMocks(page, seen);
-    await authenticateWithPermissions(page, [...BASE, 'read:requests']);
+    await loginWith(page, [...BASE, 'read:requests']);
     await page.goto('/dashboard/device-requests/911');
     await expect(page.locator('formly-form').first().getByLabel('Contact Name').first()).toHaveValue('PERM-CONTACT', { timeout: 30_000 });
     const reqQueries = seen.filter(b => b.includes('query findDeviceRequest'));

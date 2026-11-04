@@ -13,7 +13,7 @@
  *   anonymous visitor          -> loggedIn false -> no redirect  (anon-public-request spec)
  *   staff session expired mid-use -> loggedIn true  -> redirect     (this spec)
  *
- * Mechanism. authenticateWithPermissions(..., { expiredAccessToken: true }) seeds a stale
+ * Mechanism. loginWith(..., { expiredAccessToken: true }) seeds a stale
  * session: the @@user@@ identity entry stays valid, so isAuthenticated$ emits true, so
  * AuthenticationService.loggedIn is true and AuthGuard activates the route — but the
  * access-token entries are expired and carry no refresh_token, so the next
@@ -34,7 +34,7 @@
  * CI's e2e-mocked gate.
  */
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';
 
@@ -70,7 +70,7 @@ test.describe('expired staff session still re-prompts for login @mocked', () => 
       });
     });
 
-    await authenticateWithPermissions(page, [], { expiredAccessToken: true });
+    await loginWith(page, [], { expiredAccessToken: true });
 
     await page.goto('/dashboard');
 

@@ -18,14 +18,14 @@
  */
 import { Page } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions as seedAuth0Cache } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 /**
  * Auth0 cache + the Devices Active-only filter pinned, so the archived callout
  * is deterministic. The cache-shape details live in the shared helper.
  */
-async function authenticateWithPermissions(page: Page, permissions: string[]): Promise<void> {
-  await seedAuth0Cache(page, permissions, {
+async function loginWithActiveOnlyFilter(page: Page, permissions: string[]): Promise<void> {
+  await loginWith(page, permissions, {
     subject: 'auth0|e2e-bulk-edit',
     localStorage: {
       'kitFilters-kit-index': JSON.stringify({ archived: [false] }),
@@ -156,7 +156,7 @@ test.describe('kit-index pasted ID list + bulk update safeguards @mocked', () =>
     test.setTimeout(90_000);
 
     const recorded: Recorded = { findAllKits: [], lookup: [] };
-    await authenticateWithPermissions(page, ['app:bulkedit', 'read:kits', 'write:kits']);
+    await loginWithActiveOnlyFilter(page, ['app:bulkedit', 'read:kits', 'write:kits']);
     await stubGraphql(page, recorded);
 
     await page.goto('/dashboard/devices');
@@ -241,7 +241,7 @@ test.describe('kit-index pasted ID list + bulk update safeguards @mocked', () =>
     test.setTimeout(60_000);
 
     const recorded: Recorded = { findAllKits: [], lookup: [] };
-    await authenticateWithPermissions(page, ['app:bulkedit']);
+    await loginWithActiveOnlyFilter(page, ['app:bulkedit']);
     await stubGraphql(page, recorded);
 
     await page.goto('/dashboard/devices');

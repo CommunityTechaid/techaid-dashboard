@@ -18,7 +18,7 @@
  */
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const WRITE_PERMISSIONS = [
   'read:organisations', 'write:organisations',
@@ -117,7 +117,7 @@ test.describe('detail forms are not bound to frozen Apollo objects (#219) @mocke
       const mutations: string[] = [];
       await installMocks(page, c, mutations);
       // CI's fake token has `permissions: []`, which renders these forms disabled.
-      await authenticateWithPermissions(page, WRITE_PERMISSIONS);
+      await loginWith(page, WRITE_PERMISSIONS);
 
       await page.goto(c.path);
       if (c.tab) await page.getByRole('tab', { name: c.tab }).click();

@@ -9,7 +9,7 @@
  */
 import { Page } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
 
@@ -136,7 +136,7 @@ const rows = (page: Page) => page.getByTestId('settings-history-row');
 
 test.describe('settings history tab @mocked', () => {
   test('tab is absent without app:admin', async ({ page }) => {
-    await authenticateWithPermissions(page, []);
+    await loginWith(page, []);
     await installMocks(page);
     await page.goto(ADMIN_PANEL_PATH);
     await expect(page.getByRole('link', { name: 'Feature Flags' })).toBeVisible({ timeout: 15_000 });
@@ -145,7 +145,7 @@ test.describe('settings history tab @mocked', () => {
 
   test.describe('as an admin', () => {
     test.beforeEach(async ({ page }) => {
-      await authenticateWithPermissions(page, ['app:admin']);
+      await loginWith(page, ['app:admin']);
     });
 
     test('rows read as sentences, automated changes show System', async ({ page }) => {

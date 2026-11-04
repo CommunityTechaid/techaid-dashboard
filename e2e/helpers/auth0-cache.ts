@@ -1,17 +1,37 @@
 /**
  * Synthetic Auth0 session for @mocked specs.
  *
- * The CI fake token deliberately carries `permissions: []` (see ci.yml), so any
- * spec covering permission-gated UI — bulk update, the update scanner — has to
- * write its own auth0-spa-js cache entry. The SDK never re-verifies the
- * signature of a *cached* token, only its shape and expiry, so a structurally
- * correct unsigned token is enough. See e2e/save-token.mjs for the derivation.
+ * THE one place a spec mints a login with chosen permissions. Two entry points:
  *
- * Extracted from kit-id-list-bulk-update.spec.ts so the update-scanner spec can
- * reuse it rather than copy 80 lines of cache-shape trivia.
+ *   loginWith(page, ['read:requests', ...])  explicit permission list. REQUIRED for any spec that
+ *                                            asserts a control is hidden/disabled (denial), and
+ *                                            for specs that name the exact permission they need.
+ *   loginAsStaff(page)                       the documented STAFF set (STAFF_PERMISSIONS below).
+ *
+ * The default session — the fake token in e2e/.auth/user.json that CI mints via
+ * e2e/mint-fake-token.mjs — carries that same STAFF set, so a spec that never calls either helper
+ * still behaves like a fully privileged staff member. That is deliberate: when a new permission
+ * gate lands on a button, unrelated older specs keep seeing it. Do not rely on the default for a
+ * denial test; pass explicit permissions.
+ *
+ * The SDK never re-verifies the signature of a *cached* token, only its shape and expiry, so a
+ * structurally correct unsigned token is enough. See e2e/save-token.mjs for the derivation.
  */
 import { Page } from '@playwright/test';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { DEV_CLIENT_ID } from './auth0-clients';
+
+/**
+ * What a fully privileged staff user (ADMINISTRATOR + CAN_DELETE) holds: app:admin/app:bulkedit
+ * plus read/write/delete for kits, donors, organisations, requests and referees, and the
+ * users/emails/content authorities. Single source of truth in staff-permissions.json, shared
+ * with e2e/mint-fake-token.mjs (which mints the default CI token). Add a new authority there
+ * when the app gains one and staff are meant to hold it.
+ */
+export const STAFF_PERMISSIONS: readonly string[] = JSON.parse(
+  readFileSync(join(__dirname, 'staff-permissions.json'), 'utf8'),
+);
 
 // Specs run against non-production builds, which use the Dev & UAT client.
 const CLIENT_ID = DEV_CLIENT_ID;
@@ -51,7 +71,7 @@ export interface AuthOptions {
 /**
  * Builds the auth0-spa-js v2 localStorage entries for a session, without writing them.
  *
- * Exposed separately from authenticateWithPermissions so a spec can inject a *fresh* session
+ * Exposed separately from loginWith so a spec can inject a *fresh* session
  * mid-flight — the way the winner of a refresh-token race repopulates the cache while a loser is
  * still retrying. auth0-spa-js with cacheLocation 'localstorage' re-reads localStorage on every
  * getTokenSilently(), so writing these keys is enough to make the next attempt succeed from cache
@@ -127,8 +147,13 @@ export function buildAuth0CacheEntries(
   ];
 }
 
-/** Writes an auth0-spa-js v2 cache entry carrying the given permissions. */
-export async function authenticateWithPermissions(
+/** Logs the page in as the STAFF persona (see STAFF_PERMISSIONS). */
+export function loginAsStaff(page: Page, options: AuthOptions = {}): Promise<void> {
+  return loginWith(page, [...STAFF_PERMISSIONS], options);
+}
+
+/** Writes an auth0-spa-js v2 cache entry carrying exactly the given permissions. */
+export async function loginWith(
   page: Page,
   permissions: string[],
   options: AuthOptions = {},

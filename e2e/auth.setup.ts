@@ -36,7 +36,7 @@ setup('authenticate', async ({ page }) => {
   await page.locator('button[type="submit"], button[name="action"]').click();
 
   // Wait until redirected back to the app and dashboard loads
-  await page.waitForURL('http://localhost:4200/**', { timeout: 30_000 });
+  await page.waitForURL(`http://localhost:${process.env.E2E_PORT || 4200}/**`, { timeout: 30_000 });
   await expect(page.locator('app-root')).toBeVisible({ timeout: 15_000 });
 
   // Save storage state (includes Auth0 tokens in localStorage)

@@ -16,7 +16,7 @@
  */
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
 
@@ -179,7 +179,7 @@ function cell(page: Page, groupId: string, key: string) {
 
 test.describe('borough availability admin @mocked', () => {
   test.beforeEach(async ({ page }) => {
-    await authenticateWithPermissions(page, ['app:admin']);
+    await loginWith(page, ['app:admin']);
   });
 
   test('the PILOT status renders as plain text, not a badge', async ({ page }) => {
@@ -515,7 +515,7 @@ test.describe('borough availability admin @mocked', () => {
  */
 test.describe("device availability global row @mocked", () => {
   test.beforeEach(async ({ page }) => {
-    await authenticateWithPermissions(page, ["app:admin"]);
+    await loginWith(page, ["app:admin"]);
   });
 
   test("a globally-off device disables that column for every borough", async ({ page }) => {

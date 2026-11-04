@@ -33,7 +33,7 @@
  * @mocked so both run in the CI gate.
  */
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';
 
@@ -113,7 +113,7 @@ test.describe('dashboard findAll waits for a token @mocked', () => {
   });
 
   test('landing page issues exactly one findAll once authenticated', async ({ page }) => {
-    await authenticateWithPermissions(page, ['read:kits', 'read:donors']);
+    await loginWith(page, ['read:kits', 'read:donors']);
 
     const operations = await trackGraphQL(page);
 

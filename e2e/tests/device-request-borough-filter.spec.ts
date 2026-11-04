@@ -21,7 +21,7 @@
  */
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions as seedAuth0Cache } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const INDEX_PATH = '/dashboard/device-requests';
 const TABLE_ID = 'device-request-index';
@@ -41,7 +41,7 @@ const NOT_RECORDED_SENTINEL = '__not_recorded__';
  * real filter straight back to this pinned value. Use `authenticateUnpinned` there instead.
  */
 async function authenticate(page: Page): Promise<void> {
-  await seedAuth0Cache(page, [], {
+  await loginWith(page, [], {
     subject: 'auth0|e2e-borough-filter',
     localStorage: { [FILTER_STORAGE_KEY]: '{"is_sales":[]}' },
   });
@@ -49,7 +49,7 @@ async function authenticate(page: Page): Promise<void> {
 
 /** Auth0 cache with no pinned filter storage — safe to use across a reload. */
 async function authenticateUnpinned(page: Page): Promise<void> {
-  await seedAuth0Cache(page, [], { subject: 'auth0|e2e-borough-filter-reload' });
+  await loginWith(page, [], { subject: 'auth0|e2e-borough-filter-reload' });
 }
 
 function deviceRequestRow(overrides: Partial<{
