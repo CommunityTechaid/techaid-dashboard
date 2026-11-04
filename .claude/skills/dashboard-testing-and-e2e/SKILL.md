@@ -321,6 +321,38 @@ gates and broke specs that ran with a permissionless token). The rules:
 Regex hygiene: when you add a regex to a spec or helper, check it contains no raw control bytes
 (a pasted NUL/escape char). `npx eslint . --quiet` catches this via `no-control-regex`.
 
+## 10. `npm run e2e:affected` — run only what your diff can break
+
+`e2e/affected.mjs` diffs against `origin/dev` (merge-base; `--base <ref>` or `E2E_AFFECTED_BASE`
+override; includes uncommitted and untracked files), maps changed files to spec files, prints each
+selected spec with the reason, then runs them with `--grep @mocked`. It is a fast inner loop, not a
+replacement for the full `npm run e2e:fast` before opening a PR.
+
+```bash
+E2E_PORT=4315 npm run e2e:affected                 # @mocked specs for your diff
+npm run e2e:affected -- --dry-run                  # show the selection, run nothing
+npm run e2e:affected -- --live                     # drop the @mocked filter (needs a real token)
+npm run e2e:affected -- --commit <sha>             # map one commit instead (validate the mapping)
+npm run e2e:affected -- -- --headed                # args after a bare `--` go to playwright
+```
+
+Mapping: a changed spec runs itself; a changed `e2e/helpers/*` runs every spec importing it
+(transitively); a changed `src/app` file yields keys — component folder, file stem, component
+selector, static route path (from `core-widgets.routes.ts`, parameterised routes skipped), and
+GraphQL operation names defined in the component — and every spec whose text mentions a key runs.
+A changed service/state/model file is followed through its importers (3 levels) to components.
+Docs-only diffs run nothing.
+
+It falls back to the **full @mocked suite** when: a global file changed (playwright config,
+package.json, angular.json, tsconfig, app config/routing/routes, styles, index.html, environments,
+proxy, graphql.module, auth services, ci.yml, staff-permissions, token scripts); a helper is used by
+>= half the specs; src changed but nothing mapped; or the selection exceeds 60% of the specs.
+
+Limits (why it is a heuristic): a spec that exercises a component only indirectly, through an
+operation or route name it never spells out, is missed; and widely-shared selectors pull in many
+specs. A red full run in CI is still the gate. If it misses something, add the key it needed to a
+spec (a route string, a selector) rather than special-casing the script.
+
 ---
 
 ## Coverage posture (honest, as of 2026-07-19)
