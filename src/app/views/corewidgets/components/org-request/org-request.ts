@@ -43,7 +43,8 @@ declare let window: any;
 
 /** What the server tells us when it refuses a request for exceeding the referrer's cap. */
 export interface RequestLimitDetail {
-  open: number;
+  /** Null when the figure comes from the pre-form lookup, which deliberately does not expose the count. */
+  open: number | null;
   /** The borough group the cap was counted against, or 'overall' for the ungrouped fallback. */
   scope: string;
   limit: number;
@@ -78,13 +79,21 @@ const escapeHtml = (value: string): string =>
  */
 const requestLimitCopy = (detail: RequestLimitDetail | null): string => {
   const tail = 'Please wait for these to be fulfilled before making another.';
+  // Same alert styling as membership-notice.component.ts.
+  const banner = (paragraph: string) =>
+    `<div class="cta-alert cta-alert-danger mb-3" role="alert">` +
+    `<i class="fas fa-exclamation-triangle" aria-hidden="true"></i><div>${paragraph}</div></div>`;
   if (!detail) {
-    return `<p class="">It looks like you already have the maximum number of open requests for this area.</br> ${tail}</p>`;
+    return banner(`<p class="">It looks like you already have the maximum number of open requests for this area.</br> ${tail}</p>`);
+  }
+  if (detail.open === null) {
+    // Pre-form lookup: only the verdict and the limit are public, never the count.
+    return banner(`<p class="">It looks like you already have the maximum number of open requests for this area. The limit is ${detail.limit}.</br> ${tail}</p>`);
   }
   const requests = detail.open === 1 ? 'request' : 'requests';
   // 'overall' is the server's own word for the ungrouped fallback; naming it would read as a place.
   const where = detail.scope && detail.scope !== 'overall' ? ` for ${escapeHtml(detail.scope)}` : '';
-  return `<p class="">It looks like you already have ${detail.open} open ${requests}${where}. The limit is ${detail.limit}.</br> ${tail}</p>`;
+  return banner(`<p class="">It looks like you already have ${detail.open} open ${requests}${where}. The limit is ${detail.limit}.</br> ${tail}</p>`);
 };
 
 const QUERY_CONTENT = gql`
@@ -112,8 +121,10 @@ const AUTOCOMPLETE_REFERRING_ORGANISATION = gql`
   }
 `;
 
-const findOrganisationContact = (membership: string) => gql`
-  query findOrganisationContact($email: String, $refOrgId: Long) {
+// techaid-server#336: the verdict (and the limit) only, never the open count. `limitStatus` is
+// empty for the legacy query, which is what an older server that lacks the field is sent.
+const findOrganisationContact = (membership: string, limitStatus: string) => gql`
+  query findOrganisationContact($email: String, $refOrgId: Long, $borough: String) {
     referringOrganisationContactsPublic( where: {
       email: { _ilike: $email }
       referringOrganisation: { id: { _eq: $refOrgId } }
@@ -122,6 +133,7 @@ const findOrganisationContact = (membership: string) => gql`
       id
       fullName
       ${membership}
+      ${limitStatus}
     }
   }
 `;
@@ -139,8 +151,12 @@ const createDeviceRequest = (membership: string) => gql`
 // Membership fields (techaid-server#311) are requested only while the membership flag is on.
 // The allowance hangs off the referee lookup, which already requires the email to belong to the
 // chosen organisation; that match is what lets an anonymous visitor see it.
-const FIND_ORGANISATION_CONTACT = findOrganisationContact('');
-const FIND_ORGANISATION_CONTACT_MEMBERSHIP = findOrganisationContact(MEMBERSHIP_PUBLIC_SELECTION);
+const LIMIT_STATUS_SELECTION = 'requestLimitStatus(borough: $borough) { atLimit limit }';
+const FIND_ORGANISATION_CONTACT = findOrganisationContact('', LIMIT_STATUS_SELECTION);
+const FIND_ORGANISATION_CONTACT_MEMBERSHIP = findOrganisationContact(MEMBERSHIP_PUBLIC_SELECTION, LIMIT_STATUS_SELECTION);
+// Fallbacks without the field, for a server that predates #336 and would reject the query.
+const FIND_ORGANISATION_CONTACT_LEGACY = findOrganisationContact('', '');
+const FIND_ORGANISATION_CONTACT_MEMBERSHIP_LEGACY = findOrganisationContact(MEMBERSHIP_PUBLIC_SELECTION, '');
 const CREATE_DEVICE_REQUEST = createDeviceRequest('');
 const CREATE_DEVICE_REQUEST_MEMBERSHIP = createDeviceRequest('membershipGraceIndex');
 
@@ -561,7 +577,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     templateOptions: {
       text: 'Proceed',
       onClick: () => {
-        this.showRequestPage();
+        this.proceedForContact(this.referringContactIdField.formControl?.value);
       }
     },
 
@@ -1206,15 +1222,28 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
     this.membershipAllowance = null;
     this.membershipServerBlocked = false;
-    this.apollo.query({
-      query: this.membershipEnabled ? FIND_ORGANISATION_CONTACT_MEMBERSHIP : FIND_ORGANISATION_CONTACT,
-      variables: {
-        email: this.emailField.formControl.value.trim(),
-        refOrgId: this.referringOrgIdField.formControl.value
-      }
-    }).toPromise().then(res => {
+    this.contactLimitStatus.clear();
+    const variables = {
+      email: this.emailField.formControl.value.trim(),
+      refOrgId: this.referringOrgIdField.formControl.value,
+      // The borough chosen at the postcode step; null when unknown (the server then uses its overall cap).
+      borough: this.borough || null,
+    };
+    const lookup = (query: any) => this.apollo.query({ query, variables }).toPromise();
+    lookup(this.membershipEnabled ? FIND_ORGANISATION_CONTACT_MEMBERSHIP : FIND_ORGANISATION_CONTACT).catch(error => {
+      // An older server rejects the unknown requestLimitStatus field outright; look up without it
+      // and carry on as before (the submit-time check still applies).
+      const text = [...graphQLErrorMessages(error), errorText(error)].join(' ');
+      if (!text.includes('requestLimitStatus')) throw error;
+      return lookup(this.membershipEnabled ? FIND_ORGANISATION_CONTACT_MEMBERSHIP_LEGACY : FIND_ORGANISATION_CONTACT_LEGACY);
+    }).then(res => {
 
       const data = res["data"]["referringOrganisationContactsPublic"];
+      (data || []).forEach(r => {
+        const status = r.requestLimitStatus;
+        // Absent or null (old server): fall through to today's behaviour.
+        if (status && typeof status.atLimit === 'boolean') this.contactLimitStatus.set(String(r.id), status);
+      });
       // Organisation-level, so every matching contact carries the same allowance.
       this.membershipAllowance = (data && data[0] && data[0].membershipAllowance) || null;
 
@@ -1229,7 +1258,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
       } else if (data && data.length == 1) {
         this.referringContactIdField.formControl.setValue(data[0].id);
-        this.showRequestPage();
+        this.proceedForContact(data[0].id);
       } else {
         this.createNewOrganisationContactPrompt.hide = false;
       }
@@ -1242,6 +1271,19 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       this.options.detectChanges?.(this.fields[0]);
     });
 
+  }
+
+  /** Pre-form limit verdicts from the contact lookup, by contact id (techaid-server#336). */
+  private contactLimitStatus = new Map<string, { atLimit: boolean; limit: number }>();
+
+  /** Shows the cap page straight away for a referee already at their limit; otherwise the request form. */
+  private proceedForContact(contactId: unknown): void {
+    const status = contactId == null ? undefined : this.contactLimitStatus.get(String(contactId));
+    if (status?.atLimit) {
+      this.showMoreThanThreeRequestsPage({ open: null, scope: '', limit: status.limit });
+      return;
+    }
+    this.showRequestPage();
   }
 
   showThankYouPage() {
