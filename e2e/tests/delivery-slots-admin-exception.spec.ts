@@ -14,7 +14,7 @@
  */
 import { Page } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 async function fulfillJson(route: import('@playwright/test').Route, body: unknown): Promise<void> {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
@@ -93,7 +93,7 @@ async function openSlotsTab(page: Page): Promise<void> {
 test.describe('delivery-slots admin exception bookings @mocked', () => {
   test('badges an exception booking with who made it and why, and leaves public bookings alone', async ({ page }) => {
     test.setTimeout(60_000);
-    await authenticateWithPermissions(page, ['read:organisations']);
+    await loginWith(page, ['read:organisations']);
     await installMocks(page, []);
     await openSlotsTab(page);
 
@@ -105,7 +105,7 @@ test.describe('delivery-slots admin exception bookings @mocked', () => {
 
   test('a non-admin does not get the exception booking form', async ({ page }) => {
     test.setTimeout(60_000);
-    await authenticateWithPermissions(page, ['read:organisations', 'write:organisations']);
+    await loginWith(page, ['read:organisations', 'write:organisations']);
     await installMocks(page, []);
     await openSlotsTab(page);
 
@@ -115,7 +115,7 @@ test.describe('delivery-slots admin exception bookings @mocked', () => {
   test('an admin books an exception and the list reloads', async ({ page }) => {
     test.setTimeout(60_000);
     const sent: any[] = [];
-    await authenticateWithPermissions(page, ['app:admin', 'read:organisations', 'write:organisations']);
+    await loginWith(page, ['app:admin', 'read:organisations', 'write:organisations']);
     await installMocks(page, sent);
     await openSlotsTab(page);
 
