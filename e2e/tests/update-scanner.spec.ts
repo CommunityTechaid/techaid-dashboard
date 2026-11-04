@@ -18,7 +18,7 @@
  */
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const SCANNER_PATH = '/dashboard/devices/update-scanner';
 
@@ -139,7 +139,7 @@ const modeBanner = (page: Page) => page.getByTestId('scanner-mode-banner');
 test.describe('update scanner access gating @mocked', () => {
   test('without app:bulkedit and with the flag off, the page is not reachable', async ({ page }) => {
     test.setTimeout(60_000);
-    await authenticateWithPermissions(page, ['read:kits']);
+    await loginWith(page, ['read:kits']);
     await installMocks(page, { flagEnabled: false });
 
     await page.goto(SCANNER_PATH);
@@ -151,7 +151,7 @@ test.describe('update scanner access gating @mocked', () => {
 
   test('the update-scanner flag widens access to staff without app:bulkedit', async ({ page }) => {
     test.setTimeout(60_000);
-    await authenticateWithPermissions(page, ['read:kits']);
+    await loginWith(page, ['read:kits']);
     await installMocks(page, { flagEnabled: true });
 
     await openScanner(page);
@@ -161,7 +161,7 @@ test.describe('update scanner access gating @mocked', () => {
 
 test.describe('update scanner mode and apply @mocked', () => {
   test.beforeEach(async ({ page }) => {
-    await authenticateWithPermissions(page, ['app:bulkedit', 'read:kits', 'write:kits']);
+    await loginWith(page, ['app:bulkedit', 'read:kits', 'write:kits']);
   });
 
   test('scanning a mode card activates it; a device scan then applies it', async ({ page }) => {
@@ -421,7 +421,7 @@ test.describe('update scanner mode and apply @mocked', () => {
 
 test.describe('update scanner session note @mocked', () => {
   test.beforeEach(async ({ page }) => {
-    await authenticateWithPermissions(page, ['app:bulkedit', 'read:kits', 'write:kits']);
+    await loginWith(page, ['app:bulkedit', 'read:kits', 'write:kits']);
   });
 
   test('with no note typed, the mutation carries no note at all', async ({ page }) => {

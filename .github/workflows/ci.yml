@@ -80,23 +80,10 @@ jobs:
 
       - name: Mint fake token for the mocked subset
         # Fake credentials, real format: the SDK only checks structure and
-        # expiry of cached tokens, and all GraphQL is page.route-stubbed.
+        # expiry of cached tokens, and all GraphQL is page.route-stubbed. The token
+        # carries the STAFF permission set (e2e/helpers/staff-permissions.json).
         run: |
-          TOKEN=$(node -e "
-            const b64url = o => Buffer.from(JSON.stringify(o)).toString('base64url');
-            const now = Math.floor(Date.now()/1000);
-            const payload = {
-              iss: 'https://techaid-auth.eu.auth0.com/',
-              sub: 'auth0|ci-fake-user',
-              aud: ['https://api.communitytechaid.org.uk'],
-              iat: now, exp: now + 7200,
-              scope: 'openid profile email offline_access',
-              'https://communitytechaid.org.uk/email': 'ci@example.com',
-              'https://communitytechaid.org.uk/name': 'CI Fake User',
-              permissions: []
-            };
-            console.log(b64url({alg:'RS256',typ:'JWT',kid:'ci-fake'}) + '.' + b64url(payload) + '.ci_fake_signature');
-          ")
+          TOKEN=$(node e2e/mint-fake-token.mjs)
           E2E_BEARER_TOKEN="$TOKEN" node e2e/save-token.mjs
 
       - name: Run mocked e2e subset

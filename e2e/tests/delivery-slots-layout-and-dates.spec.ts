@@ -19,7 +19,7 @@
  */
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const ADMIN_PANEL_PATH = '/dashboard/admin-panel';
 const DISTRIBUTIONS_PATH = '/dashboard/distributions-and-deliveries';
@@ -108,7 +108,7 @@ async function installMocks(page: Page): Promise<void> {
 async function openWhosBooked(page: Page): Promise<void> {
   await installMocks(page);
   // The Delete button the layout checks measure only renders with write:organisations (#294).
-  await authenticateWithPermissions(page, ['app:bulkedit', 'read:requests', 'read:organisations', 'write:organisations']);
+  await loginWith(page, ['app:bulkedit', 'read:requests', 'read:organisations', 'write:organisations']);
   await page.goto(DISTRIBUTIONS_PATH);
   await page.getByRole('link', { name: 'Delivery Slots' }).click();
   await expect(page.locator('tr', { hasText: 'Dana Datestamp' })).toBeVisible({ timeout: 15_000 });

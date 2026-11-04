@@ -49,8 +49,8 @@ empty users table. Only a pinning spec makes these failure classes loud on the n
 Every GraphQL call is stubbed via `page.route('**/graphql', ...)`; a fake JWT is minted (or read from
 `e2e/.auth/user.json`) so the Auth0 SDK and `AuthGuard` are satisfied without a real login or a real
 token. **Needs no bearer token, no UAT network access.** This is what CI runs
-(`.github/workflows/ci.yml`, job `e2e-mocked`): it mints a synthetic-but-well-formed JWT inline (see
-the workflow step "Mint fake token for the mocked subset" — `auth0-spa-js` never re-verifies the
+(`.github/workflows/ci.yml`, job `e2e-mocked`): it mints a synthetic-but-well-formed JWT with `e2e/mint-fake-token.mjs` (staff permission set, §9;
+see the workflow step "Mint fake token for the mocked subset" — `auth0-spa-js` never re-verifies the
 signature of a *cached* token, only its structure and expiry), saves it via `save-token.mjs`, then runs
 `npm run e2e:fast` (`playwright test --grep @mocked`). Specs opt in by tagging their `test.describe`
 title literally with `@mocked` (e.g. `test.describe('kit-info conditional-field value retention
@@ -270,6 +270,56 @@ Checklist for every new spec regardless of pattern:
       fake token and either hang or fail for the wrong reason.
 - [ ] Whitespace-tolerant / overlay-aware selectors (§5) if it touches a modal button or ng-select.
 - [ ] `ng build --configuration production` still passes.
+
+---
+
+## 8. Parallel worktrees: `E2E_PORT`
+
+Another session may own port 4200. Do **not** edit `playwright.config.ts` or `e2e/.auth/user.json`
+to move off it:
+
+```bash
+E2E_PORT=4315 npm run e2e:fast      # any free port; default 4200, behaviour unchanged there
+```
+
+`E2E_PORT` drives `use.baseURL`, `webServer.command` (`ng serve --configuration uat-local --port N`)
+and `webServer.url`. The storageState origin follows it automatically: `playwright.config.ts` calls
+`resolveLocalStorageState()` (`e2e/helpers/port.ts`), which writes a derived copy of
+`e2e/.auth/user.json` with the localhost origin rewritten into the OS temp dir and points the
+chromium project at it. The saved file is never modified, so one token serves every port (this is
+what used to cause ~60 "Callback URL mismatch" failures after a hand-edit went stale). Each worktree
+needs its own `e2e/.auth/user.json` (gitignored) — mint one without credentials:
+
+```bash
+E2E_BEARER_TOKEN="$(node e2e/mint-fake-token.mjs)" node e2e/save-token.mjs
+```
+
+`reuseExistingServer` is still `!process.env.CI`: on a port someone is already serving, Playwright
+reuses that server — pick a port nobody is using.
+
+## 9. Permissions in specs: default = staff, denial = explicit
+
+Permission-gated UI is the main way an unrelated older `@mocked` spec breaks (#290, #294/#297 added
+gates and broke specs that ran with a permissionless token). The rules:
+
+- **Default login is STAFF.** The fake token (CI step and `e2e/mint-fake-token.mjs`) carries
+  `STAFF_PERMISSIONS` — `e2e/helpers/staff-permissions.json`: `app:admin`, `app:bulkedit` and
+  read/write/delete for kits, donors, organisations, requests, referees, plus users/emails/content.
+  A spec that never mentions permissions therefore sees every gated control, like a real
+  ADMINISTRATOR+CAN_DELETE user.
+- **One helper, `e2e/helpers/auth0-cache.ts`:** `loginWith(page, perms, opts?)` mints the Auth0
+  cache with *exactly* those permissions; `loginAsStaff(page)` is the staff set. Do not hand-roll
+  cache entries or wrap it per spec (wrappers only to add `opts.localStorage`).
+- **Denial tests must pass explicit permissions** (`loginWith(page, ['read:requests'])`) and assert
+  the control is hidden/disabled. Never weaken one to make a gate change pass.
+- Pattern for a control × permission-set matrix: `split-write-permissions.spec.ts` (table of
+  `{ perms, visible/hidden }` rows looped into tests). Extend that table rather than scattering new
+  visibility cases across feature specs; the cases that are page-specific stay in their feature spec.
+- When the app gains a new authority that staff should hold, add it to `staff-permissions.json`;
+  `staff-permissions-coverage.spec.ts` fails if a literal authority in `src/app` is missing from it.
+
+Regex hygiene: when you add a regex to a spec or helper, check it contains no raw control bytes
+(a pasted NUL/escape char). `npx eslint . --quiet` catches this via `no-control-regex`.
 
 ---
 

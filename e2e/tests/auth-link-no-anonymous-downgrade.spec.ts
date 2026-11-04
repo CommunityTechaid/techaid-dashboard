@@ -61,7 +61,7 @@
  * @mocked — all GraphQL and the Auth0 tenant are stubbed, no token needed; runs in CI's gate.
  */
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions, buildAuth0CacheEntries } from '../helpers/auth0-cache';
+import { loginWith, buildAuth0CacheEntries } from '../helpers/auth0-cache';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';
 const WARD_LOOKUP_ORIGIN = '**://communitytechaid.github.io/**';
@@ -134,7 +134,7 @@ test.describe('auth link never downgrades a staff request to anonymous @mocked',
     // A real staff session: identity cached, so isAuthenticated$ emits true, AuthGuard admits the
     // route and AuthenticationService.loggedIn is true. But the access token is already expired
     // and there IS a refresh token, so the SDK goes to the network to redeem it.
-    await authenticateWithPermissions(page, ['read:kits', 'read:donors'], {
+    await loginWith(page, ['read:kits', 'read:donors'], {
       expiredAccessToken: true,
       refreshToken: true,
     });
@@ -212,7 +212,7 @@ test.describe('auth link never downgrades a staff request to anonymous @mocked',
   test('a transient token failure recovers on retry and findAll goes out authenticated', async ({ page }) => {
     test.setTimeout(90_000);
 
-    await authenticateWithPermissions(page, ['read:kits', 'read:donors'], {
+    await loginWith(page, ['read:kits', 'read:donors'], {
       expiredAccessToken: true,
       refreshToken: true,
     });

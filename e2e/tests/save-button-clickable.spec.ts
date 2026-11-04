@@ -17,7 +17,7 @@
  * the disabled-attribute-only smoke check above.
  */
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 async function fulfillSimple(route: import('@playwright/test').Route, data: any) {
   await route.fulfill({
@@ -65,7 +65,7 @@ test.describe('Save button clickable sweep @mocked', () => {
       return fulfillSimple(route, {});
     });
 
-    await authenticateWithPermissions(page, ['write:requests']); // Save is hidden without write permission (#287)
+    await loginWith(page, ['write:requests']); // Save is hidden without write permission (#287)
     await page.goto('/dashboard/device-requests/6526');
     await page.locator('formly-form').waitFor({ state: 'visible', timeout: 30_000 });
 

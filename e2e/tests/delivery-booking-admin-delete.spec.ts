@@ -12,7 +12,7 @@
  */
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 async function fulfillSimple(route: Route, data: any) {
   await route.fulfill({
@@ -181,7 +181,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
       dialog.accept().catch(() => {});
     });
 
-    await authenticateWithPermissions(page, [...BASE_PERMS, 'write:organisations']);
+    await loginWith(page, [...BASE_PERMS, 'write:organisations']);
     await openDeliverySlotsTab(page);
     await expect(bookingCountBadge(page)).toContainText('3 booking');
 
@@ -213,7 +213,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
 
     page.on('dialog', dialog => dialog.dismiss().catch(() => {}));
 
-    await authenticateWithPermissions(page, [...BASE_PERMS, 'write:organisations']);
+    await loginWith(page, [...BASE_PERMS, 'write:organisations']);
     await openDeliverySlotsTab(page);
     await expect(bookingCountBadge(page)).toContainText('3 booking');
 
@@ -235,7 +235,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
 
     page.on('dialog', dialog => dialog.accept().catch(() => {}));
 
-    await authenticateWithPermissions(page, [...BASE_PERMS, 'write:organisations']);
+    await loginWith(page, [...BASE_PERMS, 'write:organisations']);
     await openDeliverySlotsTab(page);
     await expect(bookingCountBadge(page)).toContainText('1 booking');
 
@@ -260,7 +260,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
       dialog.accept().catch(() => {});
     });
 
-    await authenticateWithPermissions(page, [...BASE_PERMS, 'write:organisations']);
+    await loginWith(page, [...BASE_PERMS, 'write:organisations']);
     await openDeliverySlotsTab(page);
     const daveRow = bookingRow(page, 'Dave Davidson');
     await daveRow.getByTestId('delete-booking').click();
@@ -297,7 +297,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
       }
     });
 
-    await authenticateWithPermissions(page, [...BASE_PERMS, 'write:organisations']);
+    await loginWith(page, [...BASE_PERMS, 'write:organisations']);
     await openDeliverySlotsTab(page);
     const daveRow = bookingRow(page, 'Dave Davidson');
     await daveRow.getByTestId('delete-booking').click();
@@ -316,7 +316,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
       test.setTimeout(60_000);
       const captured: { body: any }[] = [];
       await installGraphqlMocks(page, { captureDelete: captured });
-      await authenticateWithPermissions(page, [...BASE_PERMS, ...perms]);
+      await loginWith(page, [...BASE_PERMS, ...perms]);
       await openDeliverySlotsTab(page);
       await expect(bookingCountBadge(page)).toContainText('3 booking');
       await expect(page.getByText('Alice Ainsley')).toBeVisible();
@@ -328,7 +328,7 @@ test.describe('Delivery slots admin — delete booking @mocked', () => {
   test('[write:organisations] Delete is shown on every booking row (#294)', async ({ page }) => {
     test.setTimeout(60_000);
     await installGraphqlMocks(page);
-    await authenticateWithPermissions(page, [...BASE_PERMS, 'write:organisations']);
+    await loginWith(page, [...BASE_PERMS, 'write:organisations']);
     await openDeliverySlotsTab(page);
     await expect(page.getByTestId('delete-booking')).toHaveCount(3);
   });

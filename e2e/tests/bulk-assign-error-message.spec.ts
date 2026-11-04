@@ -21,7 +21,7 @@
  *   and the operator reads what the server actually said.
  */
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions } from '../helpers/auth0-cache';
+import { loginWith } from '../helpers/auth0-cache';
 
 const FAKE_ID = 99997;
 const FAKE_KIT_ID = 16348;
@@ -75,7 +75,7 @@ test.describe('Bulk assign renders the real error, not "[object Object]" @mocked
     // The "Assign Devices" button is gated on `app:bulkedit`. CI mints a token with
     // `permissions: []`, so without this the button never renders and the spec times out
     // waiting for it — even though it passes locally against a real UAT token.
-    await authenticateWithPermissions(page, ['app:bulkedit', 'read:organisations', 'write:organisations']);
+    await loginWith(page, ['app:bulkedit', 'read:organisations', 'write:organisations']);
 
     await page.route('**/graphql', async route => {
       const body = route.request().postDataJSON?.() ?? {};

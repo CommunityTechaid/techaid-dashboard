@@ -1,4 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
+import { resolveLocalStorageState } from './e2e/helpers/port';
+
+// E2E_PORT (default 4200) drives the dev server, baseURL and the storageState origin, so a
+// parallel worktree can run on its own port with no config edits:
+//   E2E_PORT=4315 npm run e2e:fast
+// On the default port nothing changes (same command, same url, same e2e/.auth/user.json).
+const E2E_PORT = Number(process.env.E2E_PORT || 4200);
+const BASE_URL = `http://localhost:${E2E_PORT}`;
 
 // The live-booking-smoke spec (@live-smoke) drives the FULL public booking flow
 // against the deployed UAT origin and creates a real booking there — it must never
@@ -53,7 +61,7 @@ export default defineConfig({
   ],
   timeout: 60_000,
   use: {
-    baseURL: 'http://localhost:4200',
+    baseURL: BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     launchOptions: {
@@ -82,14 +90,16 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'e2e/.auth/user.json',
+        // Default port: e2e/.auth/user.json as-is. Other ports: a derived copy with the
+        // origin rewritten (see e2e/helpers/port.ts) — the original is never modified.
+        storageState: resolveLocalStorageState(E2E_PORT),
       },
       dependencies: ['setup'],
     },
   ],
   webServer: {
-    command: 'ng serve --configuration uat-local',
-    url: 'http://localhost:4200',
+    command: `ng serve --configuration uat-local --port ${E2E_PORT}`,
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
