@@ -38,7 +38,7 @@
  */
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
-import { authenticateWithPermissions as seedAuth0Cache } from '../helpers/auth0-cache';
+import { loginWith as seedAuth0Cache } from '../helpers/auth0-cache';
 
 const PATH = '/dashboard/distributions-and-deliveries';
 const TABLE_ID = 'distributions-and-deliveries-index';
