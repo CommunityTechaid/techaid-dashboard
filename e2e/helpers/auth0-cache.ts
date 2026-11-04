@@ -180,3 +180,10 @@ export async function loginWith(
     }
   }, entries);
 }
+
+/**
+ * @deprecated Use {@link loginWith}. Kept as an alias because specs written on
+ * branches cut before #300 (e.g. #292, #298) still import the old name; removing
+ * it broke `dev`. Migrate callers, then delete this alias in a later sweep.
+ */
+export const authenticateWithPermissions = loginWith;
