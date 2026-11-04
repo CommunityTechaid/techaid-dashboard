@@ -191,8 +191,8 @@ query findAutocompleteDonors($term: String) {
   donorsConnection(page: {
     size: 50
   }, where: {
-    name: { _contains: $term }
     OR: [
+      { name: { _contains: $term } },
       { id: { _contains: $term } },
       { phoneNumber: { _contains: $term } },
       { email: { _contains: $term } }
@@ -233,8 +233,8 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
   kitsConnection(page: {
     size: 100
   }, where: {
-    lotId: { _contains: $term }
     OR: [
+      { lotId: { _contains: $term } },
       { lotId: { _in: $ids } }
     ]
   }){

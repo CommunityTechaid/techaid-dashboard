@@ -198,8 +198,10 @@ query findAutocompleteDonors($term: String) {
   donorsConnection(page: {
     size: 50
   }, where: {
-    id: { _contains: $term }
-    OR: { name: { _contains: $term } }
+    OR: [
+      { id: { _contains: $term } },
+      { name: { _contains: $term } }
+    ]
   }){
     content  {
      id

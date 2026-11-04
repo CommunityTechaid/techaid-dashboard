@@ -22,9 +22,11 @@ const QUERY_ENTITY = gql`
 query findAllDonors($page: PaginationInput, $term: String, $where: DonorWhereInput!) {
   donorsConnection(page: $page, where: {
     AND: {
-      postCode: { _contains: $term }
-      AND: [ $where ]
       OR: [
+        {
+          postCode: { _contains: $term }
+          AND: [ $where ]
+        },
         {
           name: { _contains: $term }
           AND: [ $where ]
