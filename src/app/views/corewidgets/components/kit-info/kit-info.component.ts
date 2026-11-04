@@ -107,14 +107,6 @@ query findKit($id: Long) {
         }
       }
     }
-    attributes {
-      credentials
-      status
-      notes
-      network
-      state
-      otherType
-    }
     notes {
       id
       content
@@ -174,14 +166,6 @@ mutation updateKit($data: UpdateKitInput!) {
           name
         }
       }
-    }
-    attributes {
-      credentials
-      status
-      notes
-      network
-      state
-      otherType
     }
     notes {
       id
@@ -859,13 +843,12 @@ export class KitInfoComponent implements OnInit, OnDestroy {
 
   private normalizeData(data: any) {
     // Apollo v4 freezes query results; deep-copy nested objects that Formly writes into (defaultValue,
-    // two-way ngModel) — a shallow spread leaves subStatus/attributes frozen and silently drops writes,
+    // two-way ngModel) — a shallow spread leaves subStatus frozen and silently drops writes,
     // which is what caused the "Needs Further Investigation" checkbox to render blank for records
     // whose flag was actually true.
     data = {
       ...data,
       subStatus: { ...(data.subStatus || {}) },
-      attributes: { ...(data.attributes || {}) },
     };
     if (data.donor && data.donor.id) {
       data.donorId = data.donor.id;

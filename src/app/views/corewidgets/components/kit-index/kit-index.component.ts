@@ -38,16 +38,6 @@ const QUERY_ENTITY = gql`
               { model: { _contains: $term } },
               { serialNo: { _contains: $term } },
               { id: { _contains: $term } },
-              {
-                attributes: {
-                  filters: [
-                    {
-                      key: "notes",
-                      _text: { _contains: $term }
-                    }
-                  ]
-                }
-              }
             ]
           }
         ]
