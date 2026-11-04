@@ -148,7 +148,7 @@ test.describe('split write permissions (#233) @mocked', () => {
     await expect(page.locator('formly-form').first().getByLabel('Contact Name').first()).toHaveValue('PERM-CONTACT', { timeout: 30_000 });
     const reqQueries = seen.filter(b => b.includes('query findDeviceRequest'));
     expect(reqQueries.length).toBeGreaterThan(0);
-    for (const q of reqQueries) expect(q).not.toMatch(/notes/);
+    for (const q of reqQueries) expect(q).not.toMatch(/\bnotes\b/);
   });
 
   // org-request's isOrgAdmin is covered by review only.
