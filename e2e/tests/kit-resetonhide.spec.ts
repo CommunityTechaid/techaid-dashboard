@@ -44,7 +44,6 @@ const KIT_BASE = {
   locationCode: 'A1',
   donor: null,
   deviceRequest: null,
-  attributes: { credentials: '', status: '', notes: '', network: '', state: '', otherType: '' },
   notes: [],
 };
 
