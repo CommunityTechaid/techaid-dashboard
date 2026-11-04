@@ -26,9 +26,11 @@ query findAllDonors(
   $where: DonorWhereInput!) {
   donorsConnection(page: $page, where: {
     AND: {
-      postCode: { _contains: $term }
-      AND: [ $filter, $where ]
       OR: [
+        {
+          postCode: { _contains: $term }
+          AND: [ $filter, $where ]
+        },
         {
           name: { _contains: $term }
           AND: [ $filter, $where ]

@@ -22,9 +22,11 @@ const QUERY_ENTITY = gql`
 query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorParentWhereInput!) {
   donorParentsConnection(page: $page, where: {
     AND: {
-      address: { _contains: $term }
-      AND: [ $where ]
       OR: [
+        {
+          address: { _contains: $term }
+          AND: [ $where ]
+        },
         {
           name: { _contains: $term }
           AND: [ $where ]
