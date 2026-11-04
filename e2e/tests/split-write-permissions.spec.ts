@@ -37,13 +37,16 @@ const DATA: Record<string, unknown> = {
 const PAGES = [
   { name: 'referee page', path: '/dashboard/referring-organisation-contacts/912', field: 'Full Name', value: 'PERM-REFEREE' },
   { name: 'organisation page', path: '/dashboard/referring-organisations/913', field: 'Name', value: 'PERM-ORG' },
+  { name: 'request page', path: '/dashboard/device-requests/911', field: 'Contact Name', value: 'PERM-CONTACT' },
 ];
 
-// expected editable: [referee, organisation]
+// expected editable: [referee, organisation, request]
 const SCENARIOS: { perms: string[]; editable: boolean[] }[] = [
-  { perms: ['write:requests'], editable: [false, false] },
-  { perms: ['write:organisations'], editable: [true, true] },
-  { perms: ['write:referees'], editable: [true, false] },
+  { perms: ['write:requests'], editable: [false, false, true] },
+  { perms: ['write:organisations'], editable: [true, true, true] },
+  { perms: ['write:referees'], editable: [true, false, false] },
+  // read-only user (read:organisations is in the base set): nothing editable (#287)
+  { perms: [], editable: [false, false, false] },
 ];
 
 async function fulfill(route: Route, data: unknown): Promise<void> {
@@ -70,16 +73,22 @@ test.describe('split write permissions (#233) @mocked', () => {
       test(`[${s.perms}] ${p.name} is ${s.editable[i] ? 'editable' : 'read-only'}`, async ({ page }) => {
         test.setTimeout(60_000);
         await installMocks(page);
-        await authenticateWithPermissions(page, ['read:organisations', 'read:requests', 'read:referees', ...s.perms]);
+        await authenticateWithPermissions(page, ['read:organisations', 'read:requests', 'read:referees', 'app:bulkedit', ...s.perms]);
         await page.goto(p.path);
         const input = page.locator('formly-form').first().getByLabel(p.field).first();
         await expect(input).toHaveValue(p.value, { timeout: 30_000 });
         if (s.editable[i]) await expect(input).toBeEnabled();
         else await expect(input).toBeDisabled();
+        if (p.name === 'request page') {
+          // Save / assign actions follow the same permission (#287); Generate PDF is read-only so stays.
+          const actions = page.locator('[data-testid="devreq-save"], [data-testid="devreq-assign-open"]');
+          if (s.editable[i]) await expect(actions).toHaveCount(2);
+          else await expect(actions).toHaveCount(0);
+          await expect(page.getByRole('button', { name: /Generate PDF/ })).toBeVisible();
+        }
       });
     });
   }
 
-  // Request side: device-request-info's formState.disabled gate is not consumed by any field,
-  // so it is not observable in the DOM; org-request's isOrgAdmin is covered by review only.
+  // org-request's isOrgAdmin is covered by review only.
 });
