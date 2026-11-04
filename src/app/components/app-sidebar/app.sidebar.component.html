@@ -51,7 +51,7 @@
               </a>
             </li>
           }
-          @if (user?.authorities['read:organisations']) {
+          @if ((user?.authorities['read:referees'] || user?.authorities['read:organisations'])) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/referring-organisation-contacts">
                 <i class="fas fa-users"></i>
@@ -59,7 +59,7 @@
               </a>
             </li>
           }
-          @if (user?.authorities['read:organisations']) {
+          @if ((user?.authorities['read:requests'] || user?.authorities['read:organisations'])) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/device-requests">
                 <i class="fas fa-hands"></i>
@@ -67,7 +67,7 @@
               </a>
             </li>
           }
-          @if (user?.authorities['read:organisations']) {
+          @if ((user?.authorities['read:requests'] || user?.authorities['read:organisations'])) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/distributions-and-deliveries">
                 <i class="fas fa-gift"></i>
@@ -75,7 +75,7 @@
               </a>
             </li>
           }
-          @if (prepModeEnabled && user?.authorities['read:organisations']) {
+          @if (prepModeEnabled && (user?.authorities['read:requests'] || user?.authorities['read:organisations'])) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/prep-mode">
                 <i class="fas fa-barcode"></i>

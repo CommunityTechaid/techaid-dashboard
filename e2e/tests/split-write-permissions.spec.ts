@@ -53,9 +53,10 @@ async function fulfill(route: Route, data: unknown): Promise<void> {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data }) });
 }
 
-async function installMocks(page: Page): Promise<void> {
+async function installMocks(page: Page, seen?: string[]): Promise<void> {
   await page.route('**/graphql', async route => {
     const body = route.request().postData() ?? '';
+    seen?.push(body);
     if (body.includes('buildInfo')) {
       return fulfill(route, { buildInfo: { version: '1.0.0-test', commit: 'abc', time: TS } });
     }
@@ -89,6 +90,66 @@ test.describe('split write permissions (#233) @mocked', () => {
       });
     });
   }
+
+  // ---- #288: read + delete gating (accept old OR new) ----
+  const DELETE_BTN = (page: Page) => page.locator('button', { hasText: /^\s*DELETE\s*$/ });
+  const BASE = ['app:bulkedit', 'read:kits']; // deliberately NO read:organisations/requests/referees
+
+  // expected delete visible: [referee, organisation, request]
+  const DELETE_SCENARIOS: { perms: string[]; visible: boolean[] }[] = [
+    { perms: ['delete:requests'], visible: [false, false, true] },
+    { perms: ['delete:referees'], visible: [true, false, false] },
+    { perms: ['delete:organisations'], visible: [true, true, true] },
+    { perms: [], visible: [false, false, false] },
+  ];
+  for (const s of DELETE_SCENARIOS) {
+    PAGES.forEach((p, i) => {
+      test(`[${s.perms}] delete button on ${p.name} is ${s.visible[i] ? 'shown' : 'hidden'} (#288)`, async ({ page }) => {
+        test.setTimeout(60_000);
+        await installMocks(page);
+        await authenticateWithPermissions(page, ['read:organisations', ...s.perms, 'app:bulkedit']);
+        await page.goto(p.path);
+        await expect(page.locator('formly-form').first().getByLabel(p.field).first()).toHaveValue(p.value, { timeout: 30_000 });
+        await expect(DELETE_BTN(page)).toHaveCount(s.visible[i] ? 1 : 0);
+      });
+    });
+  }
+
+  // expected menu entries: [Orgs, Referees, Requests, Distributions & Deliveries]
+  const MENU = ['Orgs', 'Referees', 'Requests', 'Distributions & Deliveries'];
+  const MENU_SCENARIOS: { perms: string[]; shown: boolean[] }[] = [
+    { perms: ['read:requests'], shown: [false, false, true, true] },
+    { perms: ['read:referees'], shown: [false, true, false, false] },
+    { perms: ['read:organisations'], shown: [true, true, true, true] },
+    { perms: [], shown: [false, false, false, false] },
+  ];
+  for (const s of MENU_SCENARIOS) {
+    test(`[${s.perms}] sidebar entries (#288)`, async ({ page }) => {
+      test.setTimeout(60_000);
+      await installMocks(page);
+      await authenticateWithPermissions(page, [...BASE, ...s.perms]);
+      await page.goto('/dashboard/devices');
+      const nav = page.locator('app-sidebar, .sidebar').first();
+      await expect(nav.locator('.nav-link span', { hasText: /^Devices/ }).first()).toBeVisible({ timeout: 30_000 });
+      for (let i = 0; i < MENU.length; i++) {
+        await expect(nav.getByText(MENU[i], { exact: true }))
+          .toHaveCount(s.shown[i] ? 1 : 0);
+      }
+    });
+  }
+
+  // Maintainer decision: read:requests-only users must not trigger the server-denied referee `notes` field.
+  test('request page query never asks for referee notes (#288)', async ({ page }) => {
+    test.setTimeout(60_000);
+    const seen: string[] = [];
+    await installMocks(page, seen);
+    await authenticateWithPermissions(page, [...BASE, 'read:requests']);
+    await page.goto('/dashboard/device-requests/911');
+    await expect(page.locator('formly-form').first().getByLabel('Contact Name').first()).toHaveValue('PERM-CONTACT', { timeout: 30_000 });
+    const reqQueries = seen.filter(b => b.includes('query findDeviceRequest'));
+    expect(reqQueries.length).toBeGreaterThan(0);
+    for (const q of reqQueries) expect(q).not.toMatch(/notes/);
+  });
 
   // org-request's isOrgAdmin is covered by review only.
 });

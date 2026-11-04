@@ -66,7 +66,7 @@
               </button> -->
             </form>
 
-            @if (user?.authorities['delete:organisations']) {
+            @if ((user?.authorities['delete:requests'] || user?.authorities['delete:organisations'])) {
               <div class="delete-api mt-5 ">
                 <h3>Danger Zone</h3>
                 <div class="border-bottom-danger card">
