@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -13,9 +14,14 @@ import { User } from '@app/state/user/user.state';
 
 const DATA_QUERY = gql`
   query deliverySlotsAdmin {
-    deliveryBookingsAdmin { id date dayLabel window { id name } firstName surname email phone address accessNotes ctaReference createdAt matchedRequestId matchedRequestStatus matchedRequestOpen }
+    deliveryBookingsAdmin { id date dayLabel window { id name } firstName surname email phone address accessNotes ctaReference createdAt matchedRequestId matchedRequestStatus matchedRequestOpen adminException bookedBy exceptionReason }
+    deliveryWindowsAdmin { id name active }
   }
 `;
+
+// Admin exception booking (techaid-server#73): app:admin only, ignores capacity and the offered
+// days, and doesn't take a slot. The server enforces all of that; this page only offers the form.
+const ADMIN_BOOKING = gql`mutation submitDeliveryBookingAdmin($input: DeliveryBookingAdminInput!) { submitDeliveryBookingAdmin(input: $input) { id } }`;
 
 const DELETE_BOOKING = gql`mutation deleteDeliveryBooking($id: ID!, $clearRequestDelivery: Boolean) { deleteDeliveryBooking(id: $id, clearRequestDelivery: $clearRequestDelivery) }`;
 
@@ -100,8 +106,32 @@ interface BookingRow {
   matchedRequestId?: string;
   matchedRequestStatus?: string;
   matchedRequestOpen?: boolean;
+  /** An admin exception booking (techaid-server#73): doesn't take a slot. */
+  adminException?: boolean;
+  bookedBy?: string | null;
+  exceptionReason?: string | null;
   /** Resolved client-side after load, from the address's postcode — see resolveOutOfArea(). */
   outOfArea?: boolean;
+}
+
+interface ExceptionForm {
+  date: string;
+  windowId: string;
+  ctaReference: number | null;
+  firstName: string;
+  surname: string;
+  email: string;
+  phone: string;
+  address: string;
+  accessNotes: string;
+  exceptionReason: string;
+}
+
+function emptyExceptionForm(): ExceptionForm {
+  return {
+    date: '', windowId: '', ctaReference: null, firstName: '', surname: '',
+    email: '', phone: '', address: '', accessNotes: '', exceptionReason: '',
+  };
 }
 
 interface BookingGroup {
@@ -120,7 +150,7 @@ interface BookingGroup {
 @Component({
   selector: 'app-delivery-slots',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, FormsModule, RouterLink],
   templateUrl: './delivery-slots.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './delivery-slots.component.scss',
@@ -140,6 +170,12 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   bookingGroups: BookingGroup[] = [];
   totalBookings = 0;
 
+  /** Windows for the exception-booking form, inactive ones included (any window is allowed). */
+  windows: { id: string; name: string; active: boolean }[] = [];
+  showExceptionForm = false;
+  savingException = false;
+  exceptionForm: ExceptionForm = emptyExceptionForm();
+
   /** Flat copy of what's on screen, kept in load order, so the export matches the table. */
   private allBookings: BookingRow[] = [];
 
@@ -154,6 +190,9 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
    */
   canDeleteBooking = false;
 
+  /** Admin exception bookings (techaid-server#73) are app:admin only. Fails closed like the above. */
+  canAddException = false;
+
   constructor(
     private readonly apollo: Apollo,
     private readonly toastr: ToastrService,
@@ -166,6 +205,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.user$.subscribe((user) => {
         this.canDeleteBooking = !!user?.authorities?.['write:organisations'];
+        this.canAddException = !!user?.authorities?.['app:admin'];
         // Gates the Delete button inside an OnPush ancestor — mark for check.
         this.cdr.markForCheck();
       }),
@@ -181,6 +221,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
         .subscribe({
           next: ({ data }) => {
             this.groupBookings(data.deliveryBookingsAdmin || []);
+            this.windows = (data.deliveryWindowsAdmin || []).map((w: any) => ({ ...w }));
             this.loading = false;
             // Renders the bookings table (or keeps the "Loading…" state) via an
             // OnPush ancestor — mark for check or the load never repaints.
@@ -266,6 +307,53 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }),
     );
+  }
+
+  exceptionTitle(bk: BookingRow): string {
+    const who = `Booked by ${bk.bookedBy || 'an admin'}`;
+    return bk.exceptionReason ? `${who}: ${bk.exceptionReason}` : who;
+  }
+
+  toggleExceptionForm(): void {
+    this.showExceptionForm = !this.showExceptionForm;
+    if (this.showExceptionForm) this.exceptionForm = emptyExceptionForm();
+  }
+
+  submitExceptionBooking(): void {
+    const f = this.exceptionForm;
+    const required = [f.date, f.windowId, f.firstName, f.surname, f.email, f.phone, f.address];
+    if (required.some((v) => !String(v ?? '').trim()) || !f.ctaReference) {
+      this.toastr.warning('Fill in every field except access notes and reason.');
+      return;
+    }
+    this.savingException = true;
+    const input = {
+      date: f.date,
+      windowId: f.windowId,
+      ctaReference: Number(f.ctaReference),
+      firstName: f.firstName.trim(),
+      surname: f.surname.trim(),
+      email: f.email.trim(),
+      phone: f.phone.trim(),
+      address: f.address.trim(),
+      accessNotes: f.accessNotes.trim() || null,
+      exceptionReason: f.exceptionReason.trim() || null,
+    };
+    this.apollo.mutate<any>({ mutation: ADMIN_BOOKING, variables: { input } }).subscribe({
+      next: () => {
+        this.savingException = false;
+        this.showExceptionForm = false;
+        this.toastr.success('Exception booking added');
+        this.load();
+        // Hides the form and re-enables the button under the OnPush ancestor.
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.savingException = false;
+        this.toastr.error(err?.message || 'Could not add the exception booking');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   deleteBooking(bk: BookingRow, group: BookingGroup): void {
