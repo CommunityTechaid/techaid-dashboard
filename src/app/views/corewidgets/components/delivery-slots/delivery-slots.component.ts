@@ -4,9 +4,12 @@ import { RouterLink } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
-import { combineLatest, Subscription } from 'rxjs';
+import { combineLatest, Observable, Subscription } from 'rxjs';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { WardLookupService } from '@app/shared/services/ward-lookup.service';
+import { Select } from '@ngxs/store';
+import { UserState } from '@app/state/state.module';
+import { User } from '@app/state/user/user.state';
 
 const DATA_QUERY = gql`
   query deliverySlotsAdmin {
@@ -142,6 +145,15 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
 
   private readonly sub = new Subscription();
 
+  @Select(UserState.user) user$: Observable<User>;
+
+  /**
+   * Deleting a booking frees a slot and can clear a request's delivery details, so it is
+   * limited to write:organisations (maintainer decision, #294) — volunteers must not delete.
+   * Fails closed until the user state has loaded.
+   */
+  canDeleteBooking = false;
+
   constructor(
     private readonly apollo: Apollo,
     private readonly toastr: ToastrService,
@@ -151,6 +163,13 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.sub.add(
+      this.user$.subscribe((user) => {
+        this.canDeleteBooking = !!user?.authorities?.['write:organisations'];
+        // Gates the Delete button inside an OnPush ancestor — mark for check.
+        this.cdr.markForCheck();
+      }),
+    );
     this.load();
   }
 
@@ -250,6 +269,9 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   }
 
   deleteBooking(bk: BookingRow, group: BookingGroup): void {
+    if (!this.canDeleteBooking) {
+      return;
+    }
     if (
       !confirm(
         `Delete the booking for ${bk.firstName} ${bk.surname} (${bk.ctaReference}) on ${group.dayLabel}? This can't be undone and frees the slot.`,

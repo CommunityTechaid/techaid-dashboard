@@ -84,13 +84,15 @@
                            align-items-stretch lets a long label wrap inside the cell instead. -->
                       <td>
                         <div class="d-flex flex-column gap-1 align-items-stretch">
-                          <button
-                            type="button"
-                            class="btn btn-sm btn-outline-danger"
-                            data-testid="delete-booking"
-                            [attr.data-booking-id]="bk.id"
-                            (click)="deleteBooking(bk, group)"
-                          >Delete</button>
+                          @if (canDeleteBooking) {
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-outline-danger"
+                              data-testid="delete-booking"
+                              [attr.data-booking-id]="bk.id"
+                              (click)="deleteBooking(bk, group)"
+                            >Delete</button>
+                          }
                         </div>
                       </td>
                     </tr>
