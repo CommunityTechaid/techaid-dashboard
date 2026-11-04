@@ -1135,7 +1135,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.sub.add(
       this.user$.subscribe((user) => {
         console.log('getting user');
-        this.isOrgAdmin = (user && user.authorities && user.authorities['write:organisations']);
+        this.isOrgAdmin = (user && user.authorities && (user.authorities['write:requests'] || user.authorities['write:organisations']));
         this.deviceTypesPublic.hide = this.isOrgAdmin;
         this.deviceTypesAdmin.hide = !this.isOrgAdmin;
 

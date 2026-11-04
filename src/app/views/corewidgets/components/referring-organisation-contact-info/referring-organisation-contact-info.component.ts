@@ -444,7 +444,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
     this.sub.add(
       this.user$.subscribe((user) => {
         this.user = user;
-        this.options.formState.disabled = !(user && user.authorities && user.authorities['write:organisations']);
+        this.options.formState.disabled = !(user && user.authorities && (user.authorities['write:referees'] || user.authorities['write:organisations']));
       })
     );
 
