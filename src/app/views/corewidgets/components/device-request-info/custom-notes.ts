@@ -27,7 +27,9 @@ mutation deleteDeviceRequestNote($id: ID!) {
               <span class="small text-muted mb-0"><em>&nbsp;({{ note.updated_at | date:'medium' }})</em></span>
             </div>
             <div class="d-flex col-2 flex-row">
-              <button (click)="confirmDeleteNote(note.id, confirmDelete)" class="btn rounded-0" type="button" title="Delete"><i style="color: #c51616" class="fas fa-window-close fa-lg"></i></button>
+              @if (!formState?.disabled) {
+                <button (click)="confirmDeleteNote(note.id, confirmDelete)" class="btn rounded-0" type="button" title="Delete"><i style="color: #c51616" class="fas fa-window-close fa-lg"></i></button>
+              }
             </div>
           </div>
         </div>

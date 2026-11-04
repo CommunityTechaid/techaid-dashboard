@@ -17,6 +17,7 @@
  * Green (after fix): the toast is capped and contains the truncation marker.
  */
 import { test, expect } from '../helpers/csp';
+import { authenticateWithPermissions } from '../helpers/auth0-cache';
 
 const FAKE_ID = 99998;
 
@@ -143,6 +144,7 @@ test.describe('Issue #38: long GraphQL error toast is truncated @mocked', () => 
       });
 
       // ── Navigate to the device-request detail page ─────────────────────────
+      await authenticateWithPermissions(page, ['write:requests']); // Save is hidden without write permission (#287)
       await page.goto(`/dashboard/device-requests/${FAKE_ID}`);
 
       // Wait for the form to render (Formly must have processed the fixture)

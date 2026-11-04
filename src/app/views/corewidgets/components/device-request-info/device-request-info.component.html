@@ -16,7 +16,7 @@
       <li ngbNavItem>
         <a ngbNavLink>Details</a>
         <ng-template ngbNavContent>
-          <div class="card shadow mb-4 mt-1" (keyup.enter)="updateEntity(form.value)">
+          <div class="card shadow mb-4 mt-1" (keyup.enter)="canWrite && updateEntity(form.value)">
             <div class="card-header py-3">
               <div class="d-flex justify-content-between">
                 <div>
@@ -27,7 +27,7 @@
                   </h6>
                 </div>
                 <div>
-                  @if (user?.authorities['app:bulkedit']) {
+                  @if (canWrite && user?.authorities['app:bulkedit']) {
                     <button data-testid="devreq-assign-open" (click)="openAssignDevicesModal()"
                       type="button" class="btn btn-success btn-sm me-2">
                       <small><i class="fas fa-link"></i> Assign Devices</small>
@@ -45,17 +45,19 @@
                       {{ generatingPdf ? 'Generating...' : 'Generate PDF' }}
                     </small>
                   </button>
-                  <button data-testid="devreq-save" (click)="updateEntity(form.value)"
-                    type="submit" class="btn btn-sm"
-                    [class.btn-primary]="!form.invalid" [class.btn-warning]="form.invalid">
-                    <small>Save</small>
-                  </button>
+                  @if (canWrite) {
+                    <button data-testid="devreq-save" (click)="updateEntity(form.value)"
+                      type="submit" class="btn btn-sm"
+                      [class.btn-primary]="!form.invalid" [class.btn-warning]="form.invalid">
+                      <small>Save</small>
+                    </button>
+                  }
                 </div>
               </div>
             </div>
             <div class="card-body">
               <form [formGroup]="form">
-                <formly-form [options]="options" (ngSubmit)="updateEntity(form.value)"
+                <formly-form [options]="options" (ngSubmit)="canWrite && updateEntity(form.value)"
                   [form]="form" [model]="model" [fields]="fields">
                 </formly-form>
                 <!-- <button *ngIf="!options.formState.disabled" style="width: 150px" (click)="updateEntity(form.value)"

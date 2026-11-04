@@ -706,7 +706,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
                 <small><i class="fas fa-times"></i> Clear date</small>
               </button>`,
               templateOptions: { safeHtml: true },
-              hideExpression: (model: any) => !model.collectionDate,
+              hideExpression: (model: any, formState: any) => !!formState?.disabled || !model.collectionDate,
             },
             {
               key: 'collectionMethod',
@@ -903,6 +903,8 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       )
     );
 
+    this.applyReadOnlyGate(this.fields);
+
     this.sub = this.activatedRoute.params.subscribe((params) => {
       this.requestId = +params['requestId'];
       this.titleService.setTitle(`TaDa - Device Request ${this.requestId}`);
@@ -928,12 +930,36 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
         this.toggleDeviceTypes();
       } else if (target.closest('#clearCollectionDateBtn')) {
         e.preventDefault();
-        this.clearCollectionDate();
+        if (this.canWrite) {
+          this.clearCollectionDate();
+        }
       }
     };
     document.addEventListener('click', this.clickHandler);
   }
 
+
+  /** False until the user is known to hold write:requests (or the legacy write:organisations). */
+  get canWrite(): boolean {
+    return !this.options.formState.disabled;
+  }
+
+  /**
+   * Wires formState.disabled into every keyed field (function expressions, not strings: the CSP
+   * has no unsafe-eval). The template-only "Clear date" button hides itself via hideExpression.
+   */
+  private applyReadOnlyGate(fields: FormlyFieldConfig[]) {
+    for (const f of fields) {
+      if (f.fieldGroup) {
+        this.applyReadOnlyGate(f.fieldGroup);
+      } else if (f.key) {
+        f.expressionProperties = {
+          ...(f.expressionProperties as object),
+          'templateOptions.disabled': (_model: any, formState: any) => !!formState?.disabled,
+        };
+      }
+    }
+  }
 
   referringOrganisationContactName(data) {
     return `${data.fullName || ''}||${data.id || ''}`
