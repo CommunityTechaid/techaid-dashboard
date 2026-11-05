@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -205,6 +205,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
     private readonly featureFlags: FeatureFlagService,
     private readonly wardLookup: WardLookupService,
     private readonly cdr: ChangeDetectorRef,
+    private readonly host: ElementRef<HTMLElement>,
   ) {}
 
   ngOnInit(): void {
@@ -216,7 +217,31 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }),
     );
-    this.load();
+    this.loadWhenFirstVisible();
+  }
+
+  private visibilityObserver?: IntersectionObserver;
+
+  /**
+   * The host page keeps this component mounted but `[hidden]` until the Delivery Slots tab is
+   * opened, so loading in ngOnInit fetched the bookings (and ran the postcode lookups) for
+   * everyone who never looks at the tab (#283). A hidden host has no box, so the observer
+   * only reports it intersecting once the tab is shown; the first time, load and stop.
+   * Falls back to loading straight away where IntersectionObserver doesn't exist.
+   */
+  private loadWhenFirstVisible(): void {
+    if (typeof IntersectionObserver === 'undefined') {
+      this.load();
+      return;
+    }
+    this.visibilityObserver = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        this.visibilityObserver?.disconnect();
+        this.visibilityObserver = undefined;
+        this.load();
+      }
+    });
+    this.visibilityObserver.observe(this.host.nativeElement);
   }
 
   load(): void {
@@ -235,7 +260,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
           },
           error: () => {
             this.loading = false;
-            this.toastr.error('Could not load delivery slot settings');
+            this.toastr.error('Could not load delivery bookings');
             // Flips `loading` off the same way the success path does — same
             // OnPush-ancestor reasoning applies.
             this.cdr.markForCheck();
@@ -485,6 +510,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.visibilityObserver?.disconnect();
     this.sub.unsubscribe();
   }
 }
