@@ -109,23 +109,23 @@ const DELETE_ENTITY = gql`
   }
 `;
 
+// #345: the picker needs only id + name, so it uses the narrow referringOrganisationsPublic lookup
+// (the one the public request form already uses) instead of referringOrganisationsConnection, which
+// needs read:organisations and returns full organisation records. A user holding only
+// write:referees can therefore search organisations. The public query is unpaged, so the result is
+// capped client-side to the old page size.
 const AUTOCOMPLETE_REFERRING_ORGANISATIONS = gql`
 query findAutocompleteReferringOrganisations($term: String) {
-  referringOrganisationsConnection(page: {
-    size: 50
-  }, where: {
+  referringOrganisationsPublic(where: {
     name: { _contains: $term }
     archived: { _eq: false }
-
   }){
-    content  {
-      id
-      name
-      archived
-    }
+    id
+    name
   }
 }
 `;
+const AUTOCOMPLETE_LIMIT = 50;
 
 @Component({
     selector: 'app-referring-organisation-contact-info',
@@ -414,7 +414,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
           }),
           tap(() => this.referringOrganisationLoading = false),
           switchMap(res => {
-            const data = res['data']['referringOrganisationsConnection']['content'].map(v => {
+            const data = (res['data']['referringOrganisationsPublic'] ?? []).slice(0, AUTOCOMPLETE_LIMIT).map(v => {
               return {
                 label: `${this.referringOrganisationName(v)}`, value: v.id
               };
