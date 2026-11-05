@@ -35,12 +35,7 @@
                 <span class="badge badge-danger">{{filterCount}}</span>
               }</span>
             </a>
-            <!-- <a href="#" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm me-1 mb-1">
-            <span class="icon text-white-50">
-              <i class="fas fa-sitemap"></i>
-            </span>
-            <span class="text">Create Device Request</span>
-          </a> -->
+
         </div>
       </div>
       </div><!-- /.card-header -->
@@ -95,7 +90,7 @@
             @if (entities?.length != 0;) {
               <tbody>
                 @for (dt of entities; track dt) {
-                  <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
+                  <tr>
                     <td>
                       <a href="#" [routerLink]="['./', dt.id]">
                         <span class="badge badge-primary">
@@ -107,7 +102,7 @@
                       <div class="d-flex">
                         <div class="d-flex flex-column">
                           <div>
-                            @if (dt.deviceRequestItems.other != 0) {
+                            @if (dt.deviceRequestItems.other > 0) {
                               <span class="me-1 mb-1">
                                 <span class="badge badge-primary">
                                   <span class="badge badge-secondary">Other</span>
@@ -115,7 +110,7 @@
                                 </span>
                               </span>
                             }
-                            @if (dt.deviceRequestItems.laptops != 0) {
+                            @if (dt.deviceRequestItems.laptops > 0) {
                               <span class="me-1 mb-1">
                                 <span class="badge badge-primary">
                                   <span class="badge badge-secondary">Laptops</span>
@@ -123,7 +118,7 @@
                                 </span>
                               </span>
                             }
-                            @if (dt.deviceRequestItems.tablets != 0) {
+                            @if (dt.deviceRequestItems.tablets > 0) {
                               <span class="me-1 mb-1">
                                 <span class="badge badge-primary">
                                   <span class="badge badge-secondary">Tablets</span>
@@ -131,7 +126,7 @@
                                 </span>
                               </span>
                             }
-                            @if (dt.deviceRequestItems.allInOnes != 0) {
+                            @if (dt.deviceRequestItems.allInOnes > 0) {
                               <span class="me-1 mb-1">
                                 <span class="badge badge-primary">
                                   <span class="badge badge-secondary">All-in-ones</span>
@@ -139,7 +134,7 @@
                                 </span>
                               </span>
                             }
-                            @if (dt.deviceRequestItems.desktops != 0) {
+                            @if (dt.deviceRequestItems.desktops > 0) {
                               <span class="me-1 mb-1">
                                 <span class="badge badge-primary">
                                   <span class="badge badge-secondary">Desktops</span>
@@ -147,7 +142,7 @@
                                 </span>
                               </span>
                             }
-                            @if (dt.deviceRequestItems.phones != 0) {
+                            @if (dt.deviceRequestItems.phones > 0) {
                               <span class="me-1 mb-1">
                                 <span class="badge badge-primary">
                                   <span class="badge badge-secondary">Phones</span>
@@ -155,7 +150,7 @@
                                 </span>
                               </span>
                             }
-                            @if (dt.deviceRequestItems.commsDevices != 0) {
+                            @if (dt.deviceRequestItems.commsDevices > 0) {
                               <span class="me-1 mb-1">
                                 <span class="badge badge-primary">
                                   <span class="badge badge-secondary">Comms Devices</span>
@@ -271,7 +266,7 @@
         {{ dt.updatedAt | date:'medium' }}
       </td>
       <td><a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a></td>
-      <td><input type="checkbox" [checked]="dt.isPrepped" (click)="$event.preventDefault()"></td>
+      <td><input type="checkbox" [checked]="dt.isPrepped" disabled aria-label="Prepped"></td>
     </tr>
   }
 </tbody>
@@ -292,25 +287,6 @@
 </div>
 </div>
 
-<!-- <ng-template #createApi let-c="close" let-d="dismiss">
-<div class="modal-header">
-  <h4 class="modal-title">New Device Request</h4>
-</div>
-<div class="modal-body">
-  <form [formGroup]="form">
-    <formly-form [options]="options" [form]="form" [model]="model" [fields]="fields">
-    </formly-form>
-  </form>
-</div>
-<div class="modal-footer">
-  <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
-  <button type="button" class="btn btn-primary btn-sm"
-    (click)="createEntity(form.value); c('Close click')">
-    CREATE
-  </button>
-</div>
-</ng-template>
--->
 <ng-template #filters let-c="close" let-d="dismiss">
   <div class="modal-header">
     <h4 class="modal-title">Distributions And Deliveries Filters</h4>
