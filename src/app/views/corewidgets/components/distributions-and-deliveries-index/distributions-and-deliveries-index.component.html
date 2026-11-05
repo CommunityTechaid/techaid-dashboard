@@ -44,8 +44,8 @@
         @for (btn of weekButtons; track btn) {
           <button
             (click)="applyWeekFilter(btn)"
-            [class.btn-primary]="activeFilter === btn.label"
-            [class.btn-outline-primary]="activeFilter !== btn.label"
+            [class.btn-primary]="quickWeek === btn.key"
+            [class.btn-outline-primary]="quickWeek !== btn.key"
             class="btn btn-sm me-2 mb-2">
             {{btn.label}}
           </button>
@@ -53,13 +53,13 @@
         @for (btn of statusButtons; track btn) {
           <button
             (click)="applyStatusFilter(btn)"
-            [class.btn-success]="activeFilter === btn.label"
-            [class.btn-outline-success]="activeFilter !== btn.label"
+            [class.btn-success]="quickFailed"
+            [class.btn-outline-success]="!quickFailed"
             class="btn btn-sm me-2 mb-2">
             {{btn.label}}
           </button>
         }
-        @if (activeFilter) {
+        @if (hasQuickFilter) {
           <button
             (click)="clearQuickFilters()"
             class="btn btn-sm btn-outline-secondary me-2 mb-2">

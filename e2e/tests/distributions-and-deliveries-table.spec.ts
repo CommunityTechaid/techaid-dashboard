@@ -887,7 +887,7 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
     const after = (await weekButtons(page).allInnerTexts()).map((t) => t.trim());
     expect(after.slice(0, 3)).toEqual(before.slice(1));
   });
-  test('a week button sends the Mon-Sun collectionDate range, highlights, shows Clear and counts +2', async ({ page }) => {
+  test('a week button sends the Mon-Sun collectionDate range, highlights, shows Clear and counts as ONE filter', async ({ page }) => {
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -900,10 +900,10 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
     expect(v.page!.page).toBe(0);
     await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
     await expect(clearButton(page)).toBeVisible();
-    const inWeek = FIX.rows.filter(nonSales).filter((r) => r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end).sort(byIdDesc);
+    const inWeek = FIX.rows.filter(nonSales).filter((r) => !['REQUEST_DECLINED', 'REQUEST_CANCELLED', 'REQUEST_COLLECTION_DELIVERY_FAILED'].includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end).sort(byIdDesc);
     await expectIds(page, ids(inWeek.slice(0, 10)));
     await expectInfo(page, 1, Math.min(10, inWeek.length), inWeek.length);
-    await expect(filterBadge(page)).toHaveText('3'); // non-commercial + start + end
+    await expect(filterBadge(page)).toHaveText('2'); // non-commercial + the week (a date range counts once)
   });
 
   test('picking a second week replaces the first (only one highlighted)', async ({ page }) => {
@@ -965,26 +965,69 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
   });
 
   test('week and status quick filters stack, and both show as active', async ({ page }) => {
-    // DEFECT: week and Failed are presented as one row of mutually exclusive-looking buttons
-    // (a single `activeFilter`), but clicking a week then Failed sends BOTH constraints while
-    // highlighting only Failed - the week button goes back to outline although its date range
-    // is still applied. The table is silently narrower than the buttons say.
-    // component: distributions-and-deliveries-index.component.ts:332-340 (activeFilter is one string)
-    test.fail();
+    // Was a DEFECT pin (#280): week then Failed sent both constraints but lit only Failed.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
     await h.after(() => weekButtons(page).nth(0).click());
     const v = await h.after(() => failedButton(page).click());
-    expect(v.filter.AND.length).toBe(2); // the week range is still being applied...
-    await expect(weekButtons(page).nth(0)).toHaveClass(/btn-primary/); // ...so it must still look active
+    expect(v.filter.AND.length).toBe(2);
+    expect(v.filter.status).toEqual({ _in: ['REQUEST_COLLECTION_DELIVERY_FAILED'] });
+    await expect(weekButtons(page).nth(0)).toHaveClass(/btn-primary/);
+    await expect(failedButton(page)).toHaveClass(/btn-success/);
+    await expect(filterBadge(page)).toHaveText('3'); // non-commercial + failed + week
   });
 
-  test('a week button after the Failed button drops the status filter silently', async ({ page }) => {
-    // DEFECT: applyWeekFilter deletes `status` from the filter, including statuses the user chose in
-    // the modal. Picking a week therefore throws away "Status of the request" with no hint.
-    // component: distributions-and-deliveries-index.component.ts:327
-    test.fail();
+  test('Failed then a week keeps the Failed status (status is not dropped) and both stay lit', async ({ page }) => {
+    // #280 point 3, the other order: status then week used to drop the status.
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    await h.after(() => failedButton(page).click());
+    const v = await h.after(() => weekButtons(page).nth(1).click());
+    expect(v.filter.status).toEqual({ _in: ['REQUEST_COLLECTION_DELIVERY_FAILED'] });
+    expect(v.filter.AND.length).toBe(2);
+    await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
+    await expect(failedButton(page)).toHaveClass(/btn-success/);
+    const { start, end } = weekRange(1);
+    const expected = FIX.rows
+      .filter(nonSales)
+      .filter((r) => r.status === 'REQUEST_COLLECTION_DELIVERY_FAILED' && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end)
+      .sort(byIdDesc);
+    await expectIds(page, ids(expected.slice(0, 10)));
+  });
+
+  test('a week view shows open statuses only by default (#42), and drops declined/cancelled/failed rows', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    const v = await h.after(() => weekButtons(page).nth(0).click());
+    expect(v.filter.status._in.slice().sort()).toEqual(
+      ['NEW', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_ON_HOLD', 'REQUEST_COMPLETED'],
+    );
+    const { start, end } = weekRange(0);
+    const open = ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_ON_HOLD', 'REQUEST_COMPLETED'];
+    const expected = FIX.rows
+      .filter(nonSales)
+      .filter((r) => open.includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end)
+      .sort(byIdDesc);
+    await expectIds(page, ids(expected.slice(0, 10)));
+    await expectInfo(page, 1, Math.min(10, expected.length), expected.length);
+    // The implicit scope is not counted as the user's filters: non-commercial + week.
+    await expect(filterBadge(page)).toHaveText('2');
+  });
+
+  test('a status picked in the Filter window wins over the week default (declined rows can be shown)', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    await applyModal(page, h, () => pickStatuses(page, ['Declined']));
+    const v = await h.after(() => weekButtons(page).nth(0).click());
+    expect(v.filter.status).toEqual({ _in: ['REQUEST_DECLINED'] });
+  });
+
+  test('a week button after a modal status keeps the status', async ({ page }) => {
+    // Was a DEFECT pin (#280): applyWeekFilter deleted `status`, including the modal's choice.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -994,37 +1037,32 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
   });
 
   test('Clear leaves modal-chosen statuses alone', async ({ page }) => {
-    // DEFECT: clearQuickFilters deletes `status` unconditionally, so "Clear" after a week click also
-    // wipes a status the user picked in the modal beforehand.
-    // component: distributions-and-deliveries-index.component.ts:347
-    test.fail();
+    // Was a DEFECT pin (#280): clearQuickFilters deleted `status` unconditionally.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
     await applyModal(page, h, () => pickStatuses(page, ['On hold']));
-    await h.after(() => weekButtons(page).nth(0).click()); // (already drops status - see above)
+    await h.after(() => weekButtons(page).nth(0).click());
     const v = await h.after(() => clearButton(page).click());
     expect(v.filter.status).toEqual({ _in: ['PROCESSING_ON_HOLD'] });
+    expect(v.filter.AND).toEqual([]);
+    await expect(clearButton(page)).toHaveCount(0);
   });
 
   test('submitting the filter modal after a week button keeps the week range', async ({ page }) => {
-    // DEFECT: the modal form has no date fields, so its submit data lacks collectionDateStart/End;
-    // applyFilter then saves/sends a filter WITHOUT the week range, yet `activeFilter` still
-    // highlights the week button and shows Clear. UI says "week X", data is unfiltered by date.
-    // component: distributions-and-deliveries-index.component.ts:354-357 + 270
-    test.fail();
+    // Was a DEFECT pin (#280): the modal submit lost collectionDateStart/End while the button stayed lit.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
     await h.after(() => weekButtons(page).nth(0).click());
     const v = await applyModal(page, h, () => tick(page, 'Prepped'));
     expect(v.filter.AND?.length).toBe(2);
+    expect(v.filter.isPrepped).toEqual({ _in: [true] });
+    await expect(weekButtons(page).nth(0)).toHaveClass(/btn-primary/);
+    await expect(clearButton(page)).toBeVisible();
   });
 
   test('the week button highlight always agrees with whether a date range is being sent', async ({ page }) => {
-    // DEFECT: companion to the above - after a modal submit the button is still highlighted but no
-    // range is sent. Asserting the invariant directly: highlighted <=> range present.
-    test.fail();
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -1034,7 +1072,6 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
     expect(highlighted > 0).toBe((v.filter.AND ?? []).length > 0);
   });
 });
-
 test.describe('DnD table: sorting @mocked', () => {
   test('the default sort is ID descending', async ({ page }) => {
     test.setTimeout(60_000);
@@ -1112,12 +1149,9 @@ test.describe('DnD table: persistence across reload @mocked', () => {
     await expect(lengthSelect(page)).toHaveValue('25');
   });
 
-  test('a restored week range is visible and clearable from the page', async ({ page }) => {
-    // DEFECT: the week range is persisted in localStorage, but `activeFilter` is not. After a reload the
-    // range is still applied (badge 3) yet no week button is highlighted and the Clear button does not
-    // render - the date filter can neither be seen nor removed except by clearing site data.
-    // component: distributions-and-deliveries-index.component.ts:270 vs 571
-    test.fail();
+  test('a restored week range (old saved format) is visible and clearable from the page', async ({ page }) => {
+    // Was a DEFECT pin (#280): the week survived a reload but nothing was lit and Clear did not render.
+    // Old saves stored fixed ISO strings; they are converted to a week and lit when still offered.
     test.setTimeout(60_000);
     const { start, end } = weekRange(0);
     const h = await setup(page, {
@@ -1126,11 +1160,40 @@ test.describe('DnD table: persistence across reload @mocked', () => {
       },
     });
     await page.goto(PATH);
-    await expect(filterBadge(page)).toHaveText('3', { timeout: 30_000 });
+    await expect(filterBadge(page)).toHaveText('2', { timeout: 30_000 });
     expect(h.last().filter.AND.length).toBe(2);
+    await expect(weekButtons(page).nth(0)).toHaveClass(/btn-primary/);
     await expect(clearButton(page)).toBeVisible({ timeout: 2_000 });
   });
 
+  test('a week and the Failed button survive a reload, both lit', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    await h.after(() => weekButtons(page).nth(2).click());
+    await h.after(() => failedButton(page).click());
+    h.reqs.length = 0;
+    await page.reload();
+    await expect(filterBadge(page)).toHaveText('3', { timeout: 30_000 });
+    await expect(weekButtons(page).nth(2)).toHaveClass(/btn-primary/);
+    await expect(failedButton(page)).toHaveClass(/btn-success/);
+    expect(h.last().filter.AND.length).toBe(2);
+  });
+
+  test('a saved week that is no longer offered is dropped, not silently re-applied', async ({ page }) => {
+    // #280 point 1: last month's week used to stay applied with nothing lit and no Clear button.
+    test.setTimeout(60_000);
+    const h = await setup(page, {
+      localStorage: {
+        [FILTER_KEY]: JSON.stringify({ is_sales: [false], collectionDateStart: '2020-03-02T00:00:00.000Z', collectionDateEnd: '2020-03-08T23:59:59.999Z' }),
+      },
+    });
+    await load(page, h);
+    expect(h.last().filter.AND).toEqual([]);
+    await expect(filterBadge(page)).toHaveText('1');
+    await expect(clearButton(page)).toHaveCount(0);
+    await expect(quickBar(page).locator('button.btn-primary')).toHaveCount(0);
+  });
   test('a corrupt saved filter falls back to the default non-commercial view', async ({ page }) => {
     test.setTimeout(60_000);
     const h = await setup(page, { localStorage: { [FILTER_KEY]: '{not json' } });

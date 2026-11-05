@@ -71,6 +71,29 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
 }
 `;
 
+const FAILED_STATUSES = ['REQUEST_COLLECTION_DELIVERY_FAILED'];
+/** A week view hides DECLINED / CANCELLED / COLLECTION_DELIVERY_FAILED unless asked for (#42). */
+const OPEN_STATUSES = [
+  'NEW',
+  'PROCESSING_EQUALITIES_DATA_COMPLETE',
+  'PROCESSING_COLLECTION_DELIVERY_ARRANGED',
+  'PROCESSING_ON_HOLD',
+  'REQUEST_COMPLETED',
+];
+
+/** Local 'YYYY-MM-DD'. */
+function dateKey(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** Mon 00:00:00.000 to Sun 23:59:59.999 (local) for a Monday key. */
+function weekRangeFromKey(key: string): { start: Date; end: Date } {
+  const [y, m, d] = key.split('-').map(Number);
+  const start = new Date(y, m - 1, d, 0, 0, 0, 0);
+  const end = new Date(y, m - 1, d + 6, 23, 59, 59, 999);
+  return { start, end };
+}
 /**
  * en-GB Monday-Sunday range label: '2–8 Nov', or '30 Nov – 6 Dec' when the week
  * straddles a month boundary.
@@ -218,10 +241,19 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   @Input()
   tableId = 'distributions-and-deliveries-index';
 
-  weekButtons: {label: string, startDate: Date, endDate: Date, type: 'week'}[] = [];
+  weekButtons: {key: string, label: string, startDate: Date, endDate: Date, type: 'week'}[] = [];
   statusButtons: {label: string, statuses: string[], type: 'status'}[] = [];
-  activeFilter: string | null = null;
 
+  // Quick-filter state is kept apart from the Filter-window state (`filterModel`) and the
+  // two are combined only when the query is built in applyFilter() (#280).
+  /** Monday of the chosen week as a local 'YYYY-MM-DD' key, or null. */
+  quickWeek: string | null = null;
+  /** The 'Collection/Delivery Failed' button is on. */
+  quickFailed = false;
+
+  get hasQuickFilter(): boolean {
+    return !!this.quickWeek || this.quickFailed;
+  }
   generateWeekButtons() {
     const buttons = [];
     const today = new Date();
@@ -245,6 +277,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       const label = formatWeekLabel(weekStart, weekEnd);
 
       buttons.push({
+        key: dateKey(weekStart),
         label,
         startDate: weekStart,
         endDate: weekEnd,
@@ -270,37 +303,22 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     ];
   }
 
-  applyWeekFilter(button: {label: string, startDate: Date, endDate: Date}) {
-    this.activeFilter = button.label;
-    const filterData = {
-      ...this.filterModel,
-      collectionDateStart: button.startDate.toISOString(),
-      collectionDateEnd: button.endDate.toISOString(),
-    };
-    delete filterData['status'];
-
-    this.applyFilter(filterData);
+  applyWeekFilter(button: {key: string}) {
+    this.quickWeek = button.key;
+    this.applyFilter(this.filterModel);
   }
 
-  applyStatusFilter(button: {label: string, statuses: string[]}) {
-    this.activeFilter = button.label;
-    const filterData = {
-      ...this.filterModel,
-      status: button.statuses
-    };
-
-    this.applyFilter(filterData);
+  applyStatusFilter(_button?: {label: string, statuses: string[]}) {
+    this.quickFailed = true;
+    this.applyFilter(this.filterModel);
   }
 
+  /** Clears only the quick filters; anything chosen in the Filter window stays. */
   clearQuickFilters() {
-    this.activeFilter = null;
-    const filterData = { ...this.filterModel };
-    delete filterData['collectionDateStart'];
-    delete filterData['collectionDateEnd'];
-    delete filterData['status'];
-    this.applyFilter(filterData);
+    this.quickWeek = null;
+    this.quickFailed = false;
+    this.applyFilter(this.filterModel);
   }
-
   // Guards the Filter-modal submit button specifically; applyFilter itself stays
   // unguarded because it's also called internally by the week/status quick-filter
   // buttons and on initial load, which don't go through filterForm.
@@ -309,14 +327,30 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     this.applyFilter(data);
   }
 
+  /**
+   * Builds the query from the Filter-window model (`data`) combined with the quick-filter
+   * state, persists both, and reloads the table.
+   *
+   * Status scope: statuses picked in the Filter window are kept; the Failed button adds its
+   * status to them; a week view with no explicit status shows open statuses only (#42).
+   */
   applyFilter(data) {
     const filter: any = {AND: []};
     let count = 0;
     const deviceTypeLookup = DEVICE_TYPE_LOOKUP;
 
-    if (data.status && data.status.length) {
-      count = count + data.status.length;
-      filter['status'] = {'_in': data.status };
+    let status: string[] = data.status && data.status.length ? [...data.status] : [];
+    if (this.quickFailed) {
+      for (const s of FAILED_STATUSES) {
+        if (!status.includes(s)) status.push(s);
+      }
+    }
+    count += status.length;
+    if (!status.length && this.quickWeek) {
+      status = [...OPEN_STATUSES]; // implicit scope, not counted in the badge
+    }
+    if (status.length) {
+      filter['status'] = {'_in': status };
     }
 
     if (data.is_sales && data.is_sales.length) {
@@ -346,18 +380,18 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       filter['collectionMethod'] = {_in: data.collection_method};
     }
 
-    // Handle collection date filters using AND logic (like kit-index does for createdAt)
-    if(data.collectionDateStart){
+    // Collection date range uses AND logic (like kit-index does for createdAt). A range counts as one filter.
+    if (this.quickWeek) {
+      const { start, end } = weekRangeFromKey(this.quickWeek);
       count += 1;
-      filter['AND'].push({collectionDate: {_gte: data.collectionDateStart }});
+      filter['AND'].push({collectionDate: {_gte: start.toISOString() }});
+      filter['AND'].push({collectionDate: {_lte: end.toISOString() }});
     }
 
-    if(data.collectionDateEnd){
-      count += 1;
-      filter['AND'].push({collectionDate: {_lte: data.collectionDateEnd }});
-    }
-
-    localStorage.setItem(`distributionsAndDeliveriesFilters-${this.tableId}`, JSON.stringify(data));
+    localStorage.setItem(`distributionsAndDeliveriesFilters-${this.tableId}`, JSON.stringify({
+      ...data,
+      quick: { week: this.quickWeek, failed: this.quickFailed },
+    }));
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
@@ -366,7 +400,6 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     this.cdr.markForCheck();
     this.table.ajax.reload(null, true);
   }
-
   modal(content) {
     this.modalService.open(content, { centered: true, size: 'lg' });
   }
@@ -527,15 +560,35 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     }
   }
 
+  /**
+   * Reads the saved filters. Old saves stored the week as fixed ISO strings
+   * (collectionDateStart/End) inside the model; those are converted to a week key, and a
+   * week that is no longer one of the offered buttons is dropped rather than silently
+   * re-applied (#280: last month's week used to stick around with nothing lit).
+   */
+  private readSavedFilters(): { model: any; week: string | null; failed: boolean } {
+    const fallback = { model: {is_sales: [false]}, week: null, failed: false };
+    try {
+      const raw = JSON.parse(localStorage.getItem(`distributionsAndDeliveriesFilters-${this.tableId}`));
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fallback;
+      const { quick, collectionDateStart, collectionDateEnd, ...model } = raw;
+      let week: string | null = typeof quick?.week === 'string' ? quick.week : null;
+      if (!week && typeof collectionDateStart === 'string' && !isNaN(Date.parse(collectionDateStart))) {
+        week = dateKey(new Date(collectionDateStart));
+      }
+      if (week && !this.weekButtons.some(b => b.key === week)) week = null;
+      return { model, week, failed: quick?.failed === true };
+    } catch (_) {
+      return fallback;
+    }
+  }
   ngAfterViewInit() {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
-      try {
-        this.filterModel = JSON.parse(localStorage.getItem(`distributionsAndDeliveriesFilters-${this.tableId}`)) || {is_sales: [false]};
-      } catch (_) {
-        this.filterModel = {is_sales: [false]};
-      }
-
+      const saved = this.readSavedFilters();
+      this.filterModel = saved.model;
+      this.quickWeek = saved.week;
+      this.quickFailed = saved.failed;
       try {
         this.applyFilter(this.filterModel);
         this.filterForm.patchValue(this.filterModel);
