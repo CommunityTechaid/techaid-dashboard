@@ -172,9 +172,11 @@ const QUERY_MEMBERSHIP_CONFIG = gql`
 `;
 
 // Admin form only (signed-in staff): the organisation's staff-facing allowance and contacts.
+// #345: a narrow server query (name, allowance, membership contact names) readable with
+// write:requests, so the hint does not need read:organisations.
 const QUERY_ORG_MEMBERSHIP = gql`
-  query findOrganisationMembership($id: Long) {
-    referringOrganisation(where: { id: { _eq: $id } }) {
+  query findOrganisationMembership($id: ID!) {
+    referringOrganisationMembershipHint(id: $id) {
       id
       name
       ${MEMBERSHIP_SELECTION}
@@ -1347,7 +1349,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       variables: { id },
       fetchPolicy: 'network-only'
     }).toPromise().then(res => {
-      this.adminOrgMembership = res?.data?.['referringOrganisation'] ?? null;
+      this.adminOrgMembership = res?.data?.['referringOrganisationMembershipHint'] ?? null;
     }).catch(err => console.warn('Could not read organisation membership:', err));
   }
 

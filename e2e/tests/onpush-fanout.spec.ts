@@ -370,7 +370,7 @@ test.describe('OnPush fan-out — delivery-slots under its OnPush ancestor (prio
     // assertion (not a preceding "is it visible yet" check, which races the mocked response)
     // is the guard.
     await expect(page.getByText('No bookings yet.')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('Loading delivery slot settings…')).toHaveCount(0);
+    await expect(page.getByText('Loading delivery bookings…')).toHaveCount(0);
   });
 
   const BOOKING = {
