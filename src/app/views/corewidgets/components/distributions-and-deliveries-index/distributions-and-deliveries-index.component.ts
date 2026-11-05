@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Observable, Subscription } from 'rxjs';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -9,7 +9,6 @@ import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
-import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
 import { DatePipe } from '@angular/common';
@@ -72,6 +71,19 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
 }
 `;
 
+/**
+ * en-GB Monday-Sunday range label: '2–8 Nov', or '30 Nov – 6 Dec' when the week
+ * straddles a month boundary.
+ */
+export function formatWeekLabel(start: Date, end: Date): string {
+  const day = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric' });
+  const month = (d: Date) => d.toLocaleDateString('en-GB', { month: 'short' });
+  if (start.getMonth() === end.getMonth()) {
+    return `${day(start)}–${day(end)} ${month(end)}`;
+  }
+  return `${day(start)} ${month(start)} – ${day(end)} ${month(end)}`;
+}
+
 @Component({
     selector: 'distributions-and-deliveries-index',
     templateUrl: './distributions-and-deliveries-index.component.html',
@@ -119,70 +131,11 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   dtOptions: DataTables.Settings = {};
   sub: Subscription;
   table: any;
-  selections = {};
-  selected = [];
   entities = [];
-  form: UntypedFormGroup = new UntypedFormGroup({});
-  model = {};
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
   statusTypes: any = DEVICE_REQUEST_STATUS;
-
-  fields: FormlyFieldConfig[] = [
-    {
-      key: 'name',
-      type: 'input',
-      className: 'col-md-12',
-      defaultValue: '',
-      templateOptions: {
-        label: 'Name',
-        placeholder: '',
-        required: true
-      },
-      validation: {
-        show: false
-      },
-      expressionProperties: {
-        'validation.show': (model) => !!model?.showErrorState,
-      }
-    },
-    {
-      fieldGroupClassName: 'row',
-      fieldGroup: [
-        {
-          key: 'phoneNumber',
-          type: 'input',
-          className: 'col-md-6',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Organisation Phone Number',
-            pattern: /\+?[0-9]+/,
-            required: true
-          },
-          expressionProperties: {
-            'templateOptions.required': (model) => !model?.phoneNumber?.length
-          }
-        },
-        {
-          key: 'address',
-          type: 'place',
-          className: 'col-md-12',
-          defaultValue: '',
-          templateOptions: {
-            label: 'Address',
-            description: 'The address of the organisation',
-            placeholder: '',
-            postCode: false,
-            required: true
-          },
-          expressionProperties: {
-            'templateOptions.required': (model) => !model?.address?.length
-          }
-        }
-      ]
-    },
-  ];
 
   filter: any = {};
   filterCount = 0;
@@ -289,7 +242,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       weekEnd.setDate(weekStart.getDate() + 6);
       weekEnd.setHours(23, 59, 59, 999);
 
-      const label = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+      const label = formatWeekLabel(weekStart, weekEnd);
 
       buttons.push({
         label,
@@ -418,11 +371,6 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     this.modalService.open(content, { centered: true, size: 'lg' });
   }
 
-  clearSelection() {
-    this.selections = {};
-    this.selected = [];
-  }
-
   query(evt?: any, filter?: string) {
     if (filter === undefined) {
       filter = this.table.search();
@@ -544,7 +492,8 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       },
       columns: [
         { data: 'id', width: '15px' },
-        { data: 'deviceRequestItems' },
+        // An embedded object has no meaningful order for the API to sort on.
+        { data: 'deviceRequestItems', orderable: false },
         { data: 'referringOrganisationContact.fullName' },
         { data: 'referringOrganisationContact.referringOrganisation.name' },
         { data: 'clientRef' },
@@ -556,6 +505,20 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
         { data: null, orderable: false },
       ]
     };
+  }
+
+  /**
+   * The week buttons are date-derived, so a tab left open across a Monday would keep
+   * showing last week's range. Re-derive them when the tab becomes visible again.
+   */
+  @HostListener('document:visibilitychange')
+  refreshWeekButtons() {
+    if (document.visibilityState === 'hidden') return;
+    const fresh = this.generateWeekButtons();
+    if (fresh[0].startDate.getTime() !== this.weekButtons[0]?.startDate.getTime()) {
+      this.weekButtons = fresh;
+      this.cdr.markForCheck();
+    }
   }
 
   ngOnDestroy() {
@@ -579,20 +542,5 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       } catch (_) {
       }
     });
-  }
-
-  select(row?: any) {
-    if (row) {
-      if (this.selections[row.id]) {
-        delete this.selections[row.id];
-      } else {
-        this.selections[row.id] = row;
-      }
-    }
-
-    this.selected = [];
-    for (const k in this.selections) {
-      this.selected.push(this.selections[k]);
-    }
   }
 }

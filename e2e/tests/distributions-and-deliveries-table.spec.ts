@@ -75,6 +75,15 @@ function weekRange(i: number): { start: Date; end: Date } {
   return { start, end };
 }
 
+/** Independent en-GB label: '2–8 Nov', or '30 Nov – 6 Dec' across a month boundary. */
+function weekLabel(i: number): string {
+  const { start, end } = weekRange(i);
+  const mon = (d: Date) => d.toLocaleDateString('en-GB', { month: 'short' });
+  return start.getMonth() === end.getMonth()
+    ? `${start.getDate()}–${end.getDate()} ${mon(end)}`
+    : `${start.getDate()} ${mon(start)} – ${end.getDate()} ${mon(end)}`;
+}
+
 function midWeek(i: number): string {
   const { start } = weekRange(i);
   const d = new Date(start);
@@ -855,10 +864,29 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
     await expect(failedButton(page)).toBeVisible();
     await expect(clearButton(page)).toHaveCount(0);
     const labels = (await weekButtons(page).allInnerTexts()).map((t) => t.trim());
-    const expected = [0, 1, 2, 3].map((i) => weekRange(i).start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-    expect(labels).toEqual(expected);
+    expect(labels).toEqual([0, 1, 2, 3].map(weekLabel));
+    // en-GB range, never the US 'Nov 2' form.
+    for (const l of labels) expect(l).toMatch(/^\d{1,2}( [A-Z][a-z]{2})? – ?\d{1,2} [A-Z][a-z]{2}$|^\d{1,2}–\d{1,2} [A-Z][a-z]{2}$/);
   });
 
+  test('week buttons are re-derived when the tab becomes visible again after a Monday passes', async ({ page }) => {
+    // #284: buttons were computed once in ngOnInit, so a tab left open across a Monday kept last week's labels.
+    // (Load at real time so the fake Auth0 token is valid; only move the clock after the page is up.)
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    const before = (await weekButtons(page).allInnerTexts()).map((t) => t.trim());
+    expect(before).toEqual([0, 1, 2, 3].map(weekLabel));
+
+    const nextMonday = weekRange(1).start;
+    nextMonday.setHours(9, 0, 0, 0);
+    await page.clock.setFixedTime(nextMonday);
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+
+    await expect(weekButtons(page).first()).toHaveText(weekLabel(1));
+    const after = (await weekButtons(page).allInnerTexts()).map((t) => t.trim());
+    expect(after.slice(0, 3)).toEqual(before.slice(1));
+  });
   test('a week button sends the Mon-Sun collectionDate range, highlights, shows Clear and counts +2', async ({ page }) => {
     test.setTimeout(60_000);
     const h = await setup(page);
@@ -1051,21 +1079,19 @@ test.describe('DnD table: sorting @mocked', () => {
     expect(v.page!.page).toBe(0);
   });
 
-  test('the Is Prepped column (a checkbox, not sortable data) is not offered as a sort', async ({ page }) => {
-    // DEFECT: columns[10] is `{data: null, orderable: false}` but it is the "Is Prepped" column, while
-    // the real isPrepped data is never sortable; and the Requests column (index 1) IS orderable
-    // with key `deviceRequestItems` - an object, which the API cannot sort by. Clicking "Requests"
-    // sends sort key deviceRequestItems. Pin: no header sends an object-valued key.
-    // component: distributions-and-deliveries-index.component.ts:547
-    test.fail();
+  test('the Requests column (an embedded object) is not offered as a sort', async ({ page }) => {
+    // Was a DEFECT pin (#284): clicking "Requests" sent sort key deviceRequestItems, an object the
+    // API cannot order by. The column is now orderable:false, so a click sends nothing.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
-    const v = await h.after(() => table(page).locator('thead th', { hasText: 'Requests' }).click());
-    expect(v.page!.sort[0].key).not.toBe('deviceRequestItems');
+    const n = h.reqs.length;
+    await table(page).locator('thead th', { hasText: 'Requests' }).click();
+    await page.waitForTimeout(800);
+    expect(h.reqs.length).toBe(n);
+    expect(h.reqs.some((r) => r.page?.sort?.some((s) => s.key === 'deviceRequestItems'))).toBe(false);
   });
 });
-
 test.describe('DnD table: persistence across reload @mocked', () => {
   test('modal filter and DataTables page size/sort survive a reload, and the badge/total still agree', async ({ page }) => {
     test.setTimeout(90_000);
@@ -1205,6 +1231,32 @@ test.describe('DnD table: counts and row badges @mocked', () => {
     await h.after(() => searchBox(page).fill('CR-001'));
     await expectIds(page, [1]);
     await expect(dataRows(page).first().locator('td:nth-child(2) .badge')).toHaveCount(0);
+  });
+
+  test('null device counts render no badge (null is not 0)', async ({ page }) => {
+    // #284: deviceRequestItems.* are nullable and `null != 0` is true, so empty counts showed 'Other 0 / 0'.
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    const saved = FIX.rows[0].deviceRequestItems;
+    FIX.rows[0].deviceRequestItems = { phones: null, tablets: null, laptops: null, allInOnes: null, desktops: null, commsDevices: null, other: null } as any;
+    try {
+      await load(page, h);
+      await h.after(() => searchBox(page).fill('CR-001'));
+      await expectIds(page, [1]);
+      await expect(dataRows(page).first().locator('td:nth-child(2) .badge')).toHaveCount(0);
+    } finally {
+      FIX.rows[0].deviceRequestItems = saved;
+    }
+  });
+
+  test('the read-only Prepped checkbox is labelled and disabled', async ({ page }) => {
+    // #284: it had no accessible name and was a live-looking control.
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    const boxes = dataRows(page).getByRole('checkbox', { name: 'Prepped' });
+    await expect(boxes).toHaveCount(await dataRows(page).count());
+    await expect(boxes.first()).toBeDisabled();
   });
 
   test('every response row renders: ids on screen are unique and equal the requested page', async ({ page }) => {
