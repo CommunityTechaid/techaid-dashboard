@@ -176,8 +176,14 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   savingException = false;
   exceptionForm: ExceptionForm = emptyExceptionForm();
 
-  /** Flat copy of what's on screen, kept in load order, so the export matches the table. */
-  private allBookings: BookingRow[] = [];
+  /**
+   * What's on screen, flattened. Derived from bookingGroups rather than kept as a
+   * second copy: the export used to read its own list, the delete handler only pruned the groups,
+   * and a deleted booking stayed in the driver's CSV (#281).
+   */
+  private get allBookings(): BookingRow[] {
+    return this.bookingGroups.flatMap((g) => g.bookings);
+  }
 
   private readonly sub = new Subscription();
 
@@ -240,8 +246,6 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
 
   private groupBookings(bookings: BookingRow[]): void {
     this.totalBookings = bookings.length;
-    // Apollo v4 freezes query responses — copy each row so it isn't a frozen object.
-    this.allBookings = bookings.map((b) => ({ ...b }));
     const groups = new Map<string, BookingGroup>();
     for (const b of bookings) {
       const key = `${b.date}::${b.window?.id ?? '?'}`;
