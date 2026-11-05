@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -13,7 +14,7 @@ import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-r
 import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
 import { DatePipe } from '@angular/common';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
 import { DeliverySlotsComponent } from '../delivery-slots/delivery-slots.component';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 
@@ -71,6 +72,92 @@ query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: S
 }
 `;
 
+type DndTab = 'requests' | 'slots';
+
+/**
+ * Query params this page owns (#282). Anything else in the URL is left alone.
+ *   tab=slots            (omitted for the default Device Requests tab)
+ *   week=YYYY-MM-DD      Monday of the week (any date is snapped to its Monday)
+ *   failed=yes           the Collection/Delivery Failed quick filter
+ *   status=NEW,...       request status enums
+ *   sales=no|yes|no,yes|all   (omitted = non-commercial only, the default; `all` = no constraint)
+ *   prepped=no|yes       method=collection|delivery       device=LAPTOPS,PHONES,...
+ */
+const URL_FILTER_PARAMS = ['week', 'failed', 'status', 'sales', 'prepped', 'method', 'device'];
+const URL_PARAMS = ['tab', ...URL_FILTER_PARAMS];
+
+interface UrlState {
+  tab: DndTab | null;
+  /** Any filter param present: the URL then defines the whole filter state and wins over saved filters. */
+  hasFilters: boolean;
+  model: any;
+  week: string | null;
+  failed: boolean;
+}
+
+function validDateKey(s: string | null): string | null {
+  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [y, m, d] = s.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  // Snap to that week's Monday.
+  dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
+  return dateKey(dt);
+}
+
+/** Reads this page's params defensively: unknown params and invalid values are ignored. */
+function parseQuery(p: ParamMap): UrlState {
+  const csv = (k: string) => (p.get(k) ?? '').split(',').map(s => s.trim()).filter(Boolean);
+  const uniq = <T>(a: T[]) => a.filter((v, i) => a.indexOf(v) === i);
+  const yesNo = (k: string) => uniq(csv(k).filter(v => v === 'yes' || v === 'no').map(v => v === 'yes'));
+  const model: any = {};
+
+  const sales = csv('sales');
+  if (sales.includes('all')) {
+    model.is_sales = [];
+  } else {
+    const s = yesNo('sales');
+    model.is_sales = s.length ? s : [false];
+  }
+  const status = uniq(csv('status').filter(s => Object.prototype.hasOwnProperty.call(DEVICE_REQUEST_STATUS, s)));
+  if (status.length) model.status = status;
+  const prepped = yesNo('prepped');
+  if (prepped.length) model.is_prepped = prepped;
+  const method = uniq(csv('method').map(m => m.toUpperCase()).filter(m => m === 'COLLECTION' || m === 'DELIVERY'));
+  if (method.length) model.collection_method = method;
+  const device = uniq(csv('device').filter(d => Object.prototype.hasOwnProperty.call(DEVICE_TYPE_LOOKUP, d)));
+  if (device.length) model.device_type = device;
+
+  const tab = p.get('tab');
+  return {
+    tab: tab === 'slots' || tab === 'requests' ? tab : null,
+    hasFilters: URL_FILTER_PARAMS.some(k => p.has(k)),
+    model,
+    week: validDateKey(p.get('week')),
+    failed: p.get('failed') === 'yes',
+  };
+}
+
+/** The inverse of parseQuery: defaults are omitted (null), so a default page has a clean URL. */
+function serializeQuery(model: any, week: string | null, failed: boolean, tab: DndTab): Record<string, string | null> {
+  const list = (v: any[] | undefined, f: (x: any) => string) => (v && v.length ? v.map(f).join(',') : null);
+  const yn = (v: any[] | undefined) => list(v ? [...v].sort() : v, x => (x ? 'yes' : 'no'));
+  const sales: any[] | undefined = model.is_sales;
+  let salesParam: string | null;
+  if (!sales || !sales.length) salesParam = 'all';
+  else if (sales.length === 1 && sales[0] === false) salesParam = null;
+  else salesParam = yn(sales);
+  return {
+    tab: tab === 'slots' ? 'slots' : null,
+    week,
+    failed: failed ? 'yes' : null,
+    status: list(model.status, x => String(x)),
+    sales: salesParam,
+    prepped: yn(model.is_prepped),
+    method: list(model.collection_method, x => String(x).toLowerCase()),
+    device: list(model.device_type, x => String(x)),
+  };
+}
 const FAILED_STATUSES = ['REQUEST_COLLECTION_DELIVERY_FAILED'];
 /** A week view hides DECLINED / CANCELLED / COLLECTION_DELIVERY_FAILED unless asked for (#42). */
 const OPEN_STATUSES = [
@@ -132,18 +219,25 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   /** Drops out-of-order ajax responses — see LatestDraw. */
   private readonly draws = new LatestDraw();
 
-  activeTab: 'requests' | 'slots' = 'requests';
+  activeTab: DndTab = 'requests';
+  /** The tab the URL asked for; 'slots' only takes effect once the feature flag says the tab exists. */
+  private desiredTab: DndTab = 'requests';
   deliveryBookingVisible = false;
+  private urlSub: Subscription;
+  private initialSync = true;
 
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
     private apollo: Apollo,
     private featureFlags: FeatureFlagService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.featureFlags.deliveryBookingVisibility().subscribe(state => {
       this.deliveryBookingVisible = state.visible;
+      if (state.visible && this.desiredTab === 'slots') this.activeTab = 'slots';
       // Gates the Delivery Slots tab in the host template. This resolves
       // outside the host template's event tree — mark for check or the tab
       // never appears under OnPush.
@@ -319,6 +413,47 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     this.quickFailed = false;
     this.applyFilter(this.filterModel);
   }
+  setTab(tab: DndTab) {
+    this.applyTab(tab);
+    this.syncUrl();
+  }
+
+  private applyTab(tab: DndTab) {
+    this.desiredTab = tab;
+    this.activeTab = tab === 'slots' && !this.deliveryBookingVisible ? 'requests' : tab;
+  }
+
+  /**
+   * Writes the current state into the query string (pushing a history entry, so back/forward
+   * walk through filter changes), keeping any params this page does not own. A no-op when the
+   * URL already says the same thing, which also stops URL -> state -> URL loops.
+   */
+  private syncUrl(replace = false) {
+    // The first sync only makes the URL describe the restored state, so it must not add a history entry.
+    replace = replace || this.initialSync;
+    this.initialSync = false;
+    const q = serializeQuery(this.filterModel, this.quickWeek, this.quickFailed, this.desiredTab);
+    const cur = this.route.snapshot.queryParamMap;
+    if (URL_PARAMS.every(k => (q[k] ?? null) === (cur.get(k) ?? null))) return;
+    const queryParams: Params = q;
+    this.router.navigate([], { relativeTo: this.route, queryParams, queryParamsHandling: 'merge', replaceUrl: replace });
+  }
+
+  /** Browser back/forward or an edited URL: make the page match it. */
+  private onUrlChange(p: ParamMap) {
+    const u = parseQuery(p);
+    const next = { model: u.hasFilters ? u.model : { is_sales: [false] }, week: u.hasFilters ? u.week : null, failed: u.hasFilters && u.failed };
+    this.applyTab(u.tab ?? 'requests');
+    const sameState = JSON.stringify(serializeQuery(next.model, next.week, next.failed, 'requests')) ===
+      JSON.stringify(serializeQuery(this.filterModel, this.quickWeek, this.quickFailed, 'requests'));
+    if (sameState) {
+      this.cdr.markForCheck();
+      return;
+    }
+    this.quickWeek = next.week;
+    this.quickFailed = next.failed;
+    this.applyFilter(next.model);
+  }
   // Guards the Filter-modal submit button specifically; applyFilter itself stays
   // unguarded because it's also called internally by the week/status quick-filter
   // buttons and on initial load, which don't go through filterForm.
@@ -399,7 +534,9 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     // the host's filterCount badge won't repaint under OnPush without this.
     this.cdr.markForCheck();
     this.table.ajax.reload(null, true);
+    this.syncUrl();
   }
+
   modal(content) {
     this.modalService.open(content, { centered: true, size: 'lg' });
   }
@@ -421,6 +558,9 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   }
 
   ngOnInit() {
+    // The URL may ask for the Delivery Slots tab (#282).
+    this.applyTab(parseQuery(this.route.snapshot.queryParamMap).tab ?? 'requests');
+
     // Generate filter buttons
     this.weekButtons = this.generateWeekButtons();
     this.statusButtons = this.generateStatusButtons();
@@ -558,6 +698,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     if (this.sub) {
       this.sub.unsubscribe();
     }
+    this.urlSub?.unsubscribe();
   }
 
   /**
@@ -585,7 +726,11 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   ngAfterViewInit() {
     this.grid.dtInstance.then(tbl => {
       this.table = tbl;
-      const saved = this.readSavedFilters();
+      // Filters in the URL win over saved ones (#282): a link is an explicit request.
+      const fromUrl = parseQuery(this.route.snapshot.queryParamMap);
+      const saved = fromUrl.hasFilters
+        ? { model: fromUrl.model, week: fromUrl.week, failed: fromUrl.failed }
+        : this.readSavedFilters();
       this.filterModel = saved.model;
       this.quickWeek = saved.week;
       this.quickFailed = saved.failed;
@@ -594,6 +739,8 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
         this.filterForm.patchValue(this.filterModel);
       } catch (_) {
       }
+      // Back/forward and hand-edited URLs. The first emission is the state just applied.
+      this.urlSub = this.route.queryParamMap.pipe(skip(1)).subscribe(p => this.onUrlChange(p));
     });
   }
 }
