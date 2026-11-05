@@ -494,15 +494,16 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     }
 
     if (data.device_type && data.device_type.length) {
-      const deviceRequestItems = { };
+      // One alternative per type: ticking Laptops + Phones means "wants laptops OR phones" (#291).
+      const alternatives = [];
 
       data.device_type.forEach(devType => {
         if(devType in deviceTypeLookup) {
           count++;
-          deviceRequestItems[deviceTypeLookup[devType]] = { _gt: 0 };
+          alternatives.push({ [deviceTypeLookup[devType]]: { _gt: 0 } });
         }
       })
-      filter['deviceRequestItems'] = deviceRequestItems;
+      filter['deviceRequestItems'] = { OR: alternatives };
     }
 
     if (data.is_prepped && data.is_prepped.length) {
@@ -623,7 +624,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
               const kitIds: Record<string, string[]> = {};
               if (d.kits && d.kits.length) {
                 d.kits.forEach(k => {
-                  const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
+                  const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES', 'OTHER': 'OTHER' };
                   const t = typeMap[k.type] || `${k.type}S`;
                   types[t] = (types[t] || 0) + 1;
                   kitIds[t] = kitIds[t] || [];
