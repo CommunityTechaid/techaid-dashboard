@@ -177,17 +177,24 @@ function pathGet(o: any, path: string): any {
   return path.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
 }
 
+// Mirrors the server's DeviceRequestItemsWhereInput: fields AND together, an OR list is one grouped alternative.
+function matchesItems(r: Row, f: any): boolean {
+  for (const [k, cond] of Object.entries<any>(f)) {
+    if (k === 'OR' || k === 'AND') continue;
+    if (!((r.deviceRequestItems[k] ?? 0) > cond._gt)) return false;
+  }
+  if (f.AND && !f.AND.every((c: any) => matchesItems(r, c))) return false;
+  if (f.OR && f.OR.length && !f.OR.some((c: any) => matchesItems(r, c))) return false;
+  return true;
+}
+
 function matchesFilter(r: Row, f: any): boolean {
   if (!f) return true;
   if (f.status && !f.status._in.includes(r.status)) return false;
   if (f.isSales && !f.isSales._in.includes(FIX.meta.get(r.id)!.isSales)) return false;
   if (f.isPrepped && !f.isPrepped._in.includes(r.isPrepped)) return false;
   if (f.collectionMethod && !f.collectionMethod._in.includes(r.collectionMethod)) return false;
-  if (f.deviceRequestItems) {
-    for (const [k, cond] of Object.entries<any>(f.deviceRequestItems)) {
-      if (!((r.deviceRequestItems[k] ?? 0) > cond._gt)) return false;
-    }
-  }
+  if (f.deviceRequestItems && !matchesItems(r, f.deviceRequestItems)) return false;
   for (const clause of f.AND ?? []) {
     const cd = clause.collectionDate;
     if (!cd) continue;
@@ -672,12 +679,12 @@ test.describe('DnD table: modal filters @mocked', () => {
     await expect(filterBadge(page)).toHaveCount(0);
   });
 
-  test('device-type filter sends a _gt:0 constraint per type', async ({ page }) => {
+  test('device-type filter sends one _gt:0 alternative per type', async ({ page }) => {
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
     const v = await applyModal(page, h, () => tick(page, 'Laptops'));
-    expect(v.filter.deviceRequestItems).toEqual({ laptops: { _gt: 0 } });
+    expect(v.filter.deviceRequestItems).toEqual({ OR: [{ laptops: { _gt: 0 } }] });
     const expected = FIX.rows.filter(nonSales).filter((r) => r.deviceRequestItems.laptops > 0).sort(byIdDesc);
     await expectIds(page, ids(expected.slice(0, 10)));
     await expectInfo(page, 1, Math.min(10, expected.length), expected.length);
@@ -685,12 +692,8 @@ test.describe('DnD table: modal filters @mocked', () => {
   });
 
   test('ticking two device types returns requests that want EITHER type', async ({ page }) => {
-    // DEFECT: the types are ANDed (deviceRequestItems {laptops:{_gt:0}, phones:{_gt:0}}), so
-    // ticking Laptops + Phones returns only requests asking for BOTH. Every other multi-tick
-    // control in this modal (status, sales, prepped, method) is an OR/_in; this one silently
-    // narrows instead of widening, which is exactly the "confusing filter" complaint.
-    // component: distributions-and-deliveries-index.component.ts:374-384
-    test.fail();
+    // Was a DEFECT pin (#291): the types were ANDed, so Laptops + Phones returned only requests
+    // asking for BOTH. Every other multi-tick control in this modal is an OR/_in.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -698,7 +701,11 @@ test.describe('DnD table: modal filters @mocked', () => {
       await tick(page, 'Laptops');
       await tick(page, 'Phones');
     });
+    const v = h.last();
+    expect(v.filter.deviceRequestItems).toEqual({ OR: [{ laptops: { _gt: 0 } }, { phones: { _gt: 0 } }] });
     const either = FIX.rows.filter(nonSales).filter((r) => r.deviceRequestItems.laptops > 0 || r.deviceRequestItems.phones > 0);
+    const both = either.filter((r) => r.deviceRequestItems.laptops > 0 && r.deviceRequestItems.phones > 0);
+    expect(either.length).toBeGreaterThan(both.length); // the fixture can tell OR from AND
     await expectInfo(page, 1, Math.min(10, either.length), either.length);
   });
 
@@ -772,15 +779,13 @@ test.describe('DnD table: modal filters @mocked', () => {
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
-    // Commercial-only AND status Cancelled AND Prepped AND Delivery: choose a combination the fixture lacks.
+    // Status Cancelled AND wants tablets: no fixture row asks for tablets, so nothing matches.
     await applyModal(page, h, async () => {
       await pickStatuses(page, ['Cancelled']);
-      await tick(page, 'Desktops');
-      await tick(page, 'Laptops');
-      await tick(page, 'Phones');
+      await tick(page, 'Tablets');
     });
     const expected = FIX.rows.filter(nonSales).filter(
-      (r) => r.status === 'REQUEST_CANCELLED' && r.deviceRequestItems.desktops > 0 && r.deviceRequestItems.laptops > 0 && r.deviceRequestItems.phones > 0,
+      (r) => r.status === 'REQUEST_CANCELLED' && r.deviceRequestItems.tablets > 0,
     );
     expect(expected.length).toBe(0);
     await expectIds(page, []);
@@ -1266,11 +1271,8 @@ test.describe('DnD table: counts and row badges @mocked', () => {
   });
 
   test('an allocated kit of type OTHER is counted and listed on the row', async ({ page }) => {
-    // DEFECT: kits are bucketed as `${type}S`, so an OTHER kit lands in 'OTHERS' while the template
-    // reads types['OTHER']. A request that asked for "other" devices always shows 0 allocated and
-    // its kit ids are never listed. (The other seven kit types happen to pluralise correctly.)
-    // component: distributions-and-deliveries-index.component.ts:505-506
-    test.fail();
+    // Was a DEFECT pin (#291): kits were bucketed as `${type}S`, so an OTHER kit landed in 'OTHERS'
+    // while the template reads types['OTHER']: "other" requests always showed 0 allocated.
     test.setTimeout(60_000);
     // Row 20 needs an OTHER request for the badge to render at all.
     const h = await setup(page);
@@ -1441,7 +1443,7 @@ test.describe('DnD table: filters and tab in the URL @mocked', () => {
     await openLink(page, h, '?status=NEW,PROCESSING_ON_HOLD&device=LAPTOPS&sales=no,yes&failed=yes', (v) => !!v.filter?.deviceRequestItems);
     const v = h.last();
     expect(v.filter.status._in.slice().sort()).toEqual(['NEW', 'PROCESSING_ON_HOLD', 'REQUEST_COLLECTION_DELIVERY_FAILED']);
-    expect(v.filter.deviceRequestItems).toEqual({ laptops: { _gt: 0 } });
+    expect(v.filter.deviceRequestItems).toEqual({ OR: [{ laptops: { _gt: 0 } }] });
     expect(v.filter.isSales._in.slice().sort()).toEqual([false, true]);
     await expect(failedButton(page)).toHaveClass(/btn-success/);
   });
