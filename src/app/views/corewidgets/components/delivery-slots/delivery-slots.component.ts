@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -176,8 +176,14 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   savingException = false;
   exceptionForm: ExceptionForm = emptyExceptionForm();
 
-  /** Flat copy of what's on screen, kept in load order, so the export matches the table. */
-  private allBookings: BookingRow[] = [];
+  /**
+   * What's on screen, flattened. Derived from bookingGroups rather than kept as a
+   * second copy: the export used to read its own list, the delete handler only pruned the groups,
+   * and a deleted booking stayed in the driver's CSV (#281).
+   */
+  private get allBookings(): BookingRow[] {
+    return this.bookingGroups.flatMap((g) => g.bookings);
+  }
 
   private readonly sub = new Subscription();
 
@@ -199,6 +205,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
     private readonly featureFlags: FeatureFlagService,
     private readonly wardLookup: WardLookupService,
     private readonly cdr: ChangeDetectorRef,
+    private readonly host: ElementRef<HTMLElement>,
   ) {}
 
   ngOnInit(): void {
@@ -210,7 +217,31 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }),
     );
-    this.load();
+    this.loadWhenFirstVisible();
+  }
+
+  private visibilityObserver?: IntersectionObserver;
+
+  /**
+   * The host page keeps this component mounted but `[hidden]` until the Delivery Slots tab is
+   * opened, so loading in ngOnInit fetched the bookings (and ran the postcode lookups) for
+   * everyone who never looks at the tab (#283). A hidden host has no box, so the observer
+   * only reports it intersecting once the tab is shown; the first time, load and stop.
+   * Falls back to loading straight away where IntersectionObserver doesn't exist.
+   */
+  private loadWhenFirstVisible(): void {
+    if (typeof IntersectionObserver === 'undefined') {
+      this.load();
+      return;
+    }
+    this.visibilityObserver = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        this.visibilityObserver?.disconnect();
+        this.visibilityObserver = undefined;
+        this.load();
+      }
+    });
+    this.visibilityObserver.observe(this.host.nativeElement);
   }
 
   load(): void {
@@ -229,7 +260,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
           },
           error: () => {
             this.loading = false;
-            this.toastr.error('Could not load delivery slot settings');
+            this.toastr.error('Could not load delivery bookings');
             // Flips `loading` off the same way the success path does — same
             // OnPush-ancestor reasoning applies.
             this.cdr.markForCheck();
@@ -240,8 +271,6 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
 
   private groupBookings(bookings: BookingRow[]): void {
     this.totalBookings = bookings.length;
-    // Apollo v4 freezes query responses — copy each row so it isn't a frozen object.
-    this.allBookings = bookings.map((b) => ({ ...b }));
     const groups = new Map<string, BookingGroup>();
     for (const b of bookings) {
       const key = `${b.date}::${b.window?.id ?? '?'}`;
@@ -481,6 +510,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.visibilityObserver?.disconnect();
     this.sub.unsubscribe();
   }
 }
