@@ -7,12 +7,12 @@
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'requests'" href="#"
-           (click)="activeTab = 'requests'; $event.preventDefault()">Device Requests</a>
+           (click)="setTab('requests'); $event.preventDefault()">Device Requests</a>
       </li>
       @if (deliveryBookingVisible) {
         <li class="nav-item">
           <a class="nav-link" [class.active]="activeTab === 'slots'" href="#"
-             (click)="activeTab = 'slots'; $event.preventDefault()">Delivery Slots</a>
+             (click)="setTab('slots'); $event.preventDefault()">Delivery Slots</a>
         </li>
       }
     </ul>

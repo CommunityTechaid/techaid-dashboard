@@ -1389,6 +1389,194 @@ test.describe('DnD table: errors and stale responses @mocked', () => {
   });
 });
 
+// ---------------------------------------------------------------------------------------------
+// #282: filters + active tab in the URL
+// ---------------------------------------------------------------------------------------------
+
+const weekKey = (i: number): string => {
+  const d = weekRange(i).start;
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+const query = (page: Page): URLSearchParams => new URL(page.url()).searchParams;
+const slotsTab = (page: Page) => page.locator('a.nav-link', { hasText: 'Delivery Slots' });
+const requestsTab = (page: Page) => page.locator('a.nav-link', { hasText: 'Device Requests' });
+
+/** Opens a deep link and waits until the filtered query (not DataTables' unfiltered first draw) has been sent. */
+async function openLink(page: Page, h: Harness, search: string, settled: (v: Vars) => boolean): Promise<void> {
+  await page.goto(`${PATH}${search}`);
+  await expect.poll(() => h.reqs.some(settled), { timeout: 30_000 }).toBe(true);
+  await expect(info(page)).toContainText('Showing', { timeout: 15_000 });
+}
+
+test.describe('DnD table: filters and tab in the URL @mocked', () => {
+  test('a deep link applies the filters and lights the right buttons', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await openLink(page, h, `?week=${weekKey(1)}&prepped=no&method=delivery`, (v) => !!v.filter?.isPrepped);
+    const v = h.last();
+    const { start, end } = weekRange(1);
+    expect(v.filter.AND).toEqual([
+      { collectionDate: { _gte: start.toISOString() } },
+      { collectionDate: { _lte: end.toISOString() } },
+    ]);
+    expect(v.filter.isPrepped).toEqual({ _in: [false] });
+    expect(v.filter.collectionMethod).toEqual({ _in: ['DELIVERY'] });
+    expect(v.filter.isSales).toEqual({ _in: [false] }); // default when `sales` is absent
+    await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
+    await expect(quickBar(page).locator('button.btn-primary')).toHaveCount(1);
+    await expect(clearButton(page)).toBeVisible();
+    await expect(filterBadge(page)).toHaveText('4'); // non-commercial + not prepped + delivery + week
+    const open = ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_ON_HOLD', 'REQUEST_COMPLETED'];
+    const expected = FIX.rows
+      .filter(nonSales)
+      .filter((r) => !r.isPrepped && r.collectionMethod === 'DELIVERY' && open.includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end)
+      .sort(byIdDesc);
+    await expectIds(page, ids(expected.slice(0, 10)));
+  });
+
+  test('a deep link with status, device, failed and commercial params', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await openLink(page, h, '?status=NEW,PROCESSING_ON_HOLD&device=LAPTOPS&sales=no,yes&failed=yes', (v) => !!v.filter?.deviceRequestItems);
+    const v = h.last();
+    expect(v.filter.status._in.slice().sort()).toEqual(['NEW', 'PROCESSING_ON_HOLD', 'REQUEST_COLLECTION_DELIVERY_FAILED']);
+    expect(v.filter.deviceRequestItems).toEqual({ laptops: { _gt: 0 } });
+    expect(v.filter.isSales._in.slice().sort()).toEqual([false, true]);
+    await expect(failedButton(page)).toHaveClass(/btn-success/);
+  });
+
+  test('URL filters win over saved filters', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page, { localStorage: { [FILTER_KEY]: JSON.stringify({ is_sales: [false], is_prepped: [true] }) } });
+    await openLink(page, h, '?prepped=no', (v) => !!v.filter?.isPrepped && v.filter.isPrepped._in[0] === false);
+    expect(h.last().filter.isPrepped).toEqual({ _in: [false] });
+  });
+
+  test('a link with no filter params still uses the saved filters (tab alone does not override them)', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page, { localStorage: { [FILTER_KEY]: JSON.stringify({ is_sales: [false], is_prepped: [true] }) } });
+    await openLink(page, h, '?tab=requests&utm_source=email', (v) => !!v.filter?.isPrepped);
+    expect(h.last().filter.isPrepped).toEqual({ _in: [true] });
+  });
+
+  test('unknown params and invalid values are ignored safely, and unknown params survive', async ({ page }) => {
+    test.setTimeout(60_000);
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    const h = await setup(page);
+    await openLink(page, h, '?foo=bar&status=NOT_A_STATUS,constructor&week=garbage&tab=nonsense&method=teleport&device=__proto__&prepped=maybe', (v) => !!v.filter?.isSales);
+    const v = h.last();
+    expect(v.filter.status).toBeUndefined();
+    expect(v.filter.AND).toEqual([]);
+    expect(v.filter.isPrepped).toBeUndefined();
+    expect(v.filter.collectionMethod).toBeUndefined();
+    expect(v.filter.deviceRequestItems).toBeUndefined();
+    expect(v.filter.isSales).toEqual({ _in: [false] });
+    await expect(requestsTab(page)).toHaveClass(/active/);
+    expect(errors).toEqual([]);
+    // Interacting keeps the foreign param.
+    await h.after(() => weekButtons(page).nth(0).click());
+    expect(query(page).get('foo')).toBe('bar');
+    expect(query(page).get('week')).toBe(weekKey(0));
+  });
+
+  test('a week date that is not a Monday snaps to its Monday', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    const wed = weekRange(1).start;
+    wed.setDate(wed.getDate() + 2);
+    const p = (n: number) => String(n).padStart(2, '0');
+    const wedKey = `${wed.getFullYear()}-${p(wed.getMonth() + 1)}-${p(wed.getDate())}`;
+    await openLink(page, h, `?week=${wedKey}`, (v) => (v.filter?.AND ?? []).length === 2);
+    expect(h.last().filter.AND[0]).toEqual({ collectionDate: { _gte: weekRange(1).start.toISOString() } });
+    await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
+  });
+
+  test('changing filters writes them to the URL, defaults leave it clean', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    expect(page.url()).not.toContain('?');
+    await h.after(() => weekButtons(page).nth(2).click());
+    await expect.poll(() => query(page).get('week')).toBe(weekKey(2));
+    await h.after(() => failedButton(page).click());
+    await expect.poll(() => query(page).get('failed')).toBe('yes');
+    await applyModal(page, h, () => tick(page, 'Prepped'));
+    await expect.poll(() => query(page).get('prepped')).toBe('yes');
+    expect(query(page).has('sales')).toBe(false);
+    expect(query(page).has('tab')).toBe(false);
+    await h.after(() => clearButton(page).click());
+    await expect.poll(() => query(page).has('week') || query(page).has('failed')).toBe(false);
+    expect(query(page).get('prepped')).toBe('yes');
+  });
+
+  test('reload restores state from the URL alone (saved filters wiped)', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    await h.after(() => weekButtons(page).nth(1).click());
+    await applyModal(page, h, () => untick(page, 'Non-commercial'));
+    await expect.poll(() => query(page).get('sales')).toBe('all');
+    await page.evaluate((k) => localStorage.removeItem(k), FILTER_KEY);
+    h.reqs.length = 0;
+    await page.reload();
+    await expect.poll(() => h.reqs.some((v) => !v.filter?.isSales && (v.filter?.AND ?? []).length === 2), { timeout: 30_000 }).toBe(true);
+    await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
+    await expect(filterBadge(page)).toHaveText('1'); // only the week; no commercial constraint
+  });
+
+  test('back and forward walk through filter changes', async ({ page }) => {
+    test.setTimeout(90_000);
+    const h = await setup(page);
+    await load(page, h);
+    await h.after(() => weekButtons(page).nth(1).click());
+    await expect.poll(() => query(page).get('week')).toBe(weekKey(1));
+    await applyModal(page, h, () => tick(page, 'Prepped'));
+    await expect.poll(() => query(page).get('prepped')).toBe('yes');
+
+    // Back: the Prepped filter goes, the week stays.
+    let v = await h.after(() => page.goBack());
+    expect(v.filter.isPrepped).toBeUndefined();
+    expect(v.filter.AND.length).toBe(2);
+    await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
+    expect(query(page).has('prepped')).toBe(false);
+
+    // Back again: no week.
+    v = await h.after(() => page.goBack());
+    expect(v.filter.AND).toEqual([]);
+    await expect(quickBar(page).locator('button.btn-primary')).toHaveCount(0);
+    await expect(clearButton(page)).toHaveCount(0);
+
+    // Forward twice: week, then week + prepped.
+    await h.after(() => page.goForward());
+    v = await h.after(() => page.goForward());
+    expect(v.filter.isPrepped).toEqual({ _in: [true] });
+    expect(v.filter.AND.length).toBe(2);
+    await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
+    await expect(filterBadge(page)).toHaveText('3');
+  });
+
+  test('the active tab is in the URL: deep link, click, reload and back', async ({ page }) => {
+    test.setTimeout(90_000);
+    const h = await setup(page);
+    await openLink(page, h, '?tab=slots', (v) => !!v.filter);
+    await expect(slotsTab(page)).toHaveClass(/active/);
+    await expect(requestsTab(page)).not.toHaveClass(/active/);
+
+    await requestsTab(page).click();
+    await expect(requestsTab(page)).toHaveClass(/active/);
+    await expect.poll(() => query(page).has('tab')).toBe(false);
+
+    await slotsTab(page).click();
+    await expect.poll(() => query(page).get('tab')).toBe('slots');
+    await page.reload();
+    await expect(slotsTab(page)).toHaveClass(/active/, { timeout: 30_000 });
+
+    await page.goBack();
+    await expect(requestsTab(page)).toHaveClass(/active/);
+  });
+});
 /*
  * NOT COVERABLE IN @mocked - needs a live-UAT spec
  *   - Real server semantics of the filter variables: that `deviceRequestItems: {laptops:{_gt:0}}`
