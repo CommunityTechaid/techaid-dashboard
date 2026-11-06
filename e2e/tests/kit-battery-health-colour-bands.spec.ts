@@ -59,7 +59,7 @@ async function openKitWithBattery(page: Page, batteryHealth: number | null) {
 }
 
 test.describe('kit-info Battery Health colour bands (#231) @mocked', () => {
-  const CASES: Array<[number | null, string, string]> = [
+  const CASES: [number | null, string, string][] = [
     [51, GREEN, 'just above 50 is green'],
     [50, RED, 'exactly 50 is red'],
     [49, RED, 'below 50 is red'],
