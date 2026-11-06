@@ -62,6 +62,10 @@ export const KIT_STATUS_LABELS_WITH_DISABLED = [
   {label: 'Device stored', value: 'PROCESSING_STORED'}
 ];
 
+// Battery Health above this is OK (green); at or below it, or empty, is red.
+// Shared with the low-battery status lock (#232, techaid-server#264) so they can't drift apart.
+export const BATTERY_HEALTH_OK_ABOVE = 50;
+
 const QUERY_ENTITY = gql`
 query findKit($id: Long) {
   kit(where: {
@@ -457,15 +461,8 @@ export class KitInfoComponent implements OnInit, OnDestroy {
             'templateOptions.bgcolor': (model, state, field) => {
               const data = field.parent.formControl.value || {};
               const health = data['batteryHealth'];
-              if (health >= 75) {
-                return 'green';
-              } else if(health >= 50) {
-                return 'yellow';
-              } else if(health >= 25) {
-                return 'orange';
-              } else {
-                return 'red';
-              }
+              // Empty is red too: null > 50 and '' > 50 are both false.
+              return health > BATTERY_HEALTH_OK_ABOVE ? 'green' : 'red';
             }
           },
           hideExpression: (model, state, field) => {
