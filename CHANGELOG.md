@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.2.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.1.1...v2.2.0) (2026-11-09)
+
+
+### Features
+
+* **auth:** split write permissions on request/referee pages ([#233](https://github.com/CommunityTechaid/techaid-dashboard/issues/233)) ([#286](https://github.com/CommunityTechaid/techaid-dashboard/issues/286)) ([c069ff9](https://github.com/CommunityTechaid/techaid-dashboard/commit/c069ff951f6a3e869fdd19edfcd6a9dc5d1ca3ac))
+* change history for Admin Panel settings ([#273](https://github.com/CommunityTechaid/techaid-dashboard/issues/273)) ([#275](https://github.com/CommunityTechaid/techaid-dashboard/issues/275)) ([6fa1026](https://github.com/CommunityTechaid/techaid-dashboard/commit/6fa102682db5d5ca68698469fca84493d24e6e1c))
+* **delivery:** admin exception bookings on the Delivery Slots tab (techaid-server[#73](https://github.com/CommunityTechaid/techaid-dashboard/issues/73)) ([#298](https://github.com/CommunityTechaid/techaid-dashboard/issues/298)) ([dca1f3e](https://github.com/CommunityTechaid/techaid-dashboard/commit/dca1f3eda10f6289ea93193d93e3e7a1a34f152c))
+* gate request/referee read & delete UI on split permissions ([#288](https://github.com/CommunityTechaid/techaid-dashboard/issues/288)) ([#293](https://github.com/CommunityTechaid/techaid-dashboard/issues/293)) ([cc62a1b](https://github.com/CommunityTechaid/techaid-dashboard/commit/cc62a1b41a8a28bd75ca355de773c23ff8a44628))
+* **kits:** stop requesting and sending kit attributes (techaid-server[#151](https://github.com/CommunityTechaid/techaid-dashboard/issues/151)) ([#295](https://github.com/CommunityTechaid/techaid-dashboard/issues/295)) ([8b1edb2](https://github.com/CommunityTechaid/techaid-dashboard/commit/8b1edb2cb425fddf222167c7831b642ca62790e5))
+* **permissions:** referee picker and request-form hint without read:organisations ([#345](https://github.com/CommunityTechaid/techaid-dashboard/issues/345)) ([#306](https://github.com/CommunityTechaid/techaid-dashboard/issues/306)) ([71e3389](https://github.com/CommunityTechaid/techaid-dashboard/commit/71e33894890e230ce8ac5448ce0b0000c0b28d60))
+* put D&D filters and the active tab in the URL ([#282](https://github.com/CommunityTechaid/techaid-dashboard/issues/282)) ([#310](https://github.com/CommunityTechaid/techaid-dashboard/issues/310)) ([bf35c4b](https://github.com/CommunityTechaid/techaid-dashboard/commit/bf35c4b3c717cf5f3ccae20bc4688a645b43abd9))
+* read-only request form without write:requests ([#287](https://github.com/CommunityTechaid/techaid-dashboard/issues/287)) ([#290](https://github.com/CommunityTechaid/techaid-dashboard/issues/290)) ([de11acc](https://github.com/CommunityTechaid/techaid-dashboard/commit/de11acc675b526ede5c5d8efeb8399a8d49b273f))
+* show request cap before the form ([#279](https://github.com/CommunityTechaid/techaid-dashboard/issues/279)) ([#289](https://github.com/CommunityTechaid/techaid-dashboard/issues/289)) ([b434589](https://github.com/CommunityTechaid/techaid-dashboard/commit/b434589c0b07ee2e293a6f02dcb5821344d7ef07))
+
+
+### Bug Fixes
+
+* D&D device-type filter ORs the ticked types; OTHER kits are counted ([#291](https://github.com/CommunityTechaid/techaid-dashboard/issues/291)) ([#312](https://github.com/CommunityTechaid/techaid-dashboard/issues/312)) ([231a8c8](https://github.com/CommunityTechaid/techaid-dashboard/commit/231a8c81899865abb2a347fbcfd93b7c2eb611d5))
+* D&D display fixes and dead-code removal ([#284](https://github.com/CommunityTechaid/techaid-dashboard/issues/284), [#285](https://github.com/CommunityTechaid/techaid-dashboard/issues/285)) ([#307](https://github.com/CommunityTechaid/techaid-dashboard/issues/307)) ([70a05b9](https://github.com/CommunityTechaid/techaid-dashboard/commit/70a05b986113b9a82fdf39e306437239b0c36f3e))
+* Delivery Slots CSV export no longer includes deleted bookings ([#281](https://github.com/CommunityTechaid/techaid-dashboard/issues/281)) ([#305](https://github.com/CommunityTechaid/techaid-dashboard/issues/305)) ([81f132a](https://github.com/CommunityTechaid/techaid-dashboard/commit/81f132aa3808492377e22ab6af7158dfe0f98928))
+* Delivery Slots tab wording, Refresh button, load on first open ([#283](https://github.com/CommunityTechaid/techaid-dashboard/issues/283)) ([#308](https://github.com/CommunityTechaid/techaid-dashboard/issues/308)) ([35b28c3](https://github.com/CommunityTechaid/techaid-dashboard/commit/35b28c33127b43f7e3d55e9a7afa7c4ff5acab63))
+* **e2e:** restore authenticateWithPermissions as an alias of loginWith ([#304](https://github.com/CommunityTechaid/techaid-dashboard/issues/304)) ([106a555](https://github.com/CommunityTechaid/techaid-dashboard/commit/106a555437e313b77d1b5aa507fbba165dafe744))
+* hide delivery booking Delete without write:organisations ([#294](https://github.com/CommunityTechaid/techaid-dashboard/issues/294)) ([#297](https://github.com/CommunityTechaid/techaid-dashboard/issues/297)) ([585f7e1](https://github.com/CommunityTechaid/techaid-dashboard/commit/585f7e127d98156ffdb2ecba3c939f670799e4d7))
+* keep D&D quick filters and Filter-window filters consistent ([#280](https://github.com/CommunityTechaid/techaid-dashboard/issues/280)) ([#309](https://github.com/CommunityTechaid/techaid-dashboard/issues/309)) ([2ac0c65](https://github.com/CommunityTechaid/techaid-dashboard/commit/2ac0c65f9e4443685490b96a556e2df581590fa6))
+* **search:** write search ORs so they mean the same under correct OR grouping (techaid-server[#169](https://github.com/CommunityTechaid/techaid-dashboard/issues/169)) ([#303](https://github.com/CommunityTechaid/techaid-dashboard/issues/303)) ([5afeffd](https://github.com/CommunityTechaid/techaid-dashboard/commit/5afeffda6462df3ac2d1dcbf4d4046f472d8b8f3))
+
 ## [2.1.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.1.0...v2.1.1) (2026-11-03)
 
 
