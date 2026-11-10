@@ -265,6 +265,8 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
 
   filter: any = {};
   filterCount = 0;
+  /** Total from the last successful load; keeps the pager usable after a failed one. */
+  private lastTotal = 0;
   filterModel: any = {is_sales: [false]};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterDeviceTypes = DEVICE_TYPES.filter(t => t.value !== 'BROADBANDHUBS');
@@ -497,6 +499,18 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   }
 
   /**
+   * RESET in the Filter window (#291): back to the page default in one click. That is
+   * non-commercial requests only, with the week / Failed / On hold buttons switched off too,
+   * the same state as a first visit (and the same idea as the device list's RESET, #76).
+   */
+  resetFilters() {
+    this.quickWeek = null;
+    this.quickFailed = false;
+    this.quickOnHold = false;
+    this.applyFilter({ is_sales: [false] });
+  }
+
+  /**
    * Builds the query from the Filter-window model (`data`) combined with the quick-filter
    * state, persists both, and reloads the table.
    *
@@ -629,17 +643,35 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       lengthMenu: [ 5, 10, 25, 50, 100 ],
       order: [0, 'desc'],
       serverSide: true,
+      // No request of DataTables' own on init (#291): it went out before ngAfterViewInit had
+      // applied the saved or default filter, so every load fetched twice and the first,
+      // unfiltered, answer included commercial rows. applyFilter() makes the first request.
+      deferLoading: 0,
       stateSave: true,
       processing: true,
       searching: true,
+      language: {
+        // Every total this table reports is already filtered, so DataTables always picks this
+        // text for an empty page; its default ("No data available in table") reads as "the
+        // database is empty" when a search or filter simply matched nothing (#291).
+        emptyTable: 'No matching records found',
+      },
+      // A header click toggles asc/desc; DataTables' default third state is "no sort" (#291).
+      columnDefs: [{ targets: '_all', orderSequence: ['asc', 'desc'] }],
       ajax: (params: any, callback) => {
         const drawToken = this.draws.start();
-        const sort = params.order.map(o => {
+        let sort = params.order.map(o => {
           return {
             key: this.dtOptions.columns[o.column].data,
             value: o.dir
           };
         });
+        // Never ask the server for "no order" (#291): paging an unordered result can repeat or
+        // skip rows. orderSequence below stops a header click producing this; a table state
+        // saved before that could still restore it.
+        if (!sort.length) {
+          sort = [{ key: 'id', value: 'desc' }];
+        }
 
         const vars = {
           page: {
@@ -679,6 +711,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
           // or the table body never repaints under OnPush.
           this.cdr.markForCheck();
 
+          this.lastTotal = data['totalElements'] || 0;
           callback({
             draw: params.draw,
             recordsTotal: data['totalElements'],
@@ -687,10 +720,19 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
             data: []
           });
         }, err => {
+          if (this.draws.isStale(drawToken)) {
+            return;
+          }
+          // The rows on screen belong to the request before this one: clear them rather than
+          // leave the previous page showing under the new page number (#291).
+          this.entities = [];
+          this.cdr.markForCheck();
+          // Report the last known total, not zero, so the pager keeps its page links and the
+          // user can go back or try again without reloading (#291).
           callback({
             draw: params.draw,
-            recordsTotal: 0,
-            recordsFiltered: 0,
+            recordsTotal: this.lastTotal,
+            recordsFiltered: this.lastTotal,
             error: err.message,
             data: []
           });

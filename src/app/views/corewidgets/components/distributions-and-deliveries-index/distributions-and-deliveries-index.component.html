@@ -299,6 +299,8 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light btn-sm" (click)="c('Close click')">CANCEL</button>
+    <button type="button" class="btn btn-light btn-sm" data-testid="dnd-filter-reset"
+      (click)="resetFilters(); c('Close click')">RESET</button>
     <button type="button" class="btn btn-primary btn-sm"
       (click)="applyFilterFromModal(filterForm.value); c('Close click')">
       Filter
