@@ -21,6 +21,7 @@ import { MembershipMeterComponent } from '@app/shared/membership/membership-mete
 
 import { ReferringOrganisationContactComponent } from '../referring-organisation-contact-component/referring-organisation-contact-component.component';
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
+import { ReferringOrganisationAuditComponent } from '../referring-organisation-audit/referring-organisation-audit.component';
 
 const queryEntity = (membership: string) => gql`
   query findReferringOrganisation($id: Long) {
@@ -173,7 +174,7 @@ const DELETE_ENTITY = gql`
     templateUrl: './referring-organisation-info.component.html',
     styleUrls: ['./referring-organisation-info.component.scss'],
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet, MembershipBadgesComponent, MembershipMeterComponent]
+    imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet, MembershipBadgesComponent, MembershipMeterComponent, ReferringOrganisationAuditComponent]
 })
 export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
 

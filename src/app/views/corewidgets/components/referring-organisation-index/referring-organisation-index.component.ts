@@ -16,7 +16,7 @@ import { RouterLink } from '@angular/router';
 import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
 import { take } from 'rxjs/operators';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
-import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION, MEMBERSHIP_TIERS } from '@app/shared/membership/membership';
+import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION, MEMBERSHIP_TIERS, MEMBERSHIP_USAGE_BANDS } from '@app/shared/membership/membership';
 import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 
 const CREATE_ENTITY = gql`
@@ -199,6 +199,20 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
             options: MEMBERSHIP_TIERS.map(t => ({ label: t.label, value: t.value })),
             required: false,
           }
+        },
+        {
+          key: 'membershipUsage',
+          type: 'multicheckbox',
+          className: 'col-sm-4',
+          // Same as membershipTier: kept while the flag is off, ignored by the query.
+          resetOnHide: false,
+          hideExpression: () => !this.membershipEnabled,
+          templateOptions: {
+            type: 'array',
+            label: 'Filter by Allowance',
+            options: MEMBERSHIP_USAGE_BANDS.map(b => ({ label: b.label, value: b.value })),
+            required: false,
+          }
         }
       ]
     }
@@ -223,6 +237,11 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
     if (data.membershipTier && data.membershipTier.length) {
       count += data.membershipTier.length;
       filter['membershipTier'] = {_in: data.membershipTier};
+    }
+
+    if (data.membershipUsage && data.membershipUsage.length) {
+      count += data.membershipUsage.length;
+      filter['membershipUsage'] = {_in: data.membershipUsage};
     }
 
     localStorage.setItem(`referringOrgFilters-${this.tableId}`, JSON.stringify(data));
@@ -313,9 +332,9 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
 
         this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
         this.membershipEnabled = enabled;
-        if (!enabled && vars.filter.membershipTier) {
-          // The server doesn't know the field while the flag is off; don't let a saved filter break the table.
-          const { membershipTier, ...rest } = vars.filter;
+        if (!enabled && (vars.filter.membershipTier || vars.filter.membershipUsage)) {
+          // The server doesn't know the fields while the flag is off; don't let a saved filter break the table.
+          const { membershipTier, membershipUsage, ...rest } = vars.filter;
           vars.filter = rest;
         }
         (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
