@@ -3,8 +3,6 @@ import { Subject } from 'rxjs';
 import $ from 'jquery';
 import DataTable from 'datatables.net';
 import 'datatables.net-bs5';
-import 'datatables.net-rowreorder';
-import 'datatables.net-responsive';
 
 // DataTables 3 no longer imports jQuery itself. Hand it the bundled one, or $.fn.DataTable
 // (and $.fn.dataTable below) never exist and every table fails to initialise.

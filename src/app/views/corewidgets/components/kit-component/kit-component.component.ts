@@ -23,8 +23,6 @@ import {
   catchError,
 } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
-import 'datatables.net-responsive';
-import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { UserState } from '@app/state/state.module';

@@ -22,8 +22,6 @@ import {
   catchError,
 } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
-import 'datatables.net-responsive';
-import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';

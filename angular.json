@@ -22,8 +22,6 @@
             ],
             "allowedCommonJsDependencies": [
               "graphql-tag",
-              "datatables.net-responsive",
-              "datatables.net-rowreorder",
               "jquery",
               "datatables.net",
               "ngx-lightbox",

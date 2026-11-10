@@ -9,8 +9,6 @@ import { UntypedFormGroup, FormGroup, ReactiveFormsModule } from '@angular/forms
 import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
-import 'datatables.net-responsive';
-import 'datatables.net-rowreorder';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
