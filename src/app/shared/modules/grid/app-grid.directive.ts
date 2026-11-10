@@ -1,10 +1,14 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import $ from 'jquery';
-import 'datatables.net';
+import DataTable from 'datatables.net';
 import 'datatables.net-bs5';
 import 'datatables.net-rowreorder';
 import 'datatables.net-responsive';
+
+// DataTables 3 no longer imports jQuery itself. Hand it the bundled one, or $.fn.DataTable
+// (and $.fn.dataTable below) never exist and every table fails to initialise.
+DataTable.use($);
 
 // Suppress DataTables' default blocking browser-alert on an ajax failure. Errors are already
 // surfaced via toastr by the table components; the alert was the source of the confusing
