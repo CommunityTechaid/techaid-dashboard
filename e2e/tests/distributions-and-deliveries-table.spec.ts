@@ -414,10 +414,9 @@ test.describe('DnD table: initial load @mocked', () => {
   });
 
   test('the first request sent already carries the default filter', async ({ page }) => {
-    // DEFECT: DataTables' own initial draw fires before ngAfterViewInit applies the saved/default
-    // filter, so the first findAllDeviceRequests is UNFILTERED (filter {}, i.e. commercial rows
-    // too) and a second, filtered, request follows. Double fetch + a flash of the wrong rows.
-    test.fail();
+    // Was a DEFECT pin (#291): DataTables' own initial draw fired before ngAfterViewInit applied the
+    // saved/default filter, so the first request was UNFILTERED (commercial rows too) and a second,
+    // filtered, one followed. deferLoading now leaves the first request to applyFilter().
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -425,8 +424,7 @@ test.describe('DnD table: initial load @mocked', () => {
   });
 
   test('only one request is made on initial load', async ({ page }) => {
-    // DEFECT: initial load issues two requests (unfiltered draw + filtered reload); see above.
-    test.fail();
+    // Was a DEFECT pin (#291): initial load issued two requests (unfiltered draw + filtered reload).
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -599,12 +597,9 @@ test.describe('DnD table: search @mocked', () => {
   });
 
   test('a search or filter with no matches says "No matching records", not "No data available"', async ({ page }) => {
-    // DEFECT: the ajax callback reports recordsTotal === recordsFiltered === totalElements, so with zero
-    // matches DataTables picks its emptyTable text ("No data available in table"), which reads as "the
-    // database is empty", instead of zeroRecords ("No matching records found"). Fix: report the unfiltered
-    // total (or set language.emptyTable to the zeroRecords wording).
-    // component: distributions-and-deliveries-index.component.ts:522-523
-    test.fail();
+    // Was a DEFECT pin (#291): every total this table reports is already filtered, so with zero matches
+    // DataTables picked its emptyTable text ("No data available in table"), which reads as "the database
+    // is empty". language.emptyTable now carries the zeroRecords wording.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -631,7 +626,7 @@ test.describe('DnD table: search @mocked', () => {
     await h.after(() => searchBox(page).fill('nothing-matches-this'));
     await expectIds(page, []);
     await expectInfo(page, 0, 0, 0);
-    await expect(table(page)).toContainText('No data available in table');
+    await expect(table(page)).toContainText('No matching records found');
   });
 });
 
@@ -793,7 +788,7 @@ test.describe('DnD table: modal filters @mocked', () => {
     expect(expected.length).toBe(0);
     await expectIds(page, []);
     await expectInfo(page, 0, 0, 0);
-    await expect(table(page)).toContainText('No data available in table');
+    await expect(table(page)).toContainText('No matching records found');
   });
 
   test('applying a filter while on page 3 returns to page 1', async ({ page }) => {
@@ -834,17 +829,24 @@ test.describe('DnD table: modal filters @mocked', () => {
   });
 
   test('there is a way to clear every filter in one click', async ({ page }) => {
-    // DEFECT: the modal has no Reset/Clear-all, and the page "Clear" button only appears after a
-    // quick filter and clears just date + status (not sales/prepped/device/method). To get back to
-    // an unfiltered list a user must untick every box by hand - and the "no filter" state is not
-    // even reachable: the default non-commercial filter has no off switch other than ticking both.
-    test.fail();
+    // Was a DEFECT pin (#291): the modal had no Reset, and the page "Clear" button only clears the
+    // quick filters. RESET returns to the page default (non-commercial only, quick filters off),
+    // like the device list's RESET (#76).
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
     await applyModal(page, h, () => tick(page, 'Prepped'));
+    await h.after(() => onHoldButton(page).click());
     await openFilter(page);
-    await expect(page.locator('.modal-footer').getByRole('button', { name: /clear|reset/i })).toBeVisible({ timeout: 2_000 });
+    const reset = page.locator('.modal-footer').getByRole('button', { name: /clear|reset/i });
+    await expect(reset).toBeVisible({ timeout: 2_000 });
+    const v = await h.after(() => reset.click());
+    await expect(page.locator('.modal-title')).toHaveCount(0);
+    expect(v.filter).toEqual({ AND: [], isSales: { _in: [false] } });
+    // The window agrees with what was sent when it is opened again.
+    await openFilter(page);
+    await expect(modalBody(page).getByLabel('Prepped', { exact: true })).not.toBeChecked();
+    await expect(modalBody(page).getByLabel('Non-commercial', { exact: true })).toBeChecked();
   });
 
   test('un-ticking everything in a filter group drops that constraint from the request', async ({ page }) => {
@@ -1091,12 +1093,9 @@ test.describe('DnD table: sorting @mocked', () => {
   });
 
   test('clicking the sorted ID header never sends an empty sort', async ({ page }) => {
-    // DEFECT: DataTables 2 cycles a sorted header through "remove sorting" (aria: "ID: Activate to remove
-    // sorting"), so one click on the default-sorted ID column sends `sort: []`. The server then returns an
-    // unspecified order, and paging through an unordered result set can repeat or skip rows.
-    // Fix: orderable columns need `orderSequence: ['asc','desc']`, or the ajax fn should fall back to id desc.
-    // component: distributions-and-deliveries-index.component.ts:475-480 / :546
-    test.fail();
+    // Was a DEFECT pin (#291): DataTables 2 cycles a sorted header through "remove sorting", so one click
+    // on the default-sorted ID column sent `sort: []` and the server returned an unspecified order.
+    // Columns now use orderSequence ['asc','desc'], and an empty sort falls back to id desc.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -1355,11 +1354,8 @@ test.describe('DnD table: errors and stale responses @mocked', () => {
   });
 
   test('after a failed query the pager still lets the user retry or go back', async ({ page }) => {
-    // DEFECT: the error branch answers recordsTotal = recordsFiltered = 0, so DataTables redraws the pager
-    // with no page links ("Previous/Next" both disabled). A transient error therefore strands the user:
-    // only reload, a new search/filter or a page-size change re-issues a request.
-    // component: distributions-and-deliveries-index.component.ts:527-534
-    test.fail();
+    // Was a DEFECT pin (#291): the error branch answered zero totals, so the pager lost its page links
+    // and a transient error stranded the user. It now reports the last known total.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -1370,10 +1366,8 @@ test.describe('DnD table: errors and stale responses @mocked', () => {
   });
 
   test('a failed query does not leave the previous page showing under the new page number', async ({ page }) => {
-    // DEFECT: on error the ajax callback reports zero rows but never clears `entities`, so the
-    // PREVIOUS page's rows stay on screen while the info line/pager say "0 entries"/page 2.
-    // component: distributions-and-deliveries-index.component.ts:527-543 (error branch lacks entities = [])
-    test.fail();
+    // Was a DEFECT pin (#291): on error `entities` was never cleared, so the PREVIOUS page's rows
+    // stayed on screen under the new page number.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
