@@ -312,6 +312,9 @@ const filterBadge = (page: Page) => filterButton(page).locator('.badge');
 const quickBar = (page: Page) => page.locator('div.mt-3.px-3.d-flex');
 const weekButtons = (page: Page) => quickBar(page).locator('button.btn-primary, button.btn-outline-primary');
 const failedButton = (page: Page) => quickBar(page).getByRole('button', { name: 'Collection/Delivery Failed' });
+/** The week view's implicit open-status scope, sorted (excludes on-hold, failed, declined, cancelled). */
+const OPEN_SORTED = ['NEW', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'REQUEST_COMPLETED'].sort();
+const onHoldButton = (page: Page) => quickBar(page).getByRole('button', { name: 'On hold', exact: true });
 const clearButton = (page: Page) => quickBar(page).getByRole('button', { name: 'Clear' });
 
 async function shownIds(page: Page): Promise<number[]> {
@@ -905,7 +908,7 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
     expect(v.page!.page).toBe(0);
     await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
     await expect(clearButton(page)).toBeVisible();
-    const inWeek = FIX.rows.filter(nonSales).filter((r) => !['REQUEST_DECLINED', 'REQUEST_CANCELLED', 'REQUEST_COLLECTION_DELIVERY_FAILED'].includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end).sort(byIdDesc);
+    const inWeek = FIX.rows.filter(nonSales).filter((r) => !['REQUEST_DECLINED', 'REQUEST_CANCELLED', 'REQUEST_COLLECTION_DELIVERY_FAILED', 'PROCESSING_ON_HOLD'].includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end).sort(byIdDesc);
     await expectIds(page, ids(inWeek.slice(0, 10)));
     await expectInfo(page, 1, Math.min(10, inWeek.length), inWeek.length);
     await expect(filterBadge(page)).toHaveText('2'); // non-commercial + the week (a date range counts once)
@@ -977,7 +980,8 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
     await h.after(() => weekButtons(page).nth(0).click());
     const v = await h.after(() => failedButton(page).click());
     expect(v.filter.AND.length).toBe(2);
-    expect(v.filter.status).toEqual({ _in: ['REQUEST_COLLECTION_DELIVERY_FAILED'] });
+    // Additive (staff feedback 2026-11-10): the week's open requests PLUS its failed ones.
+    expect(v.filter.status._in.slice().sort()).toEqual([...OPEN_SORTED, 'REQUEST_COLLECTION_DELIVERY_FAILED'].sort());
     await expect(weekButtons(page).nth(0)).toHaveClass(/btn-primary/);
     await expect(failedButton(page)).toHaveClass(/btn-success/);
     await expect(filterBadge(page)).toHaveText('3'); // non-commercial + failed + week
@@ -990,28 +994,28 @@ test.describe('DnD table: quick filter buttons @mocked', () => {
     await load(page, h);
     await h.after(() => failedButton(page).click());
     const v = await h.after(() => weekButtons(page).nth(1).click());
-    expect(v.filter.status).toEqual({ _in: ['REQUEST_COLLECTION_DELIVERY_FAILED'] });
+    expect(v.filter.status._in.slice().sort()).toEqual([...OPEN_SORTED, 'REQUEST_COLLECTION_DELIVERY_FAILED'].sort());
     expect(v.filter.AND.length).toBe(2);
     await expect(weekButtons(page).nth(1)).toHaveClass(/btn-primary/);
     await expect(failedButton(page)).toHaveClass(/btn-success/);
     const { start, end } = weekRange(1);
     const expected = FIX.rows
       .filter(nonSales)
-      .filter((r) => r.status === 'REQUEST_COLLECTION_DELIVERY_FAILED' && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end)
+      .filter((r) => [...OPEN_SORTED, 'REQUEST_COLLECTION_DELIVERY_FAILED'].includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end)
       .sort(byIdDesc);
     await expectIds(page, ids(expected.slice(0, 10)));
   });
 
-  test('a week view shows open statuses only by default (#42), and drops declined/cancelled/failed rows', async ({ page }) => {
+  test('a week view shows open statuses only by default (#42), and drops declined/cancelled/failed/on-hold rows', async ({ page }) => {
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
     const v = await h.after(() => weekButtons(page).nth(0).click());
     expect(v.filter.status._in.slice().sort()).toEqual(
-      ['NEW', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_ON_HOLD', 'REQUEST_COMPLETED'],
+      ['NEW', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'REQUEST_COMPLETED'],
     );
     const { start, end } = weekRange(0);
-    const open = ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_ON_HOLD', 'REQUEST_COMPLETED'];
+    const open = ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'REQUEST_COMPLETED'];
     const expected = FIX.rows
       .filter(nonSales)
       .filter((r) => open.includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end)
@@ -1429,7 +1433,7 @@ test.describe('DnD table: filters and tab in the URL @mocked', () => {
     await expect(quickBar(page).locator('button.btn-primary')).toHaveCount(1);
     await expect(clearButton(page)).toBeVisible();
     await expect(filterBadge(page)).toHaveText('4'); // non-commercial + not prepped + delivery + week
-    const open = ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'PROCESSING_ON_HOLD', 'REQUEST_COMPLETED'];
+    const open = ['NEW', 'PROCESSING_EQUALITIES_DATA_COMPLETE', 'PROCESSING_COLLECTION_DELIVERY_ARRANGED', 'REQUEST_COMPLETED'];
     const expected = FIX.rows
       .filter(nonSales)
       .filter((r) => !r.isPrepped && r.collectionMethod === 'DELIVERY' && open.includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end)
@@ -1446,6 +1450,71 @@ test.describe('DnD table: filters and tab in the URL @mocked', () => {
     expect(v.filter.deviceRequestItems).toEqual({ OR: [{ laptops: { _gt: 0 } }] });
     expect(v.filter.isSales._in.slice().sort()).toEqual([false, true]);
     await expect(failedButton(page)).toHaveClass(/btn-success/);
+  });
+
+  test('the On hold button filters to PROCESSING_ON_HOLD, highlights green and is in the URL', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    const v = await h.after(() => onHoldButton(page).click());
+    expect(v.filter.status).toEqual({ _in: ['PROCESSING_ON_HOLD'] });
+    await expect(onHoldButton(page)).toHaveClass(/btn-success/);
+    await expect(failedButton(page)).toHaveClass(/btn-outline-success/);
+    await expect.poll(() => query(page).get('onhold')).toBe('yes');
+    const onHold = FIX.rows.filter(nonSales).filter((r) => r.status === 'PROCESSING_ON_HOLD').sort(byIdDesc);
+    await expectIds(page, ids(onHold.slice(0, 10)));
+    await expect(filterBadge(page)).toHaveText('2'); // non-commercial + on hold
+  });
+
+  test('a week plus On hold ADDS that week\'s on-hold rows; plus Failed adds failed rows too', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    await h.after(() => weekButtons(page).nth(0).click());
+    let v = await h.after(() => onHoldButton(page).click());
+    expect(v.filter.status._in.slice().sort()).toEqual([...OPEN_SORTED, 'PROCESSING_ON_HOLD'].sort());
+    expect(v.filter.AND.length).toBe(2);
+    await expect(weekButtons(page).nth(0)).toHaveClass(/btn-primary/);
+    const { start, end } = weekRange(0);
+    const expected = FIX.rows
+      .filter(nonSales)
+      .filter((r) => [...OPEN_SORTED, 'PROCESSING_ON_HOLD'].includes(r.status) && r.collectionDate && Date.parse(r.collectionDate) >= +start && Date.parse(r.collectionDate) <= +end)
+      .sort(byIdDesc);
+    await expectIds(page, ids(expected.slice(0, 10)));
+    await expect(filterBadge(page)).toHaveText('3'); // non-commercial + week + on hold
+    v = await h.after(() => failedButton(page).click());
+    expect(v.filter.status._in.slice().sort()).toEqual([...OPEN_SORTED, 'PROCESSING_ON_HOLD', 'REQUEST_COLLECTION_DELIVERY_FAILED'].sort());
+    // Clear drops both status buttons and the week together.
+    v = await h.after(() => clearButton(page).click());
+    expect(v.filter.status).toBeUndefined();
+    await expect(onHoldButton(page)).toHaveClass(/btn-outline-success/);
+    expect(query(page).has('onhold')).toBe(false);
+  });
+
+  test('a deep link with onhold=yes lights the On hold button', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await openLink(page, h, `?week=${weekKey(0)}&onhold=yes`, (v) => (v.filter?.AND ?? []).length === 2);
+    expect(h.last().filter.status._in.slice().sort()).toEqual([...OPEN_SORTED, 'PROCESSING_ON_HOLD'].sort());
+    await expect(onHoldButton(page)).toHaveClass(/btn-success/);
+  });
+
+  test('clicking a lit Failed or On hold button again switches just that button off', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    await h.after(() => weekButtons(page).nth(0).click());
+    await h.after(() => onHoldButton(page).click());
+    await h.after(() => failedButton(page).click());
+    let v = await h.after(() => failedButton(page).click());
+    expect(v.filter.status._in.slice().sort()).toEqual([...OPEN_SORTED, 'PROCESSING_ON_HOLD'].sort());
+    await expect(failedButton(page)).toHaveClass(/btn-outline-success/);
+    await expect(onHoldButton(page)).toHaveClass(/btn-success/);
+    await expect(weekButtons(page).nth(0)).toHaveClass(/btn-primary/);
+    v = await h.after(() => onHoldButton(page).click());
+    expect(v.filter.status._in.slice().sort()).toEqual(OPEN_SORTED);
+    await expect.poll(() => query(page).has('onhold') || query(page).has('failed')).toBe(false);
+    expect(query(page).get('week')).toBe(weekKey(0));
   });
 
   test('URL filters win over saved filters', async ({ page }) => {
