@@ -107,6 +107,7 @@ async function resolveCtaReference() {
 const violations = [];
 let turnstileApiResponse = null; // network Response for challenges.cloudflare.com/turnstile/v0/api.js
 let turnstileIframeAttached = false;
+let turnstileFrameMessages = 0; // CSP console messages raised inside Cloudflare's own iframe
 
 function report(ok, lines, gated = false) {
   console.log('\n=== CSP probe report ===');
@@ -140,7 +141,18 @@ async function main() {
   page.on('console', (msg) => {
     const text = msg.text();
     if (/content security policy/i.test(text)) {
-      violations.push({ source: 'console', detail: text });
+      // The console also carries messages from inside Turnstile's challenge iframe, which is
+      // Cloudflare's document under Cloudflare's own CSP. A real site key (production) runs a
+      // real challenge there, and its bot checks deliberately trip that policy (e.g. a fetch
+      // of `data:,`). Those say nothing about our CSP, so they are counted, not failed. UAT
+      // uses Cloudflare's always-pass test key and never produces them. Our own policy is
+      // still covered twice: main-document console messages, and securitypolicyviolation.
+      const reportedBy = msg.location()?.url ?? '';
+      if (isTurnstileUrl(reportedBy)) {
+        turnstileFrameMessages++;
+        return;
+      }
+      violations.push({ source: 'console', detail: `${text} [reported by ${reportedBy || 'unknown'}]` });
     }
   });
 
@@ -287,6 +299,9 @@ async function main() {
     lines.push('✗ No Turnstile challenge iframe attached (challenges.cloudflare.com frame never appeared).');
   }
 
+  if (turnstileFrameMessages > 0) {
+    lines.push(`ℹ Ignored ${turnstileFrameMessages} CSP message(s) from inside Turnstile's iframe (Cloudflare's own policy, not ours).`);
+  }
   if (violations.length === 0) {
     lines.push('✓ Zero CSP violations.');
   } else {
