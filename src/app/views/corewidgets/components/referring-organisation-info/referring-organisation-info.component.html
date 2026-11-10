@@ -122,6 +122,14 @@
         </div>
       </ng-template>
     </li>
+    @if (model?.id && (user?.authorities['app:admin'] || user?.authorities['admin:organisations'])) {
+      <li ngbNavItem="history">
+        <a ngbNavLink data-testid="org-history-tab">History</a>
+        <ng-template ngbNavContent>
+          <referring-organisation-audit [orgId]="model.id" [version]="model.updatedAt"></referring-organisation-audit>
+        </ng-template>
+      </li>
+    }
   </ul>
   <div [ngbNavOutlet]="nav"></div>
 </div>

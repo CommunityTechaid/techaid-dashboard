@@ -58,6 +58,17 @@ export const MEMBERSHIP_TIERS: { value: MembershipTier; label: string; range: st
   { value: 'TIER_3', label: 'Tier 3', range: '41+ requests a year', fee: '£750' },
 ];
 
+/**
+ * Organisation list filter: where an allowance stands today (techaid-server `MembershipUsageBand`).
+ * The server decides who is in each band; "near" is 80% or more of the cap used.
+ */
+export type MembershipUsageBand = 'NEAR_LIMIT' | 'LIMIT_REACHED';
+
+export const MEMBERSHIP_USAGE_BANDS: { value: MembershipUsageBand; label: string }[] = [
+  { value: 'NEAR_LIMIT', label: 'Near limit (80% or more used)' },
+  { value: 'LIMIT_REACHED', label: 'Limit reached' },
+];
+
 export function tierLabel(tier: MembershipTier | null | undefined): string {
   return MEMBERSHIP_TIERS.find(t => t.value === tier)?.label ?? 'Free';
 }
