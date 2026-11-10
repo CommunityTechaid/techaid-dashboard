@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgIf, NgFor } from '@angular/common';
@@ -41,6 +41,10 @@ export class PlaceInput extends FieldType implements OnInit, OnDestroy {
   private input$ = new Subject<string>();
   private sub?: Subscription;
 
+  // Hosts such as the referee and donor index pages are OnPush, so suggestions assigned
+  // from the HTTP response or the blur timer must mark this view for check themselves.
+  private cdr = inject(ChangeDetectorRef);
+
   constructor(private http: HttpClient) { super(); }
 
   ngOnInit() {
@@ -52,7 +56,10 @@ export class PlaceInput extends FieldType implements OnInit, OnDestroy {
           params: { input: value }
         }).pipe(catchError(() => of({ predictions: [] })));
       })
-    ).subscribe(r => this.suggestions = r.predictions || []);
+    ).subscribe(r => {
+      this.suggestions = r.predictions || [];
+      this.cdr.markForCheck();
+    });
   }
 
   ngOnDestroy() {
@@ -64,7 +71,10 @@ export class PlaceInput extends FieldType implements OnInit, OnDestroy {
   }
 
   hideSuggestions() {
-    setTimeout(() => this.suggestions = [], 200);
+    setTimeout(() => {
+      this.suggestions = [];
+      this.cdr.markForCheck();
+    }, 200);
   }
 
   select(suggestion: any) {
