@@ -79,11 +79,12 @@ type DndTab = 'requests' | 'slots';
  *   tab=slots            (omitted for the default Device Requests tab)
  *   week=YYYY-MM-DD      Monday of the week (any date is snapped to its Monday)
  *   failed=yes           the Collection/Delivery Failed quick filter
+ *   onhold=yes           the On hold quick filter
  *   status=NEW,...       request status enums
  *   sales=no|yes|no,yes|all   (omitted = non-commercial only, the default; `all` = no constraint)
  *   prepped=no|yes       method=collection|delivery       device=LAPTOPS,PHONES,...
  */
-const URL_FILTER_PARAMS = ['week', 'failed', 'status', 'sales', 'prepped', 'method', 'device'];
+const URL_FILTER_PARAMS = ['week', 'failed', 'onhold', 'status', 'sales', 'prepped', 'method', 'device'];
 const URL_PARAMS = ['tab', ...URL_FILTER_PARAMS];
 
 interface UrlState {
@@ -93,6 +94,7 @@ interface UrlState {
   model: any;
   week: string | null;
   failed: boolean;
+  onHold: boolean;
 }
 
 function validDateKey(s: string | null): string | null {
@@ -135,11 +137,12 @@ function parseQuery(p: ParamMap): UrlState {
     model,
     week: validDateKey(p.get('week')),
     failed: p.get('failed') === 'yes',
+    onHold: p.get('onhold') === 'yes',
   };
 }
 
 /** The inverse of parseQuery: defaults are omitted (null), so a default page has a clean URL. */
-function serializeQuery(model: any, week: string | null, failed: boolean, tab: DndTab): Record<string, string | null> {
+function serializeQuery(model: any, week: string | null, failed: boolean, onHold: boolean, tab: DndTab): Record<string, string | null> {
   const list = (v: any[] | undefined, f: (x: any) => string) => (v && v.length ? v.map(f).join(',') : null);
   const yn = (v: any[] | undefined) => list(v ? [...v].sort() : v, x => (x ? 'yes' : 'no'));
   const sales: any[] | undefined = model.is_sales;
@@ -151,6 +154,7 @@ function serializeQuery(model: any, week: string | null, failed: boolean, tab: D
     tab: tab === 'slots' ? 'slots' : null,
     week,
     failed: failed ? 'yes' : null,
+    onhold: onHold ? 'yes' : null,
     status: list(model.status, x => String(x)),
     sales: salesParam,
     prepped: yn(model.is_prepped),
@@ -159,14 +163,19 @@ function serializeQuery(model: any, week: string | null, failed: boolean, tab: D
   };
 }
 const FAILED_STATUSES = ['REQUEST_COLLECTION_DELIVERY_FAILED'];
-/** A week view hides DECLINED / CANCELLED / COLLECTION_DELIVERY_FAILED unless asked for (#42). */
+const ON_HOLD_STATUSES = ['PROCESSING_ON_HOLD'];
+/**
+ * A week view hides DECLINED / CANCELLED / COLLECTION_DELIVERY_FAILED unless asked for (#42),
+ * and ON_HOLD too (staff feedback 2026-11-06: an on-hold request is not going out that week).
+ * The Failed and On hold quick buttons bring their statuses back.
+ */
 const OPEN_STATUSES = [
   'NEW',
   'PROCESSING_EQUALITIES_DATA_COMPLETE',
   'PROCESSING_COLLECTION_DELIVERY_ARRANGED',
-  'PROCESSING_ON_HOLD',
   'REQUEST_COMPLETED',
 ];
+type StatusButtonKey = 'failed' | 'onHold';
 
 /** Local 'YYYY-MM-DD'. */
 function dateKey(d: Date): string {
@@ -336,7 +345,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   tableId = 'distributions-and-deliveries-index';
 
   weekButtons: {key: string, label: string, startDate: Date, endDate: Date, type: 'week'}[] = [];
-  statusButtons: {label: string, statuses: string[], type: 'status'}[] = [];
+  statusButtons: {key: StatusButtonKey, label: string, statuses: string[], type: 'status'}[] = [];
 
   // Quick-filter state is kept apart from the Filter-window state (`filterModel`) and the
   // two are combined only when the query is built in applyFilter() (#280).
@@ -344,9 +353,15 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   quickWeek: string | null = null;
   /** The 'Collection/Delivery Failed' button is on. */
   quickFailed = false;
+  /** The 'On hold' button is on. */
+  quickOnHold = false;
 
   get hasQuickFilter(): boolean {
-    return !!this.quickWeek || this.quickFailed;
+    return !!this.quickWeek || this.quickFailed || this.quickOnHold;
+  }
+
+  isStatusButtonActive(key: StatusButtonKey): boolean {
+    return key === 'failed' ? this.quickFailed : this.quickOnHold;
   }
   generateWeekButtons() {
     const buttons = [];
@@ -390,8 +405,15 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       //   type: 'status' as const
       // },
       {
+        key: 'failed' as const,
         label: 'Collection/Delivery Failed',
-        statuses: ['REQUEST_COLLECTION_DELIVERY_FAILED'],
+        statuses: FAILED_STATUSES,
+        type: 'status' as const
+      },
+      {
+        key: 'onHold' as const,
+        label: 'On hold',
+        statuses: ON_HOLD_STATUSES,
         type: 'status' as const
       }
     ];
@@ -402,8 +424,13 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     this.applyFilter(this.filterModel);
   }
 
-  applyStatusFilter(_button?: {label: string, statuses: string[]}) {
-    this.quickFailed = true;
+  /** The Failed and On hold buttons are toggles: a second click switches just that one off. */
+  applyStatusFilter(button: {key: StatusButtonKey}) {
+    if (button.key === 'onHold') {
+      this.quickOnHold = !this.quickOnHold;
+    } else {
+      this.quickFailed = !this.quickFailed;
+    }
     this.applyFilter(this.filterModel);
   }
 
@@ -411,6 +438,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   clearQuickFilters() {
     this.quickWeek = null;
     this.quickFailed = false;
+    this.quickOnHold = false;
     this.applyFilter(this.filterModel);
   }
   setTab(tab: DndTab) {
@@ -432,7 +460,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     // The first sync only makes the URL describe the restored state, so it must not add a history entry.
     replace = replace || this.initialSync;
     this.initialSync = false;
-    const q = serializeQuery(this.filterModel, this.quickWeek, this.quickFailed, this.desiredTab);
+    const q = serializeQuery(this.filterModel, this.quickWeek, this.quickFailed, this.quickOnHold, this.desiredTab);
     const cur = this.route.snapshot.queryParamMap;
     if (URL_PARAMS.every(k => (q[k] ?? null) === (cur.get(k) ?? null))) return;
     const queryParams: Params = q;
@@ -442,16 +470,22 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   /** Browser back/forward or an edited URL: make the page match it. */
   private onUrlChange(p: ParamMap) {
     const u = parseQuery(p);
-    const next = { model: u.hasFilters ? u.model : { is_sales: [false] }, week: u.hasFilters ? u.week : null, failed: u.hasFilters && u.failed };
+    const next = {
+      model: u.hasFilters ? u.model : { is_sales: [false] },
+      week: u.hasFilters ? u.week : null,
+      failed: u.hasFilters && u.failed,
+      onHold: u.hasFilters && u.onHold,
+    };
     this.applyTab(u.tab ?? 'requests');
-    const sameState = JSON.stringify(serializeQuery(next.model, next.week, next.failed, 'requests')) ===
-      JSON.stringify(serializeQuery(this.filterModel, this.quickWeek, this.quickFailed, 'requests'));
+    const sameState = JSON.stringify(serializeQuery(next.model, next.week, next.failed, next.onHold, 'requests')) ===
+      JSON.stringify(serializeQuery(this.filterModel, this.quickWeek, this.quickFailed, this.quickOnHold, 'requests'));
     if (sameState) {
       this.cdr.markForCheck();
       return;
     }
     this.quickWeek = next.week;
     this.quickFailed = next.failed;
+    this.quickOnHold = next.onHold;
     this.applyFilter(next.model);
   }
   // Guards the Filter-modal submit button specifically; applyFilter itself stays
@@ -466,23 +500,29 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
    * Builds the query from the Filter-window model (`data`) combined with the quick-filter
    * state, persists both, and reloads the table.
    *
-   * Status scope: statuses picked in the Filter window are kept; the Failed button adds its
-   * status to them; a week view with no explicit status shows open statuses only (#42).
+   * Status scope (staff feedback 2026-11-10: the quick buttons ADD to the list, never replace it):
+   *   base  = statuses picked in the Filter window; else, with a week chosen, the open statuses
+   *           (#42, which leave out on-hold and failed); else nothing (every status).
+   *   + the Failed / On hold buttons' statuses.
+   * So week + Failed = that week's open requests plus its failed ones. With no week and no
+   * Filter-window status the base is "everything", and a button alone narrows to its status.
    */
   applyFilter(data) {
     const filter: any = {AND: []};
     let count = 0;
     const deviceTypeLookup = DEVICE_TYPE_LOOKUP;
 
-    let status: string[] = data.status && data.status.length ? [...data.status] : [];
-    if (this.quickFailed) {
-      for (const s of FAILED_STATUSES) {
-        if (!status.includes(s)) status.push(s);
-      }
-    }
-    count += status.length;
-    if (!status.length && this.quickWeek) {
-      status = [...OPEN_STATUSES]; // implicit scope, not counted in the badge
+    const picked: string[] = data.status && data.status.length ? [...data.status] : [];
+    const quickStatuses = [
+      ...(this.quickFailed ? FAILED_STATUSES : []),
+      ...(this.quickOnHold ? ON_HOLD_STATUSES : []),
+    ];
+    // Badge counts what the user chose: Filter-window statuses plus lit buttons, never the
+    // implicit open-statuses scope.
+    count += picked.length + quickStatuses.filter(s => !picked.includes(s)).length;
+    let status: string[] = picked.length ? picked : this.quickWeek ? [...OPEN_STATUSES] : [];
+    for (const s of quickStatuses) {
+      if (!status.includes(s)) status.push(s);
     }
     if (status.length) {
       filter['status'] = {'_in': status };
@@ -526,7 +566,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
 
     localStorage.setItem(`distributionsAndDeliveriesFilters-${this.tableId}`, JSON.stringify({
       ...data,
-      quick: { week: this.quickWeek, failed: this.quickFailed },
+      quick: { week: this.quickWeek, failed: this.quickFailed, onHold: this.quickOnHold },
     }));
     this.filter = filter;
     this.filterCount = count;
@@ -708,8 +748,8 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
    * week that is no longer one of the offered buttons is dropped rather than silently
    * re-applied (#280: last month's week used to stick around with nothing lit).
    */
-  private readSavedFilters(): { model: any; week: string | null; failed: boolean } {
-    const fallback = { model: {is_sales: [false]}, week: null, failed: false };
+  private readSavedFilters(): { model: any; week: string | null; failed: boolean; onHold: boolean } {
+    const fallback = { model: {is_sales: [false]}, week: null, failed: false, onHold: false };
     try {
       const raw = JSON.parse(localStorage.getItem(`distributionsAndDeliveriesFilters-${this.tableId}`));
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fallback;
@@ -719,7 +759,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
         week = dateKey(new Date(collectionDateStart));
       }
       if (week && !this.weekButtons.some(b => b.key === week)) week = null;
-      return { model, week, failed: quick?.failed === true };
+      return { model, week, failed: quick?.failed === true, onHold: quick?.onHold === true };
     } catch (_) {
       return fallback;
     }
@@ -730,11 +770,12 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       // Filters in the URL win over saved ones (#282): a link is an explicit request.
       const fromUrl = parseQuery(this.route.snapshot.queryParamMap);
       const saved = fromUrl.hasFilters
-        ? { model: fromUrl.model, week: fromUrl.week, failed: fromUrl.failed }
+        ? { model: fromUrl.model, week: fromUrl.week, failed: fromUrl.failed, onHold: fromUrl.onHold }
         : this.readSavedFilters();
       this.filterModel = saved.model;
       this.quickWeek = saved.week;
       this.quickFailed = saved.failed;
+      this.quickOnHold = saved.onHold;
       try {
         this.applyFilter(this.filterModel);
         this.filterForm.patchValue(this.filterModel);
