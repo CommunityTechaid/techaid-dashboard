@@ -17,11 +17,13 @@
  *
  * Usage:
  *   node e2e/csp-probe.mjs                                   # UAT (default)
- *   node e2e/csp-probe.mjs https://app.communitytechaid.org.uk   # production
+ *   CSP_PROBE_REF=<id> node e2e/csp-probe.mjs https://app.communitytechaid.org.uk   # production
  *
- * Needs an ELIGIBLE request ID to get past the first step (see resolveCtaReference):
- * discovered automatically with the token in e2e/.auth/user.json, or pass
- * CSP_PROBE_REF=<id>. Nothing is ever submitted.
+ * Needs an ELIGIBLE request ID to get past the first step (see resolveCtaReference).
+ * On UAT it is discovered automatically with the token in e2e/.auth/user.json, or pass
+ * CSP_PROBE_REF=<id>. On PRODUCTION CSP_PROBE_REF is required: the saved token belongs to
+ * the Dev & UAT Auth0 application, which the production API rejects. Nothing is ever
+ * submitted.
  *
  * GATED ORIGINS: the /delivery-booking route sits behind deliveryBookingVisibleGuard,
  * which redirects to /404 on production while the `delivery-booking` feature flag is off
@@ -41,6 +43,7 @@ import { readFileSync } from 'fs';
 import { chromium } from 'playwright';
 
 const DEFAULT_ORIGIN = 'https://app-testing.communitytechaid.org.uk';
+const PRODUCTION_ORIGIN = 'https://app.communitytechaid.org.uk';
 const BOOKING_PATH = '/delivery-booking';
 const origin = (process.argv[2] ?? DEFAULT_ORIGIN).replace(/\/+$/, '');
 const url = `${origin}${BOOKING_PATH}`;
@@ -51,7 +54,7 @@ const probeNotes = [];
 /** Which API each dashboard origin talks to (environment.*.ts `graphql_endpoint`). */
 const API_FOR_ORIGIN = {
   'https://app-testing.communitytechaid.org.uk': 'https://api-testing.communitytechaid.org.uk/graphql',
-  'https://app.communitytechaid.org.uk': 'https://api.communitytechaid.org.uk/graphql',
+  [PRODUCTION_ORIGIN]: 'https://api.communitytechaid.org.uk/graphql',
 };
 
 /**
@@ -61,10 +64,21 @@ const API_FOR_ORIGIN = {
  *   1. CSP_PROBE_REF=<id>  — explicit, e.g. for an origin with no mapped API
  *   2. discovered via the admin API with the bearer token in e2e/.auth/user.json
  *      (the same token save-token.mjs writes; the admin query is not rate-limited,
- *      unlike the public eligibility check)
+ *      unlike the public eligibility check). Never on production: that token is issued
+ *      to the Dev & UAT Auth0 application, and the production API only accepts its own
+ *      applications (AUTH0_ALLOWED_CLIENTS, techaid-server#330), so the lookup can only
+ *      fail there. Say what is needed instead of reporting a confusing lookup error.
  */
 async function resolveCtaReference() {
   if (process.env.CSP_PROBE_REF) return { id: Number(process.env.CSP_PROBE_REF), source: 'CSP_PROBE_REF' };
+  if (origin === PRODUCTION_ORIGIN) {
+    throw new Error(
+      'production needs CSP_PROBE_REF=<id of a production device request in status ' +
+      'PROCESSING_EQUALITIES_DATA_COMPLETE>. The saved E2E token is for the Dev & UAT Auth0 ' +
+      'application, which the production API rejects, so the ID cannot be looked up automatically. ' +
+      `Re-run as: CSP_PROBE_REF=<id> node e2e/csp-probe.mjs ${PRODUCTION_ORIGIN}`,
+    );
+  }
   const api = process.env.CSP_PROBE_API ?? API_FOR_ORIGIN[origin];
   if (!api) throw new Error(`no API known for ${origin} — set CSP_PROBE_REF=<eligible request id> or CSP_PROBE_API`);
   let token;

@@ -230,7 +230,8 @@ confirms the Turnstile `api.js` loaded and the challenge iframe attached, and as
 violations:
 
 ```bash
-node e2e/csp-probe.mjs https://app.communitytechaid.org.uk    # prod (default origin: app-testing)
+CSP_PROBE_REF=<id> node e2e/csp-probe.mjs https://app.communitytechaid.org.uk    # prod; <id> = a prod request in PROCESSING_EQUALITIES_DATA_COMPLETE
+node e2e/csp-probe.mjs                                                            # UAT (default origin; finds a request itself)
 ```
 
 Exit 0 = clean. A violation in the probe output names exactly which directive to extend.
