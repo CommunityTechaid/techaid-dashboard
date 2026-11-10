@@ -266,6 +266,8 @@ test.describe('Device intake write-flow (kit create → index → edit → persi
       `query ($id: Long) { kit(where: { id: { _eq: $id } }) { id archived } }`,
       { id: kitId },
     );
-    expect(after.kit?.archived, 'device should be archived out of active views after teardown').toBe(true);
+    // Teardown hard-deletes when the token may (UAT tokens carry dev:tech since
+    // techaid-server#330) and archives otherwise: the device is either gone or archived.
+    expect(after.kit?.archived ?? true, 'device should be deleted or archived after teardown').toBe(true);
   });
 });
