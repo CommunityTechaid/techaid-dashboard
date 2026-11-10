@@ -180,7 +180,7 @@ individually when copying a pattern).
   headers, so no other spec can catch a CSP regression). Run after any change to
   `staticwebapp.config.json` or the Turnstile integration, once the deploy has rolled out:
   ```bash
-  node e2e/csp-probe.mjs https://app.communitytechaid.org.uk   # prod
+  CSP_PROBE_REF=<id> node e2e/csp-probe.mjs https://app.communitytechaid.org.uk   # prod (<id> required: a prod request in PROCESSING_EQUALITIES_DATA_COMPLETE)
   node e2e/csp-probe.mjs                                       # UAT (default)
   ```
   Exit 0 = Turnstile `api.js` loaded, challenge iframe attached, zero CSP violations. Deploy-verification

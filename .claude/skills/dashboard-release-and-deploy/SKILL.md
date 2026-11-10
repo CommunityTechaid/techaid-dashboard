@@ -135,7 +135,7 @@ only to anchor where this repo's steps sit in the larger picture:
    whatever image UAT is currently running)
 3. techaid-dashboard: merge its release PR → `dev` (tags release; `deploy-dev.yml` redeploys UAT)
 4. techaid-dashboard: run `deploy-prod.yml` (prod UI deploy — auto-FFs main on success)
-5. `node e2e/csp-probe.mjs https://app.communitytechaid.org.uk` — post-deploy CSP/Turnstile check
+5. `CSP_PROBE_REF=<id> node e2e/csp-probe.mjs https://app.communitytechaid.org.uk` — post-deploy CSP/Turnstile check (`<id>`: a prod request in `PROCESSING_EQUALITIES_DATA_COMPLETE`; required on prod)
 
 **Why API before UI:** the dashboard's UI features can depend on server-side GraphQL mutations
 that must already exist in prod before the UI that calls them ships — shipping the UI first

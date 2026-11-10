@@ -29,7 +29,7 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 | GraphQL client | Apollo Angular v13 (`@apollo/client@4`) | `src/app/graphql.module.ts` |
 | State management | NGXS v21 | `src/app/state/` |
 | UI components | ng-bootstrap v20 + Bootstrap 5 | throughout |
-| Dynamic forms | ngx-formly v7 (8 custom field types) | `src/app/shared/modules/formly/` |
+| Dynamic forms | ngx-formly v11 (11 custom field types) | `src/app/shared/modules/formly/` |
 | Auth | `@auth0/auth0-angular` v2 (`AuthModule.forRoot`) | `src/app/shared/services/authentication.service.ts`, `src/app/app.module.ts` |
 | Feature components | 36 components | `src/app/views/corewidgets/components/` |
 | Shared services | 3 services | `src/app/shared/services/` |
@@ -101,8 +101,10 @@ then ship; API before UI:
 4. **Dashboard**: run `Deploy to Production SWA` (`deploy-prod.yml`,
    `workflow_dispatch`), selecting **`dev`** in the branch dropdown. On
    success it fast-forwards `main` itself.
-5. Post-deploy: `node e2e/csp-probe.mjs https://app.communitytechaid.org.uk`
-   verifies the booking page's Turnstile/CSP on the prod origin.
+5. Post-deploy: `CSP_PROBE_REF=<id> node e2e/csp-probe.mjs https://app.communitytechaid.org.uk`
+   verifies the booking page's Turnstile/CSP on the prod origin. `<id>` is a production
+   device request in status `PROCESSING_EQUALITIES_DATA_COMPLETE`; the probe cannot look one
+   up on production (the saved E2E token is for the Dev & UAT Auth0 app) and submits nothing.
 
 Why this order: deploying before merging the release PR ships a build stamped
 with the old version, and the tag lands on a commit that isn't what's deployed.
