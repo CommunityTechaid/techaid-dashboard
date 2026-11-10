@@ -70,7 +70,7 @@ export class FormlyCustomReferringOrganisationContactNote extends FieldType {
         this.modalService.open(content, { centered: true });
     }
 
-    /* Delete note calls the delete mutation directly and reloads the page to refresh the listings. There might be a way to prevent reload but it's too complicated. Also KISS/YAGNI
+    /* Delete calls the mutation directly, then drops the note from the list in place (no page reload).
      */
     deleteReferringOrganisationContactNote(id: any) {
         this.apollo.mutate<any>({
@@ -82,7 +82,7 @@ export class FormlyCustomReferringOrganisationContactNote extends FieldType {
           `, 'Deleted Note', {
                 enableHtml: true
             });
-            location.reload();
+            this.removeNote(id);
         }, err => {
             this.toastr.error(`
           <small>${err.message}</small>
@@ -90,5 +90,11 @@ export class FormlyCustomReferringOrganisationContactNote extends FieldType {
                 enableHtml: true
             });
         });
+    }
+
+    // Notes are append-only server rows: once deleteNote succeeds, the list is the old one minus that id.
+    // Build a new array (never mutate: the parent's list derives from a frozen Apollo result).
+    private removeNote(id: any) {
+        this.to.notes = (this.to.notes || []).filter((n: any) => String(n.id) !== String(id));
     }
 }
