@@ -366,8 +366,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
    *
    * This API cold-starts, which is the entire reason startBackendHealthCheck() retries fifteen
    * times over roughly a minute. The flags come from the same GraphQL endpoint but over a plain
-   * HttpClient POST with no retry, and FeatureFlagService caches whatever it gets — including
-   * the empty map it falls back to on error — in a shareReplay(1) for the rest of the page load.
+   * HttpClient POST with no retry, and FeatureFlagService used to cache whatever it got — including
+   * the empty map it falls back to on error — for the rest of the page load (no longer, since #326).
    *
    * Reading them during ngOnInit therefore raced the cold start and lost: the flags POST failed,
    * `{}` was cached, every flag read false, and the visitor got the legacy github.io iframe with
