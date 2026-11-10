@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.3.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.2.0...v2.3.0) (2026-11-10)
+
+
+### Features
+
+* D&D hides on-hold by default; Failed/On hold buttons add to the week ([#322](https://github.com/CommunityTechaid/techaid-dashboard/issues/322)) ([916f65e](https://github.com/CommunityTechaid/techaid-dashboard/commit/916f65ead7ba12fe104733639fb52e8ecb23f3af))
+
+
+### Bug Fixes
+
+* device list Reset clears the filters ([#76](https://github.com/CommunityTechaid/techaid-dashboard/issues/76)) ([#321](https://github.com/CommunityTechaid/techaid-dashboard/issues/321)) ([c8e3c11](https://github.com/CommunityTechaid/techaid-dashboard/commit/c8e3c11b499160d13da823ca421aafa95f4b9e93))
+* notes list refreshes in place after a delete ([#62](https://github.com/CommunityTechaid/techaid-dashboard/issues/62)) ([#323](https://github.com/CommunityTechaid/techaid-dashboard/issues/323)) ([261d58a](https://github.com/CommunityTechaid/techaid-dashboard/commit/261d58aa52b046a480d84ee4437ccf25537d0fff))
+* show delivery configuration changes in the History tab ([#320](https://github.com/CommunityTechaid/techaid-dashboard/issues/320)) ([9e90e36](https://github.com/CommunityTechaid/techaid-dashboard/commit/9e90e36400e8cdfa286cba6adbb4f8cea867b8e9))
+
 ## [2.2.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.1.1...v2.2.0) (2026-11-09)
 
 
