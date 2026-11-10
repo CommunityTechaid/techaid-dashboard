@@ -61,6 +61,10 @@ export const SETTING_TYPES = [
   { value: 'BOROUGH_AVAILABILITY', label: 'Device availability' },
   { value: 'LIMIT_EXCEPTION', label: 'Limit exceptions' },
   { value: 'ADMIN_CONFIG', label: 'Admin config (public-request switches & membership)' },
+  { value: 'DELIVERY_CONFIG', label: 'Delivery settings & days' },
+  { value: 'DELIVERY_WINDOW', label: 'Delivery windows' },
+  { value: 'DELIVERY_BLOCKED_DATE', label: 'Blocked delivery dates' },
+  { value: 'DELIVERY_DAY_BOROUGH', label: 'Delivery day boroughs' },
 ];
 
 // Labels as the Membership tab shows them.
@@ -70,7 +74,24 @@ const FIELD_LABELS: Record<string, string> = {
   maxPerReferee: 'limit per referrer',
   membershipOverLimitMode: 'over-limit mode',
   membershipGraceRequests: 'grace requests',
+  // Delivery configuration.
+  enabled: 'enabled',
+  leadTimeDays: 'lead time (days)',
+  advanceDays: 'delivery days offered ahead',
+  boroughSchedulingEnabled: 'borough scheduling',
+  startTime: 'start time',
+  endTime: 'end time',
+  sortOrder: 'sort order',
+  active: 'active',
 };
+
+// ISO day-of-week numbers as stored by the server (1 = Monday .. 7 = Sunday).
+const DAY_NAMES = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const FULL_DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function days(v: string | null): string[] {
+  return (v ?? '').split(',').filter((d) => d !== '').map((d) => DAY_NAMES[Number(d)] ?? d);
+}
 
 const PAGE_SIZE = 20;
 
@@ -91,6 +112,14 @@ function settingOf(c: SettingChange): string {
       return `Borough group "${label}" / ${deviceLabel(c.settingKey.split(':').pop() ?? '')}`;
     case 'LIMIT_EXCEPTION':
       return `Limit exception "${label}"`;
+    case 'DELIVERY_CONFIG':
+      return 'Delivery configuration';
+    case 'DELIVERY_WINDOW':
+      return `Delivery window "${label}"`;
+    case 'DELIVERY_BLOCKED_DATE':
+      return `Blocked delivery date ${label}`;
+    case 'DELIVERY_DAY_BOROUGH':
+      return `Boroughs delivered to on ${FULL_DAY_NAMES[Number(c.settingKey)] ?? c.settingKey}`;
     case 'ADMIN_CONFIG':
       return c.field.startsWith('membership') ? 'Membership settings' : 'Public request switches';
     default:
@@ -98,7 +127,40 @@ function settingOf(c: SettingChange): string {
   }
 }
 
+/** Delivery rows with their own wording; null falls through to the generic "field: old → new". */
+function deliveryChangeOf(c: SettingChange): string | null {
+  switch (c.settingType) {
+    case 'DELIVERY_CONFIG': {
+      if (c.field !== 'daysOfWeek') return null;
+      const before = days(c.oldValue);
+      const after = days(c.newValue);
+      const added = after.filter((d) => !before.includes(d));
+      const removed = before.filter((d) => !after.includes(d));
+      const notes = [
+        ...(added.length ? [`added ${added.join(', ')}`] : []),
+        ...(removed.length ? [`removed ${removed.join(', ')}`] : []),
+      ];
+      const suffix = notes.length ? ` (${notes.join('; ')})` : '';
+      return `Delivery days: ${before.join(', ') || 'none'} → ${after.join(', ') || 'none'}${suffix}`;
+    }
+    case 'DELIVERY_BLOCKED_DATE':
+      if (c.changeType === 'CREATED') return `Date blocked${c.newValue ? `: ${c.newValue}` : ''}`;
+      if (c.changeType === 'DELETED') return 'Date unblocked';
+      return `reason: ${c.oldValue || '(none)'} → ${c.newValue || '(none)'}`;
+    case 'DELIVERY_DAY_BOROUGH': {
+      const list = (v: string | null) => (v ? v.split(',').join(', ') : '(any borough)');
+      const from = c.changeType === 'CREATED' ? null : c.oldValue;
+      const to = c.changeType === 'DELETED' ? null : c.newValue;
+      return `boroughs: ${list(from)} → ${list(to)}`;
+    }
+    default:
+      return null;
+  }
+}
+
 function changeOf(c: SettingChange): string {
+  const delivery = deliveryChangeOf(c);
+  if (delivery) return delivery;
   const field = c.field.startsWith('canPublicRequest')
     ? c.field.replace('canPublicRequest', '')
     : FIELD_LABELS[c.field] ?? c.field;
