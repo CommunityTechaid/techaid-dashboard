@@ -68,7 +68,10 @@ export class FeatureFlagService {
     return !!this.config.environment.production;
   }
 
-  /** Cached load of the public feature flags. Call reload() after an admin toggle. */
+  /**
+   * Cached load of the public feature flags. Call reload() after an admin toggle.
+   * Only a successful response is cached; a failed or timed-out one is retried by the next caller.
+   */
   private loadPublicFlags(): Observable<Record<string, boolean>> {
     if (!this.publicFlags$) {
       this.publicFlags$ = this.http
@@ -88,7 +91,14 @@ export class FeatureFlagService {
             (res.data?.featureFlagsPublic ?? []).forEach((f) => (flags[f.key] = f.enabled));
             return flags;
           }),
-          catchError(() => of({} as Record<string, boolean>)),
+          catchError(() => {
+            // Whoever is waiting gets "every flag off", but a failure is not an answer worth
+            // keeping (#326): the header asks at boot, often while the API is still
+            // cold-starting, and caching that left the request form rejecting Tower Hamlets
+            // for the rest of the page load. Drop the cache so the next caller asks again.
+            this.publicFlags$ = undefined;
+            return of({} as Record<string, boolean>);
+          }),
           shareReplay(1),
         );
     }
