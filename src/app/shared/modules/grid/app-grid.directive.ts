@@ -8,6 +8,12 @@ import 'datatables.net-bs5';
 // (and $.fn.dataTable below) never exist and every table fails to initialise.
 DataTable.use($);
 
+// A header click toggles ascending/descending on every table. DataTables' default adds a third
+// "no order" state, so one click on the column a table is already sorted by cleared the sort
+// instead of reversing it, and paging an unordered server-side result can repeat or skip rows
+// (#291 fixed this for Distributions & Deliveries alone).
+(DataTable as any).defaults.column.orderSequence = ['asc', 'desc'];
+
 // Suppress DataTables' default blocking browser-alert on an ajax failure. Errors are already
 // surfaced via toastr by the table components; the alert was the source of the confusing
 // "Access Denied" popup when a request went out unauthenticated (e.g. during an API restart).
