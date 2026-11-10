@@ -95,7 +95,9 @@ test.describe('GraphQL teardown helper', () => {
       `query ($id: Long) { donor(where: { id: { _eq: $id } }) { id archived } }`,
       { id: donor.id },
     );
-    expect(afterTeardown.donor?.archived).toBe(true);
+    // Teardown hard-deletes when the token may (UAT tokens carry dev:tech since
+    // techaid-server#330) and archives otherwise: the donor is either gone or archived.
+    expect(afterTeardown.donor?.archived ?? true, 'donor must be deleted or archived after teardown').toBe(true);
 
     const active = await uat.request<{
       donorsConnection: { content: { id: string }[] };

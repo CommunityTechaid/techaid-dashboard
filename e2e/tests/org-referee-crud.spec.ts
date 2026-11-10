@@ -339,7 +339,9 @@ test.describe('Referring-org + referee CRUD write-flow', () => {
       }`,
       { orgId, contactId },
     );
-    expect(after.referringOrganisation?.archived, 'org must be archived after teardown').toBe(true);
-    expect(after.referringOrganisationContact?.archived, 'referee must be archived after teardown').toBe(true);
+    // Teardown hard-deletes when the token may (UAT tokens carry dev:tech since
+    // techaid-server#330) and archives otherwise: each record is either gone or archived.
+    expect(after.referringOrganisation?.archived ?? true, 'org must be deleted or archived after teardown').toBe(true);
+    expect(after.referringOrganisationContact?.archived ?? true, 'referee must be deleted or archived after teardown').toBe(true);
   });
 });

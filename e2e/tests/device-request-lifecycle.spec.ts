@@ -345,8 +345,10 @@ test.describe('Device-request lifecycle (create → assign → transitions → c
       }`,
       { kitId, orgId: org.id, contactId: contact.id },
     );
-    expect(residueCheck.kit?.archived, 'kit must be archived after teardown').toBe(true);
-    expect(residueCheck.referringOrganisation?.archived, 'org must be archived after teardown').toBe(true);
-    expect(residueCheck.referringOrganisationContact?.archived, 'contact must be archived after teardown').toBe(true);
+    // Teardown hard-deletes when the token may (UAT tokens carry dev:tech since
+    // techaid-server#330) and archives otherwise: each record is either gone or archived.
+    expect(residueCheck.kit?.archived ?? true, 'kit must be deleted or archived after teardown').toBe(true);
+    expect(residueCheck.referringOrganisation?.archived ?? true, 'org must be deleted or archived after teardown').toBe(true);
+    expect(residueCheck.referringOrganisationContact?.archived ?? true, 'contact must be deleted or archived after teardown').toBe(true);
   });
 });

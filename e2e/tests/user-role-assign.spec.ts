@@ -222,6 +222,12 @@ test.describe('User role assign/remove write-flow', () => {
     );
     await page.getByTestId('role-assign-submit').click();
     const assignJson = await (await assignResp).json();
+    // UAT's Auth0 Management API grant is read-only by design (techaid-server#330): the server
+    // answers every role write with this message, so the round-trip cannot run there.
+    test.skip(
+      JSON.stringify(assignJson.errors ?? '').includes('User management is read-only in this environment'),
+      'User management is read-only in this environment (read-only Auth0 Management API grant)',
+    );
     expect(assignJson.errors, `assign must not error: ${JSON.stringify(assignJson.errors)}`).toBeFalsy();
 
     // The roles table reloads — the new role row must appear.
