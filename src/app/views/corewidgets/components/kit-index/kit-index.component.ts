@@ -906,8 +906,16 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       { enableHtml: true, timeOut: 6000 });
   }
 
+  /**
+   * RESET in the Filter window (#76). Formly's `resetModel()` only reverts to the model as it was
+   * when the window opened, and `filterForm.reset()` nulls every control, so neither cleared the
+   * filters. Set the explicit page default (Active devices only), push it into the form, and
+   * re-apply so the list, the badge and the saved localStorage filters all match.
+   */
   resetFilterForm() {
-    this.filterForm.reset();
+    const defaults = { archived: [false] };
+    this.filterOptions.resetModel?.({ ...defaults });
+    this.applyFilter({ ...defaults });
   }
 
   modal(content) {
