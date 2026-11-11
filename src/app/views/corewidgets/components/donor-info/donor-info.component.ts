@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -119,7 +119,8 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
 
   }
   sub: Subscription;
-  // Written from Apollo/router/store callbacks: mark for check so the view repaints without zone.js (#115).
+  // model and options.formState are written from Apollo/router/store callbacks; model feeds formly-form, so it
+  // stays a plain field: mark for check so the view repaints without zone.js (#115).
   private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
@@ -128,10 +129,11 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
     }
   };
   model: any = {};
-  entityName: string;
+  // Signals: written from Apollo and store callbacks (#115).
+  readonly entityName = signal<string | undefined>(undefined);
   entityId: number;
   donorParentId: number;
-  public user: User;
+  public readonly user = signal<User | undefined>(undefined);
   @Select(UserState.user) user$: Observable<User>;
 
   ages = {
@@ -332,10 +334,10 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
         const data = res.data['donor'];
         this.model = this.normalizeData(data);
         this.donorParentId = this.model['donorParent']?.['id']; // null for a donor with no parent donor
-        this.entityName = `${this.model['name'] || ''}/${this.model['email'] || ''}/${this.model['phoneNumber'] || ''}`.trim().split('/').filter(f => f.trim().length > 0)[0];
+        this.entityName.set(`${this.model['name'] || ''}/${this.model['email'] || ''}/${this.model['phoneNumber'] || ''}`.trim().split('/').filter(f => f.trim().length > 0)[0]);
       } else {
         this.model = {};
-        this.entityName = 'Not Found!';
+        this.entityName.set('Not Found!');
       }
     }, err => {
       this.toastr.warning(`
@@ -390,7 +392,7 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
 
     this.sub.add(this.user$.subscribe(user => {
         this.cdr.markForCheck();
-        this.user = user;
+        this.user.set(user);
         this.options.formState.disabled = !(user && user.authorities && user.authorities['write:donors']);
     }));
 
@@ -428,9 +430,9 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
     }).subscribe(res => {
       this.cdr.markForCheck();
       this.model = this.normalizeData(res.data['updateDonor']);
-      this.entityName = `${this.model['name'] || ''} ${this.model['email'] || ''} ${this.model['phoneNumber'] || ''}`.trim().split(' ')[0];
+      this.entityName.set(`${this.model['name'] || ''} ${this.model['email'] || ''} ${this.model['phoneNumber'] || ''}`.trim().split(' ')[0]);
       this.toastr.info(`
-      <small>Successfully updated donor ${this.entityName}</small>
+      <small>Successfully updated donor ${this.entityName()}</small>
       `, 'Updated Donor', {
           enableHtml: true
         });
@@ -448,10 +450,9 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
       mutation: DELETE_ENTITY,
       variables: { id: this.entityId }
     }).subscribe(res => {
-      this.cdr.markForCheck();
       if (res.data.deleteDonor) {
         this.toastr.info(`
-        <small>Successfully deleted donor ${this.entityName}</small>
+        <small>Successfully deleted donor ${this.entityName()}</small>
         `, 'Donor Deleted', {
             enableHtml: true
           });
