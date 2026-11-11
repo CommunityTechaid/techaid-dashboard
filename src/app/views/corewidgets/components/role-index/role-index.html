@@ -14,51 +14,33 @@
       <div class="card-body">
         <div class="w-100">
           <div class="table-responsive">
-            <table id="role-index" class="table table-striped table-hover table-bordered table-md" datatable
-              [dtOptions]="dtOptions">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              @if (entities?.length != 0;) {
-                <tbody>
-                  @for (dt of entities; track dt) {
-                    <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
-                      <td>
-                        <a href="#" [routerLink]="['./', dt.id]">{{ dt.name }}</a>
-                      </td>
-                      <td>
-                        <div class="d-flex">
-                          <div>{{ dt.description }}</div>
-                          <div class="ms-4">
-                            <div ngbDropdown placement="bottom-left" class="d-inline-block mb-2">
-                              <button class="btn btn-sm btn-outline-link" id="options" ngbDropdownToggle>
-                                <i class="fas fa-cogs"></i>
-                              </button>
-                              <div ngbDropdownMenu aria-labelledby="options">
-                                <a href="#" [routerLink]="['./', dt.id]" class="dropdown-item">
-                                  View Details
-                                </a>
-                                <!-- <div class="dropdown-divider"></div> -->
-                              </div>
-                            </div>
+            <cta-table tableId="role-index" pagingType="full_numbers" [columns]="columns" [source]="source"
+              [order]="{ column: 0, dir: 'desc' }" (loadError)="onLoadError($event)">
+              <ng-template ctaRow let-dt>
+                <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
+                  <td>
+                    <a href="#" [routerLink]="['./', dt.id]">{{ dt.name }}</a>
+                  </td>
+                  <td>
+                    <div class="d-flex">
+                      <div>{{ dt.description }}</div>
+                      <div class="ms-4">
+                        <div ngbDropdown placement="bottom-left" class="d-inline-block mb-2">
+                          <button class="btn btn-sm btn-outline-link" id="options" ngbDropdownToggle>
+                            <i class="fas fa-cogs"></i>
+                          </button>
+                          <div ngbDropdownMenu aria-labelledby="options">
+                            <a href="#" [routerLink]="['./', dt.id]" class="dropdown-item">
+                              View Details
+                            </a>
                           </div>
                         </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              }
-              @if (entities?.length == 0) {
-                <tbody>
-                  <tr>
-                    <td colspan="4" class="no-data-available">No data!</td>
-                  </tr>
-                </tbody>
-              }
-            </table>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+            </cta-table>
           </div>
         </div>
       </div>

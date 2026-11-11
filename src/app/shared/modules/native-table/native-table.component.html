@@ -1,0 +1,133 @@
+<div class="dt-container dt-bootstrap5" [id]="tableId() + '_wrapper'">
+  <div class="row">
+    <div class="col-sm-12 col-md-6">
+      @if (pageLengths().length) {
+        <div class="dt-length">
+          <select
+            class="form-select form-select-sm"
+            autocomplete="off"
+            [id]="tableId() + '_length'"
+            [attr.aria-controls]="tableId()"
+            (change)="onLengthChange($event)">
+            @for (n of pageLengths(); track n) {
+              <option [value]="n" [selected]="n === pageSize()">{{ n }}</option>
+            }
+          </select>
+          <label [for]="tableId() + '_length'"> entries per page</label>
+        </div>
+      }
+    </div>
+    <div class="col-sm-12 col-md-6">
+      @if (searchable()) {
+        <div class="dt-search">
+          <label [for]="tableId() + '_search'">Search:</label>
+          <input
+            type="search"
+            class="form-control form-control-sm"
+            autocomplete="off"
+            [id]="tableId() + '_search'"
+            [attr.aria-controls]="tableId()"
+            [value]="term()"
+            (input)="onSearchInput($event)"
+            (keydown.enter)="onSearchEnter($event)" />
+        </div>
+      }
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-12">
+      @if (loading()) {
+        <div class="dt-processing card" role="status" [id]="tableId() + '_processing'">
+          <div><div></div><div></div><div></div><div></div></div>
+        </div>
+      }
+      <table
+        [id]="tableId()"
+        class="dataTable"
+        [class]="tableClass()"
+        style="width: 100%"
+        [attr.aria-describedby]="tableId() + '_info'">
+        <thead>
+          <tr>
+            @for (col of columns(); track $index) {
+              <th
+                scope="col"
+                [class]="headerClasses(col, $index)"
+                [style.width]="col.width ?? null"
+                [attr.aria-sort]="ariaSort($index)"
+                (click)="onHeaderClick($index)">
+                <div class="dt-column-header">
+                  <div class="dt-column-title">{{ col.title }}</div>
+                  @if (isSortable(col)) {
+                    <div
+                      class="dt-column-order"
+                      role="button"
+                      tabindex="0"
+                      [attr.aria-label]="sortLabel(col, $index)"
+                      (keydown.enter)="onHeaderKey($event, $index)"
+                      (keydown.space)="onHeaderKey($event, $index)"></div>
+                  }
+                </div>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track $index) {
+            <ng-container *ngTemplateOutlet="rowTemplate()?.template ?? null; context: { $implicit: row, index: $index }" />
+          }
+          @if (loaded() && rows().length === 0) {
+            <tr>
+              <td [attr.colspan]="columns().length" class="no-data-available">No data!</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-12 col-md-5">
+      <div class="dt-info" aria-live="polite" role="status" [id]="tableId() + '_info'">{{ info() }}</div>
+    </div>
+    <div class="col-sm-12 col-md-7">
+      <div class="dt-paging" [class]="'paging_' + pagingType()">
+        <nav aria-label="pagination">
+          <ul class="pagination">
+            @if (pagingType() === 'full_numbers') {
+              <li class="dt-paging-button page-item" [class.disabled]="page() === 0">
+                <button class="page-link first" type="button" aria-label="First" [attr.aria-controls]="tableId()"
+                  [attr.aria-disabled]="page() === 0" [attr.tabindex]="page() === 0 ? -1 : null" (click)="goTo(0)">&laquo;</button>
+              </li>
+            }
+            <li class="dt-paging-button page-item" [class.disabled]="page() === 0">
+              <button class="page-link previous" type="button" aria-label="Previous" [attr.aria-controls]="tableId()"
+                [attr.aria-disabled]="page() === 0" [attr.tabindex]="page() === 0 ? -1 : null" (click)="goTo(page() - 1)">&lsaquo;</button>
+            </li>
+            @for (item of pageItems(); track $index) {
+              @if (item === 'ellipsis') {
+                <li class="dt-paging-button page-item disabled">
+                  <button class="page-link ellipsis" type="button" disabled tabindex="-1">&hellip;</button>
+                </li>
+              } @else {
+                <li class="dt-paging-button page-item" [class.active]="item === page()">
+                  <button class="page-link" type="button" [attr.aria-controls]="tableId()"
+                    [attr.aria-current]="item === page() ? 'page' : null" (click)="goTo(item)">{{ item + 1 }}</button>
+                </li>
+              }
+            }
+            <li class="dt-paging-button page-item" [class.disabled]="atLastPage()">
+              <button class="page-link next" type="button" aria-label="Next" [attr.aria-controls]="tableId()"
+                [attr.aria-disabled]="atLastPage()" [attr.tabindex]="atLastPage() ? -1 : null" (click)="goTo(page() + 1)">&rsaquo;</button>
+            </li>
+            @if (pagingType() === 'full_numbers') {
+              <li class="dt-paging-button page-item" [class.disabled]="atLastPage()">
+                <button class="page-link last" type="button" aria-label="Last" [attr.aria-controls]="tableId()"
+                  [attr.aria-disabled]="atLastPage()" [attr.tabindex]="atLastPage() ? -1 : null" (click)="goTo(pageCount() - 1)">&raquo;</button>
+              </li>
+            }
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
