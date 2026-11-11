@@ -10,7 +10,7 @@
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="#" [routerLink]="['../']">Parent Donors</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ entityName }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ entityName() }}</li>
       </ol>
     </nav>
 
@@ -21,7 +21,7 @@
           <div class="card shadow mb-4 mt-1">
             <div class="card-header py-3">
               <div class="d-flex justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">{{entityName}}</h6>
+                <h6 class="m-0 font-weight-bold text-primary">{{entityName()}}</h6>
               </div>
             </div>
             <div class="card-body">
@@ -37,7 +37,7 @@
                 }
               </form>
 
-              @if (user?.authorities['delete:donorParents']) {
+              @if (user()?.authorities['delete:donorParents']) {
                 <div class="delete-api mt-5 ">
                   <h3>Danger Zone</h3>
                   <div class="border-bottom-danger card">
@@ -93,7 +93,7 @@
   </div>
   <div class="modal-body">
     <small>
-      <p>Are you really sure you want to delete "<strong>{{entityName}}</strong>"? This cannot be undone!</p>
+      <p>Are you really sure you want to delete "<strong>{{entityName()}}</strong>"? This cannot be undone!</p>
     </small>
   </div>
   <div class="modal-footer">

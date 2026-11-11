@@ -9,7 +9,7 @@
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="#" [routerLink]="['../']">Devices</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ entityName }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ entityName() }}</li>
       </ol>
     </nav>
 
@@ -21,7 +21,7 @@
             <div class="card-header py-3">
               <div class="d-flex justify-content-between">
                 <div>
-                  <h6 class="m-0 font-weight-bold text-primary">{{entityName}}
+                  <h6 class="m-0 font-weight-bold text-primary">{{entityName()}}
                     <span class="ms-1 badge badge-primary">
                       {{model?.id}}
                     </span>
@@ -50,7 +50,7 @@
                 }
               </form>
 
-              @if (user?.authorities['delete:kits']) {
+              @if (user()?.authorities['delete:kits']) {
                 <div  class="delete-api mt-5 ">
                   <h3>Danger Zone</h3>
                   <div class="border-bottom-danger card">
@@ -85,7 +85,7 @@
           </ng-template>
         </li>
       }
-      @if (model?.id && user?.authorities['admin:kits']) {
+      @if (model?.id && user()?.authorities['admin:kits']) {
         <li ngbNavItem>
           <a ngbNavLink>Audit Table</a>
           <ng-template ngbNavContent>
@@ -106,7 +106,7 @@
   </div>
   <div class="modal-body">
     <small>
-      <p>Are you really sure you want to delete "<strong>{{entityName}}</strong>"? This cannot be undone!</p>
+      <p>Are you really sure you want to delete "<strong>{{entityName()}}</strong>"? This cannot be undone!</p>
     </small>
   </div>
   <div class="modal-footer">

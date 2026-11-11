@@ -27,22 +27,22 @@
                   </h6>
                 </div>
                 <div>
-                  @if (canWrite && user?.authorities['app:bulkedit']) {
+                  @if (canWrite && user()?.authorities['app:bulkedit']) {
                     <button data-testid="devreq-assign-open" (click)="openAssignDevicesModal()"
                       type="button" class="btn btn-success btn-sm me-2">
                       <small><i class="fas fa-link"></i> Assign Devices</small>
                     </button>
                   }
-                  <button [disabled]="generatingPdf" (click)="generatePDF()"
+                  <button [disabled]="generatingPdf()" (click)="generatePDF()"
                     type="button" class="btn btn-info btn-sm me-2">
                     <small>
-                      @if (!generatingPdf) {
+                      @if (!generatingPdf()) {
                         <i class="fas fa-file-pdf"></i>
                       }
-                      @if (generatingPdf) {
+                      @if (generatingPdf()) {
                         <i class="fas fa-spinner fa-spin"></i>
                       }
-                      {{ generatingPdf ? 'Generating...' : 'Generate PDF' }}
+                      {{ generatingPdf() ? 'Generating...' : 'Generate PDF' }}
                     </small>
                   </button>
                   @if (canWrite) {
@@ -66,7 +66,7 @@
               </button> -->
             </form>
 
-            @if ((user?.authorities['delete:requests'] || user?.authorities['delete:organisations'])) {
+            @if ((user()?.authorities['delete:requests'] || user()?.authorities['delete:organisations'])) {
               <div class="delete-api mt-5 ">
                 <h3>Danger Zone</h3>
                 <div class="border-bottom-danger card">
@@ -98,7 +98,7 @@
     </ng-template>
   </li> -->
   <li ngbNavItem>
-    <a ngbNavLink>{{deviceCount === 0 ? 'No Devices Assigned' : deviceCount + ' Device' + (deviceCount === 1 ? '' : 's') + ' Assigned'}}</a>
+    <a ngbNavLink>{{deviceCount() === 0 ? 'No Devices Assigned' : deviceCount() + ' Device' + (deviceCount() === 1 ? '' : 's') + ' Assigned'}}</a>
     <ng-template ngbNavContent>
       <div class="mt-2">
         @if (model?.id) {
@@ -108,7 +108,7 @@
       </div>
     </ng-template>
   </li>
-  @if (model?.id && user?.authorities['admin:organisations']) {
+  @if (model?.id && user()?.authorities['admin:organisations']) {
     <li ngbNavItem>
       <a ngbNavLink>Audit Table</a>
       <ng-template ngbNavContent>
