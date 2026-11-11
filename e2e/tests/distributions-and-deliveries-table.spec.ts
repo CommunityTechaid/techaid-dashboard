@@ -1318,14 +1318,27 @@ test.describe('DnD table: counts and row badges @mocked', () => {
     }
   });
 
-  test('the read-only Prepped checkbox is labelled and disabled', async ({ page }) => {
+  test('the read-only Prepped checkbox is labelled, keeps its blue tick, and cannot be toggled', async ({ page }) => {
     // #284: it had no accessible name and was a live-looking control.
+    // #307 then fixed that with `disabled`, which the browser paints grey: staff reported the
+    // prepped ticks had "greyed out" in production (2.3.0). Read-only must not mean disabled.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
     const boxes = dataRows(page).getByRole('checkbox', { name: 'Prepped' });
     await expect(boxes).toHaveCount(await dataRows(page).count());
-    await expect(boxes.first()).toBeDisabled();
+    // Pin by index so the locators cannot re-resolve to a different row after a click.
+    const states = await boxes.evaluateAll((els) => els.map((e) => (e as HTMLInputElement).checked));
+    const ticked = boxes.nth(states.indexOf(true));
+    const unticked = boxes.nth(states.indexOf(false));
+    expect(states).toContain(true);
+    expect(states).toContain(false);
+    await expect(ticked).toBeEnabled();
+    await expect(ticked).toHaveAttribute('aria-readonly', 'true');
+    await ticked.click();
+    await expect(ticked).toBeChecked();
+    await unticked.click();
+    await expect(unticked).not.toBeChecked();
   });
 
   test('every response row renders: ids on screen are unique and equal the requested page', async ({ page }) => {
