@@ -382,6 +382,51 @@ test.describe('streamlined ward lookup @mocked', () => {
     expect(text).not.toMatch(/\d/);
   });
 
+  /**
+   * Zoneless (#115): a successful submit must still swap the form for the equalities Typeform.
+   * displayTypeForm() sets `showTypeform` from the createDeviceRequest callback, and the widget is
+   * created in ngAfterViewChecked once the `#tfForm` container exists, so if the host stops
+   * repainting after the async response the widget is never created. The Typeform embed script
+   * is stubbed so the test sees exactly what the app hands it.
+   */
+  test('a successful submit embeds the equalities Typeform with the correlation id', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.route('**://embed.typeform.com/next/embed.js', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'text/javascript',
+        body: `window.tf = { createWidget: function (id, opts) {
+          window.__tfCalls = (window.__tfCalls || []).concat([{ id: id, hidden: opts.hidden }]);
+          opts.container.insertAdjacentHTML('beforeend', '<div data-testid="tf-stub">typeform stub</div>');
+        } };`,
+      }),
+    );
+    await installMocks(page, { towerHamlets: true, streamlinedLookup: true });
+    await page.route('**/graphql', async route => {
+      const raw = route.request().postData() ?? '';
+      if (raw.includes('createDeviceRequest')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: { createDeviceRequest: { id: 4242, correlationId: 'corr-zoneless-4242', membershipGraceIndex: null } },
+          }),
+        });
+      }
+      return route.fallback();
+    });
+    await openReadyPage(page);
+
+    await fillSubmittableTowerHamletsRequest(page);
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    await expect(page.getByTestId('tf-stub')).toBeVisible({ timeout: 15_000 });
+    const calls = await page.evaluate(() => (window as unknown as { __tfCalls?: { hidden: Record<string, string> }[] }).__tfCalls ?? []);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].hidden.corr_id).toBe('corr-zoneless-4242');
+    await expect(page.locator('formly-form')).toHaveCount(0);
+  });
+
   test('Tower Hamlets is out of area when its borough flag is off', async ({ page }) => {
     test.setTimeout(90_000);
     await installMocks(page, { towerHamlets: false, streamlinedLookup: true });

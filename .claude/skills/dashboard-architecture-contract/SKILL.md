@@ -1,6 +1,6 @@
 ---
 name: dashboard-architecture-contract
-description: Load BEFORE designing any change to techaid-dashboard — adding or editing an Apollo query/mutation, a table (`cta-table` native shell) component, a Formly form, an NGXS slice, the GraphQL client wiring, an environment/proxy config, a change-detection strategy, the CSP, or the cta-places-proxy Worker — and whenever judging whether a diff is safe. Explains the load-bearing design decisions (fully-standalone Angular 21 + esbuild, Apollo v4 frozen responses, Formly resetOnHide, the users-sort quirk, the OnPush pilot, CSP-constrained NGXS, the manually-deployed Places Worker) with the WHY behind each, the invariants a diff must not break, and the known weak points. Use it to answer "will this change violate how the dashboard is supposed to work?"
+description: Load BEFORE designing any change to techaid-dashboard — adding or editing an Apollo query/mutation, a table (`cta-table` native shell) component, a Formly form, an NGXS slice, the GraphQL client wiring, an environment/proxy config, a change-detection strategy, the CSP, or the cta-places-proxy Worker — and whenever judging whether a diff is safe. Explains the load-bearing design decisions (fully-standalone zoneless Angular 22 + esbuild, Apollo v4 frozen responses, Formly resetOnHide, the users-sort quirk, zoneless change detection, CSP-constrained NGXS, the manually-deployed Places Worker) with the WHY behind each, the invariants a diff must not break, and the known weak points. Use it to answer "will this change violate how the dashboard is supposed to work?"
 ---
 
 # TechAid Dashboard — Architecture Contract
@@ -40,24 +40,24 @@ Web Apps, which serves the app and its Content-Security-Policy. One small Cloudf
 | Frozen response | Apollo v4 deep-freezes query result objects; writing to one throws |
 | Formly type | A custom field renderer registered in `FORMLYCONFIG` (e.g. `choice`, `place`, `date`) |
 | `cta-table` | The native, signal-based table shell (`src/app/shared/modules/native-table/`); the host passes a `source` function and a `ctaRow` template, the shell owns paging, sort, search, info line and saved state. It replaced jQuery DataTables (#113); DataTables-style class names (`dt-container`, `dt-paging`, ...) are kept on purpose |
-| OnPush pilot | `donor-index` — the **only** component on `ChangeDetectionStrategy.OnPush` |
+| Zoneless | The app runs with `provideZonelessChangeDetection()` and no zone.js (#115, 2026-11-11): a view repaints only when a signal it reads changes, `markForCheck()` is called, an `async` pipe emits, a template event fires, or an input changes |
 | version triple | `{version, build, commit}` in `version.ts`, stamped by CI — identifies one UAT build |
 | Places proxy | `cta-places-proxy` Cloudflare Worker fronting Google Places for address autocomplete |
 | SWA | Azure Static Web Apps — the prod/UAT host; serves `staticwebapp.config.json` headers/CSP |
 
 ---
 
-## 1. The stack (verified against `package.json`, 2026-07-19)
+## 1. The stack (verified against `package.json`, 2026-11-11)
 
 | Concern | Choice | Version | Where |
 |---|---|---|---|
-| Framework | Angular, **fully standalone**, esbuild | `@angular/*` 21.2.17, `@angular/build` 21.2.18 | app-wide |
-| GraphQL client | Apollo Angular / `@apollo/client` | `apollo-angular` 13, `@apollo/client` 4.1.7 | `src/app/graphql.module.ts` |
-| State | NGXS | 21 | `src/app/state/` |
-| UI | ng-bootstrap + Bootstrap | 20 / 5.3 | throughout |
-| Dynamic forms | ngx-formly | 7.1 | `src/app/shared/modules/formly/` |
+| Framework | Angular, **fully standalone**, esbuild, **zoneless** | `@angular/*` 22.2 | app-wide (`src/main.ts`) |
+| GraphQL client | Apollo Angular / `@apollo/client` | `apollo-angular` 14, `@apollo/client` 4.3 | `src/app/graphql.module.ts` |
+| State | NGXS | 22 | `src/app/state/` |
+| UI | ng-bootstrap + Bootstrap | 21 / 5.3 | throughout |
+| Dynamic forms | ngx-formly | 11.1 | `src/app/shared/modules/formly/` |
 | Tables | native `cta-table` shell (no jQuery) | — | `src/app/shared/modules/native-table/`; styles in `native-table.css` |
-| Auth | `@auth0/auth0-angular` | 2.8 | `src/app/shared/services/authentication.service.ts` (hardcoded client id/domain, **real tenant in dev**) |
+| Auth | `@auth0/auth0-angular` | 2.15 | `src/app/shared/services/authentication.service.ts` (hardcoded client id/domain, **real tenant in dev**) |
 | Feature components | ~40 component files | — | `src/app/views/corewidgets/components/` |
 
 The Angular 20→21 standalone + esbuild migration (roadmap P1–P11) completed **2026-05**; there are no
@@ -148,18 +148,43 @@ Pinned by `e2e/tests/issue-72-user-index-sort.spec.ts`.
 
 ---
 
-## 6. Invariant: `donor-index` is the sole OnPush pilot
+## 6. Invariant: zoneless change detection — every async state write must notify
 
-`donor-index.component.ts` is the **only** component using `ChangeDetectionStrategy.OnPush`; everything
-else is default change detection. Because OnPush skips CD for state set outside the host template's
-event tree, `donor-index` calls `cdr.markForCheck()` explicitly in two places: the table's
-`source` callback (paints rows) and `applyFilter()` invoked from the NgbModal filter footer (paints the count
-badge). Dropping either `markForCheck()` leaves rows/badge unpainted. Pinned by
-`e2e/tests/donor-onpush.spec.ts`.
+Since #115 (PRs #362, #363; 2026-11-11) the app runs with `provideZonelessChangeDetection()` and
+zone.js is not loaded (`e2e/tests/zoneless.spec.ts` fails if `Zone` reappears on `window`). Nothing
+re-checks the page "after anything happens" any more. A view repaints only when a signal it reads
+changes, `markForCheck()` marks it, an `async` pipe emits, a template event listener fires on it, or
+an input changes.
 
-**The rule:** if you convert another component to OnPush, every state mutation reached from a
-table `source` callback, an NgbModal footer, or any non-template async path needs an explicit
-`markForCheck()` — and a regression test like donor-onpush's.
+**The rule:** template-bound state written from an Apollo/rxjs `subscribe`, `.then`, `setTimeout`,
+`addEventListener`, a third-party callback, or an NgbModal footer must be a `signal()` or be followed
+by `cdr.markForCheck()`. Prefer signals for new code. About 22 components are `OnPush`, the rest are
+`ChangeDetectionStrategy.Eager` (default) — under zoneless **Eager is not a safety net**: it is only
+refreshed when something notifies.
+
+Load-bearing details (checked in the Angular source during #115):
+
+- `markForCheck()` marks the view and all ancestors, so a mark anywhere tends to repaint the whole
+  default-CD tree; a missing mark therefore often hides until a page has nothing else going on.
+- **NgbModal content is its own view root.** A modal-footer click does not mark the host, and the
+  host's `markForCheck()` does not reach the modal: host state set from a footer (e.g. `applyFilter`
+  → filter badge) needs the host's own mark; state shown *inside* a modal and written async needs
+  signals (device-request-info's assign-devices modal).
+- **The repaint runs after the event, not inside it.** A `[value]` binding to state that the same
+  input also edits can write an old value over newer typing (the `cta-table` search box bug fixed in
+  #363 by binding a separate `boxText` signal). Don't bind an input's `[value]` to derived/applied
+  state the user is still editing.
+- Formly 11 handles NoopNgZone itself and marks a field when a `props`/`templateOptions` key that
+  existed at build time changes (covers the typeahead `items` subscriptions). Keys added after the
+  field is built are not watched. Keyless template fields' `hide` can land a frame after sibling
+  `props` changes — poll in specs, don't read once.
+- Third-party libraries (ng-bootstrap 21, ng-select, ngx-toastr, apollo-angular 14, NGXS 22,
+  auth0-angular 2.15) were checked for `onStable`/`onMicrotaskEmpty` reliance: none. The Turnstile
+  widget (booking page; `csp-probe.mjs` PASS on zoneless UAT 2026-11-11) and the Typeform equalities
+  embed (pinned by a `streamlined-ward-lookup.spec.ts` case) were verified after the switch.
+
+Specs that pin this: `zoneless.spec.ts`, `donor-onpush.spec.ts`, `onpush-fanout.spec.ts`,
+live `onpush-live-repaint.spec.ts`. The per-file audit is `docs/native-tables-plan.md` §5 "Z1 audit".
 
 ---
 
@@ -252,7 +277,7 @@ Check any diff against this table. "MUST" means a violation is a blocking review
 | 4 | Conditional Formly fields that must retain values set `resetOnHide: false` (no bogus `defaultValue`) | grep `hideExpression` near value fields |
 | 5 | New custom Formly field types are registered in `formly/index.ts` `FORMLYCONFIG` | that file |
 | 6 | Users-table sort sends string `'1'`/`'-1'`, NOT `'asc'`/`'desc'` — don't normalize | `user-index` / `role-users` |
-| 7 | A new OnPush component calls `markForCheck()` on every non-template async state set, with a regression test | component + spec |
+| 7 | Template state written outside a template event (subscribe/then/timer/listener/modal footer) is a signal or followed by `markForCheck()` — OnPush **and** Eager (zoneless) | component + spec |
 | 8 | NGXS keeps `strictContentSecurityPolicy: true` | `state.module.ts` |
 | 9 | Any new external origin the app fetches/frames is added to the CSP `connect-src`/`frame-src`/`script-src` | `src/staticwebapp.config.json` |
 | 10 | Editing the Places Worker → redeploy it (`wrangler deploy`) AND reconcile its hostname with the CSP | `workers/cta-places-proxy/`, CSP |
@@ -261,7 +286,7 @@ Check any diff against this table. "MUST" means a violation is a blocking review
 
 ---
 
-## 12. Known weak points — stated plainly (as of 2026-07-19)
+## 12. Known weak points — stated plainly (as of 2026-11-11)
 
 Do not silently "fix" these; each is accepted or parked. Keep changes scoped (per `CLAUDE.md` triage
 rules).
@@ -274,7 +299,7 @@ rules).
 | Places Worker deployed manually | Accepted | No CI; repo↔deployed drift is possible. `wrangler deploy` by hand; README + `CLAUDE.md` note it. |
 | Places Worker Origin check is forgeable | Accepted, rate-limit is the backstop | Origin header is script-forgeable; the 60/min per-IP limit is the real quota guard. Google-side key restriction + daily quota cap still open (no GCP access noted 2026-07-19). |
 | CSP is hand-maintained in `staticwebapp.config.json` | Accepted, fragile | New external origins silently break in prod only. `csp-probe.mjs` is the post-deploy check; run it after any origin change. |
-| OnPush only piloted on one component | Deliberate pilot | Rolling OnPush out further needs the `markForCheck()` audit + a spec per component (see §6); not a free perf win. |
+| Zoneless repaint relies on discipline | Accepted, partly guarded | A forgotten signal/`markForCheck()` gives stale UI with no error (§6). Missing marks often hide because another mark repaints the tree; they surface on quiet pages or under timing changes. Guards: the Z1 audit, `zoneless.spec.ts`, the OnPush specs, live `onpush-live-repaint`. ~58 components are still `Eager` with plain fields + marks; converting them to signals is optional cleanup, not required. |
 | Public-form close-toggle off-repo | Accepted (edge) | Lives at the Cloudflare edge; not discoverable or changeable from this repo. |
 
 ---
@@ -293,7 +318,7 @@ tree. Re-verify volatile facts:
 - Formly resetOnHide sites: `grep -rn "resetOnHide" src`
 - Formly type registry: `sed -n '40,205p' src/app/shared/modules/formly/index.ts`
 - Users-sort quirk: `grep -n "o.dir" src/app/views/corewidgets/components/user-index/user-index.component.ts src/app/views/corewidgets/components/role-users/*.ts`
-- OnPush usage: `grep -rn "ChangeDetectionStrategy.OnPush" src` (expect only donor-index)
+- Zoneless: `grep -n "provideZone" src/main.ts` (expect only `provideZonelessChangeDetection`); `grep -rn "zone.js\|NgZone" src package.json` (expect none)
 - NGXS CSP flag: `grep -n "strictContentSecurityPolicy" src/app/state/state.module.ts`
 - Per-env endpoints: `grep -n "graphql_endpoint" src/environments/*.ts`
 - Proxies: `cat src/proxy.conf.json src/proxy.conf.uat.json`

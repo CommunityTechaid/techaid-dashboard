@@ -26,9 +26,10 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 
 | Concern | Implementation | Key files |
 |---|---|---|
-| GraphQL client | Apollo Angular v13 (`@apollo/client@4`) | `src/app/graphql.module.ts` |
-| State management | NGXS v21 | `src/app/state/` |
-| UI components | ng-bootstrap v20 + Bootstrap 5 | throughout |
+| Change detection | **Zoneless** — `provideZonelessChangeDetection()`, no zone.js (#115). Async template state must be a signal or call `markForCheck()`; see the architecture-contract skill §6 | `src/main.ts` |
+| GraphQL client | Apollo Angular v14 (`@apollo/client@4`) | `src/app/graphql.module.ts` |
+| State management | NGXS v22 | `src/app/state/` |
+| UI components | ng-bootstrap v21 + Bootstrap 5 | throughout |
 | Tables | Native signal-based shell `cta-table` (no jQuery / DataTables). The host passes a `source` function and a `ctaRow` template; it keeps DataTables' class names (`dt-container`, `dt-paging`, `table.dataTable`, ...) so styles and specs still match | `src/app/shared/modules/native-table/` (styles: `native-table.css`) |
 | Page chrome | Collapsed sidebar and scroll-to-top button (was `sb-admin-2.min.js`) | `src/app/shared/services/layout.service.ts` |
 | Dynamic forms | ngx-formly v11 (11 custom field types) | `src/app/shared/modules/formly/` |
