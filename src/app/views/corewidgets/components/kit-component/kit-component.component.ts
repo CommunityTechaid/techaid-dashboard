@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, viewChild, Input, OnInit, OnDestroy } from '@angular/core';
 import {
   concat,
   Subject,
@@ -7,8 +7,7 @@ import {
   Subscription,
   from,
 } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
-import { KIT_TYPES, warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -28,7 +27,8 @@ import { KIT_STATUS, KIT_STATUS_LABELS } from '../kit-info/kit-info.component';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { DatePipe } from '@angular/common';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { RouterLink } from '@angular/router';
 
 const QUERY_ENTITY = gql`
@@ -157,7 +157,7 @@ const FIND_USERS = gql`
     selector: 'kit-component',
     styleUrls: ['kit-component.scss'],
     templateUrl: './kit-component.html',
-    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe],
+    imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe],
     // OnPush (hygiene 6.5 fan-out, #114). Host-bound state changes only via the
     // DataTables ajax callback and applyFilter(), so both call cdr.markForCheck().
     // The user$ and deviceRequests$ subscriptions, and the FIND_USERS lookup in
@@ -166,10 +166,7 @@ const FIND_USERS = gql`
     // window component, so it repaints on its own.
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
-  /** Drops out-of-order ajax responses — see LatestDraw. */
-  private readonly draws = new LatestDraw();
-
+export class KitComponent implements OnInit, OnDestroy {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
@@ -184,19 +181,25 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     this._whereSerialized = serialised;
     this._where = where;
-    if (this.table) {
-      this.total = 0;
+    if (this.grid()) {
       this.applyFilter(this.filterModel);
     }
   }
-  @ViewChild(AppGridDirective) grid: AppGridDirective;
-  dtOptions: DataTables.Settings = {};
+  readonly grid = viewChild(NativeTableComponent<any>);
+  readonly columns: TableColumn[] = [
+    { title: '', width: '15px', sortable: false },
+    { title: 'Make', key: 'make' },
+    { title: 'Model', key: 'model' },
+    { title: 'Donor', key: 'donor' },
+    { title: 'Created', key: 'createdAt' },
+    { title: 'Updated', key: 'updatedAt' },
+    { title: 'Type', key: 'type' },
+    { title: 'Status', key: 'status' },
+  ];
+  source: TableSource<any>;
   sub: Subscription;
-  table: any;
-  total: number;
   selections = {};
   selected = [];
-  entities = [];
   ages = {
      0: 'I don\'t know',
      1: 'Less than a year',
@@ -448,11 +451,10 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
-    this.total = 0;
     // Called from the filter modal, whose view lives in NgbModal's window —
     // the host's filterCount badge won't repaint under OnPush without this.
     this.cdr.markForCheck();
-    this.table.ajax.reload(null, false);
+    this.grid()?.reload();
   }
 
   modal(content) {
@@ -464,23 +466,45 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selected = [];
   }
 
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
-  }
-
   ngOnInit() {
+    // Restore the saved filter before the table makes its first request (the shell starts in its own ngOnInit).
+    try {
+      this.filterModel =
+        JSON.parse(localStorage.getItem(`kitFilters-${this.tableId}`)) || {};
+      if (this.filterModel && (this.filterModel.deviceRequestIds || this.filterModel.donorParentId) ) {
+        this.apollo
+          .query({
+            query: FIND_USERS,
+            variables: {
+              deviceRequestIds: this.filterModel.deviceRequestIds || [],
+              donorParentId: this.filterModel.donorParentId || []
+            }
+          })
+          .toPromise()
+          .then((res) => {
+            if (res.data) {
+              if (res.data['deviceRequests']) {
+                this.deviceRequestField.templateOptions['items'] = res.data['deviceRequests'].map((v) => {
+                  return { label: this.deviceRequestName(v), value: v.id };
+                });
+              }
+              if (res.data['donorParents']) {
+                this.donorParentField.templateOptions['items'] = res.data['donorParents'].map(v => {
+                  return {label: this.donorParentName(v), value: v.id };
+                });
+              }
+            }
+          });
+      }
+    } catch (_) {
+      this.filterModel = {};
+    }
+
+    try {
+      this.applyFilter(this.filterModel);
+      this.filterForm.patchValue(this.filterModel);
+    } catch (_) {}
+
     const queryRef = this.apollo.watchQuery({
       query: QUERY_ENTITY,
       variables: {},
@@ -492,10 +516,7 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
     this.sub = this.search$.subscribe((query) => {
-      if (this.table) {
-        this.table.search(query);
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.search(query);
     });
 
     this.deviceRequests$ = concat(
@@ -547,102 +568,32 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
       })
     );
 
-    this.dtOptions = {
-      pagingType: 'simple_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: this.pageLength,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [1, 'desc'],
-      serverSide: true,
-      stateSave: true,
-      processing: true,
-      searching: true,
-      stateDuration: -1,
-      ajax: (params: any, callback) => {
-        const drawToken = this.draws.start();
-        const sort = params.order.map(o => {
-          return {
-            key: this.dtOptions.columns[o.column].data,
-            value: o.dir
-          };
-        });
-
-        const vars = {
-          page: {
-            sort: sort,
-            size: params.length,
-            page: Math.round(params.start / params.length),
-          },
-          where: this.filter,
-          filter: this._where || {},
-          term: params['search']['value'],
-        };
-
-        queryRef.refetch(vars).then(
-          (res) => {
-            if (this.draws.isStale(drawToken)) {
-              return;
-            }
-            let data: any = {};
-            if (res.data) {
-              data = res['data']['kitsConnection'];
-              if (!this.total) {
-                this.total = data['totalElements'];
-              }
-              this.entities = data.content.map((d) => {
-                return d.donor ? { ...d, donorName: this.donorName(d.donor) } : d;
-              });
-            }
-            // The rows are rendered by Angular from `entities`, but this promise
-            // resolves outside the host template's event tree — mark for check
-            // or the table body never repaints under OnPush.
-            this.cdr.markForCheck();
-
-            callback({
-              draw: params.draw,
-              recordsTotal: this.total,
-              recordsFiltered: data['totalElements'],
-              error: '',
-              data: [],
-            });
-          },
-          (err) => {
-            callback({
-              draw: params.draw,
-              recordsTotal: this.total || 0,
-              recordsFiltered: 0,
-              error: err.message,
-              data: [],
-            });
-
-            this.toastr.warning(
-              `
-            <small>${err.message}</small>
-          `,
-              'GraphQL Error',
-              {
-                enableHtml: true,
-                timeOut: 15000,
-                disableTimeOut: true,
-              }
-            );
-          }
-        );
-      },
-      columns: [
-        { data: null, width: '15px', orderable: false },
-        { data: 'make' },
-        { data: 'model' },
-        { data: 'donor' },
-        { data: 'createdAt' },
-        { data: 'updatedAt' },
-        { data: 'type' },
-        { data: 'status' },
-      ],
+    this.source = async (q) => {
+      const res = await queryRef.refetch({
+        page: {
+          sort: q.sort.map(s => ({ key: s.key, value: s.dir })),
+          size: q.size,
+          page: q.page,
+        },
+        where: this.filter,
+        filter: this._where || {},
+        term: q.term,
+      });
+      const data: any = res.data?.['kitsConnection'];
+      // map + spread: Apollo v4 freezes the rows, never write to them.
+      const rows = (data?.content ?? []).map(d => (d.donor ? { ...d, donorName: this.donorName(d.donor) } : d));
+      return { rows, total: data?.totalElements ?? 0 };
     };
+  }
+
+  onLoadError(err: any) {
+    this.toastr.warning(`
+      <small>${err?.message}</small>
+    `, 'GraphQL Error', {
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+      });
   }
 
   deviceRequestName(data) {
@@ -673,48 +624,6 @@ export class KitComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.sub) {
       this.sub.unsubscribe();
     }
-  }
-
-  ngAfterViewInit() {
-    this.grid.dtInstance.then((tbl) => {
-      this.table = tbl;
-      try {
-        this.filterModel =
-          JSON.parse(localStorage.getItem(`kitFilters-${this.tableId}`)) || {};
-        if (this.filterModel && (this.filterModel.deviceRequestIds || this.filterModel.donorParentId) ) {
-          this.apollo
-            .query({
-              query: FIND_USERS,
-              variables: {
-                deviceRequestIds: this.filterModel.deviceRequestIds || [],
-                donorParentId: this.filterModel.donorParentId || []
-              }
-            })
-            .toPromise()
-            .then((res) => {
-              if (res.data) {
-                if (res.data['deviceRequests']) {
-                  this.deviceRequestField.templateOptions['items'] = res.data['deviceRequests'].map((v) => {
-                    return { label: this.deviceRequestName(v), value: v.id };
-                  });
-                }
-                if (res.data['donorParents']) {
-                  this.donorParentField.templateOptions['items'] = res.data['donorParents'].map(v => {
-                    return {label: this.donorParentName(v), value: v.id };
-                  });
-                }
-              }
-            });
-        }
-      } catch (_) {
-        this.filterModel = {};
-      }
-
-      try {
-        this.applyFilter(this.filterModel);
-        this.filterForm.patchValue(this.filterModel);
-      } catch (_) {}
-    });
   }
 
   select(row?: any) {

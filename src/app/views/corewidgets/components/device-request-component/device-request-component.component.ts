@@ -1,6 +1,5 @@
-import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
-import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
+import { Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Observable, Subscription, from, Subject, concat, of, firstValueFrom } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -11,9 +10,10 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
-import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, LatestDraw } from '@app/shared/utils';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP } from '@app/shared/utils';
 import { DatePipe } from '@angular/common';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { RouterLink } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
@@ -108,12 +108,9 @@ query findMembershipGraceRequests {
     styleUrls: ['device-request-component.component.scss'],
     templateUrl: './device-request-component.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent]
+    imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent]
 })
-export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit {
-  /** Drops out-of-order ajax responses — see LatestDraw. */
-  private readonly draws = new LatestDraw();
-
+export class DeviceRequestComponent implements OnInit, OnDestroy {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
@@ -132,20 +129,26 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
     }
     this._whereSerialized = serialised;
     this._where = where;
-    if (this.table) {
-      this.total = 0;
+    if (this.grid()) {
       this.applyFilter(this.filterModel);
     }
   }
 
-  @ViewChild(AppGridDirective) grid: AppGridDirective;
-  dtOptions: DataTables.Settings = {};
+  readonly grid = viewChild(NativeTableComponent<any>);
+  readonly columns: TableColumn[] = [
+    { title: 'ID', key: 'id', width: '15px' },
+    { title: 'Requests', key: 'kitCount' },
+    { title: 'Referee', key: 'referringOrganisationContact.fullName' },
+    { title: 'Organisation', key: 'referringOrganisationContact.referringOrganisation.name' },
+    { title: 'Client Ref', key: 'clientRef' },
+    { title: 'Created', key: 'createdAt' },
+    { title: 'Updated', key: 'updatedAt' },
+    { title: 'Status', key: 'status' },
+  ];
+  source: TableSource<any>;
   sub: Subscription;
-  table: any;
-  total: number;
   selections = {};
   selected = [];
-  entities = [];
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
   statusTypes: any = DEVICE_REQUEST_STATUS;
@@ -303,8 +306,7 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
-    this.total = 0;
-    this.table.ajax.reload(null, false);
+    this.grid()?.reload();
   }
 
   modal(content) {
@@ -316,23 +318,13 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
     this.selected = [];
   }
 
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
-  }
-
   ngOnInit() {
+    // Apply the default filter before the table makes its first request (the shell starts in its own ngOnInit).
+    try {
+      this.applyFilter(this.filterModel);
+    } catch (_) {
+    }
+
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_ENTITY,
@@ -345,115 +337,54 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
       });
 
     this.sub = this.search$.subscribe(query => {
-      if (this.table) {
-        this.table.search(query);
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.search(query);
     });
 
-    this.dtOptions = {
-      pagingType: 'simple_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: 10,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [0, 'desc'],
-      serverSide: true,
-      stateSave: true,
-      processing: true,
-      searching: true,
-      ajax: (params: any, callback) => {
-        const drawToken = this.draws.start();
-        const sort = params.order.map(o => {
-          return {
-            key: this.dtOptions.columns[o.column].data,
-            value: o.dir
-          };
-        });
-
-        const vars = {
-          page: {
-            sort: sort,
-            size: params.length,
-            page: Math.round(params.start / params.length),
+    this.source = async (q) => {
+      const vars = {
+        page: {
+          sort: q.sort.map(s => ({ key: s.key, value: s.dir })),
+          size: q.size,
+          page: q.page,
+        },
+        where: this.filter,
+        term: q.term,
+        filter: this._where || this.filter
+      };
+      const enabled = await firstValueFrom(this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)), { defaultValue: false });
+      if (enabled && this.graceTotal === undefined) {
+        // Optional: without it the badge just reads "Grace N". This host is Eager (zone-checked).
+        this.apollo.query<any>({ query: GRACE_CONFIG }).subscribe({
+          next: r => {
+            this.graceTotal = r.data?.adminConfig?.membershipGraceRequests ?? undefined;
           },
-          where: this.filter,
-          term: params['search']['value'],
-          filter: this._where || this.filter
-        };
-
-        this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
-        if (enabled && this.graceTotal === undefined) {
-          // Optional: without it the badge just reads "Grace N".
-          this.apollo.query<any>({ query: GRACE_CONFIG }).subscribe({
-            next: r => {
-              this.graceTotal = r.data?.adminConfig?.membershipGraceRequests ?? undefined;
-            },
-            error: () => {},
-          });
-        }
-        (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
-          if (this.draws.isStale(drawToken)) {
-            return;
-          }
-          let data: any = {};
-          if (res.data) {
-            data = res['data']['deviceRequestConnection'];
-            if (!this.total) {
-              this.total = data['totalElements'];
-            }
-            this.entities = data.content.map(d => {
-              const types: Record<string, number> = {};
-              if (d.kits && d.kits.length) {
-                d.kits.forEach(k => {
-                  const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
-                  const t = typeMap[k.type] || `${k.type}S`;
-                  types[t] = (types[t] || 0) + 1;
-                });
-              }
-              return { ...d, types };
-            });
-          }
-
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total,
-            recordsFiltered: data['totalElements'],
-            error: '',
-            data: []
-          });
-        }, err => {
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total || 0,
-            recordsFiltered: 0,
-            error: err.message,
-            data: []
-          });
-
-          this.toastr.warning(`
-            <small>${err.message}</small>
-          `, 'GraphQL Error', {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true
-            });
+          error: () => {},
         });
+      }
+      const res = await (enabled ? membershipQueryRef : queryRef).refetch(vars);
+      const data: any = res.data?.['deviceRequestConnection'];
+      // map + spread: Apollo v4 freezes the rows, never write to them.
+      const rows = (data?.content ?? []).map(d => {
+        const types: Record<string, number> = {};
+        (d.kits ?? []).forEach(k => {
+          const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
+          const t = typeMap[k.type] || `${k.type}S`;
+          types[t] = (types[t] || 0) + 1;
         });
-      },
-      columns: [
-        { data: 'id', width: '15px' },
-        { data: 'kitCount'},
-        { data: 'referringOrganisationContact.fullName' },
-        { data: 'referringOrganisationContact.referringOrganisation.name' },
-        { data: 'clientRef' },
-        { data: 'createdAt'},
-        { data: 'updatedAt' },
-        { data: 'status' },
-      ]
+        return { ...d, types };
+      });
+      return { rows, total: data?.totalElements ?? 0 };
     };
+  }
+
+  onLoadError(err: any) {
+    this.toastr.warning(`
+      <small>${err?.message}</small>
+    `, 'GraphQL Error', {
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+      });
   }
 
   ngOnDestroy() {
@@ -461,21 +392,6 @@ export class DeviceRequestComponent implements OnInit, OnDestroy, AfterViewInit 
       this.sub.unsubscribe();
     }
   }
-
-  ngAfterViewInit() {
-    this.grid.dtInstance.then(tbl => {
-      this.table = tbl;
-
-
-      try {
-        this.applyFilter(this.filterModel);
-        this.filterForm.patchValue(this.filterModel);
-      } catch (_) {
-      }
-    });
-  }
-
-
 
   select(row?: any) {
     if (row) {

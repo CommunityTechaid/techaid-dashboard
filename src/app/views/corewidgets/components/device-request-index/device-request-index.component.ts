@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy } from '@angular/core';
+import { Observable, Subscription, from, Subject, concat, of, firstValueFrom } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -11,9 +10,10 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
-import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, ALL_BOROUGHS, LatestDraw } from '@app/shared/utils';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, ALL_BOROUGHS } from '@app/shared/utils';
 import { DatePipe } from '@angular/common';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { RouterLink } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
@@ -113,17 +113,14 @@ query findMembershipGraceRequests {
     selector: 'app-device-request-index',
     templateUrl: './device-request-index.component.html',
     styleUrls: ['./device-request-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent],
+    imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent],
     // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111):
     // this page's state only changes via the DataTables ajax callback and the
     // filter modal. Both paths run outside the host template's event tree, so
     // they call cdr.markForCheck() explicitly.
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterViewInit {
-  /** Drops out-of-order ajax responses — see LatestDraw. */
-  private readonly draws = new LatestDraw();
-
+export class DeviceRequestIndexComponent implements OnInit, OnDestroy {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
@@ -133,14 +130,25 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
   ) {
 
   }
-  @ViewChild(AppGridDirective) grid: AppGridDirective;
-  dtOptions: DataTables.Settings = {};
+  readonly grid = viewChild(NativeTableComponent<any>);
+  readonly columns: TableColumn[] = [
+    { title: 'ID', key: 'id', width: '15px' },
+    { title: 'Requests', sortable: false },
+    { title: 'Referee', key: 'referringOrganisationContact.fullName' },
+    { title: 'Organisation', key: 'referringOrganisationContact.referringOrganisation.name' },
+    // Borough sits beside Organisation. This list is positional against `order` below and the
+    // stored sort index, so edit them together.
+    { title: 'Borough', key: 'borough' },
+    { title: 'Client Ref', key: 'clientRef' },
+    { title: 'Created', key: 'createdAt' },
+    { title: 'Updated', key: 'updatedAt' },
+    { title: 'Status', key: 'status' },
+    { title: 'Is Prepped', sortable: false },
+  ];
+  source: TableSource<any>;
   sub: Subscription;
-  table: any;
-  total: number;
   selections = {};
   selected = [];
-  entities = [];
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
   statusTypes: any = DEVICE_REQUEST_STATUS;
@@ -292,14 +300,10 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
     this.filter = filter;
     this.filterCount = count;
     this.filterModel = data;
-    // Reset the cached total so it is re-captured from the next response,
-    // preventing recordsTotal from being stale (and smaller than recordsFiltered)
-    // when a filter is active on the first load (e.g. restored from localStorage).
-    this.total = 0;
     // Called from the filter modal, whose view lives in NgbModal's window —
     // the host's filterCount badge won't repaint under OnPush without this.
     this.cdr.markForCheck();
-    this.table.ajax.reload(null, false);
+    this.grid()?.reload();
   }
 
   modal(content) {
@@ -311,23 +315,18 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
     this.selected = [];
   }
 
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
-  }
-
   ngOnInit() {
+    // Restore the saved filter before the table makes its first request (the shell starts in its own ngOnInit).
+    try {
+      this.filterModel = JSON.parse(localStorage.getItem(`deviceRequestFilters-${this.tableId}`)) || {is_sales: [false]};
+    } catch (_) {
+      this.filterModel = {is_sales: [false]};
+    }
+    try {
+      this.applyFilter(this.filterModel);
+    } catch (_) {
+    }
+
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_ENTITY,
@@ -340,171 +339,64 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy, AfterView
       });
 
     this.sub = this.search$.subscribe(query => {
-      if (this.table) {
-        this.table.search(query);
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.search(query);
     });
 
-    this.dtOptions = {
-      pagingType: 'simple_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: 10,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [0, 'desc'],
-      serverSide: true,
-      stateSave: true,
-      /**
-       * Discard a saved state that predates a column being added or removed.
-       *
-       * DataTables persists per-column state (visibility, widths, and the sort column INDEX) in
-       * localStorage keyed by table id. Adding the Borough column shifts every index after it, so
-       * a state saved before this change would restore a sort against the wrong column — or, with
-       * a stale visibility array, break the table outright. Returning false discards it.
-       *
-       * This is the classic "the table is broken for me but fine in incognito" report: it never
-       * reproduces in a fresh browser, and so never shows up in an e2e run either. Anyone changing
-       * the column list again gets the same protection for free.
-       */
-      stateLoadParams: (settings: any, data: any) => {
-        const expected = this.dtOptions.columns?.length ?? 0;
-        if (data?.columns && expected && data.columns.length !== expected) {
-          return false;
-        }
-        return true;
-      },
-      processing: true,
-      searching: true,
-      ajax: (params: any, callback) => {
-        const drawToken = this.draws.start();
-        const sort = params.order.map(o => {
-          return {
-            key: this.dtOptions.columns[o.column].data,
-            value: o.dir
-          };
-        });
-
-        const vars = {
-          page: {
-            sort: sort,
-            size: params.length,
-            page: Math.round(params.start / params.length),
+    this.source = async (q) => {
+      const vars = {
+        page: {
+          sort: q.sort.map(s => ({ key: s.key, value: s.dir })),
+          size: q.size,
+          page: q.page,
+        },
+        term: q.term,
+        numericterm: isNaN(Number(q.term)) ? -1 : Number(q.term),
+        filter: this.filter
+      };
+      const enabled = await firstValueFrom(this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)), { defaultValue: false });
+      if (enabled && this.graceTotal === undefined) {
+        // Optional: without it the badge just reads "Grace N".
+        this.apollo.query<any>({ query: GRACE_CONFIG }).subscribe({
+          next: r => {
+            this.graceTotal = r.data?.adminConfig?.membershipGraceRequests ?? undefined;
+            this.cdr.markForCheck();
           },
-          term: params['search']['value'],
-          numericterm: isNaN(Number(params['search']['value'])) ? -1 : Number(params['search']['value']),
-          filter: this.filter
-        };
-        console.log('vars', vars);
-        this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
-        if (enabled && this.graceTotal === undefined) {
-          // Optional: without it the badge just reads "Grace N".
-          this.apollo.query<any>({ query: GRACE_CONFIG }).subscribe({
-            next: r => {
-              this.graceTotal = r.data?.adminConfig?.membershipGraceRequests ?? undefined;
-              this.cdr.markForCheck();
-            },
-            error: () => {},
-          });
-        }
-        (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
-          if (this.draws.isStale(drawToken)) {
-            return;
-          }
-          let data: any = {};
-          if (res.data) {
-            data = res['data']['deviceRequestConnection'];
-            if (!this.total) {
-              this.total = data['totalElements'];
-            }
-            this.entities = data.content.map(d => {
-              const types: Record<string, number> = {};
-              const kitIds: Record<string, string[]> = {};
-              if (d.kits && d.kits.length) {
-                d.kits.forEach(k => {
-                  const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
-                  const t = typeMap[k.type] || `${k.type}S`;
-                  types[t] = (types[t] || 0) + 1;
-                  kitIds[t] = kitIds[t] || [];
-                  kitIds[t].push(k.id);
-                });
-              }
-              return { ...d, types, kitIds };
-            });
-          }
-          // The rows are rendered by Angular from `entities`, but this promise
-          // resolves outside the host template's event tree — mark for check
-          // or the table body never repaints under OnPush.
-          this.cdr.markForCheck();
-
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total,
-            recordsFiltered: data['totalElements'],
-            error: '',
-            data: []
-          });
-        }, err => {
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total || 0,
-            recordsFiltered: 0,
-            error: err.message,
-            data: []
-          });
-
-          this.toastr.warning(`
-            <small>${err.message}</small>
-          `, 'GraphQL Error', {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true
-            });
+          error: () => {},
         });
+      }
+      const res = await (enabled ? membershipQueryRef : queryRef).refetch(vars);
+      const data: any = res.data?.['deviceRequestConnection'];
+      // map + spread: Apollo v4 freezes the rows, never write to them.
+      const rows = (data?.content ?? []).map(d => {
+        const types: Record<string, number> = {};
+        const kitIds: Record<string, string[]> = {};
+        (d.kits ?? []).forEach(k => {
+          const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES' };
+          const t = typeMap[k.type] || `${k.type}S`;
+          types[t] = (types[t] || 0) + 1;
+          kitIds[t] = kitIds[t] || [];
+          kitIds[t].push(k.id);
         });
-      },
-      columns: [
-        { data: 'id', width: '15px' },
-        { data: null, orderable: false },
-        { data: 'referringOrganisationContact.fullName' },
-        { data: 'referringOrganisationContact.referringOrganisation.name' },
-        // Borough sits beside Organisation — together they answer "who referred, and from where".
-        // This array is positional against the <th> list in the template AND against the sort
-        // mapping below (dtOptions.columns[o.column].data), so the two must be edited together or
-        // the table silently sorts by the wrong field.
-        { data: 'borough' },
-        { data: 'clientRef' },
-        { data: 'createdAt' },
-        { data: 'updatedAt' },
-        { data: 'status' },
-        { data: null, orderable: false },
-      ]
+        return { ...d, types, kitIds };
+      });
+      return { rows, total: data?.totalElements ?? 0 };
     };
+  }
+
+  onLoadError(err: any) {
+    this.toastr.warning(`
+      <small>${err?.message}</small>
+    `, 'GraphQL Error', {
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+      });
   }
 
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();
     }
-  }
-
-  ngAfterViewInit() {
-    this.grid.dtInstance.then(tbl => {
-      this.table = tbl;
-      try {
-        this.filterModel = JSON.parse(localStorage.getItem(`deviceRequestFilters-${this.tableId}`)) || {is_sales: [false]};
-      } catch (_) {
-        this.filterModel = {is_sales: [false]};
-      }
-
-      try {
-        this.applyFilter(this.filterModel);
-        this.filterForm.patchValue(this.filterModel);
-      } catch (_) {
-      }
-    });
   }
 
   select(row?: any) {

@@ -31,24 +31,8 @@
       <div class="card-body">
         <div class="w-100">
           <div class="table-responsive">
-            <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable
-              [dtOptions]="dtOptions" style="width:100%;">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Requests #</th>
-                  <th>Organisation</th>
-                  <th>Created</th>
-                  <th>Updated</th>
-                  <th>Archived</th>
-                </tr>
-              </thead>
-              @if (entities?.length != 0;) {
-                <tbody>
-                  @for (dt of entities; track dt) {
+            <cta-table [tableId]="tableId" [columns]="columns" [source]="source" [order]="{ column: 7, dir: 'desc' }" (loadError)="onLoadError($event)">
+<ng-template ctaRow let-dt>
                     <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
                       <td>
                         <a href="#" [routerLink]="['./', dt.id]">
@@ -89,10 +73,8 @@
                       </td>
                       <td><input type="checkbox" [checked]="dt.archived" (click)="$event.preventDefault()"></td>
                     </tr>
-                  }
-                </tbody>
-              }
-            </table>
+</ng-template>
+</cta-table>
           </div>
         </div>
       </div>

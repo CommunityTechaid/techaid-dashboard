@@ -12,8 +12,11 @@ until the removal milestone).
 | M2 audit tables | DONE (PR M2-M4, commit 1) |
 | M3 users-admin cluster | DONE (PR M2-M4, commit 2) |
 | M4 post-index, dashboard-index | DONE (PR M2-M4, commit 3) |
-| M5 referring organisations | next (not started) |
-| M6 onward | not started |
+| M5 referring organisations | DONE (PR M5-M7, commit 1) |
+| M6 donors | DONE (PR M5-M7, commit 2) |
+| M7 devices and requests | DONE (PR M5-M7, commit 3) |
+| M8 D&D and kit-index | next (not started) |
+| M9 onward | not started |
 
 ### Progress notes (newest last)
 
@@ -278,14 +281,68 @@ Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the curre
 - New spec: `e2e/tests/native-table-posts-dashboard.spec.ts` (3 tests, `@mocked`). The dashboard page
   had no e2e cover before this.
 
+**M5 (done).** referring-organisation-index, -contact-index and -contact-component use `cta-table`.
+
+- Config kept verbatim: all three `simple_numbers`; page length 10, 10 and 5 (the embedded
+  component's `pageLength` input, default 5); length menu `[5, 10, 25, 50, 100]`; order col 6 desc
+  (index) and col 7 desc (contact index and component), i.e. Updated desc. Select column is
+  `sortable: false`; the contact tables sort Organisation by `referringOrganisation.name`.
+- The saved Filter modal choice (`referringOrg*Filters-<tableId>` in localStorage) is now restored in
+  `ngOnInit`, before the shell makes its first request. It used to be applied from `ngAfterViewInit`
+  after DataTables' first, unfiltered request, so the table fired two requests; it fires one now.
+  Consequence for the contact index: `applyFilter` only adds `isMembershipContact` when
+  `membershipEnabled` is already true, and the flag is only known after the first request, so a saved
+  "membership contacts only" choice is not applied to the first load (it was racy before, in practice
+  also dropped). Not changed here.
+- `applyFilter` and the embedded component's `where` setter call `grid()?.reload()` (page kept, as
+  `ajax.reload(null, false)`); a reload before the shell's `ngOnInit` is a no-op, so the restore is safe.
+- **Deliberate difference.** The embedded referee table had `stateDuration: -1` (DataTables then used
+  sessionStorage, state dropped when the tab closes). The shell has no such option and keeps state in
+  localStorage for 2 h like every other table. Per-table ids make this harmless.
+- Zoneless (#115): the three hosts stay `OnPush`; `membershipEnabled` is still a plain field set from
+  `source` with `cdr.markForCheck()`, and `filterCount`/`filterModel` are set from the filter modal with
+  `markForCheck()`. Z1 should turn these into signals.
+- New spec: `e2e/tests/native-table-referring-orgs.spec.ts` (5 tests, `@mocked`).
+
+**M6 (done).** donor-parent-index, donor-index and donor-component use `cta-table`.
+
+- Config kept verbatim: `simple_numbers`, page length 10, menu `[5, 10, 25, 50, 100]`. Order is Created
+  desc: column 5 on the two donor tables, column 4 on donor-parent-index. Table ids are hard-coded
+  in the templates and kept: `donor-index` (also the id of the embedded donor-component's table, a
+  pre-existing duplicate that the specs rely on), `donor-parent-index`.
+- Same filter-restore-before-first-request change as M5 (default saved model is `{ }` here, so the
+  first request sends `where: {}`). donor-component sends both `where` (the parent) and `filter`.
+- donor-parent-index derives `deviceCount` inside `source` with map + spread.
+- New spec: `e2e/tests/native-table-donors.spec.ts` (4 tests, `@mocked`). Creating a donor is not
+  covered in the mocked spec (the required parent is an ng-select typeahead); `donor-crud` (live) covers it.
+
+**M7 (done).** device-request-index, device-request-component and kit-component use `cta-table`.
+
+- Config kept verbatim: `simple_numbers`, menu `[5, 10, 25, 50, 100]`, order column 0 desc (ID) on both request
+  tables and column 1 desc (Make) on kit-component; page length 10, 10 and 5 (`pageLength` input, default 5).
+  On device-request-index Requests and Is Prepped are `sortable: false`; on device-request-component
+  Requests IS sortable (key `kitCount`), as before. Nested sort keys are sent verbatim
+  (`referringOrganisationContact.fullName`, `...referringOrganisation.name`, kit `donor`).
+- device-request-index: default `is_sales: [false]` and a saved filter are restored in `ngOnInit`, so the first
+  request carries them. `numericterm` is unchanged (`-1` for non-numeric text, `0` for an empty term). Rows get
+  `types`/`kitIds` in `source` (map + spread). The membership flag is read per request; `graceTotal` is fetched
+  once and repaints through `markForCheck()`.
+- **Dropped:** the `console.log('vars', ...)` debug line, and the DataTables `stateLoadParams` column-count guard.
+  The guard is not needed: storage uses a new key, and the shell ignores a saved order whose column no longer
+  exists or is not sortable. `device-request-borough-filter`'s "stale saved state" test was rewritten for that
+  (seeds a `cta-table_*` state sorting on column 12).
+- **Deliberate difference.** kit-component had `stateDuration: -1` (session storage); now 2 h in localStorage,
+  like the other embedded tables.
+- device-request-component stays `Eager` (it injects no `ChangeDetectorRef`; `graceTotal` repaints through zone.js).
+  Z1 must convert that. kit-component is `OnPush` and keeps `cdr.markForCheck()` for the filter badge.
+- kit-component keeps restoring its saved filter (incl. the FIND_USERS lookup for the typeahead items) in
+  `ngOnInit`; `donorParentId` set by the input is overwritten by the restore exactly as before.
+- New spec: `e2e/tests/native-table-requests-kits.spec.ts` (4 tests, `@mocked`).
+
 ### Where to resume
 
-Next is **M5** (referring-organisation-index, -contact-index, -contact-component): same recipe as
-M3/M4. Per component: replace the `dtOptions` block with `this.source = async q => ...` (keep the
-`watchQuery` ref in `ngOnInit`), put the `<tr>` inside `<cta-table><ng-template ctaRow>`, map
-`q.sort` to the resolver's format, call `grid()?.reload()` where `table.ajax.reload(null, false)` was,
-and the filter modals call `grid()?.reload(true)` where they used `reload(resetPaging)`. Add
-`sortable: false` for `orderable: false` columns. Check the existing `[pageLength]`/`lengthMenu` in each
-component rather than trusting the inventory table (it was wrong once, see M3). Run the existing
-`stale-search-response` and `onpush-fanout` specs, and add a parity spec per cluster.
-
+Next is **M8**, the riskiest pair: distributions-and-deliveries-index (quick buttons call `reload(true)`,
+week-button date logic, `columnDefs orderSequence` override, `HostListener`), then kit-index (1433 lines,
+bulk actions, ID-list paste into the search box). Re-run `kit-id-list-bulk-update`,
+`distributions-and-deliveries-table`, `exclude-status-filter`, `stale-search-response` and `onpush-fanout`.
+Do one commit per component.
