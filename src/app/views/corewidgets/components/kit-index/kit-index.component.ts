@@ -737,22 +737,30 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * Recognises a pasted list of device IDs in the search box. Returns null when
-   * the term isn't ID-list shaped (no comma) so the caller falls back to the
-   * ordinary free-text search.
+   * the term isn't ID-list shaped so the caller falls back to the ordinary
+   * free-text search.
+   *
+   * Separators are commas and/or any whitespace (spaces, tabs, new lines), mixed
+   * freely, so a column copied from a spreadsheet works. A term with a comma is a
+   * list whatever its tokens look like (bad tokens are reported). A term with only
+   * whitespace separators is a list only when it has 2+ tokens and every one is an
+   * ID, so ordinary multi-word searches ("dell latitude") stay free-text.
    */
   private parseIdList(term: string): { ids: number[], invalid: string[] } {
-    if (!term || term.indexOf(',') === -1) {
+    if (!term) {
+      return null;
+    }
+    const hasComma = term.indexOf(',') !== -1;
+    const tokens = term.split(/[\s,]+/).filter(t => t.length);
+    const idShaped = /^(?:CTA-?)?(\d+)$/i;
+    if (!hasComma && (tokens.length < 2 || !tokens.every(t => idShaped.test(t)))) {
       return null;
     }
     const ids: number[] = [];
     const seen = {};
     const invalid: string[] = [];
-    term.split(',').forEach(raw => {
-      const token = raw.trim();
-      if (!token.length) {
-        return;
-      }
-      const match = /^(?:CTA-?)?(\d+)$/i.exec(token);
+    tokens.forEach(token => {
+      const match = idShaped.exec(token);
       if (!match) {
         invalid.push(token);
         return;

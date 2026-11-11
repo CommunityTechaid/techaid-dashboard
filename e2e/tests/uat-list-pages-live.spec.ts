@@ -472,7 +472,7 @@ async function exerciseTable(page: Page, table: Table, h: Handle) {
       await settled(wrapper);
       if (hasInfo) await expect(info).toContainText('Showing 0 to 0 of 0', { timeout: 60_000 });
     }
-    if (table.extras === 'devices') await devicesIdListPaste(wrapper, search);
+    if (table.extras === 'devices') await devicesIdListPaste(page, wrapper, search);
     await search.fill('');
     await search.press('Enter');
     await expect(rows.first()).toBeVisible({ timeout: 60_000 });
@@ -503,7 +503,7 @@ async function exerciseTable(page: Page, table: Table, h: Handle) {
 }
 
 /** kit-id-list-bulk-update relies on pasting 2-3 ids into the search box returning exactly them. */
-async function devicesIdListPaste(wrapper: Locator, search: Locator) {
+async function devicesIdListPaste(page: Page, wrapper: Locator, search: Locator) {
   await search.fill('');
   await search.press('Enter');
   const rows = rowsOf(wrapper);
@@ -517,8 +517,8 @@ async function devicesIdListPaste(wrapper: Locator, search: Locator) {
   expect(new Set(ids).size, 'distinct ids').toBe(ids.length);
   expect(ids.length, 'need at least 2 devices on the page').toBeGreaterThanOrEqual(2);
 
-  // The box reads an ID list only when it contains a comma (kit-index parseIdList); whitespace
-  // around the ids is tolerated, whitespace alone is not a separator.
+  // kit-index parseIdList: commas and/or any whitespace separate ids, and stray whitespace around
+  // them is tolerated. First a comma list, then (below) a newline-separated paste.
   const pasted = ids.length === 3 ? `${ids[0]}, ${ids[1]} ,${ids[2]}` : `${ids[0]}, ${ids[1]}`;
   await search.fill(pasted);
   await search.press('Enter');
@@ -531,6 +531,27 @@ async function devicesIdListPaste(wrapper: Locator, search: Locator) {
     got.push((await rowsOf(wrapper).nth(i).locator('td').first().innerText()).trim());
   }
   expect(got.sort(), 'exactly the pasted kit ids come back').toEqual([...ids].sort());
+
+  // A column copied from a spreadsheet: one id per line. Goes through the real clipboard and
+  // Ctrl+V, because a single-line <input> never holds a raw newline (Chromium turns each into a
+  // space) and `fill()` would not exercise that.
+  await search.fill('');
+  await search.press('Enter');
+  await expect(rowsOf(wrapper).first()).toBeVisible({ timeout: 60_000 });
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.evaluate(text => navigator.clipboard.writeText(text), ids.join('\n') + '\n');
+  await search.click();
+  await page.keyboard.press('Control+V');
+  await search.press('Enter');
+  await expect
+    .poll(async () => (await rowsOf(wrapper).count()), { timeout: 60_000, message: 'rows for a newline-separated paste' })
+    .toBe(ids.length);
+  await settled(wrapper);
+  const gotNl: string[] = [];
+  for (let i = 0; i < ids.length; i++) {
+    gotNl.push((await rowsOf(wrapper).nth(i).locator('td').first().innerText()).trim());
+  }
+  expect(gotNl.sort(), 'exactly the newline-pasted kit ids come back').toEqual([...ids].sort());
 }
 
 /** Week quick filter and the hidden-requests note; picking a week changes the info line. */
