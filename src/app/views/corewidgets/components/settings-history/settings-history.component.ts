@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
@@ -187,6 +187,8 @@ export class SettingsHistoryComponent implements OnInit, OnDestroy {
   loading = true;
   failed = false;
   private sub?: Subscription;
+  // Written from Apollo callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(private readonly apollo: Apollo) {}
 
@@ -211,6 +213,7 @@ export class SettingsHistoryComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: ({ data, error }) => {
+          this.cdr.markForCheck();
           this.loading = false;
           if (error || !data?.settingChanges) {
             this.failed = true;
@@ -230,6 +233,7 @@ export class SettingsHistoryComponent implements OnInit, OnDestroy {
           }));
         },
         error: () => {
+          this.cdr.markForCheck();
           this.loading = false;
           this.failed = true;
         },

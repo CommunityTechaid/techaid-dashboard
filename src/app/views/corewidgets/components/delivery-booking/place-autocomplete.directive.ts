@@ -1,4 +1,4 @@
-import { Directive, ElementRef, EventEmitter, HostListener, inject, OnDestroy, Output } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, HostListener, inject, OnDestroy, Output, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { NgControl } from '@angular/forms';
 import { Subject, Subscription, of } from 'rxjs';
@@ -65,6 +65,9 @@ export class PlaceAutocompleteDirective implements OnDestroy {
   private readonly ngControl = inject(NgControl, { optional: true, self: true });
   private readonly input$ = new Subject<string>();
   private readonly sub: Subscription;
+  // `suggestions` is read by the host template and written from the HTTP stream and a blur timer;
+  // a directive's ChangeDetectorRef is its host view's, so marking it repaints the list without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor() {
     this.sub = this.input$
@@ -84,7 +87,10 @@ export class PlaceAutocompleteDirective implements OnDestroy {
             );
         }),
       )
-      .subscribe((suggestions) => (this.suggestions = suggestions));
+      .subscribe((suggestions) => {
+        this.suggestions = suggestions;
+        this.cdr.markForCheck();
+      });
   }
 
   @HostListener('input')
@@ -95,7 +101,10 @@ export class PlaceAutocompleteDirective implements OnDestroy {
   @HostListener('blur')
   onBlur(): void {
     // Delay so a (mousedown) on a suggestion fires before the list is cleared.
-    setTimeout(() => (this.suggestions = []), 200);
+    setTimeout(() => {
+      this.suggestions = [];
+      this.cdr.markForCheck();
+    }, 200);
   }
 
   select(suggestion: PlaceSuggestion): void {

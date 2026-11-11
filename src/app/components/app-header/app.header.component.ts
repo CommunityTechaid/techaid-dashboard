@@ -1,7 +1,7 @@
 import { Select, Store } from '@ngxs/store';
 import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -36,6 +36,7 @@ export class AppHeader implements OnInit, OnDestroy {
         window.location.hostname === 'app-testing.communitytechaid.org.uk';
     deliveryBookingVisible = false;
     @Select(UserState.user) user$: Observable<User>;
+    private readonly cdr = inject(ChangeDetectorRef);
     constructor(
         private store: Store,
         private toastr: ToastrService,
@@ -55,9 +56,11 @@ export class AppHeader implements OnInit, OnDestroy {
     ngOnInit() {
         this.sub = this.user$.subscribe(user => {
             this.user = user;
+            this.cdr.markForCheck();
         });
         this.featureFlags.deliveryBookingVisibility().subscribe(state => {
             this.deliveryBookingVisible = state.visible;
+            this.cdr.markForCheck();
         });
     }
 

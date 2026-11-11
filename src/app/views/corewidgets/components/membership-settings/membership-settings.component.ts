@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -41,6 +41,8 @@ export class MembershipSettingsComponent implements OnInit {
   mode: MembershipOverLimitMode = 'BLOCK';
   grace = 0;
   private saved: Config = { membershipOverLimitMode: 'BLOCK', membershipGraceRequests: 0 };
+  // Written from Apollo callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
     private apollo: Apollo,
@@ -50,6 +52,7 @@ export class MembershipSettingsComponent implements OnInit {
   ngOnInit(): void {
     this.apollo.query<{ adminConfig: Config }>({ query: CONFIG_QUERY, fetchPolicy: 'network-only' }).subscribe({
       next: ({ data, error }) => {
+        this.cdr.markForCheck();
         if (error || !data?.adminConfig) {
           this.unavailable = true;
         } else {
@@ -58,6 +61,7 @@ export class MembershipSettingsComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
+        this.cdr.markForCheck();
         this.unavailable = true;
         this.loading = false;
       },
@@ -79,6 +83,7 @@ export class MembershipSettingsComponent implements OnInit {
     };
     this.apollo.mutate<{ updateAdminConfig: Config }>({ mutation: UPDATE_CONFIG, variables: { data } }).subscribe({
       next: ({ data: res, error }) => {
+        this.cdr.markForCheck();
         this.saving = false;
         if (error || !res?.updateAdminConfig) {
           this.toastr.error('Could not save membership settings');
@@ -88,6 +93,7 @@ export class MembershipSettingsComponent implements OnInit {
         this.toastr.success('Membership settings saved');
       },
       error: () => {
+        this.cdr.markForCheck();
         this.saving = false;
         this.toastr.error('Could not save membership settings');
       },

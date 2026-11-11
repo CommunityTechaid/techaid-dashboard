@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -171,6 +171,9 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
     private readonly featureFlags: FeatureFlagService,
   ) {}
 
+  // Written from Apollo callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
+
   ngOnInit(): void {
     this.load();
   }
@@ -180,6 +183,7 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.apollo.query<{ featureFlags: FlagRow[] }>({ query: FLAGS_QUERY, fetchPolicy: 'network-only' }).subscribe({
         next: ({ data }) => {
+          this.cdr.markForCheck();
           this.flags = (data.featureFlags || [])
             .map((f) => ({
               ...f,
@@ -193,6 +197,7 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: () => {
+          this.cdr.markForCheck();
           this.loading = false;
           this.toastr.error('Could not load feature flags');
         },
@@ -228,6 +233,7 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: ({ data }) => {
+          this.cdr.markForCheck();
           row.enabled = data!.updateFeatureFlag.enabled;
           row.updatedAt = data!.updateFeatureFlag.updatedAt;
           row.saving = false;
@@ -235,6 +241,7 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
           this.toastr.success(`${row.label} ${row.enabled ? 'enabled' : 'disabled'}`);
         },
         error: () => {
+          this.cdr.markForCheck();
           row.saving = false;
           input.checked = row.enabled;
           this.toastr.error('Could not update the flag');

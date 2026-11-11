@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, Output, EventEmitter, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ElementRef, Output, EventEmitter, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { Subscription } from 'rxjs';
 
@@ -68,6 +68,9 @@ export class GalleryInput extends FieldType implements OnInit {
   @ViewChild('fileInput') fileInput: ElementRef;
   files = [];
   sub: Subscription;
+  // `files` is rewritten from valueChanges (also after the FileReader callback); formly-form is OnPush,
+  // so this view marks itself for check rather than rely on zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   get validationId() {
       return this.field.id + '-message';
@@ -77,6 +80,7 @@ export class GalleryInput extends FieldType implements OnInit {
     this.setFiles(this.formControl.value);
     this.sub = this.formControl.valueChanges.subscribe((val) => {
       this.setFiles(val);
+      this.cdr.markForCheck();
     });
   }
 

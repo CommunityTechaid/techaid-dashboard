@@ -10,7 +10,8 @@ import {
   signal,
   SimpleChanges,
   ViewChild,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  ChangeDetectorRef
 } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { combineLatest } from 'rxjs';
@@ -120,6 +121,8 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
   readonly verificationPending = signal(false);
 
   private widgetId: string | null = null;
+  // `boroughWarning` is written from the ward-lookup stream: mark for check so it repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly form = this.fb.nonNullable.group({
     firstName: ['', Validators.required],
@@ -263,6 +266,7 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
     }
     combineLatest([this.wardLookup.lookup(postcode), this.featureFlags.supportedBoroughs()]).subscribe(
       ([result, supported]) => {
+        this.cdr.markForCheck();
         if (result.status === 'resolved') {
           const covered = supported.some((b) => b.code === result.borough.code);
           this.boroughWarning = covered ? null : OUT_OF_AREA_WARNING;
