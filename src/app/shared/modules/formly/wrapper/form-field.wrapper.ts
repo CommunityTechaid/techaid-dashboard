@@ -35,7 +35,7 @@ import { NgbTooltip, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
     }
     </div>
     `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbTooltip, NgbPopover, FormlyModule]
 })
 export class AppFormlyWrapperFormField extends FieldWrapper {

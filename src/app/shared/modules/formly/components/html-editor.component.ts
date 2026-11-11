@@ -29,7 +29,7 @@ import { ReactiveFormsModule } from '@angular/forms';
       .html-editor-source { font-family: SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size: .85rem; }
       .html-editor-preview { min-height: 3rem; overflow-wrap: anywhere; background: #fff; }
     `],
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ReactiveFormsModule]
 })
 export class HtmlEditorComponent extends FieldType {}

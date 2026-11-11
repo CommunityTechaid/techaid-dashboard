@@ -139,7 +139,7 @@ class NgbDateNativeAdapter extends NgbDateAdapter<any> {
 
 </div>
 `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbInputDatepicker, ReactiveFormsModule, FormlyModule, NgbDatepicker]
 })
 export class DateInput extends FieldType implements OnInit {

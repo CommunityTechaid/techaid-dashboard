@@ -19,7 +19,7 @@ import { ReactiveFormsModule } from '@angular/forms';
         placeholder="{{this.to.placeholder}}">
     </ng-select>
   `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgSelectComponent, ReactiveFormsModule]
 })
 export class ChoiceInput extends FieldType implements AfterViewInit {

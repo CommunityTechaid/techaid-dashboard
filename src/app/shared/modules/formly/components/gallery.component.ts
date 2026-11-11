@@ -1,7 +1,8 @@
-import { Component, ViewChild, ElementRef, Output, EventEmitter, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, ElementRef, Output, EventEmitter, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { Subscription } from 'rxjs';
 
+interface GalleryFile { url: string; image: string; id: string | number | null; }
 
 @Component({
     selector: 'formly-field-file',
@@ -46,7 +47,7 @@ import { Subscription } from 'rxjs';
     template: `
   <div [class.is-invalid]="showError">
     <div class="">
-      @for (f of files; track f) {
+      @for (f of files(); track f) {
         <div class="file mr-1">
           <img class="img-thumbnail" [src]="f.image || to.prefix + f.url" />
           <a href="#" (click)="remove(f)"><i class="fas fa-times"></i></a>
@@ -61,16 +62,15 @@ import { Subscription } from 'rxjs';
     </div>
   </div>
   `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: []
 })
 export class GalleryInput extends FieldType implements OnInit {
   @ViewChild('fileInput') fileInput: ElementRef;
-  files = [];
+  // A signal: `files` is rewritten from valueChanges (also after the FileReader callback), so the
+  // view repaints without a manual markForCheck (#115).
+  readonly files = signal<GalleryFile[]>([]);
   sub: Subscription;
-  // `files` is rewritten from valueChanges (also after the FileReader callback); formly-form is OnPush,
-  // so this view marks itself for check rather than rely on zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
 
   get validationId() {
       return this.field.id + '-message';
@@ -80,18 +80,17 @@ export class GalleryInput extends FieldType implements OnInit {
     this.setFiles(this.formControl.value);
     this.sub = this.formControl.valueChanges.subscribe((val) => {
       this.setFiles(val);
-      this.cdr.markForCheck();
     });
   }
 
   setFiles(files) {
-    this.files = (files || []).map(f => {
+    this.files.set((files || []).map(f => {
       return {
         url: f.url,
         image: f.image,
         id: f.id
       };
-    });
+    }));
   }
 
   fileChange(event: any) {
@@ -99,9 +98,10 @@ export class GalleryInput extends FieldType implements OnInit {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.resizeImage(e.target['result'], 640, (data) => {
-          this.files.push({image: data, id: null, url: null});
+          const files = [...this.files(), {image: data, id: null, url: null}];
+          this.files.set(files);
           this.fileInput.nativeElement.value = '';
-          this.formControl.setValue(this.files);
+          this.formControl.setValue(files);
         });
       };
       reader.readAsDataURL(file);
@@ -109,8 +109,9 @@ export class GalleryInput extends FieldType implements OnInit {
   }
 
   remove(file) {
-    this.files = this.files.filter(f => f != file);
-    this.formControl.setValue(this.files);
+    const files = this.files().filter(f => f != file);
+    this.files.set(files);
+    this.formControl.setValue(files);
     return false;
   }
 
