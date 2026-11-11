@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, signal } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of, firstValueFrom } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -214,7 +214,8 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
   ];
 
   filter: any = {};
-  filterCount = 0;
+  // Signals: written from the NgbModal filter footer (its own view root) and the table source (#115).
+  readonly filterCount = signal(0);
   filterModel: any = {archived: [false]};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterFields: FormlyFieldConfig[] = [
@@ -242,7 +243,7 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
           className: 'col-sm-4',
           // Values survive the flag being off; applyFilter ignores them then.
           resetOnHide: false,
-          hideExpression: () => !this.membershipEnabled,
+          hideExpression: () => !this.membershipEnabled(),
           templateOptions: {
             label: 'Membership contacts only',
             required: false,
@@ -254,7 +255,7 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
   ];
 
   /** Membership flag (techaid-server#311). */
-  membershipEnabled = false;
+  readonly membershipEnabled = signal(false);
 
   @Input()
   tableId = 'referring-org-contact-index';
@@ -269,14 +270,14 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
       filter['archived'] = {_in: data.archived};
     }
 
-    if (this.membershipEnabled && data.membershipContactsOnly) {
+    if (this.membershipEnabled() && data.membershipContactsOnly) {
       count++;
       filter['isMembershipContact'] = {_eq: true};
     }
 
     localStorage.setItem(`referringOrgContactFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
-    this.filterCount = count;
+    this.filterCount.set(count);
     this.filterModel = data;
     // Called from the filter modal, whose view lives in NgbModal's window —
     // the host's filterCount badge won't repaint under OnPush without this.
@@ -331,7 +332,7 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
         filter: this.filter
       };
       const enabled = await firstValueFrom(this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)), { defaultValue: false });
-      this.membershipEnabled = enabled;
+      this.membershipEnabled.set(enabled);
       this.cdr.markForCheck();
       if (!enabled && vars.filter.isMembershipContact) {
         // The server doesn't know the field while the flag is off; don't let a saved filter break the table.

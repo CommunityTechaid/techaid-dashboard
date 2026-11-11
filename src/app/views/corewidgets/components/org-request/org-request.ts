@@ -3,7 +3,6 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
-  NgZone,
   Renderer2,
   ViewChild, OnInit, AfterViewInit, OnDestroy,
   ChangeDetectionStrategy
@@ -1079,7 +1078,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     private elementRef: ElementRef,
     private renderer: Renderer2,
     private changeDetectorRef: ChangeDetectorRef,
-    private ngZone: NgZone,
     private route: ActivatedRoute,
     private router: Router,
     private featureFlags: FeatureFlagService,

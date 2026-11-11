@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, viewChild, Input, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, viewChild, Input, OnInit, OnDestroy, signal } from '@angular/core';
 import {
   concat,
   Subject,
@@ -259,7 +259,8 @@ export class KitComponent implements OnInit, OnDestroy {
   };
 
   filter: any = {};
-  filterCount = 0;
+  // Signals: written from the NgbModal filter footer (its own view root) and the table source (#115).
+  readonly filterCount = signal(0);
   filterModel: any = {};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterOptions: FormlyFormOptions = {};
@@ -449,7 +450,7 @@ export class KitComponent implements OnInit, OnDestroy {
 
     localStorage.setItem(`kitFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
-    this.filterCount = count;
+    this.filterCount.set(count);
     this.filterModel = data;
     // Called from the filter modal, whose view lives in NgbModal's window —
     // the host's filterCount badge won't repaint under OnPush without this.
