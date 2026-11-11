@@ -60,3 +60,45 @@ export function pageNumbers(current: number, pages: number, buttons = 7): PageIt
   }
   return [0, 'ellipsis', ...range(current - half + 2, current + half - 1), 'ellipsis', pages - 1];
 }
+
+/**
+ * Client-side mode: a `source` over rows the host already holds, for tables with no server
+ * paging (the dashboard's status table). `rows` is read on every request, so a host passing a
+ * signal reads its current value; `accessors` maps each sortable column `key` to the cell value
+ * used for ordering and searching.
+ *
+ * Matches DataTables' client-side defaults: the search is case-insensitive and "smart" (every
+ * whitespace-separated word must appear somewhere in the row), strings sort case-insensitively
+ * and numbers numerically, and the sort is stable.
+ */
+export function clientSource<T>(
+  rows: () => readonly T[],
+  accessors: Record<string, (row: T) => string | number>,
+): TableSource<T> {
+  return async (query: TableQuery): Promise<TableResult<T>> => {
+    const words = query.term.toLowerCase().split(/\s+/).filter(Boolean);
+    const text = (row: T) => Object.values(accessors).map(get => String(get(row))).join(' ').toLowerCase();
+    const matching = rows().filter(row => {
+      const haystack = text(row);
+      return words.every(w => haystack.includes(w));
+    });
+    const sort = query.sort[0];
+    const get = sort ? accessors[sort.key] : undefined;
+    const compare = (a: string | number, b: string | number): number => {
+      if (typeof a === 'number' && typeof b === 'number') {
+        return a - b;
+      }
+      const x = String(a).toLowerCase();
+      const y = String(b).toLowerCase();
+      return x < y ? -1 : x > y ? 1 : 0;
+    };
+    const ordered = get
+      ? matching
+          .map((row, i) => ({ row, i, v: get(row) }))
+          .sort((a, b) => (sort.dir === 'asc' ? compare(a.v, b.v) : -compare(a.v, b.v)) || a.i - b.i)
+          .map(x => x.row)
+      : matching;
+    const start = query.page * query.size;
+    return { rows: ordered.slice(start, start + query.size), total: ordered.length };
+  };
+}

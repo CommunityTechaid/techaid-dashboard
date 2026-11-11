@@ -8,8 +8,60 @@ until the removal milestone).
 
 | Milestone | State |
 |---|---|
-| M1 shell + role-index pilot | DONE in this PR |
-| M2 onward | not started |
+| M1 shell + role-index pilot | DONE (PR #341) |
+| M2 audit tables | DONE (PR M2-M4, commit 1) |
+| M3 users-admin cluster | DONE (PR M2-M4, commit 2) |
+| M4 post-index, dashboard-index | DONE (PR M2-M4, commit 3) |
+| M5 referring organisations | next (not started) |
+| M6 onward | not started |
+
+### Progress notes (newest last)
+
+**M2 (done).** `kit-audit-component` and `device-request-audit-component` no longer use DataTables.
+They hold rows in signals (`entities` / `allEntities` / `loaded`), are `OnPush`, and keep their
+ids (`kit-audit-<id>`, `device-request-audit-<id>`) so `audit-system-label` and `bugs` still
+select them. Notes:
+
+- The old components sent a `page` variable the audit queries do not declare, and read a
+  `search$` term that was never forwarded. Both are dropped; the header-search subscription still
+  refetches (first emission skipped, it is the current value). The header search box has no
+  element in the template today (`postSearch()` is never bound), so that refetch cannot be driven
+  from e2e.
+- "No data!" now appears only after the first answer (it showed from the first paint before).
+- Zoneless (#115): nothing to do here, state is signals. Both were `Eager` before and only
+  repainted because zone.js re-checked them.
+- New spec: `e2e/tests/native-table-audit.spec.ts` (5 tests, `@mocked`; needs `admin:kits` and
+  `admin:organisations` on top of the staff set to see the Audit tab).
+
+**M3 (done).** user-index, role-users, role-permissions, user-permissions and user-roles use
+`cta-table`. `source` stays a field assigned in `ngOnInit` (it closes over the `watchQuery` ref).
+Notes:
+
+- The `'1'`/`'-1'` mapping lives in each users-table `source` (user-index also maps the column to
+  the server's `last_login`); role-permissions, user-permissions and user-roles send `asc`/`desc`
+  as before. Do not unify them.
+- Non-sortable columns carry `sortable: false`; role-users' default order is on a non-sortable
+  column (`name`, desc), so the first request still sends `{ key: 'name', value: '-1' }` as the
+  DataTables version did, and clicking those headers is inert.
+- **Plan correction.** The inventory said role-permissions has no length menu. It had no explicit
+  `lengthMenu`, so DataTables showed its default `[10, 25, 50, 100]` (the `dom` has the `l`
+  slot). Migrated with `[pageLengths]="[10, 25, 50, 100]"`; pinned in the new spec.
+- `NativeTableComponent.search()`/`reload()` are now no-ops until the shell's `ngOnInit` has run.
+  The hosts' header-search subscription (NGXS replays the current value on subscribe) can fire
+  after the shell exists but before its inputs are bound, which threw NG0950 (`columns` required)
+  and broke the page. role-index (M1) had the same latent bug; the guard fixes it too.
+- Mutation reloads (`removeRoles`, `removePermissions`, assign) call `grid()?.reload()`, which
+  keeps the current page, as `ajax.reload(null, false)` did.
+- Zoneless (#115): the tables are signal-driven. The four child tabs and role-users/user-roles
+  hosts are still `Eager`; their remaining zone-dependent state is NOT table state: the formly
+  typeahead (`appField.templateOptions['items']` is written from an rxjs subscription in
+  role-users/user-roles) and `apiLoading`. Z1 must convert those. `selectedUser`/`selectedRole`
+  are set in click handlers, which schedule CD themselves.
+- New spec: `e2e/tests/native-table-users-admin.spec.ts` (5 tests, `@mocked`) pins the sort
+  strings, inert headers, length menus, pager flavour, info line, mutation reloads and the
+  `user=roles` id. `issue-72-user-index-sort` is a live-UAT spec and could not run here (it needs
+  a real Auth0 token; with the fake one the page redirects to Auth0), the mocked spec covers the
+  same assertion.
 
 Model strength: **S** = Sonnet-class is enough, **O** = Opus-class (design judgement, subtle
 behaviour). Effort in focused hours; a milestone is one sitting or less unless noted.
@@ -206,3 +258,34 @@ outside Angular's scheduling except the third-party libraries below.
 | Z5 | Ship to UAT first, soak, then release; update the architecture-contract skill (sections 6, 12) and CLAUDE.md | S | 1 h |
 
 Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the current build; most of it zone.js).
+
+**M4 (done).** post-index and dashboard-index.
+
+- post-index: ordinary shell page (`simple_numbers`, order `updatedAt` desc). It takes `tableId` and
+  `pageLength` as inputs because the dashboard embeds it (`post-index-dashboard`, 5 per page);
+  both are passed through to `cta-table`. Creating a post calls `grid()?.reload()` (current page kept).
+- **Client-side mode** is `clientSource(rows, accessors)` in `table-types.ts`, not a new shell
+  input: the shell stays server-shaped and the host hands it a `source` over a signal it holds.
+  Search is DataTables' "smart" client search (each word must match somewhere, case-insensitive),
+  strings sort case-insensitively, numbers numerically, stable. M5+ need nothing from it.
+- dashboard-index's table is now `status-count` (it was a second `donor-index` id), with
+  `pageLengths=[]` (no menu), `persistState=false` (it never had `stateSave`), order Status asc.
+  Rows are labels (`KIT_STATUS[status] || status`), so sorting and searching act on what the user sees.
+- Zoneless (#115): dashboard-index was `Eager` with `model`/`user` assigned in async callbacks; it is
+  now `OnPush` with `model` and `user` as signals (template reads `model()`/`user()`), so it repaints
+  without zone.js. `normalizeData` still mutates the local `styles` map before `model` is set; that
+  object is not an Apollo response.
+- New spec: `e2e/tests/native-table-posts-dashboard.spec.ts` (3 tests, `@mocked`). The dashboard page
+  had no e2e cover before this.
+
+### Where to resume
+
+Next is **M5** (referring-organisation-index, -contact-index, -contact-component): same recipe as
+M3/M4. Per component: replace the `dtOptions` block with `this.source = async q => ...` (keep the
+`watchQuery` ref in `ngOnInit`), put the `<tr>` inside `<cta-table><ng-template ctaRow>`, map
+`q.sort` to the resolver's format, call `grid()?.reload()` where `table.ajax.reload(null, false)` was,
+and the filter modals call `grid()?.reload(true)` where they used `reload(resetPaging)`. Add
+`sortable: false` for `orderable: false` columns. Check the existing `[pageLength]`/`lengthMenu` in each
+component rather than trusting the inventory table (it was wrong once, see M3). Run the existing
+`stale-search-response` and `onpush-fanout` specs, and add a parity spec per cluster.
+

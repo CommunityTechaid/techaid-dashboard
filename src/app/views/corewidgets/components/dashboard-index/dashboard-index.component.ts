@@ -1,7 +1,6 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, computed, signal } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -14,7 +13,8 @@ import { Select } from '@ngxs/store';
 import { AuthenticationService } from '@app/shared/services/authentication.service';
 import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, clientSource } from '@app/shared/modules/native-table/table-types';
 import { PostIndexComponent } from '../post-index/post-index.component';
 
 const QUERY_ENTITY = gql`
@@ -53,13 +53,15 @@ query findAll {
     selector: 'dashboard-index',
     styleUrls: ['dashboard-index.scss'],
     templateUrl: './dashboard-index.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [NgbProgressbar, AppGridDirective_1, PostIndexComponent]
+    // OnPush: model and user are signals, so the page repaints with no zone.js (#115). It was
+    // Eager and only repainted because zone.js re-checked it after the findAll promise.
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NgbProgressbar, NativeTableComponent, NativeTableRowDirective, PostIndexComponent]
 })
 export class DashboardIndexComponent implements OnInit, OnDestroy {
   sub: Subscription;
-  model: any;
-  user: User;
+  readonly model = signal<any>(undefined);
+  readonly user = signal<User | undefined>(undefined);
   @Select(UserState.user) user$: Observable<User>;
 
   constructor(
@@ -80,14 +82,23 @@ export class DashboardIndexComponent implements OnInit, OnDestroy {
     'BROADBANDHUB': {title: 'Broadband Hubs', style: 'success', progress: 0}
   };
 
-  dtOptions = {
-    pageLength: 5,
-    dom: '<\'row\'<\'col-sm-12 col-md-6\'><\'col-sm-12 col-md-6\'f>>' +
-          '<\'row\'<\'col-sm-12\'tr>>' +
-          '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-  };
-
   kitStatus = KIT_STATUS;
+
+  /**
+   * The status table is client-side: 5 rows a page, a search box, header sort (status, then
+   * count), no length menu and no saved state, as it was under DataTables. The rows are the
+   * findAll `statusCount` entries with their display label; the source reads them per request.
+   */
+  readonly statusRows = computed(() =>
+    (this.model()?.statusCount ?? []).map((s: any) => ({ status: s.status, label: this.kitStatus[s.status] || s.status, count: s.count })));
+  readonly statusColumns: TableColumn[] = [
+    { title: 'Status', key: 'label' },
+    { title: 'Count', key: 'count' },
+  ];
+  readonly statusSource = clientSource<any>(() => this.statusRows(), {
+    label: r => r.label,
+    count: r => r.count,
+  });
 
   // Created lazily: four of findAll's five fields are @PreAuthorize'd server-side, so building
   // the query before a token exists just buys an Access Denied round trip and a server WARN.
@@ -113,16 +124,16 @@ export class DashboardIndexComponent implements OnInit, OnDestroy {
     }
     this.queryRef.refetch(vars).then(res => {
       if (res.data) {
-        this.model = this.normalizeData(res.data);
+        this.model.set(this.normalizeData(res.data));
       } else {
-        this.model = {};
+        this.model.set({});
       }
     });
   }
 
   ngOnInit() {
     this.sub = this.user$.subscribe(user => {
-        this.user = user;
+        this.user.set(user);
     });
 
     // Hold findAll until a token exists — four of its five fields are @PreAuthorize'd and

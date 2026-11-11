@@ -15,22 +15,8 @@
       <div class="card-body">
         <div class="w-100">
           <div class="table-responsive">
-            <table id="user-index"
-              class="table table-striped table-hover table-bordered table-md"
-              datatable
-              [dtOptions]="dtOptions"
-              >
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Name</th>
-                  <th>Logins</th>
-                  <th>Last Login</th>
-                </tr>
-              </thead>
-              @if (entities?.length != 0) {
-                <tbody>
-                  @for (dt of entities; track dt) {
+            <cta-table tableId="user-index" pagingType="full_numbers" [columns]="columns" [source]="source" [order]="{ column: 3, dir: 'desc' }" [pageLength]="5" (loadError)="onLoadError($event)">
+<ng-template ctaRow let-dt>
                     <tr
                       [class.selected]="selections[dt.id]"
                       (click)="select(dt)"
@@ -86,17 +72,8 @@
                         <td>{{ dt.loginsCount }}</td>
                         <td>{{ dt.lastLogin | date:'medium' }}</td>
                       </tr>
-                    }
-                  </tbody>
-                }
-                @if (entities?.length == 0) {
-                  <tbody>
-                    <tr>
-                      <td colspan="4" class="no-data-available">No data!</td>
-                    </tr>
-                  </tbody>
-                }
-              </table>
+</ng-template>
+</cta-table>
             </div>
           </div>
         </div>

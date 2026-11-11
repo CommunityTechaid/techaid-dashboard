@@ -1,6 +1,5 @@
-import { Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -11,8 +10,9 @@ import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 import { RouterLink } from '@angular/router';
 
@@ -68,20 +68,19 @@ query findAutocompleteRoles($term: String) {
     styleUrls: ['user-roles.scss'],
     templateUrl: './user-roles.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule]
+    imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, ReactiveFormsModule, FormlyModule]
 })
-export class UserRolesComponent implements OnInit, OnDestroy, AfterViewInit {
-  /** Drops out-of-order ajax responses — see LatestDraw. */
-  private readonly draws = new LatestDraw();
-
-  @ViewChild(AppGridDirective) grid: AppGridDirective;
-  dtOptions: DataTables.Settings = {};
+export class UserRolesComponent implements OnInit, OnDestroy {
+  readonly grid = viewChild(NativeTableComponent<any>);
+  readonly columns: TableColumn[] = [
+    { title: 'Name', key: 'name' },
+    { title: 'Description', key: 'description' },
+    { title: '', width: '15px', sortable: false },
+  ];
+  source: TableSource<any>;
   sub: Subscription;
-  table: any;
-  total: number;
   selections = {};
   selected = [];
-  entities = [];
   form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
@@ -124,9 +123,7 @@ export class UserRolesComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input()
   set userId(str: number) {
     this._userId = str;
-    if (this.table) {
-      this.table.ajax.reload(null, false);
-    }
+    this.grid()?.reload();
   }
 
   modal(content) {
@@ -139,22 +136,6 @@ export class UserRolesComponent implements OnInit, OnDestroy, AfterViewInit {
   clearSelection() {
     this.selections = {};
     this.selected = [];
-  }
-
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
   }
 
   ngOnInit() {
@@ -172,10 +153,7 @@ export class UserRolesComponent implements OnInit, OnDestroy, AfterViewInit {
       });
 
     this.sub = this.search$.subscribe(query => {
-      if (this.table) {
-        this.table.search(query);
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.search(query);
     });
 
     this.apis$ = concat(
@@ -210,94 +188,35 @@ export class UserRolesComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
 
-    this.dtOptions = {
-      pagingType: 'full_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: 10,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [1, 'desc'],
-      serverSide: true,
-      processing: true,
-      stateSave: true,
-      searching: true,
-      ajax: (params: any, callback) => {
-        const drawToken = this.draws.start();
-        const sort = params.order.map(o => {
-          return {
-            key: this.dtOptions.columns[o.column].data,
-            value: o.dir
-          };
-        });
-
-        const vars = {
-          page: {
-            sort: sort,
-            size: params.length,
-            page: Math.round(params.start / params.length),
-          },
-          userId: this._userId,
-          term: params['search']['value']
-        };
-
-        queryRef.refetch(vars).then(res => {
-          if (this.draws.isStale(drawToken)) {
-            return;
-          }
-          let data: any = {};
-          if (res.data) {
-            data = res['data']?.['user']?.['roles'] || { totalElements: 0, content: [] };
-            if (!this.total) {
-              this.total = data['totalElements'];
-            }
-            this.entities = data.content;
-          }
-
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total,
-            recordsFiltered: data['totalElements'],
-            error: '',
-            data: []
-          });
-        }, err => {
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total || 0,
-            recordsFiltered: 0,
-            error: err.message,
-            data: []
-          });
-
-          this.toastr.warning(`
-            <small>${err.message}</small>
-          `, 'GraphQL Error', {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true
-            });
-        });
-      },
-      columns: [
-        { data: 'name' },
-        { data: 'description' },
-        { data: null, width: '15px', orderable: false }
-      ]
+    this.source = async (q) => {
+      const res = await queryRef.refetch({
+        page: {
+          sort: q.sort.map(s => ({ key: s.key, value: s.dir })),
+          size: q.size,
+          page: q.page,
+        },
+        userId: this._userId,
+        term: q.term,
+      });
+      const data: any = res?.data?.['user']?.['roles'] || { totalElements: 0, content: [] };
+      return { rows: data.content ?? [], total: data.totalElements ?? 0 };
     };
+  }
+
+  onLoadError(err: any) {
+    this.toastr.warning(`
+      <small>${err?.message}</small>
+    `, 'GraphQL Error', {
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+      });
   }
 
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();
     }
-  }
-
-  ngAfterViewInit() {
-    this.grid.dtInstance.then(tbl => {
-      this.table = tbl;
-    });
   }
 
   assignRoles(data: any) {
@@ -316,9 +235,7 @@ export class UserRolesComponent implements OnInit, OnDestroy, AfterViewInit {
       });
       this.form.markAsUntouched();
       this.form.markAsPristine();
-      if (this.table) {
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.reload();
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
@@ -337,7 +254,7 @@ export class UserRolesComponent implements OnInit, OnDestroy, AfterViewInit {
         roleIds: [role.id]
       }
     }).subscribe(res => {
-      this.table.ajax.reload(null, false);
+      this.grid()?.reload();
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>
