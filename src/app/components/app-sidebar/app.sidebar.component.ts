@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
@@ -28,12 +28,14 @@ export class AppSidebar implements OnInit, OnDestroy {
     public user: User;
     private sub: Subscription;
     @Select(UserState.user) user$: Observable<User>;
+    private readonly cdr = inject(ChangeDetectorRef);
 
 
     constructor(private store: Store) { }
     ngOnInit() {
         this.sub = this.user$.subscribe(user => {
             this.user = user;
+            this.cdr.markForCheck();
         });
     }
 

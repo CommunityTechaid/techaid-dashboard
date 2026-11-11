@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
@@ -34,6 +34,8 @@ export class AppComponent implements OnInit, OnDestroy {
   showInterstitial = false;
   private interstitialTimer: any;
   private readonly INTERSTITIAL_GRACE_MS = 1000;
+  // Fields below are written from subscriptions and a timer: mark for check so they repaint without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
     private toastr: ToastrService,
@@ -80,6 +82,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.authService.isLoading$.subscribe(loading => {
         this.authLoading = loading;
         this.updateInterstitial();
+        this.cdr.markForCheck();
       })
     );
 
@@ -87,6 +90,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.backendStatusService.status$.subscribe(status => {
         this.backendStatus = status;
         this.updateInterstitial();
+        this.cdr.markForCheck();
       })
     );
 
@@ -98,6 +102,7 @@ export class AppComponent implements OnInit, OnDestroy {
         } else if (this.backendStatus === 'error') {
           this.apiVersion = 'unavailable';
         }
+        this.cdr.markForCheck();
       })
     );
 
@@ -140,6 +145,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.interstitialTimer = setTimeout(() => {
           this.interstitialTimer = null;
           this.showInterstitial = true;
+          this.cdr.markForCheck();
         }, this.INTERSTITIAL_GRACE_MS);
       }
     } else {

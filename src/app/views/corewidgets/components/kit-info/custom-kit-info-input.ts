@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
 
 import { ReactiveFormsModule } from '@angular/forms';
@@ -95,6 +95,7 @@ export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> implemen
     editable = false;
     choice = false;
     private destroy$ = new Subject<void>();
+    private readonly cdr = inject(ChangeDetectorRef);
 
     constructor(private modalService: NgbModal) {
       super();
@@ -102,6 +103,8 @@ export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> implemen
 
     toggleEdit(){
       this.editable = !this.editable
+      // Called from the NgbModal footer, a separate view root: mark this field for check (zoneless, #115).
+      this.cdr.markForCheck();
     }
 
     confirmEditField(content: TemplateRef<any>){

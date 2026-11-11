@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { ConfigService } from './config.service';
 
@@ -9,7 +9,8 @@ export class BackendStatusService {
   private readonly POLL_INTERVAL_MS = 4000;
   private readonly MAX_ATTEMPTS = 15;
 
-  private attempt = 0;
+  /** A signal so `statusMessage` repaints its readers on every retry (zoneless, #115). */
+  private readonly attempt = signal(0);
   private pollTimer: any;
   private abortController: AbortController | null = null;
 
@@ -22,19 +23,19 @@ export class BackendStatusService {
    */
   readonly buildInfo$ = new BehaviorSubject<{ version: string; commit: string; time: string } | null>(null);
 
-  constructor(private zone: NgZone, private config: ConfigService) {}
+  constructor(private config: ConfigService) {}
 
   /** User-facing message that progresses as attempts accumulate. */
   get statusMessage(): string {
-    if (this.attempt < 3) return 'Starting up… this usually takes about 30 seconds.';
-    if (this.attempt < 8) return 'Still warming up… almost there.';
+    if (this.attempt() < 3) return 'Starting up… this usually takes about 30 seconds.';
+    if (this.attempt() < 8) return 'Still warming up… almost there.';
     return 'Taking a bit longer than usual, please hang on…';
   }
 
   /** Start (or restart) the health-check poll cycle from scratch. */
   startCheck() {
     this.cleanup();
-    this.attempt = 0;
+    this.attempt.set(0);
     this.status$.next('checking');
     this.poll();
   }
@@ -51,24 +52,22 @@ export class BackendStatusService {
     })
       .then(res => res.json())
       .then(res => {
-        this.zone.run(() => {
-          if (res?.data?.buildInfo) {
-            this.buildInfo$.next(res.data.buildInfo);
-            this.status$.next('ready');
-          } else {
-            this.scheduleRetry();
-          }
-        });
+        if (res?.data?.buildInfo) {
+          this.buildInfo$.next(res.data.buildInfo);
+          this.status$.next('ready');
+        } else {
+          this.scheduleRetry();
+        }
       })
       .catch(err => {
         if (err?.name === 'AbortError') return;
-        this.zone.run(() => this.scheduleRetry());
+        this.scheduleRetry();
       });
   }
 
   private scheduleRetry() {
-    this.attempt++;
-    if (this.attempt >= this.MAX_ATTEMPTS) {
+    this.attempt.update(n => n + 1);
+    if (this.attempt() >= this.MAX_ATTEMPTS) {
       this.status$.next('error');
       return;
     }

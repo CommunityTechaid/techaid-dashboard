@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -44,6 +44,8 @@ query findPost($slug: String) {
 })
 export class PostDataComponent implements OnInit, OnDestroy {
   sub: Subscription;
+  // Written from Apollo/router callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
   model: any;
   user: User;
   @Select(UserState.user) user$: Observable<User>;
@@ -69,6 +71,7 @@ export class PostDataComponent implements OnInit, OnDestroy {
 
   private fetchData(vars) {
     this.queryRef.refetch(vars).then(res => {
+      this.cdr.markForCheck();
       if (res.data && res.data['post']) {
         const data = res.data['post'];
         this.model = this.normalizeData(data);
@@ -81,6 +84,7 @@ export class PostDataComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.user$.subscribe(user => {
+        this.cdr.markForCheck();
         this.user = user;
     });
     const url = (this.router.url || '').split('?', 2)[0].replace(/^\//, '');

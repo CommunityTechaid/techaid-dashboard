@@ -1,6 +1,6 @@
 import { State, StateContext, Action, Selector, NgxsOnInit } from '@ngxs/store';
 import { LoginUser, LogoutUser } from './actions/user.actions';
-import { NgZone, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { AuthenticationService } from '@app/shared/services/authentication.service';
 import { tap, first, filter } from 'rxjs/operators';
 
@@ -37,7 +37,7 @@ export class User {
 })
 @Injectable()
 export class UserState implements NgxsOnInit {
-    constructor(private auth: AuthenticationService, private zone: NgZone) { }
+    constructor(private auth: AuthenticationService) { }
 
     @Selector() static user(state: UserStateModel) {
         return state.user;
@@ -97,8 +97,6 @@ export class UserState implements NgxsOnInit {
             })
         });
 
-        this.zone.run(() => {
-            this.auth.logout();
-        });
+        this.auth.logout();
     }
 }

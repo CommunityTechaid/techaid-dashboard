@@ -15,8 +15,8 @@
               <span class="icon text-white-50">
                 <i class="fas fa-filter"></i>
               </span>
-              <span class="text">Filter @if (filterCount > 0) {
-                <span class="badge badge-danger">{{filterCount}}</span>
+              <span class="text">Filter @if (filterCount() > 0) {
+                <span class="badge badge-danger">{{filterCount()}}</span>
               }</span>
             </a>
             <a href="#" data-testid="org-create-open" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm mb-1">
@@ -29,7 +29,7 @@
         </div>
       </div>
       <div class="card-body">
-        @if (membershipEnabled) {
+        @if (membershipEnabled()) {
           <div class="d-flex flex-wrap align-items-center gap-2 mb-3 small text-muted" data-testid="membership-badge-key">
             <span>Membership:</span>
             <membership-badges tier="FREE"></membership-badges> free tier

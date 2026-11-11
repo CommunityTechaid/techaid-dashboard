@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
@@ -161,6 +161,8 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
   newBlockedReason = '';
 
   private readonly sub = new Subscription();
+  // Written from Apollo/rxjs callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly apollo: Apollo,
@@ -196,6 +198,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
         .subscribe({
           next: ({ data }) => {
             const cfg = data.deliveryConfig;
+            this.cdr.markForCheck();
             this.enabled = cfg?.enabled ?? true;
             this.leadTimeDays = cfg?.leadTimeDays ?? 1;
             this.advanceDays = cfg?.advanceDays ?? 4;
@@ -225,6 +228,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
           error: () => {
             this.loading = false;
             this.toastr.error('Could not load delivery slot settings');
+            this.cdr.markForCheck();
           },
         }),
     );
@@ -307,6 +311,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
     );
 
     forkJoin([configObs, ...dayObs]).subscribe((results) => {
+      this.cdr.markForCheck();
       this.savingSettings = false;
       const configResult = results[0] as { ok: boolean; updatedAt?: string };
       const failedDays = results.filter((r) => r.kind === 'day' && !r.ok) as { day: number }[];
@@ -389,6 +394,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
 
   saveWindow(w: WindowRow): void {
     this.saveWindowRequest(w).subscribe((ok) => {
+      this.cdr.markForCheck();
       if (ok) {
         this.toastr.success(`Saved "${w.name}"`);
       } else if (w.saveErrorKind === 'validation') {
@@ -413,8 +419,13 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
     from(dirty)
       .pipe(concatMap((w) => this.saveWindowRequest(w)))
       .subscribe({
-        next: (ok) => (ok ? succeeded++ : failed++),
+        next: (ok) => {
+          if (ok) succeeded++;
+          else failed++;
+          this.cdr.markForCheck();
+        },
         complete: () => {
+          this.cdr.markForCheck();
           this.savingAllWindows = false;
           if (failed === 0) {
             this.toastr.success(`Saved ${succeeded} window${succeeded === 1 ? '' : 's'}`);
@@ -488,6 +499,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
       next: () => {
         this.windows.splice(index, 1);
         this.toastr.success('Window deleted');
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.toastr.error(err?.message || 'Could not delete window');
@@ -517,6 +529,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
           this.newBlockedDate = '';
           this.newBlockedReason = '';
           this.toastr.success('Date blocked');
+          this.cdr.markForCheck();
         },
         error: () => this.toastr.error('Could not block that date'),
       });
@@ -527,6 +540,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
       next: () => {
         this.blocked.splice(index, 1);
         this.toastr.success('Date unblocked');
+        this.cdr.markForCheck();
       },
       error: () => this.toastr.error('Could not remove that date'),
     });

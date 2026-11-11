@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -247,6 +247,8 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   editing: { groupId: string | null; key: string } | null = null;
 
   private sub = new Subscription();
+  // Written from Apollo/rxjs callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly apollo: Apollo,
@@ -277,6 +279,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: ({ data }) => {
+          this.cdr.markForCheck();
           this.groups = (data?.boroughGroups ?? []).map((group) => ({
             id: String(group.id),
             name: group.name,
@@ -329,6 +332,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
         error: () => {
           this.loading = false;
           this.loadError = true;
+          this.cdr.markForCheck();
           // Leave `loaded` false so nothing can be saved from a configuration we never read.
           this.groups = [];
           this.exceptions = [];
@@ -553,6 +557,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
           distinctUntilChanged(),
           switchMap((term) => {
             row.loading = true;
+            this.cdr.markForCheck();
             return this.apollo
               .query<{ referringOrganisationsConnection: { content: { id: string; name: string }[] } }>({
                 query: SEARCH_ORGANISATIONS,
@@ -566,6 +571,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
         )
         .subscribe((res) => {
           row.loading = false;
+          this.cdr.markForCheck();
           const found: OrganisationOption[] = (res?.data?.referringOrganisationsConnection?.content ?? []).map(
             (organisation) => ({
               id: String(organisation.id),
@@ -664,11 +670,13 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
           // admin checking their own change on the request form would keep seeing the old config.
           this.availability.reload();
           this.toastr.success('Availability saved');
+          this.cdr.markForCheck();
           this.load();
         },
         error: (err) => {
           this.saving = false;
           this.toastr.error(err?.message ?? 'Could not save the configuration');
+          this.cdr.markForCheck();
           // Re-read so the grid reflects whatever actually landed, including a partial save.
           this.load();
         },

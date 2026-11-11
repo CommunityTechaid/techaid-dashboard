@@ -15,8 +15,8 @@
               <span class="icon text-white-50">
                 <i class="fas fa-filter"></i>
               </span>
-              <span class="text">Filter @if (filterCount > 0) {
-                <span class="badge badge-danger">{{filterCount}}</span>
+              <span class="text">Filter @if (filterCount() > 0) {
+                <span class="badge badge-danger">{{filterCount()}}</span>
               }</span>
             </a>
           </div>

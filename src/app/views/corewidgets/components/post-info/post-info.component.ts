@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -68,6 +68,8 @@ export class PostInfoComponent implements OnInit, OnDestroy {
 
   }
   sub: Subscription;
+  // Written from Apollo/router callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   model = {};
@@ -164,6 +166,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
     this.queryRef.refetch({
       id: this.entityId
     }).then(res => {
+      this.cdr.markForCheck();
       if (res.data && res.data['post']) {
         const data = res.data['post'];
         this.model = this.normalizeData(data);
@@ -185,6 +188,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.activatedRoute.params.subscribe(params => {
+      this.cdr.markForCheck();
       this.entityId = +params['postId'];
       this.fetchData();
     });
@@ -205,6 +209,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
         data
       }
     }).subscribe(res => {
+      this.cdr.markForCheck();
       this.model = this.normalizeData(res.data['updatePost']);
       this.entityName = this.model['title'];
       this.toastr.info(`
@@ -226,6 +231,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
       mutation: DELETE_ENTITY,
       variables: { id: this.entityId }
     }).subscribe(res => {
+      this.cdr.markForCheck();
       if (res.data.deletePost) {
         this.toastr.info(`
         <small>Successfully deleted Post ${this.entityName}</small>

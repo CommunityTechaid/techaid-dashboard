@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { pairwise, startWith } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -188,6 +188,8 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
     private flags: FeatureFlagService
   ) {}
   sub: Subscription;
+  // Written from Apollo/router/store/flag callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
     formState: {
@@ -324,6 +326,7 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
       })
       .then(
         (res) => {
+          this.cdr.markForCheck();
           if (res.data && res.data['referringOrganisation']) {
             const data = res.data['referringOrganisation'];
             this.model = this.normalizeData(data);
@@ -351,11 +354,13 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.activatedRoute.params.subscribe((params) => {
+      this.cdr.markForCheck();
       this.orgId = +params['orgId'];
       this.fetchData();
     });
     this.sub.add(
       this.flags.isEnabled(MEMBERSHIP_FLAG).subscribe((enabled) => {
+        this.cdr.markForCheck();
         this.membershipEnabled = enabled;
         if (enabled) {
           // Between Phone and Archived, which is the last group.
@@ -366,6 +371,7 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
     );
     this.sub.add(
       this.user$.subscribe((user) => {
+        this.cdr.markForCheck();
         this.user = user;
         this.options.formState.disabled = !(user && user.authorities && user.authorities['write:organisations']);
       })
@@ -401,6 +407,7 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe(
         (res) => {
+          this.cdr.markForCheck();
           this.model = this.normalizeData(res.data['updateReferringOrganisation']);
           this.name = this.model['name'];
           this.toastr.info(
@@ -435,6 +442,7 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe(
         (res) => {
+          this.cdr.markForCheck();
           if (res.data.deleteReferringOrganisation) {
             this.toastr.info(
               `

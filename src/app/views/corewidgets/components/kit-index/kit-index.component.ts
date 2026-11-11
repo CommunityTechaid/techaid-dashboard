@@ -1381,6 +1381,9 @@ export class KitIndexComponent implements OnInit, OnDestroy {
       this.toastr.info(`<small>Successfully updated ${ids.length} device(s)</small>`, 'Bulk Update', { enableHtml: true });
       this.clearSelection();
       this.allPageSelected = false;
+      // The selection state is host-template state written from an Apollo callback; don't rely on the
+      // reload's own markForCheck to repaint it (#115).
+      this.cdr.markForCheck();
       this.grid()?.reload();
       close();
     }, (err: any) => {
