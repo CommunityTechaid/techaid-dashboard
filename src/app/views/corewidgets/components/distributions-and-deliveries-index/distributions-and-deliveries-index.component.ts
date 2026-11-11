@@ -359,29 +359,22 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   quickOnHold = false;
 
   /**
-   * Plain-English note on what the current view leaves out by default, or '' when nothing is hidden.
-   * Mirrors applyFilter: non-commercial only while is_sales is exactly [false]; with a week chosen and
+   * One short line naming what the current view leaves out by default, or '' when nothing is hidden.
+   * Mirrors applyFilter: commercial is hidden while is_sales is exactly [false]; with a week chosen and
    * no Filter-window status, declined / cancelled / failed / on-hold are hidden unless a button adds them.
    */
   get hiddenNote(): string {
     const sales: any[] = this.filterModel?.is_sales ?? [];
-    const nonCommercialOnly = sales.length === 1 && sales[0] === false;
-    const hiddenStatuses: string[] = [];
+    const hidden: string[] = [];
+    if (sales.length === 1 && sales[0] === false) hidden.push('commercial');
     if (this.quickWeek && !(this.filterModel?.status?.length)) {
-      hiddenStatuses.push('declined', 'cancelled');
-      if (!this.quickFailed) hiddenStatuses.push('failed');
-      if (!this.quickOnHold) hiddenStatuses.push('on-hold');
+      hidden.push('declined', 'cancelled');
+      if (!this.quickFailed) hidden.push('failed');
+      if (!this.quickOnHold) hidden.push('on-hold');
     }
-    const parts: string[] = [];
-    if (nonCommercialOnly) parts.push('Showing non-commercial requests only.');
-    if (hiddenStatuses.length) {
-      const list = hiddenStatuses.length > 1
-        ? `${hiddenStatuses.slice(0, -1).join(', ')} and ${hiddenStatuses[hiddenStatuses.length - 1]}`
-        : hiddenStatuses[0];
-      parts.push(`${list.charAt(0).toUpperCase()}${list.slice(1)} requests are hidden in a week view.`);
-    }
-    if (parts.length) parts.push('Change this in Filter.');
-    return parts.join(' ');
+    if (!hidden.length) return '';
+    const list = hidden.length > 1 ? `${hidden.slice(0, -1).join(', ')} and ${hidden[hidden.length - 1]}` : hidden[0];
+    return `${list.charAt(0).toUpperCase()}${list.slice(1)} requests hidden · change in Filter`;
   }
 
   /** Accessible label for a week button, e.g. 'Week of Mon 2 Nov 2026'. */

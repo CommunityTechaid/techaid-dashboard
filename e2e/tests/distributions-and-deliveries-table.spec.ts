@@ -1657,18 +1657,18 @@ test.describe('DnD table: filters and tab in the URL @mocked', () => {
 test.describe('DnD table: labels and hints @mocked', () => {
   const note = (page: Page) => page.locator('.dd-hidden-note');
 
-  test('the default view says it shows non-commercial requests only, and the note follows the filters', async ({ page }) => {
+  test('the default view says commercial requests are hidden, and the note follows the filters', async ({ page }) => {
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
-    await expect(note(page)).toHaveText('Showing non-commercial requests only. Change this in Filter.');
+    await expect(note(page)).toHaveText('Commercial requests hidden · change in Filter');
 
     await h.after(() => weekButtons(page).nth(0).click());
     await expect(note(page)).toHaveText(
-      'Showing non-commercial requests only. Declined, cancelled, failed and on-hold requests are hidden in a week view. Change this in Filter.');
+      'Commercial, declined, cancelled, failed and on-hold requests hidden · change in Filter');
 
     await h.after(() => onHoldButton(page).click());
-    await expect(note(page)).toContainText('Declined, cancelled and failed requests are hidden');
+    await expect(note(page)).toHaveText('Commercial, declined, cancelled and failed requests hidden · change in Filter');
     await expect(note(page)).not.toContainText('on-hold');
 
     await h.after(() => clearButton(page).click());
