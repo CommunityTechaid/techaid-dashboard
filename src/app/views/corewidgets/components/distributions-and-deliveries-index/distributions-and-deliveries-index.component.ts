@@ -358,6 +358,30 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   /** The 'On hold' button is on. */
   quickOnHold = false;
 
+  /**
+   * One short line naming what the current view leaves out by default, or '' when nothing is hidden.
+   * Mirrors applyFilter: commercial is hidden while is_sales is exactly [false]; with a week chosen and
+   * no Filter-window status, declined / cancelled / failed / on-hold are hidden unless a button adds them.
+   */
+  get hiddenNote(): string {
+    const sales: any[] = this.filterModel?.is_sales ?? [];
+    const hidden: string[] = [];
+    if (sales.length === 1 && sales[0] === false) hidden.push('commercial');
+    if (this.quickWeek && !(this.filterModel?.status?.length)) {
+      hidden.push('declined', 'cancelled');
+      if (!this.quickFailed) hidden.push('failed');
+      if (!this.quickOnHold) hidden.push('on-hold');
+    }
+    if (!hidden.length) return '';
+    const list = hidden.length > 1 ? `${hidden.slice(0, -1).join(', ')} and ${hidden[hidden.length - 1]}` : hidden[0];
+    return `${list.charAt(0).toUpperCase()}${list.slice(1)} requests hidden · change in Filter`;
+  }
+
+  /** Accessible label for a week button, e.g. 'Week of Mon 2 Nov 2026'. */
+  weekTitle(b: { startDate: Date }): string {
+    return 'Week of ' + b.startDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).replace(/,/g, '');
+  }
+
   get hasQuickFilter(): boolean {
     return !!this.quickWeek || this.quickFailed || this.quickOnHold;
   }
@@ -543,7 +567,8 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     }
 
     if (data.is_sales && data.is_sales.length) {
-      count += data.is_sales.length;
+      // Commercial + Non-commercial together constrain nothing, so that is no active filter.
+      if (data.is_sales.length < 2) count += 1;
       filter['isSales'] = {_in: data.is_sales};
     }
 
