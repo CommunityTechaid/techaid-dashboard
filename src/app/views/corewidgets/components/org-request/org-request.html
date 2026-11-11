@@ -1,5 +1,5 @@
 <!-- <app-local-css [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}'"></app-local-css> -->
-@if (!isOrgAdmin) {
+@if (!isOrgAdmin()) {
   <app-local-css
   [style]="'app-sidebar{display:none !important;}app-header{display:none !important;}textarea::placeholder { text-align: center; }'"></app-local-css>
 }
@@ -28,7 +28,7 @@
       </div>
     </div>
     <div class="card-body">
-      @if (backendStatus === 'checking') {
+      @if (backendStatus() === 'checking') {
         <div class="text-center py-5">
           <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
             <span class="visually-hidden">Loading…</span>
@@ -36,14 +36,14 @@
           <p class="text-muted mt-2">{{ backendStatusMessage }}</p>
         </div>
       }
-      @if (backendStatus === 'error') {
+      @if (backendStatus() === 'error') {
         <div class="text-center py-5">
           <p class="text-muted">The server is taking longer than expected to respond.</p>
           <p class="text-muted">Please try again in a few minutes, or click below to retry now.</p>
           <button class="btn btn-primary btn-sm" (click)="startBackendHealthCheck()">Retry</button>
         </div>
       }
-      @if (backendStatus === 'ready') {
+      @if (backendStatus() === 'ready') {
         <div class="row">
           @if (submited) {
             <div class="col-md-12">
@@ -58,46 +58,46 @@
               </div>
             </div>
           }
-          @if (showTypeform && wardSubmitted) {
+          @if (showTypeform() && wardSubmitted()) {
             <div class="col-md-12">
               <div #tfForm id="tf-form" style="width: 100%; height: 800px"></div>
             </div>
           }
         </div>
-        @if (content?.content) {
+        @if (content()?.content) {
           <div class="row justify-content-center">
-            <div [innerHtml]="$safeNavigationMigration(content?.content)"></div>
+            <div [innerHtml]="$safeNavigationMigration(content()?.content)"></div>
           </div>
         }
-        @if (!wardSubmitted) {
+        @if (!wardSubmitted()) {
           <div>
-            @if (!showTypeform) {
-              <postcode-location-step [supportedBoroughs]="supportedBoroughList"
+            @if (!showTypeform()) {
+              <postcode-location-step [supportedBoroughs]="supportedBoroughList()"
                 (confirmed)="onLocationConfirmed($event)">
               </postcode-location-step>
             }
           </div>
         }
-        @if (!submited && wardSubmitted && !showTypeform) {
-          @if (deviceAvailabilityNote && !requestLimitReached) {
+        @if (!submited && wardSubmitted() && !showTypeform()) {
+          @if (deviceAvailabilityNote() && !requestLimitReached()) {
             <div class="alert alert-warning border-left-warning" data-testid="device-availability-note">
-              {{ deviceAvailabilityNote }}
+              {{ deviceAvailabilityNote() }}
             </div>
           }
-          @if (membershipEnabled && onRequestPage && !requestLimitReached) {
-            @if (isOrgAdmin && adminOrgMembership?.membership) {
+          @if (membershipEnabled() && onRequestPage() && !requestLimitReached()) {
+            @if (isOrgAdmin() && adminOrgMembership()?.membership) {
               <div class="d-flex flex-wrap align-items-center gap-2 mb-3" data-testid="admin-membership-badges">
-                <strong>{{ adminOrgMembership.name }}</strong>
-                <membership-badges [membership]="adminOrgMembership.membership" [showUsage]="true"></membership-badges>
+                <strong>{{ adminOrgMembership().name }}</strong>
+                <membership-badges [membership]="adminOrgMembership().membership" [showUsage]="true"></membership-badges>
                 @if (selectedContactIsMembershipContact) {
                   <membership-badges [contact]="true"></membership-badges>
                 }
               </div>
             }
-            <membership-notice [notice]="membershipNoticeKind" [allowance]="membershipAllowance"
-              [organisationName]="selectedOrganisationName" [graceTotal]="membershipGraceRequests"
-              [overLimitMode]="membershipOverLimitMode" [contactName]="membershipContactName"
-              [staff]="isOrgAdmin"></membership-notice>
+            <membership-notice [notice]="membershipNoticeKind" [allowance]="membershipAllowance()"
+              [organisationName]="selectedOrganisationName" [graceTotal]="membershipGraceRequests()"
+              [overLimitMode]="membershipOverLimitMode()" [contactName]="membershipContactName"
+              [staff]="isOrgAdmin()"></membership-notice>
           }
           <form [formGroup]="form">
             <!-- Over the membership limit (hard block): the whole request fieldset, Submit included, is disabled. -->

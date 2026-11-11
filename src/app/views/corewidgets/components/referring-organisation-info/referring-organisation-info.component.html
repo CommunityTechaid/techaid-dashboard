@@ -11,7 +11,7 @@
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="#" [routerLink]="['../']">Referring Organisations</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ name }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ name() }}</li>
       </ol>
     </nav>
 
@@ -22,7 +22,7 @@
           <div class="card shadow mb-4 mt-1">
             <div class="card-header py-3">
               <div class="d-flex justify-content-start align-items-center gap-2">
-                <h6 class="m-0 font-weight-bold text-primary">{{name}}</h6>
+                <h6 class="m-0 font-weight-bold text-primary">{{name()}}</h6>
                 @if (model?.membership) {
                   <membership-badges [tier]="model.membership.tier" [expired]="model.membership.expired" [large]="true"></membership-badges>
                 }
@@ -71,7 +71,7 @@
                 }
               </form>
 
-              @if (user?.authorities['delete:organisations']) {
+              @if (user()?.authorities['delete:organisations']) {
                 <div class="delete-api mt-5 ">
                   <h3>Danger Zone</h3>
                   <div class="border-bottom-danger card">
@@ -122,7 +122,7 @@
         </div>
       </ng-template>
     </li>
-    @if (model?.id && (user?.authorities['app:admin'] || user?.authorities['admin:organisations'])) {
+    @if (model?.id && (user()?.authorities['app:admin'] || user()?.authorities['admin:organisations'])) {
       <li ngbNavItem="history">
         <a ngbNavLink data-testid="org-history-tab">History</a>
         <ng-template ngbNavContent>
@@ -141,7 +141,7 @@
   </div>
   <div class="modal-body">
     <small>
-      <p>Are you really sure you want to delete "<strong>{{name}}</strong>"? This cannot be undone!</p>
+      <p>Are you really sure you want to delete "<strong>{{name()}}</strong>"? This cannot be undone!</p>
     </small>
   </div>
   <div class="modal-footer">

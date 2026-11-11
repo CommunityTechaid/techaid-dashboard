@@ -71,7 +71,7 @@ query typeaheadFindAllUsers($page: PaginationInput!, $term: String) {
     selector: 'role-users',
     styleUrls: ['role-users.scss'],
     templateUrl: './role-users.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NativeTableComponent, NativeTableRowDirective, AppInitialComponent, RouterLink, ReactiveFormsModule, FormlyModule]
 })
 export class RoleUsersComponent implements OnInit, OnDestroy {

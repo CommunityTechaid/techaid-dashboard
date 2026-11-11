@@ -50,7 +50,7 @@ mutation deleteReferringOrganisationContactNote($id: ID!) {
   </div>
 </ng-template>
 `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [DatePipe]
 })
 export class FormlyCustomReferringOrganisationContactNote extends FieldType {
