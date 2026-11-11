@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -43,6 +43,8 @@ export class UserInfoComponent implements OnInit, OnDestroy {
 
   }
   sub: Subscription;
+  // Written from Apollo/router callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
   userName: string;
@@ -66,6 +68,7 @@ export class UserInfoComponent implements OnInit, OnDestroy {
     this.queryRef.refetch({
       id: this.userId
     }).then(res => {
+      this.cdr.markForCheck();
       if (res.data && res.data['user']) {
         this.model = res.data['user'];
         this.userName = this.model['name'];
@@ -87,6 +90,7 @@ export class UserInfoComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.activatedRoute.params.subscribe(params => {
+      this.cdr.markForCheck();
       this.userId = params['userId'];
       this.fetchData();
     });

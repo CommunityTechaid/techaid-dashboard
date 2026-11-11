@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -119,6 +119,8 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
 
   }
   sub: Subscription;
+  // Written from Apollo/router/store callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
     formState: {
@@ -325,6 +327,7 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
     this.queryRef.refetch({
       id: this.entityId
     }).then(res => {
+      this.cdr.markForCheck();
       if (res.data && res.data['donor']) {
         const data = res.data['donor'];
         this.model = this.normalizeData(data);
@@ -380,11 +383,13 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
     );
 
     this.sub = this.activatedRoute.params.subscribe(params => {
+      this.cdr.markForCheck();
       this.entityId = +params['donorId'];
       this.fetchData();
     });
 
     this.sub.add(this.user$.subscribe(user => {
+        this.cdr.markForCheck();
         this.user = user;
         this.options.formState.disabled = !(user && user.authorities && user.authorities['write:donors']);
     }));
@@ -421,6 +426,7 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
         data
       }
     }).subscribe(res => {
+      this.cdr.markForCheck();
       this.model = this.normalizeData(res.data['updateDonor']);
       this.entityName = `${this.model['name'] || ''} ${this.model['email'] || ''} ${this.model['phoneNumber'] || ''}`.trim().split(' ')[0];
       this.toastr.info(`
@@ -442,6 +448,7 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
       mutation: DELETE_ENTITY,
       variables: { id: this.entityId }
     }).subscribe(res => {
+      this.cdr.markForCheck();
       if (res.data.deleteDonor) {
         this.toastr.info(`
         <small>Successfully deleted donor ${this.entityName}</small>

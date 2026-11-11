@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -267,6 +267,8 @@ export class KitInfoComponent implements OnInit, OnDestroy {
   @Select(UserState.user) user$: Observable<User>;
 
   sub: Subscription;
+  // Written from Apollo/router/store callbacks: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   model: any = {};
@@ -810,7 +812,11 @@ export class KitInfoComponent implements OnInit, OnDestroy {
 
     if(this.disabledStatuses && disabledStatusGroup.includes(currentStatus)) {
       console.log('Invalidating');
-      setTimeout(() => this.statusField.formControl.setErrors({incorrect: true, serverError: { message: "Error"}}));
+      setTimeout(() => {
+        this.statusField.formControl.setErrors({incorrect: true, serverError: { message: "Error"}});
+        // formly-form is OnPush: repaint the status field's error without relying on zone.js (#115).
+        this.statusField.options?.detectChanges?.(this.statusField);
+      });
       this.statusField.formControl.markAsTouched();
       this.toastr.error(`
         <small></small>
@@ -896,6 +902,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
     this.queryRef.refetch({
       id: this.entityId
     }).then(res => {
+      this.cdr.markForCheck();
       if (res.data && res.data['kit']) {
         const data = res.data['kit'];
         this.model = this.normalizeData(data);
@@ -993,6 +1000,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
     );
 
     this.sub = this.activatedRoute.params.subscribe(params => {
+      this.cdr.markForCheck();
       this.entityId = +params['kitId'];
       this.titleService.setTitle(`TaDa - Device ${this.entityId}`);
       this.fetchData();
@@ -1000,6 +1008,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
 
     this.sub.add(
       this.user$.subscribe((user) => {
+        this.cdr.markForCheck();
         this.user = user;
       })
     );
@@ -1050,6 +1059,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
         data
       }
     }).subscribe(res => {
+      this.cdr.markForCheck();
       this.model = this.normalizeData(res.data['updateKit']);
       this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
       this.toastr.info(`
@@ -1071,6 +1081,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
       mutation: DELETE_ENTITY,
       variables: { id: this.entityId }
     }).subscribe(res => {
+      this.cdr.markForCheck();
       if (res.data.deleteKit) {
         this.toastr.info(`
         <small>Successfully deleted device ${this.entityName}</small>

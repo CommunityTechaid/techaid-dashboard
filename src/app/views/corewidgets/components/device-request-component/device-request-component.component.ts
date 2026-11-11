@@ -1,4 +1,4 @@
-import { Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, ChangeDetectorRef } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of, firstValueFrom } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -118,8 +118,10 @@ export class DeviceRequestComponent implements OnInit, OnDestroy {
     private flags: FeatureFlagService
   ) { }
 
-  /** Grace allowance M for "Grace N of M"; undefined until fetched (flag on only). */
-  graceTotal: number | undefined;
+  /** Grace allowance M for "Grace N of M"; undefined until fetched (flag on only). A signal: it is set from an Apollo callback (#115). */
+  readonly graceTotal = signal<number | undefined>(undefined);
+  // applyFilter runs from the NgbModal footer (a separate view root): mark for check so the badge repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
 
   @Input()
   set where(where: any) {
@@ -307,6 +309,7 @@ export class DeviceRequestComponent implements OnInit, OnDestroy {
     this.filterCount = count;
     this.filterModel = data;
     this.grid()?.reload();
+    this.cdr.markForCheck();
   }
 
   modal(content) {
@@ -352,11 +355,11 @@ export class DeviceRequestComponent implements OnInit, OnDestroy {
         filter: this._where || this.filter
       };
       const enabled = await firstValueFrom(this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)), { defaultValue: false });
-      if (enabled && this.graceTotal === undefined) {
-        // Optional: without it the badge just reads "Grace N". This host is Eager (zone-checked).
+      if (enabled && this.graceTotal() === undefined) {
+        // Optional: without it the badge just reads "Grace N".
         this.apollo.query<any>({ query: GRACE_CONFIG }).subscribe({
           next: r => {
-            this.graceTotal = r.data?.adminConfig?.membershipGraceRequests ?? undefined;
+            this.graceTotal.set(r.data?.adminConfig?.membershipGraceRequests ?? undefined);
           },
           error: () => {},
         });

@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, TemplateRef, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -56,6 +56,7 @@ mutation deleteDeviceRequestNote($id: ID!) {
     imports: [DatePipe]
 })
 export class FormlyCustomDeviceRequestNote extends FieldType {
+    private readonly cdr = inject(ChangeDetectorRef);
 
     pendingDeleteId: any;
 
@@ -98,5 +99,7 @@ export class FormlyCustomDeviceRequestNote extends FieldType {
     // Build a new array (never mutate: the parent's list derives from a frozen Apollo result).
     private removeNote(id: any) {
         this.to.notes = (this.to.notes || []).filter((n: any) => String(n.id) !== String(id));
+        // Runs from the deleteNote callback: mark this field for check so the list repaints without zone.js (#115).
+        this.cdr.markForCheck();
     }
 }

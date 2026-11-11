@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, signal, ChangeDetectorRef, inject } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -230,6 +230,8 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
   }
 
   sub: Subscription;
+  // Written from Apollo/router/store callbacks and a document listener: mark for check so the view repaints without zone.js (#115).
+  private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
     formState: {
@@ -246,8 +248,10 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
   deviceCount = 0;
 
   assignDeviceIds = '';
-  assignmentResults: DeviceAssignmentResult[] = [];
-  isAssigning = false;
+  readonly assignmentResults = signal<DeviceAssignmentResult[]>([]);
+  // Rendered inside the NgbModal (its own view root, which the host's markForCheck does not reach) and
+  // written from an async loop: signals repaint the modal without zone.js (#115).
+  readonly isAssigning = signal(false);
   showAssignConfirmation = false;
   parsedDeviceIds: string[] = [];
 
@@ -814,6 +818,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       })
       .then(
         (res) => {
+          this.cdr.markForCheck();
           if (res.data && res.data['deviceRequest']) {
             const data = res.data['deviceRequest'];
             this.model = this.normalizeData(data);
@@ -859,6 +864,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe(
         (res) => {
+          this.cdr.markForCheck();
           if (res.data && res.data['kitsConnection']) {
             this.deviceCount = res.data['kitsConnection']['totalElements'];
           }
@@ -906,6 +912,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
     this.applyReadOnlyGate(this.fields);
 
     this.sub = this.activatedRoute.params.subscribe((params) => {
+      this.cdr.markForCheck();
       this.requestId = +params['requestId'];
       this.titleService.setTitle(`TaDa - Device Request ${this.requestId}`);
       this.fetchData();
@@ -913,6 +920,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
 
     this.sub.add(
       this.user$.subscribe((user) => {
+        this.cdr.markForCheck();
         this.user = user;
         this.options.formState.disabled = !(user && user.authorities && (user.authorities['write:requests'] || user.authorities['write:organisations']));
       })
@@ -934,6 +942,8 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
           this.clearCollectionDate();
         }
       }
+      // A plain document listener does not schedule change detection on its own.
+      this.cdr.markForCheck();
     };
     document.addEventListener('click', this.clickHandler);
   }
@@ -1006,6 +1016,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe(
         (res) => {
+          this.cdr.markForCheck();
           this.model = this.normalizeData(res.data['updateDeviceRequest']);
           this.requestId = this.model['id'];
 
@@ -1048,6 +1059,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe(
         (res) => {
+          this.cdr.markForCheck();
           if (res.data.deleteDeviceRequest) {
             this.toastr.info(
               `
@@ -1077,7 +1089,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
 
   openAssignDevicesModal() {
     this.assignDeviceIds = '';
-    this.assignmentResults = [];
+    this.assignmentResults.set([]);
     this.showAssignConfirmation = false;
     this.parsedDeviceIds = [];
     this.modalService.open(this.assignDevicesModal, { centered: true, size: 'lg' });
@@ -1099,15 +1111,15 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
 
   resetAssignModal() {
     this.assignDeviceIds = '';
-    this.assignmentResults = [];
+    this.assignmentResults.set([]);
     this.showAssignConfirmation = false;
     this.parsedDeviceIds = [];
   }
 
   async executeAssignment() {
-    this.isAssigning = true;
+    this.isAssigning.set(true);
     this.showAssignConfirmation = false;
-    this.assignmentResults = [];
+    this.assignmentResults.set([]);
 
     for (const kitId of this.parsedDeviceIds) {
       try {
@@ -1125,20 +1137,20 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
         const wasAssigned = assignedKits.some(k => String(k.id) === String(kitId));
 
         if (wasAssigned) {
-          this.assignmentResults.push({ deviceId: kitId, status: 'success', message: 'Assigned successfully' });
+          this.assignmentResults.update(r => [...r, { deviceId: kitId, status: 'success', message: 'Assigned successfully' }]);
         } else {
-          this.assignmentResults.push({ deviceId: kitId, status: 'error', message: 'Device not found' });
+          this.assignmentResults.update(r => [...r, { deviceId: kitId, status: 'error', message: 'Device not found' }]);
         }
       } catch (err) {
-        this.assignmentResults.push({ deviceId: kitId, status: 'error', message: errorText(err) });
+        this.assignmentResults.update(r => [...r, { deviceId: kitId, status: 'error', message: errorText(err) }]);
       }
     }
 
-    if (this.assignmentResults.some(r => r.status === 'success')) {
+    if (this.assignmentResults().some(r => r.status === 'success')) {
       this.fetchDeviceCount();
     }
 
-    this.isAssigning = false;
+    this.isAssigning.set(false);
   }
 
   generatingPdf = false;
@@ -1218,6 +1230,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       );
     } finally {
       this.generatingPdf = false;
+      this.cdr.markForCheck();
     }
   }
 }
