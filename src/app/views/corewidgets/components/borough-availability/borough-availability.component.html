@@ -2,8 +2,8 @@
   <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <h6 class="m-0 font-weight-bold text-primary">Borough Availability</h6>
-      @if (lastUpdated) {
-        <div class="text-muted small mt-1"><em>Last updated: {{ lastUpdated }}</em></div>
+      @if (lastUpdated()) {
+        <div class="text-muted small mt-1"><em>Last updated: {{ lastUpdated() }}</em></div>
       }
     </div>
     <div class="d-flex align-items-center gap-2">
@@ -21,7 +21,7 @@
         [disabled]="!canSave"
         (click)="save()"
       >
-        @if (saving) {
+        @if (saving()) {
           <i class="fas fa-spinner fa-spin"></i> Saving…
         } @else {
           Save Configuration
@@ -31,13 +31,13 @@
   </div>
 
   <div class="card-body">
-    @if (loading) {
+    @if (loading()) {
       <div class="text-center py-4">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading…</span>
         </div>
       </div>
-    } @else if (loadError) {
+    } @else if (loadError()) {
       <p class="text-muted mb-0" data-testid="availability-load-error">
         Could not load the configuration.
         <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="retry()">
@@ -76,12 +76,12 @@
                     type="button"
                     class="btn btn-sm p-1 border-0 bg-transparent"
                     [attr.data-testid]="'global-cell-' + column.key"
-                    [disabled]="saving"
-                    [attr.aria-label]="column.label + ' service-wide: ' + (globalOffered[column.key] ? 'offered' : 'not offered')"
+                    [disabled]="saving()"
+                    [attr.aria-label]="column.label + ' service-wide: ' + (globalOffered()[column.key] ? 'offered' : 'not offered')"
                     (click)="toggleGlobal(column.key)"
                   >
-                    <span class="badge rounded-pill" [class]="globalOffered[column.key] ? 'bg-success' : 'bg-secondary'">
-                      <i [class]="globalOffered[column.key] ? 'fas fa-check' : 'fas fa-times'"></i>
+                    <span class="badge rounded-pill" [class]="globalOffered()[column.key] ? 'bg-success' : 'bg-secondary'">
+                      <i [class]="globalOffered()[column.key] ? 'fas fa-check' : 'fas fa-times'"></i>
                     </span>
                   </button>
                 </td>
@@ -90,7 +90,7 @@
               <td class="text-center text-muted small">—</td>
             </tr>
 
-            @for (group of groups; track group.id) {
+            @for (group of groups(); track group.id) {
               <tr [attr.data-testid]="'group-row-' + group.id">
                 <th scope="row" class="fw-normal">
                   <div class="font-weight-bold">{{ group.name }}</div>
@@ -125,7 +125,7 @@
                       type="button"
                       class="btn btn-sm p-1 border-0 bg-transparent"
                       [attr.data-testid]="'cell-' + group.id + '-' + column.key"
-                      [disabled]="saving || isGloballyOff(column.key)"
+                      [disabled]="saving() || isGloballyOff(column.key)"
                       [attr.aria-label]="column.label + ' in ' + group.name + ': ' + modeOf(group, column.key)
                         + (isGloballyOff(column.key) ? ' (disabled: switched off for all boroughs)' : '')"
                       [class.border]="isEditing(group, column)"
@@ -145,7 +145,7 @@
                     class="form-control form-control-sm text-center mx-auto"
                     style="max-width: 5rem;"
                     [attr.data-testid]="'max-per-referee-' + group.id"
-                    [disabled]="saving"
+                    [disabled]="saving()"
                     [(ngModel)]="group.maxPerReferee"
                     [name]="'maxPerReferee-' + group.id"
                   />
@@ -155,7 +155,7 @@
               <!-- In-flow editor row, spanning the full grid width and sitting directly under its
                    group. Deliberately not a popover: an absolutely-positioned panel has no room
                    in a full-width matrix and clipped in review. -->
-              @if (editing && editing.groupId === group.id && editingColumn(); as column) {
+              @if (editing() && editing().groupId === group.id && editingColumn(); as column) {
                 <tr class="table-light" data-testid="cell-editor">
                   <td [attr.colspan]="columns.length + 2">
                     <div class="d-flex justify-content-between align-items-start gap-3 p-2">
@@ -248,7 +248,7 @@
 <div class="card shadow mb-4">
   <div class="card-header py-3 d-flex justify-content-between align-items-center">
     <h6 class="m-0 font-weight-bold text-primary">Request limits — exceptions by organisation</h6>
-    <button type="button" class="btn btn-primary btn-sm" data-testid="add-exception" [disabled]="saving" (click)="addException()">
+    <button type="button" class="btn btn-primary btn-sm" data-testid="add-exception" [disabled]="saving()" (click)="addException()">
       Add exception
     </button>
   </div>
@@ -257,7 +257,7 @@
       Overrides only. An organisation with no row here gets its borough group's limit.
     </p>
 
-    @if (exceptions.length === 0) {
+    @if (exceptions().length === 0) {
       <p class="text-muted mb-0" data-testid="no-exceptions">No exceptions — every organisation uses its group's limit.</p>
     } @else {
       <table class="table table-sm align-middle" data-testid="exceptions-table">
@@ -270,7 +270,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (row of exceptions; track $index) {
+          @for (row of exceptions(); track $index) {
             <tr>
               <td>
                 <!-- The same searchable picker the public booking form uses for "your
@@ -284,7 +284,7 @@
                   [typeahead]="row.search"
                   [loading]="row.loading"
                   [minTermLength]="3"
-                  [disabled]="saving"
+                  [disabled]="saving()"
                   [(ngModel)]="row.organisationId"
                   [name]="'exceptionOrg-' + $index"
                   placeholder="Start typing an organisation name"
@@ -300,7 +300,7 @@
                   [(ngModel)]="row.boroughGroupId"
                   [name]="'exceptionGroup-' + $index"
                 >
-                  @for (group of groups; track group.id) {
+                  @for (group of groups(); track group.id) {
                     <option [value]="group.id">{{ group.name }}</option>
                   }
                 </select>

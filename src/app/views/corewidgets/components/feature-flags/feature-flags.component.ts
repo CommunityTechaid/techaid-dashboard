@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -157,12 +157,12 @@ interface FlagRow extends FlagCopy {
   standalone: true,
   imports: [DatePipe],
   templateUrl: './feature-flags.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './feature-flags.component.scss',
 })
 export class FeatureFlagsComponent implements OnInit, OnDestroy {
-  flags: FlagRow[] = [];
-  loading = true;
+  readonly flags = signal<FlagRow[]>([]);
+  readonly loading = signal(true);
   private readonly sub = new Subscription();
 
   constructor(
@@ -171,34 +171,29 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
     private readonly featureFlags: FeatureFlagService,
   ) {}
 
-  // Written from Apollo callbacks: mark for check so the view repaints without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
-
   ngOnInit(): void {
     this.load();
   }
 
   load(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.sub.add(
       this.apollo.query<{ featureFlags: FlagRow[] }>({ query: FLAGS_QUERY, fetchPolicy: 'network-only' }).subscribe({
         next: ({ data }) => {
-          this.cdr.markForCheck();
-          this.flags = (data.featureFlags || [])
+          this.flags.set((data.featureFlags || [])
             .map((f) => ({
               ...f,
               ...(FLAG_LABELS[f.key] || { ...UNDESCRIBED, label: f.key }),
             }))
-            .filter((f) => !f.hidden);
+            .filter((f) => !f.hidden));
           // A retired flag is on whatever the server row says.
-          this.flags.forEach((f) => {
+          this.flags().forEach((f) => {
             if (f.lockedOn) f.enabled = true;
           });
-          this.loading = false;
+          this.loading.set(false);
         },
         error: () => {
-          this.cdr.markForCheck();
-          this.loading = false;
+          this.loading.set(false);
           this.toastr.error('Could not load feature flags');
         },
       }),
@@ -225,7 +220,7 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
       input.checked = row.enabled;
       return;
     }
-    row.saving = true;
+    this.patchRow(row.key, { saving: true });
     this.apollo
       .mutate<{ updateFeatureFlag: FlagRow }>({
         mutation: UPDATE_FLAG,
@@ -233,20 +228,22 @@ export class FeatureFlagsComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: ({ data }) => {
-          this.cdr.markForCheck();
-          row.enabled = data!.updateFeatureFlag.enabled;
-          row.updatedAt = data!.updateFeatureFlag.updatedAt;
-          row.saving = false;
+          const enabled = data!.updateFeatureFlag.enabled;
+          this.patchRow(row.key, { enabled, updatedAt: data!.updateFeatureFlag.updatedAt, saving: false });
           this.featureFlags.reload();
-          this.toastr.success(`${row.label} ${row.enabled ? 'enabled' : 'disabled'}`);
+          this.toastr.success(`${row.label} ${enabled ? 'enabled' : 'disabled'}`);
         },
         error: () => {
-          this.cdr.markForCheck();
-          row.saving = false;
+          this.patchRow(row.key, { saving: false });
           input.checked = row.enabled;
           this.toastr.error('Could not update the flag');
         },
       });
+  }
+
+  /** Replace one row with a patched copy, so the `flags` signal notifies the view. */
+  private patchRow(key: string, changes: Partial<FlagRow>): void {
+    this.flags.update((rows) => rows.map((r) => (r.key === key ? { ...r, ...changes } : r)));
   }
 
   ngOnDestroy(): void {

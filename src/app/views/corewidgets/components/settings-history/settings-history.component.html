@@ -24,13 +24,13 @@
       </div>
     </div>
 
-    @if (loading) {
+    @if (loading()) {
       <div class="text-muted small">Loading change history…</div>
-    } @else if (failed) {
+    } @else if (failed()) {
       <div class="alert alert-danger mb-0" data-testid="settings-history-error">
         Could not load the change history. Try again, or reload the page.
       </div>
-    } @else if (rows.length === 0) {
+    } @else if (rows().length === 0) {
       <div class="text-muted small">No changes recorded yet.</div>
     } @else {
       <table class="table table-sm">
@@ -38,7 +38,7 @@
           <tr><th>When</th><th>Who</th><th>Setting</th><th>Change</th></tr>
         </thead>
         <tbody>
-          @for (row of rows; track row.id) {
+          @for (row of rows(); track row.id) {
             <tr data-testid="settings-history-row">
               <td data-testid="history-when">{{ row.changedAt | date: 'd MMM y HH:mm' }}</td>
               <td data-testid="history-who" [attr.title]="row.whoTitle">{{ row.who }}</td>
@@ -49,12 +49,12 @@
         </tbody>
       </table>
       <div class="d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="page <= 0" (click)="load(page - 1)">
+        <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="page() <= 0" (click)="load(page() - 1)">
           Previous
         </button>
-        <span class="small">Page {{ page + 1 }} of {{ totalPages || 1 }}</span>
-        <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="page + 1 >= totalPages"
-                (click)="load(page + 1)">
+        <span class="small">Page {{ page() + 1 }} of {{ totalPages() || 1 }}</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="page() + 1 >= totalPages()"
+                (click)="load(page() + 1)">
           Next
         </button>
       </div>
