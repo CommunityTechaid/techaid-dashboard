@@ -331,7 +331,7 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
       if (res.data && res.data['donor']) {
         const data = res.data['donor'];
         this.model = this.normalizeData(data);
-        this.donorParentId = this.model['donorParent']['id'];
+        this.donorParentId = this.model['donorParent']?.['id']; // null for a donor with no parent donor
         this.entityName = `${this.model['name'] || ''}/${this.model['email'] || ''}/${this.model['phoneNumber'] || ''}`.trim().split('/').filter(f => f.trim().length > 0)[0];
       } else {
         this.model = {};
