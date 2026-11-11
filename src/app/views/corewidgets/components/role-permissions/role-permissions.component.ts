@@ -35,7 +35,7 @@ query findPermissions($page: PaginationInput, $roleId: String!) {
     selector: 'role-permissions',
     styleUrls: ['role-permissions.scss'],
     templateUrl: './role-permissions.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NativeTableComponent, NativeTableRowDirective]
 })
 export class RolePermissionsComponent implements OnInit, OnDestroy {

@@ -51,7 +51,7 @@ mutation removePermissions($userId: String!, $permissions: [PermissionInput!]!) 
     selector: 'user-permissions',
     styleUrls: ['user-permissions.scss'],
     templateUrl: './user-permissions.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NativeTableComponent, NativeTableRowDirective, NgbPopover]
 })
 export class UserPermissionsComponent implements OnInit, OnDestroy {

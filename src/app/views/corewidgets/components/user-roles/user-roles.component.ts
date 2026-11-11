@@ -65,7 +65,7 @@ query findAutocompleteRoles($term: String) {
     selector: 'user-roles',
     styleUrls: ['user-roles.scss'],
     templateUrl: './user-roles.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, ReactiveFormsModule, FormlyModule]
 })
 export class UserRolesComponent implements OnInit, OnDestroy {

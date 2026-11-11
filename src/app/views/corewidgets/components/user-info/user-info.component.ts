@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -28,7 +28,7 @@ query findUser($id: String!) {
     selector: 'user-info',
     styleUrls: ['user-info.scss'],
     templateUrl: './user-info.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, UserRolesComponent, UserPermissionsComponent, NgbNavOutlet]
 })
 export class UserInfoComponent implements OnInit, OnDestroy {
@@ -43,12 +43,11 @@ export class UserInfoComponent implements OnInit, OnDestroy {
 
   }
   sub: Subscription;
-  // Written from Apollo/router callbacks: mark for check so the view repaints without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
-  model = {};
-  userName: string;
-  userId: string;
+  // Signals: written from Apollo/router callbacks, so they repaint without zone.js (#115).
+  readonly model = signal<any>({});
+  readonly userName = signal<string>(undefined);
+  readonly userId = signal<string>(undefined);
 
   private queryRef = this.apollo
     .watchQuery({
@@ -61,20 +60,20 @@ export class UserInfoComponent implements OnInit, OnDestroy {
   }
 
   private fetchData() {
-    if (!this.userId) {
+    if (!this.userId()) {
       return;
     }
 
     this.queryRef.refetch({
-      id: this.userId
+      id: this.userId()
     }).then(res => {
-      this.cdr.markForCheck();
       if (res.data && res.data['user']) {
-        this.model = res.data['user'];
-        this.userName = this.model['name'];
+        const user = res.data['user'];
+        this.model.set(user);
+        this.userName.set(user['name']);
       } else {
-        this.model = {};
-        this.userName = 'Not Found!';
+        this.model.set({});
+        this.userName.set('Not Found!');
       }
     }, err => {
       this.toastr.warning(`
@@ -90,8 +89,7 @@ export class UserInfoComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.activatedRoute.params.subscribe(params => {
-      this.cdr.markForCheck();
-      this.userId = params['userId'];
+      this.userId.set(params['userId']);
       this.fetchData();
     });
   }

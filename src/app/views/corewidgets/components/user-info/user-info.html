@@ -8,7 +8,7 @@
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="#" [routerLink]="['/dashboard/roles']">Roles</a></li>
                 <li class="breadcrumb-item"><a href="#" [routerLink]="['/dashboard/users']">Users</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ userName }}</li>
+                <li class="breadcrumb-item active" aria-current="page">{{ userName() }}</li>
             </ol>
         </nav>
 
@@ -17,7 +17,7 @@
         <a ngbNavLink>Roles</a>
                     <ng-template ngbNavContent>
                         <div class="mt-1">
-                            <user-roles [userId]="userId"></user-roles>
+                            <user-roles [userId]="userId()"></user-roles>
                         </div>
                     </ng-template>
             </li>
@@ -25,7 +25,7 @@
         <a ngbNavLink>Permissions</a>
                 <ng-template ngbNavContent>
                     <div class="mt-1">
-                        <user-permissions [userId]="userId"></user-permissions>
+                        <user-permissions [userId]="userId()"></user-permissions>
                     </div>
                 </ng-template>
             </li>
@@ -40,7 +40,7 @@
     </div>
     <div class="modal-body">
         <small>
-            <p>Are you really sure you want to delete "<strong>{{model.email}}</strong>"? This cannot be undone!</p>
+            <p>Are you really sure you want to delete "<strong>{{model().email}}</strong>"? This cannot be undone!</p>
         </small>
     </div>
     <div class="modal-footer">

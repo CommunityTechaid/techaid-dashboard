@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -26,7 +26,7 @@ query findRole($id: String!) {
     selector: 'role-info',
     styleUrls: ['role-info.scss'],
     templateUrl: './role-info.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, RoleUsersComponent, RolePermissionsComponent, NgbNavOutlet]
 })
 export class RoleInfoComponent implements OnInit, OnDestroy {
@@ -42,12 +42,11 @@ export class RoleInfoComponent implements OnInit, OnDestroy {
 
   }
   sub: Subscription;
-  // Written from Apollo/router callbacks: mark for check so the view repaints without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
-  model = {};
-  roleName: string;
-  roleId: string;
+  // Signals: written from Apollo/router callbacks, so they repaint without zone.js (#115).
+  readonly model = signal<any>({});
+  readonly roleName = signal<string>(undefined);
+  readonly roleId = signal<string>(undefined);
 
   fields: FormlyFieldConfig[] = [
     {
@@ -117,20 +116,20 @@ export class RoleInfoComponent implements OnInit, OnDestroy {
   }
 
   private fetchData() {
-    if (!this.roleId) {
+    if (!this.roleId()) {
       return;
     }
 
     this.queryRef.refetch({
-      id: this.roleId
+      id: this.roleId()
     }).then(res => {
-      this.cdr.markForCheck();
       if (res.data && res.data['role']) {
-        this.model = res.data['role'] || {};
-        this.roleName = this.model['description'] || this.model['name'];
+        const role = res.data['role'] || {};
+        this.model.set(role);
+        this.roleName.set(role['description'] || role['name']);
       } else {
-        this.model = {};
-        this.roleName = 'Not Found!';
+        this.model.set({});
+        this.roleName.set('Not Found!');
       }
     }, err => {
       this.toastr.warning(`
@@ -145,8 +144,7 @@ export class RoleInfoComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.activatedRoute.params.subscribe(params => {
-      this.cdr.markForCheck();
-      this.roleId = params['roleId'];
+      this.roleId.set(params['roleId']);
       this.fetchData();
     });
   }
