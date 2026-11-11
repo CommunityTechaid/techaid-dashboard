@@ -46,6 +46,7 @@ const updateEntity = (membership: string) => gql`
       name
       website
       archived
+      updatedAt
       ${membership}
     }
   }
