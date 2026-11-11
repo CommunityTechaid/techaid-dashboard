@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd, RouterOutlet, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
 import { Store, Actions, ofAction } from '@ngxs/store';
@@ -16,13 +16,14 @@ import { AppSidebar } from './components/app-sidebar/app.sidebar.component';
 import { AppHeader } from './components/app-header/app.header.component';
 import { BackendStatusService, BackendStatus } from '@app/shared/services/backend-status.service';
 import { AuthenticationService } from '@app/shared/services/authentication.service';
+import { LayoutService } from '@app/shared/services/layout.service';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [NgProgressbar, NgProgressRouter, NgProgressHttp, AppSidebar, AppHeader, RouterOutlet, RouterLink]
+    imports: [NgProgressbar, NgProgressRouter, NgProgressHttp, AppSidebar, AppHeader, RouterOutlet]
 })
 export class AppComponent implements OnInit, OnDestroy {
   private actionSub: Subscription;
@@ -44,7 +45,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private appInsights: AppInsightsService,
     private config: ConfigService,
     readonly backendStatusService: BackendStatusService,
-    private authService: AuthenticationService
+    private authService: AuthenticationService,
+    private layout: LayoutService
   ) {
     titleService.setTitle("TaDa");
 
@@ -71,6 +73,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.layout.init();
     this.actionSub = this.actions.pipe(ofAction(RouterNavigation)).subscribe(({ event }) => this.handleAction(event));
 
     this.actionSub.add(
@@ -99,6 +102,11 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     this.backendStatusService.startCheck();
+  }
+
+  scrollToTop(event: Event) {
+    event.preventDefault();
+    this.layout.scrollToTop();
   }
 
   handleAction(action) {
