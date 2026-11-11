@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { Observable, Subscription, from, Subject, concat, of } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy } from '@angular/core';
+import { Observable, Subscription, from, Subject, concat, of, firstValueFrom } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -11,9 +10,10 @@ import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { RouterLink } from '@angular/router';
-import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { warnIfFormInvalid } from '@app/shared/utils';
 import { take } from 'rxjs/operators';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION, MEMBERSHIP_TIERS, MEMBERSHIP_USAGE_BANDS } from '@app/shared/membership/membership';
@@ -71,17 +71,14 @@ const QUERY_ENTITY_MEMBERSHIP = queryEntity(MEMBERSHIP_SELECTION);
     selector: 'app-referring-organisation-index',
     templateUrl: './referring-organisation-index.component.html',
     styleUrls: ['./referring-organisation-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent],
+    imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent],
     // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111):
     // this page's state only changes via the DataTables ajax callback and the
     // filter modal. Both paths run outside the host template's event tree, so
     // they call cdr.markForCheck() explicitly.
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, AfterViewInit {
-  /** Drops out-of-order ajax responses — see LatestDraw. */
-  private readonly draws = new LatestDraw();
-
+export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy {
   constructor(
     private modalService: NgbModal,
     private toastr: ToastrService,
@@ -91,14 +88,21 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
   ) {
 
   }
-  @ViewChild(AppGridDirective) grid: AppGridDirective;
-  dtOptions: DataTables.Settings = {};
+  readonly grid = viewChild(NativeTableComponent<any>);
+  readonly columns: TableColumn[] = [
+    { title: '', width: '15px', sortable: false },
+    { title: 'Name', key: 'name' },
+    { title: 'Website', key: 'website' },
+    { title: 'Phone', key: 'phoneNumber' },
+    { title: 'Open Request #', key: 'requestCount' },
+    { title: 'Created', key: 'createdAt' },
+    { title: 'Updated', key: 'updatedAt' },
+    { title: 'Archived', key: 'archived' },
+  ];
+  source: TableSource<any>;
   sub: Subscription;
-  table: any;
-  total: number;
   selections = {};
   selected = [];
-  entities = [];
   form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
@@ -251,7 +255,7 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
     // Called from the filter modal, whose view lives in NgbModal's window —
     // the host's filterCount badge won't repaint under OnPush without this.
     this.cdr.markForCheck();
-    this.table.ajax.reload(null, false);
+    this.grid()?.reload();
   }
 
   modal(content) {
@@ -263,23 +267,18 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
     this.selected = [];
   }
 
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
-  }
-
   ngOnInit() {
+    // Restore the saved filter before the table makes its first request (the shell starts in its own ngOnInit).
+    try {
+      this.filterModel = JSON.parse(localStorage.getItem(`referringOrgFilters-${this.tableId}`)) || {archived: [false]};
+    } catch (_) {
+      this.filterModel = {archived: [false]};
+    }
+    try {
+      this.applyFilter(this.filterModel);
+    } catch (_) {
+    }
+
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_ENTITY,
@@ -292,128 +291,47 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
       });
 
     this.sub = this.search$.subscribe(query => {
-      if (this.table) {
-        this.table.search(query);
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.search(query);
     });
 
-    this.dtOptions = {
-      pagingType: 'simple_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: 10,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [6, 'desc'],
-      serverSide: true,
-      stateSave: true,
-      processing: true,
-      searching: true,
-      ajax: (params: any, callback) => {
-        const drawToken = this.draws.start();
-        const sort = params.order.map(o => {
-          return {
-            key: this.dtOptions.columns[o.column].data,
-            value: o.dir
-          };
-        });
-
-        const vars = {
-          page: {
-            sort: sort,
-            size: params.length,
-            page: Math.round(params.start / params.length),
-          },
-          term: params['search']['value'],
-          filter: this.filter
-        };
-
-        this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)).subscribe(enabled => {
-        this.membershipEnabled = enabled;
-        if (!enabled && (vars.filter.membershipTier || vars.filter.membershipUsage)) {
-          // The server doesn't know the fields while the flag is off; don't let a saved filter break the table.
-          const { membershipTier, membershipUsage, ...rest } = vars.filter;
-          vars.filter = rest;
-        }
-        (enabled ? membershipQueryRef : queryRef).refetch(vars).then(res => {
-          if (this.draws.isStale(drawToken)) {
-            return;
-          }
-          let data: any = {};
-          if (res.data) {
-            data = res['data']['referringOrganisationsConnection'];
-            if (!this.total) {
-              this.total = data['totalElements'];
-            }
-            this.entities = data.content;
-          }
-          // The rows are rendered by Angular from `entities`, but this promise
-          // resolves outside the host template's event tree — mark for check
-          // or the table body never repaints under OnPush.
-          this.cdr.markForCheck();
-
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total,
-            recordsFiltered: data['totalElements'],
-            error: '',
-            data: []
-          });
-        }, err => {
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total || 0,
-            recordsFiltered: 0,
-            error: err.message,
-            data: []
-          });
-
-          this.toastr.warning(`
-            <small>${err.message}</small>
-          `, 'GraphQL Error', {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true
-            });
-        });
-        });
-      },
-      columns: [
-        { data: null, width: '15px', orderable: false },
-        { data: 'name' },
-        { data: 'website' },
-        { data: 'phoneNumber' },
-        { data: 'requestCount' },
-        { data: 'createdAt' },
-        { data: 'updatedAt' },
-        { data: 'archived' },
-      ]
+    this.source = async (q) => {
+      const vars: any = {
+        page: {
+          sort: q.sort.map(s => ({ key: s.key, value: s.dir })),
+          size: q.size,
+          page: q.page,
+        },
+        term: q.term,
+        filter: this.filter
+      };
+      const enabled = await firstValueFrom(this.flags.isEnabled(MEMBERSHIP_FLAG).pipe(take(1)), { defaultValue: false });
+      this.membershipEnabled = enabled;
+      this.cdr.markForCheck();
+      if (!enabled && (vars.filter.membershipTier || vars.filter.membershipUsage)) {
+        // The server doesn't know the fields while the flag is off; don't let a saved filter break the table.
+        const { membershipTier, membershipUsage, ...rest } = vars.filter;
+        vars.filter = rest;
+      }
+      const res = await (enabled ? membershipQueryRef : queryRef).refetch(vars);
+      const data: any = res.data?.['referringOrganisationsConnection'];
+      return { rows: data?.content ?? [], total: data?.totalElements ?? 0 };
     };
+  }
+
+  onLoadError(err: any) {
+    this.toastr.warning(`
+      <small>${err?.message}</small>
+    `, 'GraphQL Error', {
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+      });
   }
 
   ngOnDestroy() {
     if (this.sub) {
       this.sub.unsubscribe();
     }
-  }
-
-  ngAfterViewInit() {
-    this.grid.dtInstance.then(tbl => {
-      this.table = tbl;
-      try {
-        this.filterModel = JSON.parse(localStorage.getItem(`referringOrgFilters-${this.tableId}`)) || {archived: [false]};
-      } catch (_) {
-        this.filterModel = {archived: [false]};
-      }
-
-      try {
-        this.applyFilter(this.filterModel);
-        this.filterForm.patchValue(this.filterModel);
-      } catch (_) {
-      }
-    });
   }
 
   select(row?: any) {
@@ -437,8 +355,7 @@ export class ReferringOrganisationIndexComponent implements OnInit, OnDestroy, A
       mutation: CREATE_ENTITY,
       variables: { data }
     }).subscribe(data => {
-      this.total = null;
-      this.table.ajax.reload(null, false);
+      this.grid()?.reload();
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>

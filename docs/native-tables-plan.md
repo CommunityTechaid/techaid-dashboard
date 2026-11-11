@@ -12,8 +12,9 @@ until the removal milestone).
 | M2 audit tables | DONE (PR M2-M4, commit 1) |
 | M3 users-admin cluster | DONE (PR M2-M4, commit 2) |
 | M4 post-index, dashboard-index | DONE (PR M2-M4, commit 3) |
-| M5 referring organisations | next (not started) |
-| M6 onward | not started |
+| M5 referring organisations | DONE (PR M5-M7, commit 1) |
+| M6 donors | next (not started) |
+| M7 onward | not started |
 
 ### Progress notes (newest last)
 
@@ -278,14 +279,31 @@ Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the curre
 - New spec: `e2e/tests/native-table-posts-dashboard.spec.ts` (3 tests, `@mocked`). The dashboard page
   had no e2e cover before this.
 
+**M5 (done).** referring-organisation-index, -contact-index and -contact-component use `cta-table`.
+
+- Config kept verbatim: all three `simple_numbers`; page length 10, 10 and 5 (the embedded
+  component's `pageLength` input, default 5); length menu `[5, 10, 25, 50, 100]`; order col 6 desc
+  (index) and col 7 desc (contact index and component), i.e. Updated desc. Select column is
+  `sortable: false`; the contact tables sort Organisation by `referringOrganisation.name`.
+- The saved Filter modal choice (`referringOrg*Filters-<tableId>` in localStorage) is now restored in
+  `ngOnInit`, before the shell makes its first request. It used to be applied from `ngAfterViewInit`
+  after DataTables' first, unfiltered request, so the table fired two requests; it fires one now.
+  Consequence for the contact index: `applyFilter` only adds `isMembershipContact` when
+  `membershipEnabled` is already true, and the flag is only known after the first request, so a saved
+  "membership contacts only" choice is not applied to the first load (it was racy before, in practice
+  also dropped). Not changed here.
+- `applyFilter` and the embedded component's `where` setter call `grid()?.reload()` (page kept, as
+  `ajax.reload(null, false)`); a reload before the shell's `ngOnInit` is a no-op, so the restore is safe.
+- **Deliberate difference.** The embedded referee table had `stateDuration: -1` (DataTables then used
+  sessionStorage, state dropped when the tab closes). The shell has no such option and keeps state in
+  localStorage for 2 h like every other table. Per-table ids make this harmless.
+- Zoneless (#115): the three hosts stay `OnPush`; `membershipEnabled` is still a plain field set from
+  `source` with `cdr.markForCheck()`, and `filterCount`/`filterModel` are set from the filter modal with
+  `markForCheck()`. Z1 should turn these into signals.
+- New spec: `e2e/tests/native-table-referring-orgs.spec.ts` (5 tests, `@mocked`).
+
 ### Where to resume
 
-Next is **M5** (referring-organisation-index, -contact-index, -contact-component): same recipe as
-M3/M4. Per component: replace the `dtOptions` block with `this.source = async q => ...` (keep the
-`watchQuery` ref in `ngOnInit`), put the `<tr>` inside `<cta-table><ng-template ctaRow>`, map
-`q.sort` to the resolver's format, call `grid()?.reload()` where `table.ajax.reload(null, false)` was,
-and the filter modals call `grid()?.reload(true)` where they used `reload(resetPaging)`. Add
-`sortable: false` for `orderable: false` columns. Check the existing `[pageLength]`/`lengthMenu` in each
-component rather than trusting the inventory table (it was wrong once, see M3). Run the existing
-`stale-search-response` and `onpush-fanout` specs, and add a parity spec per cluster.
-
+Next is **M6** (donor-parent-index, donor-index, donor-component), same recipe as M3-M5. See the
+M5 notes for the filter-restore pattern (restore the saved filter in `ngOnInit`, before the shell's
+first request). Re-run `donor-onpush` and `donor-crud`.
