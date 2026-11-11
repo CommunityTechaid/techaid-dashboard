@@ -49,7 +49,7 @@ Part A — Platform health (the #112–#121 upgrade/debt train):
 | ID | Title | Status |
 |---|---|---|
 | PH1 | Upgrade train: Angular 22 / apollo-angular 14 / NGXS 22 / TS 6 (#112) | open |
-| PH2 | Replace jQuery DataTables with native Angular tables (#113) | open, gated |
+| PH2 | Replace jQuery DataTables with native Angular tables (#113) | DONE (M9-M10 PR; jQuery and DataTables removed) |
 | PH3 | OnPush fan-out after donor-index pilot (#114) | ready-now |
 | PH4 | Zoneless change detection (#115) | blocked-internal |
 | PH5 | FontAwesome 5→7 (#116) | ready-now |
@@ -115,7 +115,11 @@ majors, with no new CSP or Apollo-freeze regressions.
 current major *before* the framework bump, but the upgrade must not wait on PH2 if PH2 slips.
 Coordinate, don't serialise blindly.
 
-### PH2. Replace jQuery DataTables with native Angular tables — status: open, gated (#113)
+### PH2. Replace jQuery DataTables with native Angular tables — status: DONE (#113)
+
+**Finished:** every table is on the `cta-table` shell and `jquery`, `datatables.net*` and `@types/jquery` are gone (plan and
+notes: `docs/native-tables-plan.md`). The text below is the original brief, kept for history; what remains is **PH4** (#115, see
+the plan's "Then #115" section).
 
 **Why:** jQuery + `datatables.net-*` is the app's largest legacy dependency cluster and the main
 blocker to a zoneless future (its callbacks run outside Angular scheduling).

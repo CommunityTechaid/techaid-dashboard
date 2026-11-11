@@ -17,7 +17,11 @@ until the removal milestone).
 | M7 devices and requests | DONE (PR M5-M7, commit 3) |
 | M8a distributions-and-deliveries-index | DONE (PR M8, commit 1) |
 | M8b kit-index | DONE (PR M8, commit 2) |
-| M9 onward | not started |
+| M9 non-table jQuery uses (`LayoutService`) | DONE (PR M9-M10, commit 1) |
+| M10 remove DataTables and jQuery, port the CSS | DONE (PR M9-M10, commit 2) |
+
+**#113 is complete.** No jQuery or DataTables remains in `src`, `angular.json` or `package.json`. Next is #115: see
+"5. Then #115 (zoneless)" below.
 
 ### Progress notes (newest last)
 
@@ -386,19 +390,36 @@ Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the curre
   the ID-list state and `filterCount` are plain fields. Z1 should turn them into signals.
 - New spec: `e2e/tests/native-table-kits.spec.ts` (6 tests, `@mocked`).
 
+**M9 (done).** The two non-table jQuery uses are gone.
+
+- `src/sb-admin-2.min.js` is deleted and no longer in `angular.json` `scripts`. Its live behaviour moved to
+  `src/app/shared/services/layout.service.ts` (`LayoutService`, started by `AppComponent.ngOnInit`; the header's phone button calls
+  `toggleSidebar()`): below 768px the sidebar starts collapsed (`body.sidebar-toggled`), a window resize re-applies the rule
+  (and expands it again at 768px and up), scrolling on a phone collapses it again, the scroll-to-top button shows after 100px and
+  smooth-scrolls up (`window.scrollTo`, replacing `animate`; the `a.scroll-to-top` `routerLink` was dropped, the click is
+  `preventDefault`ed in place). The script's commented-out blocks (`#sidebarToggle`, `.sidebar.toggled`, scroll-lock) were dead
+  and not ported. jQuery's `fadeIn`/`fadeOut` became an immediate `display` change (no 400ms fade).
+- New spec `e2e/tests/sidebar-layout.spec.ts` (3 tests, `@mocked`); it passed against the old script before the port.
+
+**M10 (done).** DataTables and jQuery are removed.
+
+- Deleted `AppGridDirective` (`shared/modules/grid/`), `datatables-types-shim.d.ts`, the six unused `AppGridDirective` imports
+  (donor-info, donor-parent-info, kit-info, post-data, post-info, role-info); removed `jquery`, `datatables.net`,
+  `datatables.net-bs5`, `@types/jquery` from `package.json` and the lockfile, the scripts / `styles` / `allowedCommonJsDependencies`
+  entries from `angular.json`, and the dependabot `datatables` group.
+- CSS: `dataTables.bootstrap5.css` is replaced by `src/app/shared/modules/native-table/native-table.css`, a global stylesheet in the
+  same cascade position (before `styles.css` and `sb-admin.css`, so those still win ties). Only the rules the shell emits were
+  ported (table, striping/hover shadows, sort arrows, length / search / info / pager, mobile centring, processing indicator); the
+  scroller, control-column, layout, dark-mode, `dt-type-*` and alignment rules were dropped. Class names are unchanged. The old
+  `td.dt-empty` / `.dataTables_empty` rules in `styles.css` are now dead but harmless and were left alone.
+- Verified with before/after screenshots at 1366x900 and 390x844 (Devices, D&D incl. empty and processing, roles, kit audit,
+  dashboard home): byte-identical except frames that move on their own (the processing dots, the top progress bar).
+- No spec used `getByRole('link')` inside a pager (all remaining `link` roles are tabs, Filter buttons or row links).
+- Bundle (production build): initial total 2.68 MB -> 2.36 MB raw (657.70 -> 561.65 kB transfer); `scripts` 280.27 kB -> 61.38 kB
+  (now only bootstrap.js); main 1.11 MB -> 1.02 MB; styles 494.29 -> 479.95 kB.
+- Stale comments that still say "DataTables ajax callback" in some host components are history, not behaviour.
+
 ### Where to resume
 
-M1-M8 are done: every DataTables page now uses `cta-table`. Next is **M9** (the two non-table jQuery uses: the header
-toggle and `sb-admin-2.min.js`), then **M10** (delete `AppGridDirective`, `datatables-types-shim.d.ts`, jquery, datatables
-packages, the `scripts` / `styles` entries; port the DataTables CSS the shell relies on, see section 2).
-
-Things M10 must know from M8:
-- The shell still leans on DataTables' class names and its Bootstrap stylesheet (`dt-container`, `dt-search`, `dt-info`,
-  `dt-paging`, `dt-column-order`, `dt-processing`, `dt-orderable-*`, `dt-ordering-*`); port those rules before dropping it.
-- Pager items are `<button class="page-link">`; DataTables rendered `<a>`. Specs written against DataTables used
-  `getByRole('link')`; the D&D spec was changed to `button`. Any remaining spec with that pattern fails after M10, so grep.
-- Shell inputs added in M8: `emptyText`, `keepTotalOnError`, `showFilteredFrom`, `TableColumn.hint`, `TableColumn.custom`
-  with `ctaHeader`.
-- Six `*-info` components (donor-info, donor-parent-info, kit-info, post-data, post-info, role-info) still carry an unused
-  `import { AppGridDirective }`; delete those imports in M10. `grep -rn "AppGridDirective\|dtOptions\|datatable" src` should then
-  list only the directive, the types shim and a doc comment in the shell.
+#113 is finished. The next project is **#115 (zoneless)**: read "5. Then #115 (zoneless)" above. The hosts' `markForCheck()`
+calls and plain-field state noted in M8a/M8b (and the earlier milestones) are Z1's starting list.

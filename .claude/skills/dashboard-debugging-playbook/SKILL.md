@@ -23,8 +23,9 @@ Run shell commands from the repo root. All paths below are relative to
 - **UAT** — the user-acceptance dashboard at `https://app-testing.communitytechaid.org.uk`,
   auto-deployed from `dev` (`deploy-dev.yml`); talks to `api-testing.communitytechaid.org.uk`.
 - **Frozen response** — Apollo v4 deep-freezes every GraphQL result object; writing to one throws.
-- **DataTables ajax callback** — the jQuery DataTables function that resolves a GraphQL promise and
-  paints table rows; an exception inside it rejects silently and the table renders empty.
+- **Table `source` callback** — the function a host passes to `cta-table` (the native table shell, which
+  replaced jQuery DataTables in #113); it resolves a GraphQL promise into rows, and an exception inside it
+  rejects silently and the table renders empty.
 - **Formly type** — a custom field renderer registered in `FORMLYCONFIG` (`choice`, `place`, `date`, …).
 - **version triple** — `{version, build, commit}` in `src/environments/version.ts`, stamped by CI;
   identifies one exact UAT build.
@@ -53,7 +54,7 @@ Run shell commands from the repo root. All paths below are relative to
 
 **First check** — is any code writing back onto a GraphQL result object? `@apollo/client` v4
 deep-freezes every result; `row.foo = x` throws `TypeError: Cannot assign to read only property`,
-and the throw happens *inside* a `refetch().then(...)` / DataTables ajax callback that rejects
+and the throw happens *inside* a `refetch().then(...)` / table `source` callback that rejects
 silently — an error toast may flash, then the table renders empty and the user reports "doesn't load".
 
 ```bash
@@ -170,7 +171,7 @@ render bug. Historically `user.roles`, `user.permissions`, `role.users`, `role.p
 `null` with no GraphQL error — the server-side `@SchemaMapping` resolvers were lost in the
 kickstart→Spring-GraphQL migration (fixed in techaid-server PR #36).
 
-**The trap:** the DataTables callbacks dereferenced the nested field directly
+**The trap:** the table callbacks (DataTables then, `source` now) dereferenced the nested field directly
 (`res.data.user.roles['totalElements']`), so a `null` threw
 `TypeError: Cannot read properties of null (reading 'totalElements')` and the tab hung on
 "Loading…" forever — which looks like a frontend rendering hang, not a missing-data (backend) problem.

@@ -29,6 +29,8 @@ Auth is configured in `src/app/shared/services/authentication.service.ts`. The A
 | GraphQL client | Apollo Angular v13 (`@apollo/client@4`) | `src/app/graphql.module.ts` |
 | State management | NGXS v21 | `src/app/state/` |
 | UI components | ng-bootstrap v20 + Bootstrap 5 | throughout |
+| Tables | Native signal-based shell `cta-table` (no jQuery / DataTables). The host passes a `source` function and a `ctaRow` template; it keeps DataTables' class names (`dt-container`, `dt-paging`, `table.dataTable`, ...) so styles and specs still match | `src/app/shared/modules/native-table/` (styles: `native-table.css`) |
+| Page chrome | Collapsed sidebar and scroll-to-top button (was `sb-admin-2.min.js`) | `src/app/shared/services/layout.service.ts` |
 | Dynamic forms | ngx-formly v11 (11 custom field types) | `src/app/shared/modules/formly/` |
 | Auth | `@auth0/auth0-angular` v2 (`AuthModule.forRoot`) | `src/app/shared/services/authentication.service.ts`, `src/app/app.module.ts` |
 | Feature components | 36 components | `src/app/views/corewidgets/components/` |
