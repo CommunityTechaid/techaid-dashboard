@@ -10,7 +10,7 @@ until the removal milestone).
 |---|---|
 | M1 shell + role-index pilot | DONE (PR #341) |
 | M2 audit tables | DONE (PR M2-M4, commit 1) |
-| M3 users-admin cluster | not started |
+| M3 users-admin cluster | DONE (PR M2-M4, commit 2) |
 | M4 post-index, dashboard-index | not started |
 | M5 onward | not started |
 
@@ -31,6 +31,36 @@ select them. Notes:
   repainted because zone.js re-checked them.
 - New spec: `e2e/tests/native-table-audit.spec.ts` (5 tests, `@mocked`; needs `admin:kits` and
   `admin:organisations` on top of the staff set to see the Audit tab).
+
+**M3 (done).** user-index, role-users, role-permissions, user-permissions and user-roles use
+`cta-table`. `source` stays a field assigned in `ngOnInit` (it closes over the `watchQuery` ref).
+Notes:
+
+- The `'1'`/`'-1'` mapping lives in each users-table `source` (user-index also maps the column to
+  the server's `last_login`); role-permissions, user-permissions and user-roles send `asc`/`desc`
+  as before. Do not unify them.
+- Non-sortable columns carry `sortable: false`; role-users' default order is on a non-sortable
+  column (`name`, desc), so the first request still sends `{ key: 'name', value: '-1' }` as the
+  DataTables version did, and clicking those headers is inert.
+- **Plan correction.** The inventory said role-permissions has no length menu. It had no explicit
+  `lengthMenu`, so DataTables showed its default `[10, 25, 50, 100]` (the `dom` has the `l`
+  slot). Migrated with `[pageLengths]="[10, 25, 50, 100]"`; pinned in the new spec.
+- `NativeTableComponent.search()`/`reload()` are now no-ops until the shell's `ngOnInit` has run.
+  The hosts' header-search subscription (NGXS replays the current value on subscribe) can fire
+  after the shell exists but before its inputs are bound, which threw NG0950 (`columns` required)
+  and broke the page. role-index (M1) had the same latent bug; the guard fixes it too.
+- Mutation reloads (`removeRoles`, `removePermissions`, assign) call `grid()?.reload()`, which
+  keeps the current page, as `ajax.reload(null, false)` did.
+- Zoneless (#115): the tables are signal-driven. The four child tabs and role-users/user-roles
+  hosts are still `Eager`; their remaining zone-dependent state is NOT table state: the formly
+  typeahead (`appField.templateOptions['items']` is written from an rxjs subscription in
+  role-users/user-roles) and `apiLoading`. Z1 must convert those. `selectedUser`/`selectedRole`
+  are set in click handlers, which schedule CD themselves.
+- New spec: `e2e/tests/native-table-users-admin.spec.ts` (5 tests, `@mocked`) pins the sort
+  strings, inert headers, length menus, pager flavour, info line, mutation reloads and the
+  `user=roles` id. `issue-72-user-index-sort` is a live-UAT spec and could not run here (it needs
+  a real Auth0 token; with the fake one the page redirects to Auth0), the mocked spec covers the
+  same assertion.
 
 Model strength: **S** = Sonnet-class is enough, **O** = Opus-class (design judgement, subtle
 behaviour). Effort in focused hours; a milestone is one sitting or less unless noted.

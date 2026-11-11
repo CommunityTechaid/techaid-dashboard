@@ -26,17 +26,8 @@
         </div>
         <div class="w-100">
           <div class="table-responsive">
-            <table id="role-users" class="table table-striped table-hover table-borderedx table-md w-100" datatable
-              [dtOptions]="dtOptions">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th></th>
-                </tr>
-              </thead>
-              @if (entities?.length != 0;) {
-                <tbody>
-                  @for (dt of entities; track dt) {
+            <cta-table tableId="role-users" pagingType="full_numbers" [columns]="columns" [source]="source" [order]="{ column: 0, dir: 'desc' }" [pageLength]="5" tableClass="table table-striped table-hover table-borderedx table-md w-100" (loadError)="onLoadError($event)">
+<ng-template ctaRow let-dt>
                     <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
                       <td>
                         <div class="d-flex">
@@ -68,17 +59,8 @@
                         </button>
                       </td>
                     </tr>
-                  }
-                </tbody>
-              }
-              @if (entities?.length == 0) {
-                <tbody>
-                  <tr>
-                    <td colspan="4" class="no-data-available">No data!</td>
-                  </tr>
-                </tbody>
-              }
-            </table>
+</ng-template>
+</cta-table>
           </div>
         </div>
       </div>

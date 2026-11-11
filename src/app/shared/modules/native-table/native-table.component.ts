@@ -78,6 +78,13 @@ export class NativeTableComponent<T = unknown> implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly draws = new LatestDraw();
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
+  /**
+   * False until `ngOnInit` has restored state and made the first request. The header search box
+   * subscription in a host (NGXS replays the current value on subscribe) can fire after the shell
+   * exists but before its inputs are bound; `search()` and `reload()` are ignored until then, as
+   * they were while DataTables had not yet produced its instance.
+   */
+  private ready = false;
 
   readonly page = signal(0);
   readonly pageSize = signal(10);
@@ -119,6 +126,7 @@ export class NativeTableComponent<T = unknown> implements OnInit {
     this.pageSize.set(this.pageLength());
     this.sortOrder.set(this.order());
     this.restoreState();
+    this.ready = true;
     this.load();
   }
 
@@ -126,6 +134,9 @@ export class NativeTableComponent<T = unknown> implements OnInit {
 
   /** Fetch again. Keeps the current page unless `resetPage` is set (DataTables `ajax.reload(null, resetPaging)`). */
   reload(resetPage = false): void {
+    if (!this.ready) {
+      return;
+    }
     if (resetPage) {
       this.page.set(0);
     }
@@ -137,6 +148,9 @@ export class NativeTableComponent<T = unknown> implements OnInit {
    * page, as `table.search(term); table.ajax.reload(null, false)` did.
    */
   search(term: string): void {
+    if (!this.ready) {
+      return;
+    }
     clearTimeout(this.searchTimer);
     this.term.set(term ?? '');
     this.load();
