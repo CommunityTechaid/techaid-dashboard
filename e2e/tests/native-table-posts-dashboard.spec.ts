@@ -126,7 +126,7 @@ test.describe('native tables: post-index and dashboard @mocked', () => {
     const box = page.locator(`${W} .dt-search input`);
     await box.fill('brand');
     await box.press('Enter');
-    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entries (filtered from 24 total entries)');
+    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entry (filtered from 24 total entries)');
     expect(st.posts.at(-1)!.term).toBe('brand');
   });
 
@@ -169,7 +169,7 @@ test.describe('native tables: post-index and dashboard @mocked', () => {
     await box.press('Enter');
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText('Device wiped');
-    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entries (filtered from 12 total entries)');
+    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entry (filtered from 12 total entries)');
     // The unknown status falls back to its raw name.
     await box.fill('legacy');
     await box.press('Enter');

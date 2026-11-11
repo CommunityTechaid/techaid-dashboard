@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { skip } from 'rxjs/operators';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -11,9 +10,10 @@ import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DEVICE_REQUEST_STATUS_LABELS, DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
-import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { DEVICE_TYPES, DEVICE_TYPE_LOOKUP, warnIfFormInvalid } from '@app/shared/utils';
 import { DatePipe } from '@angular/common';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
 import { DeliverySlotsComponent } from '../delivery-slots/delivery-slots.component';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
@@ -207,9 +207,9 @@ export function formatWeekLabel(start: Date, end: Date): string {
     selector: 'distributions-and-deliveries-index',
     templateUrl: './distributions-and-deliveries-index.component.html',
     styleUrls: ['./distributions-and-deliveries-index.component.scss'],
-    imports: [AppGridDirective_1, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, DeliverySlotsComponent],
-    // OnPush (hygiene 6.5 fan-out, #114). Host-bound state changes via the
-    // DataTables ajax callback, applyFilter() (also reached from the week/status
+    imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, DeliverySlotsComponent],
+    // OnPush (hygiene 6.5 fan-out, #114). Rows paint from the cta-table shell's own
+    // signals; host-bound state changes via applyFilter() (also reached from the week/status
     // quick-filter buttons, which are in the host template and don't strictly
     // need it, but applyFilter marks for check unconditionally to stay correct
     // for the filter-modal path too) and the deliveryBookingVisibility()
@@ -224,10 +224,7 @@ export function formatWeekLabel(start: Date, end: Date): string {
     // sites for exactly this reason (caught by delivery-booking-admin-delete.spec.ts).
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestroy, AfterViewInit {
-  /** Drops out-of-order ajax responses — see LatestDraw. */
-  private readonly draws = new LatestDraw();
-
+export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestroy {
   activeTab: DndTab = 'requests';
   /** The tab the URL asked for; 'slots' only takes effect once the feature flag says the tab exists. */
   private desiredTab: DndTab = 'requests';
@@ -253,11 +250,27 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       this.cdr.markForCheck();
     });
   }
-  @ViewChild(AppGridDirective) grid: AppGridDirective;
-  dtOptions: DataTables.Settings = {};
+  readonly grid = viewChild(NativeTableComponent<any>);
+  /**
+   * Default order is column 0 (ID) desc. The shell never offers a "no order" third state on a header
+   * click (#291) and ignores a saved order that is not a sortable column.
+   */
+  readonly columns: TableColumn[] = [
+    { title: 'ID', key: 'id', width: '15px' },
+    // An embedded object has no meaningful order for the API to sort on.
+    { title: 'Requests', sortable: false, hint: 'Each badge shows allocated / requested devices for that type' },
+    { title: 'Referee', key: 'referringOrganisationContact.fullName' },
+    { title: 'Organisation', key: 'referringOrganisationContact.referringOrganisation.name' },
+    { title: 'Client Ref', key: 'clientRef' },
+    { title: 'Collection/Delivery', key: 'collectionMethod' },
+    { title: 'Collection/Delivery Date', key: 'collectionDate' },
+    { title: 'Created', key: 'createdAt' },
+    { title: 'Updated', key: 'updatedAt' },
+    { title: 'Status', key: 'status' },
+    { title: 'Is Prepped', sortable: false },
+  ];
+  source: TableSource<any>;
   sub: Subscription;
-  table: any;
-  entities = [];
 
   @Select(CoreWidgetState.query) search$: Observable<string>;
 
@@ -265,8 +278,6 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
 
   filter: any = {};
   filterCount = 0;
-  /** Total from the last successful load; keeps the pager usable after a failed one. */
-  private lastTotal = 0;
   filterModel: any = {is_sales: [false]};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterDeviceTypes = DEVICE_TYPES.filter(t => t.value !== 'BROADBANDHUBS');
@@ -613,28 +624,14 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     // Called from the filter modal, whose view lives in NgbModal's window —
     // the host's filterCount badge won't repaint under OnPush without this.
     this.cdr.markForCheck();
-    this.table.ajax.reload(null, true);
+    // A new filter starts from the first page. A reload before the shell's ngOnInit is a no-op:
+    // ngOnInit applies the saved filter first, so the shell's own first request carries it.
+    this.grid()?.reload(true);
     this.syncUrl();
   }
 
   modal(content) {
     this.modalService.open(content, { centered: true, size: 'lg' });
-  }
-
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
   }
 
   ngOnInit() {
@@ -645,6 +642,22 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     this.weekButtons = this.generateWeekButtons();
     this.statusButtons = this.generateStatusButtons();
 
+    // Restore the filter before the table makes its first request (the shell starts in its own ngOnInit,
+    // after this method). Filters in the URL win over saved ones (#282): a link is an explicit request.
+    const fromUrl = parseQuery(this.route.snapshot.queryParamMap);
+    const saved = fromUrl.hasFilters
+      ? { model: fromUrl.model, week: fromUrl.week, failed: fromUrl.failed, onHold: fromUrl.onHold }
+      : this.readSavedFilters();
+    this.filterModel = saved.model;
+    this.quickWeek = saved.week;
+    this.quickFailed = saved.failed;
+    this.quickOnHold = saved.onHold;
+    try {
+      this.applyFilter(this.filterModel);
+      this.filterForm.patchValue(this.filterModel);
+    } catch (_) {
+    }
+
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_ENTITY,
@@ -652,140 +665,56 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
       });
 
     this.sub = this.search$.subscribe(query => {
-      if (this.table) {
-        this.table.search(query);
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.search(query);
     });
 
-    this.dtOptions = {
-      pagingType: 'simple_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: 10,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [0, 'desc'],
-      serverSide: true,
-      // No request of DataTables' own on init (#291): it went out before ngAfterViewInit had
-      // applied the saved or default filter, so every load fetched twice and the first,
-      // unfiltered, answer included commercial rows. applyFilter() makes the first request.
-      deferLoading: 0,
-      stateSave: true,
-      processing: true,
-      searching: true,
-      language: {
-        // Every total this table reports is already filtered, so DataTables always picks this
-        // text for an empty page; its default ("No data available in table") reads as "the
-        // database is empty" when a search or filter simply matched nothing (#291).
-        emptyTable: 'No matching records found',
-      },
-      // A header click toggles asc/desc; DataTables' default third state is "no sort" (#291).
-      columnDefs: [{ targets: '_all', orderSequence: ['asc', 'desc'] }],
-      ajax: (params: any, callback) => {
-        const drawToken = this.draws.start();
-        let sort = params.order.map(o => {
-          return {
-            key: this.dtOptions.columns[o.column].data,
-            value: o.dir
-          };
-        });
-        // Never ask the server for "no order" (#291): paging an unordered result can repeat or
-        // skip rows. orderSequence below stops a header click producing this; a table state
-        // saved before that could still restore it.
-        if (!sort.length) {
-          sort = [{ key: 'id', value: 'desc' }];
-        }
-
-        const vars = {
-          page: {
-            sort: sort,
-            size: params.length,
-            page: Math.round(params.start / params.length),
-          },
-          term: params['search']['value'],
-          numericterm: isNaN(Number(params['search']['value'])) ? -1 : Number(params['search']['value']),
-          filter: this.filter
-        };
-
-        queryRef.refetch(vars).then(res => {
-          if (this.draws.isStale(drawToken)) {
-            return;
-          }
-          let data: any = {};
-          if (res.data) {
-            data = res['data']['deviceRequestConnection'];
-            this.entities = data.content.map(d => {
-              const types: Record<string, number> = {};
-              const kitIds: Record<string, string[]> = {};
-              if (d.kits && d.kits.length) {
-                d.kits.forEach(k => {
-                  const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES', 'OTHER': 'OTHER' };
-                  const t = typeMap[k.type] || `${k.type}S`;
-                  types[t] = (types[t] || 0) + 1;
-                  kitIds[t] = kitIds[t] || [];
-                  kitIds[t].push(k.id);
-                });
-              }
-              return { ...d, types, kitIds };
+    this.source = async (q) => {
+      const vars = {
+        page: {
+          sort: q.sort.map(s => ({ key: s.key, value: s.dir })),
+          size: q.size,
+          page: q.page,
+        },
+        term: q.term,
+        numericterm: isNaN(Number(q.term)) ? -1 : Number(q.term),
+        filter: this.filter
+      };
+      const res = await queryRef.refetch(vars);
+      const data: any = res.data?.['deviceRequestConnection'];
+      if (!data) {
+        return { rows: [], total: 0 };
+      }
+      return {
+        rows: data.content.map(d => {
+          const types: Record<string, number> = {};
+          const kitIds: Record<string, string[]> = {};
+          if (d.kits && d.kits.length) {
+            d.kits.forEach(k => {
+              const typeMap: Record<string, string> = { 'SMARTPHONE': 'PHONES', 'OTHER': 'OTHER' };
+              const t = typeMap[k.type] || `${k.type}S`;
+              types[t] = (types[t] || 0) + 1;
+              kitIds[t] = kitIds[t] || [];
+              kitIds[t].push(k.id);
             });
           }
-          // The rows are rendered by Angular from `entities`, but this promise
-          // resolves outside the host template's event tree — mark for check
-          // or the table body never repaints under OnPush.
-          this.cdr.markForCheck();
-
-          this.lastTotal = data['totalElements'] || 0;
-          callback({
-            draw: params.draw,
-            recordsTotal: data['totalElements'],
-            recordsFiltered: data['totalElements'],
-            error: '',
-            data: []
-          });
-        }, err => {
-          if (this.draws.isStale(drawToken)) {
-            return;
-          }
-          // The rows on screen belong to the request before this one: clear them rather than
-          // leave the previous page showing under the new page number (#291).
-          this.entities = [];
-          this.cdr.markForCheck();
-          // Report the last known total, not zero, so the pager keeps its page links and the
-          // user can go back or try again without reloading (#291).
-          callback({
-            draw: params.draw,
-            recordsTotal: this.lastTotal,
-            recordsFiltered: this.lastTotal,
-            error: err.message,
-            data: []
-          });
-
-          this.toastr.warning(`
-            <small>${err.message}</small>
-          `, 'GraphQL Error', {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true
-            });
-        });
-      },
-      columns: [
-        { data: 'id', width: '15px' },
-        // An embedded object has no meaningful order for the API to sort on.
-        { data: 'deviceRequestItems', orderable: false },
-        { data: 'referringOrganisationContact.fullName' },
-        { data: 'referringOrganisationContact.referringOrganisation.name' },
-        { data: 'clientRef' },
-        { data: 'collectionMethod' },
-        { data: 'collectionDate' },
-        { data: 'createdAt'},
-        { data: 'updatedAt' },
-        { data: 'status' },
-        { data: null, orderable: false },
-      ]
+          return { ...d, types, kitIds };
+        }),
+        total: data['totalElements'] || 0,
+      };
     };
+
+    // Back/forward and hand-edited URLs. The first emission is the state just applied.
+    this.urlSub = this.route.queryParamMap.pipe(skip(1)).subscribe(p => this.onUrlChange(p));
+  }
+
+  onLoadError(err: any) {
+    this.toastr.warning(`
+      <small>${err?.message}</small>
+    `, 'GraphQL Error', {
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+    });
   }
 
   /**
@@ -830,26 +759,5 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     } catch (_) {
       return fallback;
     }
-  }
-  ngAfterViewInit() {
-    this.grid.dtInstance.then(tbl => {
-      this.table = tbl;
-      // Filters in the URL win over saved ones (#282): a link is an explicit request.
-      const fromUrl = parseQuery(this.route.snapshot.queryParamMap);
-      const saved = fromUrl.hasFilters
-        ? { model: fromUrl.model, week: fromUrl.week, failed: fromUrl.failed, onHold: fromUrl.onHold }
-        : this.readSavedFilters();
-      this.filterModel = saved.model;
-      this.quickWeek = saved.week;
-      this.quickFailed = saved.failed;
-      this.quickOnHold = saved.onHold;
-      try {
-        this.applyFilter(this.filterModel);
-        this.filterForm.patchValue(this.filterModel);
-      } catch (_) {
-      }
-      // Back/forward and hand-edited URLs. The first emission is the state just applied.
-      this.urlSub = this.route.queryParamMap.pipe(skip(1)).subscribe(p => this.onUrlChange(p));
-    });
   }
 }

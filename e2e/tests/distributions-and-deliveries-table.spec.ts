@@ -43,7 +43,8 @@ import { loginWith as seedAuth0Cache } from '../helpers/auth0-cache';
 const PATH = '/dashboard/distributions-and-deliveries';
 const TABLE_ID = 'distributions-and-deliveries-index';
 const FILTER_KEY = `distributionsAndDeliveriesFilters-${TABLE_ID}`;
-const DT_STATE_KEY = `DataTables_${TABLE_ID}_${PATH}`;
+// The native table shell's saved state (page, length, order, search); DataTables' old key was `DataTables_<id>_<path>` (#113).
+const DT_STATE_KEY = `cta-table_${TABLE_ID}_${PATH}`;
 
 // ---------------------------------------------------------------------------------------------
 // Fixture
@@ -372,7 +373,7 @@ async function pickStatuses(page: Page, labels: string[]): Promise<void> {
 }
 
 async function goToPage(page: Page, label: string | number): Promise<void> {
-  await pager(page).getByRole('link', { name: String(label), exact: true }).click();
+  await pager(page).getByRole('button', { name: String(label), exact: true }).click();
 }
 
 /** Applies a modal filter in one go, returning the request it caused. */
@@ -397,8 +398,8 @@ test.describe('DnD table: initial load @mocked', () => {
     await expectInfo(page, 1, 10, 54);
     await expect(lengthSelect(page)).toHaveValue('10');
     // 54 rows / 10 per page = 6 pages.
-    await expect(pager(page).getByRole('link', { name: '6', exact: true })).toBeVisible();
-    await expect(pager(page).getByRole('link', { name: '7', exact: true })).toHaveCount(0);
+    await expect(pager(page).getByRole('button', { name: '6', exact: true })).toBeVisible();
+    await expect(pager(page).getByRole('button', { name: '7', exact: true })).toHaveCount(0);
 
     const v = h.last();
     expect(v.page).toEqual({ page: 0, size: 10, sort: [{ key: 'id', value: 'desc' }] });
@@ -440,7 +441,7 @@ test.describe('DnD table: pagination @mocked', () => {
     await load(page, h);
     const expected = FIX.rows.filter(nonSales).sort(byIdDesc);
 
-    let v = await h.after(() => pager(page).getByRole('link', { name: 'Next' }).click());
+    let v = await h.after(() => pager(page).getByRole('button', { name: 'Next' }).click());
     expect(v.page!.page).toBe(1);
     await expectIds(page, ids(expected.slice(10, 20)));
     await expectInfo(page, 11, 20, 54);
@@ -450,7 +451,7 @@ test.describe('DnD table: pagination @mocked', () => {
     await expectIds(page, ids(expected.slice(30, 40)));
     await expectInfo(page, 31, 40, 54);
 
-    v = await h.after(() => pager(page).getByRole('link', { name: 'Previous' }).click());
+    v = await h.after(() => pager(page).getByRole('button', { name: 'Previous' }).click());
     expect(v.page!.page).toBe(2);
     await expectIds(page, ids(expected.slice(20, 30)));
 
@@ -459,15 +460,15 @@ test.describe('DnD table: pagination @mocked', () => {
     // Last page is partial: 54 = 5*10 + 4.
     await expectIds(page, ids(expected.slice(50, 54)));
     await expectInfo(page, 51, 54, 54);
-    await expect(pager(page).getByRole('link', { name: 'Next' })).toBeDisabled();
+    await expect(pager(page).getByRole('button', { name: 'Next' })).toBeDisabled();
   });
 
   test('Previous is disabled and Next enabled on page 1', async ({ page }) => {
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
-    await expect(pager(page).getByRole('link', { name: 'Previous' })).toBeDisabled();
-    await expect(pager(page).getByRole('link', { name: 'Next' })).toBeEnabled();
+    await expect(pager(page).getByRole('button', { name: 'Previous' })).toBeDisabled();
+    await expect(pager(page).getByRole('button', { name: 'Next' })).toBeEnabled();
   });
 
   test('changing page size sends page.size, resets to page 1 and recomputes the page count', async ({ page }) => {
@@ -484,8 +485,8 @@ test.describe('DnD table: pagination @mocked', () => {
     await expectIds(page, ids(expected.slice(0, 25)));
     await expectInfo(page, 1, 25, 54);
     // 54 / 25 = 3 pages.
-    await expect(pager(page).getByRole('link', { name: '3', exact: true })).toBeVisible();
-    await expect(pager(page).getByRole('link', { name: '4', exact: true })).toHaveCount(0);
+    await expect(pager(page).getByRole('button', { name: '3', exact: true })).toBeVisible();
+    await expect(pager(page).getByRole('button', { name: '4', exact: true })).toHaveCount(0);
 
     const v2 = await h.after(() => lengthSelect(page).selectOption('100'));
     expect(v2.page).toMatchObject({ size: 100, page: 0 });
@@ -495,7 +496,7 @@ test.describe('DnD table: pagination @mocked', () => {
     const v3 = await h.after(() => lengthSelect(page).selectOption('5'));
     expect(v3.page).toMatchObject({ size: 5, page: 0 });
     await expectInfo(page, 1, 5, 54);
-    await expect(pager(page).getByRole('link', { name: '11', exact: true })).toBeVisible(); // ceil(54/5)
+    await expect(pager(page).getByRole('button', { name: '11', exact: true })).toBeVisible(); // ceil(54/5)
   });
 
   test('the page size offers 5/10/25/50/100', async ({ page }) => {
@@ -1214,8 +1215,7 @@ test.describe('DnD table: persistence across reload @mocked', () => {
     await page.addInitScript(([k, id]) => {
       if (!localStorage.getItem(k as string)) {
         localStorage.setItem(k as string, JSON.stringify({
-          time: Date.now(), start: 50, length: 10, order: [[0, 'desc']], search: { search: '' },
-          columns: Array.from({ length: 11 }, () => ({ visible: true, search: { search: '' } })),
+          time: Date.now(), page: 5, size: 10, term: '', order: { column: 0, dir: 'desc' },
         }));
       }
       void id;
@@ -1239,8 +1239,8 @@ test.describe('DnD table: counts and row badges @mocked', () => {
       await expectInfo(page, total ? 1 : 0, Math.min(10, total), total);
       const pages = Math.ceil(total / 10);
       if (pages > 1) {
-        await expect(pager(page).getByRole('link', { name: String(pages), exact: true })).toBeVisible();
-        await expect(pager(page).getByRole('link', { name: String(pages + 1), exact: true })).toHaveCount(0);
+        await expect(pager(page).getByRole('button', { name: String(pages), exact: true })).toBeVisible();
+        await expect(pager(page).getByRole('button', { name: String(pages + 1), exact: true })).toHaveCount(0);
       }
       if (badge === null) await expect(filterBadge(page)).toHaveCount(0);
       else await expect(filterBadge(page)).toHaveText(badge);
@@ -1359,7 +1359,7 @@ test.describe('DnD table: errors and stale responses @mocked', () => {
     h.failNext(1);
     await h.after(() => goToPage(page, 2));
     await expect(page.locator('.toast-warning')).toContainText('GraphQL Error', { timeout: 10_000 });
-    await expect(pager(page).getByRole('link', { name: '1', exact: true })).toBeVisible({ timeout: 2_000 });
+    await expect(pager(page).getByRole('button', { name: '1', exact: true })).toBeVisible({ timeout: 2_000 });
   });
 
   test('a failed query does not leave the previous page showing under the new page number', async ({ page }) => {

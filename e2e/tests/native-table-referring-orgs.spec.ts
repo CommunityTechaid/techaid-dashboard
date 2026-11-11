@@ -172,7 +172,7 @@ test.describe('native tables: referring organisations @mocked', () => {
     });
     await page.goto('/dashboard/referring-organisations');
     const W = '#referring-org-index_wrapper';
-    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entries');
+    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entry');
     await expect(page.locator('#referring-org-index tbody tr')).toHaveCount(1);
     await expect(page.locator('#referring-org-index tbody tr').first()).toContainText('Org 23');
     // The very first request already carried the saved filter (no wasted unfiltered one).
@@ -229,7 +229,7 @@ test.describe('native tables: referring organisations @mocked', () => {
     const box = page.locator(`${W} .dt-search input`);
     await box.fill('Referee 05');
     await box.press('Enter');
-    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entries (filtered from 11 total entries)');
+    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entry (filtered from 11 total entries)');
   });
 
   test('organisation referees tab: 5 per page, sends the organisation where, create reloads', async ({ page }) => {

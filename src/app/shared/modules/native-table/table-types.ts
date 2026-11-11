@@ -6,6 +6,8 @@ export interface TableColumn {
   sortable?: boolean;
   width?: string;
   headerClass?: string;
+  /** Tooltip on the header cell (the `title` attribute). */
+  hint?: string;
 }
 
 export type SortDirection = 'asc' | 'desc';

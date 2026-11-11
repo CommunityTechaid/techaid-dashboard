@@ -71,6 +71,18 @@ export class NativeTableComponent<T = unknown> implements OnInit {
   readonly tableClass = input('table table-striped table-hover table-bordered table-md');
   /** Keep page, length, order and search across navigation (DataTables `stateSave`). */
   readonly persistState = input(true);
+  /** Text of the single row shown when a loaded answer has no rows. */
+  readonly emptyText = input('No data!');
+  /**
+   * After a failed request keep the last known total, so the pager keeps its page links and the
+   * user can retry or go back (D&D, #291). Off: the total drops to zero with the rows.
+   */
+  readonly keepTotalOnError = input(false);
+  /**
+   * Append "(filtered from N total entries)" to the info line when a search narrows the list. Off for
+   * D&D, whose old table reported only the filtered total (its own quick filters are not a search).
+   */
+  readonly showFilteredFrom = input(true);
 
   /** A request failed. The shell empties the table; the host decides how to tell the user. */
   readonly loadError = output<unknown>();
@@ -110,10 +122,12 @@ export class NativeTableComponent<T = unknown> implements OnInit {
     const total = this.total();
     const start = total === 0 ? 0 : this.page() * this.pageSize() + 1;
     const end = Math.min((this.page() + 1) * this.pageSize(), total);
-    let text = `Showing ${fmt(start)} to ${fmt(end)} of ${fmt(total)} entries`;
+    // DataTables' en text: "entry" for exactly one, "entries" otherwise (0 included).
+    const noun = (n: number) => (n === 1 ? 'entry' : 'entries');
+    let text = `Showing ${fmt(start)} to ${fmt(end)} of ${fmt(total)} ${noun(total)}`;
     const all = this.unfilteredTotal();
-    if (all !== null && all !== total) {
-      text += ` (filtered from ${fmt(all)} total entries)`;
+    if (this.showFilteredFrom() && all !== null && all !== total) {
+      text += ` (filtered from ${fmt(all)} total ${noun(all)})`;
     }
     return text;
   });
@@ -275,6 +289,13 @@ export class NativeTableComponent<T = unknown> implements OnInit {
         if (this.draws.isStale(token)) {
           return;
         }
+        // A saved or stale page past the end of the (now smaller) result set: step back to the last
+        // page that exists and ask again, as DataTables did, instead of showing an empty page.
+        if (query.page > 0 && query.page * query.size >= result.total) {
+          this.page.set(Math.max(0, Math.ceil(result.total / query.size) - 1));
+          this.load();
+          return;
+        }
         this.rows.set(result.rows);
         this.total.set(result.total);
         if (query.term === '') {
@@ -288,7 +309,9 @@ export class NativeTableComponent<T = unknown> implements OnInit {
           return;
         }
         this.rows.set([]);
-        this.total.set(0);
+        if (!this.keepTotalOnError()) {
+          this.total.set(0);
+        }
         this.loaded.set(true);
         this.loading.set(false);
         this.loadError.emit(error);

@@ -15,7 +15,8 @@ until the removal milestone).
 | M5 referring organisations | DONE (PR M5-M7, commit 1) |
 | M6 donors | DONE (PR M5-M7, commit 2) |
 | M7 devices and requests | DONE (PR M5-M7, commit 3) |
-| M8 D&D and kit-index | next (not started) |
+| M8a distributions-and-deliveries-index | DONE (PR M8, commit 1) |
+| M8b kit-index | next (blocked on PR #349, the ID-list separators change) |
 | M9 onward | not started |
 
 ### Progress notes (newest last)
@@ -339,10 +340,32 @@ Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the curre
   `ngOnInit`; `donorParentId` set by the input is overwritten by the restore exactly as before.
 - New spec: `e2e/tests/native-table-requests-kits.spec.ts` (4 tests, `@mocked`).
 
+**M8a (done).** distributions-and-deliveries-index uses `cta-table`.
+
+- Config kept verbatim: `simple_numbers`, page length 10, menu `[5, 10, 25, 50, 100]`, order column 0 (ID) desc,
+  real sort keys (nested referee / organisation paths), Requests and Is Prepped inert. The `columnDefs
+  orderSequence` override is gone: the shell never offers a "no order" state and ignores a saved order that is
+  not a sortable column. The `sort.length === 0` fallback to `id desc` went with it (unreachable).
+- The saved filter (and the URL's filters, which win) is restored in `ngOnInit`, so the shell's own first request
+  carries it; `applyFilter()` calls `grid()?.reload(true)` (a no-op before the shell's `ngOnInit`). The old
+  `deferLoading: 0` workaround is no longer needed. The URL subscription is set up at the end of `ngOnInit`.
+- Shell additions for D&D parity (all opt-in inputs, defaults unchanged for the other pages): `emptyText`
+  ("No matching records found" here, #291), `keepTotalOnError` (the pager keeps its page links after a failed
+  request, #291), `showFilteredFrom=false` (the old table reported only the filtered total, so no
+  "(filtered from N total entries)" suffix), and `TableColumn.hint` (the Requests header tooltip).
+- Shell fixes found by the unchanged D&D spec, now true for every page: the info line says "1 entry" (not "1 entries")
+  as DataTables did (six `native-table-*` assertions updated); a page past the end of the result set (a saved page
+  after the filter shrank the list) steps back to the last real page and asks again, as DataTables did.
+- Selector-level spec changes only: pager items are `<button>`s in the shell (DataTables rendered `<a>`), so
+  `getByRole('link')` became `getByRole('button')` inside the pager; the saved-state key is `cta-table_<id>_<path>`
+  with the native shape. Nothing else in `distributions-and-deliveries-table.spec.ts` changed.
+- Zoneless (#115): the host stays `OnPush`; `filterCount`, `activeTab` and the week buttons are plain fields repainted
+  with `markForCheck()`. Z1 should turn them into signals.
+- New spec: `e2e/tests/native-table-dnd.spec.ts` (5 tests, `@mocked`).
+
 ### Where to resume
 
-Next is **M8**, the riskiest pair: distributions-and-deliveries-index (quick buttons call `reload(true)`,
-week-button date logic, `columnDefs orderSequence` override, `HostListener`), then kit-index (1433 lines,
-bulk actions, ID-list paste into the search box). Re-run `kit-id-list-bulk-update`,
-`distributions-and-deliveries-table`, `exclude-status-filter`, `stale-search-response` and `onpush-fanout`.
-Do one commit per component.
+Next is **M8b**, kit-index (1433 lines, two bulk mutations, exclude-status filter, default sales filter, ID-list paste
+into the search box). It waits for PR #349 (`parseIdList()` accepts new lines, spaces and tabs) so rebase on `dev`
+after that merges. Re-run `kit-id-list-bulk-update`, `exclude-status-filter`, `stale-search-response`, `onpush-fanout`,
+`issue-76-kit-filter-reset` and `kit-locked-status`. Do one commit for kit-index.
