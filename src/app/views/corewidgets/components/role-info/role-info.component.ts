@@ -44,7 +44,7 @@ export class RoleInfoComponent implements OnInit, OnDestroy {
   sub: Subscription;
   form: UntypedFormGroup = new UntypedFormGroup({});
   // Signals: written from Apollo/router callbacks, so they repaint without zone.js (#115).
-  readonly model = signal<any>({});
+  readonly model = signal<{ id?: string; name?: string; description?: string }>({});
   readonly roleName = signal<string>(undefined);
   readonly roleId = signal<string>(undefined);
 
