@@ -17,15 +17,16 @@ jobs:
         # on — dispatch from main and you run whatever copy of this pipeline
         # main happens to carry, which is by definition the previously
         # deployed one. Fail fast rather than deploy with a stale pipeline.
-        if: github.ref_name != 'dev'
+        # HOTFIX BRANCH VARIANT: only hotfix/* refs may dispatch this copy.
+        if: ${{ !startsWith(github.ref_name, 'hotfix/') }}
         run: |
-          echo "::error::Dispatched from '${{ github.ref_name }}'. Re-run with 'dev' selected in the branch dropdown — releases and deploys are always dev-based; main only records what is already live."
+          echo "::error::This hotfix-branch copy of the pipeline only deploys hotfix/* refs; dispatched from '${{ github.ref_name }}'."
           exit 1
 
-      - name: Checkout dev branch
+      - name: Checkout hotfix branch
         uses: actions/checkout@v4
         with:
-          ref: dev
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -166,6 +167,8 @@ jobs:
             }
 
       - name: Fast-forward main to deployed commit
+        # HOTFIX: skipped — main must stay on the dev lineage so the next dev deploy FFs cleanly.
+        if: false
         run: |
           # HEAD is the dev commit just deployed to prod. A plain push
           # (no --force) only succeeds if main is strictly behind, so
