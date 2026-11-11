@@ -7,13 +7,13 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import { Apollo } from 'apollo-angular';
 import { SearchQuery } from '@views/corewidgets/state/actions';
-import $ from 'jquery';
 import { environment } from '@env/environment';
 
 import { AppInitialComponent } from '../../shared/components/app-initial/app-initial.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { LayoutService } from '@app/shared/services/layout.service';
 
 
 @Component({
@@ -41,14 +41,15 @@ export class AppHeader implements OnInit, OnDestroy {
         private toastr: ToastrService,
         private modalService: NgbModal,
         private apollo: Apollo,
-        private featureFlags: FeatureFlagService) { }
+        private featureFlags: FeatureFlagService,
+        private layout: LayoutService) { }
 
     modal(content) {
         this.modalService.open(content, { centered: true });
     }
 
     toggleSideBar() {
-        $('body').toggleClass('sidebar-toggled');
+        this.layout.toggleSidebar();
     }
 
     ngOnInit() {

@@ -1,6 +1,6 @@
 ---
 name: dashboard-architecture-contract
-description: Load BEFORE designing any change to techaid-dashboard — adding or editing an Apollo query/mutation, a table/DataTables component, a Formly form, an NGXS slice, the GraphQL client wiring, an environment/proxy config, a change-detection strategy, the CSP, or the cta-places-proxy Worker — and whenever judging whether a diff is safe. Explains the load-bearing design decisions (fully-standalone Angular 21 + esbuild, Apollo v4 frozen responses, Formly resetOnHide, the users-sort quirk, the OnPush pilot, CSP-constrained NGXS, the manually-deployed Places Worker) with the WHY behind each, the invariants a diff must not break, and the known weak points. Use it to answer "will this change violate how the dashboard is supposed to work?"
+description: Load BEFORE designing any change to techaid-dashboard — adding or editing an Apollo query/mutation, a table (`cta-table` native shell) component, a Formly form, an NGXS slice, the GraphQL client wiring, an environment/proxy config, a change-detection strategy, the CSP, or the cta-places-proxy Worker — and whenever judging whether a diff is safe. Explains the load-bearing design decisions (fully-standalone Angular 21 + esbuild, Apollo v4 frozen responses, Formly resetOnHide, the users-sort quirk, the OnPush pilot, CSP-constrained NGXS, the manually-deployed Places Worker) with the WHY behind each, the invariants a diff must not break, and the known weak points. Use it to answer "will this change violate how the dashboard is supposed to work?"
 ---
 
 # TechAid Dashboard — Architecture Contract
@@ -39,7 +39,7 @@ Web Apps, which serves the app and its Content-Security-Policy. One small Cloudf
 | esbuild builder | `@angular/build` application builder; `ng build` uses esbuild, not Webpack |
 | Frozen response | Apollo v4 deep-freezes query result objects; writing to one throws |
 | Formly type | A custom field renderer registered in `FORMLYCONFIG` (e.g. `choice`, `place`, `date`) |
-| DataTables ajax | The jQuery DataTables callback that resolves a GraphQL promise and paints table rows |
+| `cta-table` | The native, signal-based table shell (`src/app/shared/modules/native-table/`); the host passes a `source` function and a `ctaRow` template, the shell owns paging, sort, search, info line and saved state. It replaced jQuery DataTables (#113); DataTables-style class names (`dt-container`, `dt-paging`, ...) are kept on purpose |
 | OnPush pilot | `donor-index` — the **only** component on `ChangeDetectionStrategy.OnPush` |
 | version triple | `{version, build, commit}` in `version.ts`, stamped by CI — identifies one UAT build |
 | Places proxy | `cta-places-proxy` Cloudflare Worker fronting Google Places for address autocomplete |
@@ -56,7 +56,7 @@ Web Apps, which serves the app and its Content-Security-Policy. One small Cloudf
 | State | NGXS | 21 | `src/app/state/` |
 | UI | ng-bootstrap + Bootstrap | 20 / 5.3 | throughout |
 | Dynamic forms | ngx-formly | 7.1 | `src/app/shared/modules/formly/` |
-| Tables | jQuery DataTables | 2.3 | index/list components |
+| Tables | native `cta-table` shell (no jQuery) | — | `src/app/shared/modules/native-table/`; styles in `native-table.css` |
 | Auth | `@auth0/auth0-angular` | 2.8 | `src/app/shared/services/authentication.service.ts` (hardcoded client id/domain, **real tenant in dev**) |
 | Feature components | ~40 component files | — | `src/app/views/corewidgets/components/` |
 
@@ -76,7 +76,7 @@ UAT build from another (the semver only moves on a release — see `CLAUDE.md`).
 
 `@apollo/client` v4 **deep-freezes** every query result object. Writing a property back onto a response
 row (`row.foo = x`) throws `TypeError: Cannot assign to read only property`. The throw usually happens
-inside a `refetch().then(...)` / DataTables ajax callback, where it rejects the whole chain **silently**
+inside a `refetch().then(...)` / table `source` callback, where it rejects the whole chain **silently**
 — an error toast may flash, then the table renders empty and the user reports "doesn't load".
 
 **The rule:** clone-then-derive with `.map()` + object spread; never `forEach` + assignment.
@@ -152,13 +152,13 @@ Pinned by `e2e/tests/issue-72-user-index-sort.spec.ts`.
 
 `donor-index.component.ts` is the **only** component using `ChangeDetectionStrategy.OnPush`; everything
 else is default change detection. Because OnPush skips CD for state set outside the host template's
-event tree, `donor-index` calls `cdr.markForCheck()` explicitly in two places: the DataTables ajax
-callback (paints rows) and `applyFilter()` invoked from the NgbModal filter footer (paints the count
+event tree, `donor-index` calls `cdr.markForCheck()` explicitly in two places: the table's
+`source` callback (paints rows) and `applyFilter()` invoked from the NgbModal filter footer (paints the count
 badge). Dropping either `markForCheck()` leaves rows/badge unpainted. Pinned by
 `e2e/tests/donor-onpush.spec.ts`.
 
 **The rule:** if you convert another component to OnPush, every state mutation reached from a
-DataTables callback, an NgbModal footer, or any non-template async path needs an explicit
+table `source` callback, an NgbModal footer, or any non-template async path needs an explicit
 `markForCheck()` — and a regression test like donor-onpush's.
 
 ---

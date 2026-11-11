@@ -1,6 +1,5 @@
 import { Component, ViewChild, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
