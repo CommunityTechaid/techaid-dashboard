@@ -1,5 +1,5 @@
 import { Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
+import { concat, Subject, of, forkJoin, Subscription, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -8,8 +8,6 @@ import { query } from '@angular/animations';
 import { FormControl, UntypedFormGroup, FormBuilder, Validators } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
-import { Select } from '@ngxs/store';
-import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 
@@ -53,7 +51,6 @@ export class RolePermissionsComponent implements OnInit, OnDestroy {
   form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
-  @Select(CoreWidgetState.query) search$: Observable<string>;
 
   constructor(
     private modalService: NgbModal,
@@ -82,10 +79,6 @@ export class RolePermissionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.sub = this.search$.subscribe(query => {
-      this.grid()?.search(query);
-    });
-
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_PERMISSIONS,

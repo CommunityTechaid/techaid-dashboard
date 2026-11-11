@@ -66,6 +66,10 @@ async function installMocks(page: Page): Promise<State> {
     if (op === 'findUser') return fulfill(route, { user: { id: 'u1', userId: 'auth0|u1', phoneNumber: '', email: 'u1@example.org', name: 'User 01', picture: '', lastLogin: '2026-01-01T00:00:00Z' } });
     if (op === 'findRole') return fulfill(route, { role: { id: 'r1', name: 'Role 01', description: 'd' } });
 
+    if (op === 'findAllRoles') {
+      const content = [{ id: 'r1', name: 'Role 01', description: 'd1' }];
+      return fulfill(route, { roles: { totalElements: 1, number: 0, content } });
+    }
     if (op === 'findAllUsers') {
       st.calls.push({ op: v.roleId ? 'role-users' : 'user-index', vars: v });
       if (v.roleId) {
@@ -234,6 +238,36 @@ test.describe('native tables: users-admin cluster @mocked', () => {
     await expect(rows).toHaveCount(1);
     expect(count(st, 'user-permissions')).toBeGreaterThan(n);
     expect(st.mutations[0].op).toBe('removePermissions');
+  });
+
+  // Issue #350: the detail tables' queries take no filter, so their search box did nothing. It is
+  // hidden there; the two list tables keep theirs.
+  test('search box is hidden on the four detail tables and kept on role-index and user-index', async ({ page }) => {
+    await installMocks(page);
+    const box = (id: string) => page.locator(`[id="${id}_wrapper"] .dt-search input`);
+
+    await page.goto('/dashboard/roles');
+    await expect(page.locator('#role-index tbody tr').first()).toBeVisible();
+    await expect(box('role-index')).toBeVisible();
+
+    await page.goto('/dashboard/users');
+    await expect(page.locator('#user-index tbody tr').first()).toBeVisible();
+    await expect(box('user-index')).toBeVisible();
+
+    // [page, tab to open (the first tab is already showing), table id]
+    const details: [string, string | null, string][] = [
+      ['/dashboard/roles/r1', null, 'role-users'],
+      ['/dashboard/roles/r1', 'Permissions', 'role-permissions'],
+      ['/dashboard/users/u1', null, 'user=roles'],
+      ['/dashboard/users/u1', 'Permissions', 'user-permissions'],
+    ];
+    for (const [path, tab, id] of details) {
+      await page.goto(path);
+      if (tab) await page.locator('ul.nav-tabs .nav-link', { hasText: tab }).click();
+      await expect(page.locator(`[id="${id}"] tbody tr`).first(), `${id} renders rows`).toBeVisible();
+      await expect(page.locator(`[id="${id}_wrapper"] .dt-info`), `${id} still has its info line`).toBeVisible();
+      await expect(box(id), `${id} has no search box`).toHaveCount(0);
+    }
   });
 
   test('user-roles: table id "user=roles", paging and unassign reload', async ({ page }) => {

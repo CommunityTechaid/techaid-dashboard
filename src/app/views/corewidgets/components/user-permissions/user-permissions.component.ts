@@ -1,12 +1,10 @@
 import { Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { query } from '@angular/animations';
-import { Select } from '@ngxs/store';
-import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 
@@ -70,7 +68,6 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
   selected = [];
 
 
-  @Select(CoreWidgetState.query) search$: Observable<string>;
 
   constructor(
     private modalService: NgbModal,
@@ -99,10 +96,6 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.sub = this.search$.subscribe(query => {
-      this.grid()?.search(query);
-    });
-
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_PERMISSIONS,

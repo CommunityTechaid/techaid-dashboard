@@ -8,8 +8,6 @@ import { query } from '@angular/animations';
 import { FormControl, UntypedFormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
-import { Select } from '@ngxs/store';
-import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { warnIfFormInvalid } from '@app/shared/utils';
@@ -85,7 +83,6 @@ export class UserRolesComponent implements OnInit, OnDestroy {
   model = {};
 
 
-  @Select(CoreWidgetState.query) search$: Observable<string>;
 
   apis$: Observable<any>;
   apis: any[] = [];
@@ -151,10 +148,6 @@ export class UserRolesComponent implements OnInit, OnDestroy {
         variables: {
         }
       });
-
-    this.sub = this.search$.subscribe(query => {
-      this.grid()?.search(query);
-    });
 
     this.apis$ = concat(
       of([]),
