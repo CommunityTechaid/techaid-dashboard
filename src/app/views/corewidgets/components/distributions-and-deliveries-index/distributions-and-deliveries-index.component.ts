@@ -358,6 +358,37 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   /** The 'On hold' button is on. */
   quickOnHold = false;
 
+  /**
+   * Plain-English note on what the current view leaves out by default, or '' when nothing is hidden.
+   * Mirrors applyFilter: non-commercial only while is_sales is exactly [false]; with a week chosen and
+   * no Filter-window status, declined / cancelled / failed / on-hold are hidden unless a button adds them.
+   */
+  get hiddenNote(): string {
+    const sales: any[] = this.filterModel?.is_sales ?? [];
+    const nonCommercialOnly = sales.length === 1 && sales[0] === false;
+    const hiddenStatuses: string[] = [];
+    if (this.quickWeek && !(this.filterModel?.status?.length)) {
+      hiddenStatuses.push('declined', 'cancelled');
+      if (!this.quickFailed) hiddenStatuses.push('failed');
+      if (!this.quickOnHold) hiddenStatuses.push('on-hold');
+    }
+    const parts: string[] = [];
+    if (nonCommercialOnly) parts.push('Showing non-commercial requests only.');
+    if (hiddenStatuses.length) {
+      const list = hiddenStatuses.length > 1
+        ? `${hiddenStatuses.slice(0, -1).join(', ')} and ${hiddenStatuses[hiddenStatuses.length - 1]}`
+        : hiddenStatuses[0];
+      parts.push(`${list.charAt(0).toUpperCase()}${list.slice(1)} requests are hidden in a week view.`);
+    }
+    if (parts.length) parts.push('Change this in Filter.');
+    return parts.join(' ');
+  }
+
+  /** Accessible label for a week button, e.g. 'Week of Mon 2 Nov 2026'. */
+  weekTitle(b: { startDate: Date }): string {
+    return 'Week of ' + b.startDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).replace(/,/g, '');
+  }
+
   get hasQuickFilter(): boolean {
     return !!this.quickWeek || this.quickFailed || this.quickOnHold;
   }
@@ -543,7 +574,8 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
     }
 
     if (data.is_sales && data.is_sales.length) {
-      count += data.is_sales.length;
+      // Commercial + Non-commercial together constrain nothing, so that is no active filter.
+      if (data.is_sales.length < 2) count += 1;
       filter['isSales'] = {_in: data.is_sales};
     }
 

@@ -46,6 +46,8 @@
             (click)="applyWeekFilter(btn)"
             [class.btn-primary]="quickWeek === btn.key"
             [class.btn-outline-primary]="quickWeek !== btn.key"
+            [attr.title]="weekTitle(btn)"
+            [attr.aria-label]="weekTitle(btn)"
             class="btn btn-sm me-2 mb-2">
             {{btn.label}}
           </button>
@@ -67,6 +69,9 @@
           </button>
         }
       </div>
+      @if (hiddenNote) {
+        <p class="px-3 mb-2 small text-muted dd-hidden-note">{{hiddenNote}}</p>
+      }
     <div class="card-body">
       <div class="w-100">
         <div class="table-responsive">
@@ -75,7 +80,7 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Requests</th>
+                <th title="Each badge shows allocated / requested devices for that type">Requests</th>
                 <th>Referee</th>
                 <th>Organisation</th>
                 <th>Client Ref</th>
@@ -104,7 +109,7 @@
                           <div>
                             @if (dt.deviceRequestItems.other > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary">
+                                <span class="badge badge-primary" title="allocated / requested">
                                   <span class="badge badge-secondary">Other</span>
                                   {{dt.types['OTHER'] || 0}}  / {{dt.deviceRequestItems.other || 0}}
                                 </span>
@@ -112,7 +117,7 @@
                             }
                             @if (dt.deviceRequestItems.laptops > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary">
+                                <span class="badge badge-primary" title="allocated / requested">
                                   <span class="badge badge-secondary">Laptops</span>
                                   {{dt.types['LAPTOPS'] || 0}}  / {{dt.deviceRequestItems.laptops || 0}}
                                 </span>
@@ -120,7 +125,7 @@
                             }
                             @if (dt.deviceRequestItems.tablets > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary">
+                                <span class="badge badge-primary" title="allocated / requested">
                                   <span class="badge badge-secondary">Tablets</span>
                                   {{dt.types['TABLETS'] || 0}}  / {{dt.deviceRequestItems.tablets || 0}}
                                 </span>
@@ -128,7 +133,7 @@
                             }
                             @if (dt.deviceRequestItems.allInOnes > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary">
+                                <span class="badge badge-primary" title="allocated / requested">
                                   <span class="badge badge-secondary">All-in-ones</span>
                                   {{dt.types['ALLINONES'] || 0}}  / {{dt.deviceRequestItems.allInOnes || 0}}
                                 </span>
@@ -136,7 +141,7 @@
                             }
                             @if (dt.deviceRequestItems.desktops > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary">
+                                <span class="badge badge-primary" title="allocated / requested">
                                   <span class="badge badge-secondary">Desktops</span>
                                   {{dt.types['DESKTOPS'] || 0}}  / {{dt.deviceRequestItems.desktops || 0}}
                                 </span>
@@ -144,7 +149,7 @@
                             }
                             @if (dt.deviceRequestItems.phones > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary">
+                                <span class="badge badge-primary" title="allocated / requested">
                                   <span class="badge badge-secondary">Phones</span>
                                   {{dt.types['PHONES'] || 0}}  / {{dt.deviceRequestItems.phones || 0}}
                                 </span>
@@ -152,7 +157,7 @@
                             }
                             @if (dt.deviceRequestItems.commsDevices > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary">
+                                <span class="badge badge-primary" title="allocated / requested">
                                   <span class="badge badge-secondary">Comms Devices</span>
                                   {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
                                 </span>

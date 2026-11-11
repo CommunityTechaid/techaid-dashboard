@@ -663,12 +663,9 @@ test.describe('DnD table: modal filters @mocked', () => {
     await expectInfo(page, 1, 10, TOTAL_ROWS);
   });
 
-  test('with both commercial options ticked the Filter badge does not claim 2 active filters', async ({ page }) => {
-    // DEFECT: filterCount adds one per ticked OPTION, so Commercial + Non-commercial (which
-    // together constrain nothing) shows a badge of 2, and even the untouched default shows 1.
-    // The badge reads as "N filters active" but means "N boxes ticked".
-    // component: distributions-and-deliveries-index.component.ts:369-372
-    test.fail();
+  test('with both commercial options ticked the Filter badge does not claim an active filter', async ({ page }) => {
+    // Was a DEFECT pin: filterCount added one per ticked OPTION, so Commercial + Non-commercial
+    // (which together constrain nothing) showed a badge of 2. One option is one filter, both is none.
     test.setTimeout(60_000);
     const h = await setup(page);
     await load(page, h);
@@ -1255,7 +1252,7 @@ test.describe('DnD table: counts and row badges @mocked', () => {
     await applyModal(page, h, () => tick(page, 'Delivery'));
     await check(FIX.rows.filter(nonSales).filter((r) => r.isPrepped && r.collectionMethod === 'DELIVERY'), '3');
     await applyModal(page, h, () => tick(page, 'Commercial'));
-    await check(FIX.rows.filter((r) => r.isPrepped && r.collectionMethod === 'DELIVERY'), '4');
+    await check(FIX.rows.filter((r) => r.isPrepped && r.collectionMethod === 'DELIVERY'), '2'); // both commercial options = no sales constraint, so only prepped + delivery count
   });
 
   test('row requested/allocated badges count kits per type (allocated / requested)', async ({ page }) => {
@@ -1656,3 +1653,48 @@ test.describe('DnD table: filters and tab in the URL @mocked', () => {
  *     separate path to the same reload and shares the page-reset defect, but lives in the app header.
  *   - The Delivery Slots tab (flag ON) and its counts - covered by delivery-slots-*.spec.ts.
  */
+
+test.describe('DnD table: labels and hints @mocked', () => {
+  const note = (page: Page) => page.locator('.dd-hidden-note');
+
+  test('the default view says it shows non-commercial requests only, and the note follows the filters', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    await expect(note(page)).toHaveText('Showing non-commercial requests only. Change this in Filter.');
+
+    await h.after(() => weekButtons(page).nth(0).click());
+    await expect(note(page)).toHaveText(
+      'Showing non-commercial requests only. Declined, cancelled, failed and on-hold requests are hidden in a week view. Change this in Filter.');
+
+    await h.after(() => onHoldButton(page).click());
+    await expect(note(page)).toContainText('Declined, cancelled and failed requests are hidden');
+    await expect(note(page)).not.toContainText('on-hold');
+
+    await h.after(() => clearButton(page).click());
+    await applyModal(page, h, () => tick(page, 'Commercial'));
+    await expect(note(page)).toHaveCount(0);
+  });
+
+  test('week buttons carry a full-date title and aria-label, the visible label is unchanged', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    const first = weekButtons(page).first();
+    const title = await first.getAttribute('title');
+    expect(title).toMatch(/^Week of (Mon) \d{1,2} [A-Z][a-z]{2} \d{4}$/);
+    await expect(first).toHaveAttribute('aria-label', title!);
+    const { start } = weekRange(0);
+    expect(title).toContain(`${start.getDate()} `);
+    await expect(first).toHaveText(weekLabel(0));
+  });
+
+  test('allocated / requested badges and the Requests header explain themselves', async ({ page }) => {
+    test.setTimeout(60_000);
+    const h = await setup(page);
+    await load(page, h);
+    await expect(table(page).locator('thead th', { hasText: 'Requests' })).toHaveAttribute('title', /allocated \/ requested/);
+    const badges = table(page).locator('tbody span.badge.badge-primary[title="allocated / requested"]');
+    expect(await badges.count()).toBeGreaterThan(0);
+  });
+});
