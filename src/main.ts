@@ -12,7 +12,6 @@ import { provideAuth0 } from '@auth0/auth0-angular';
 import { provideNgProgressHttp, progressInterceptor } from 'ngx-progressbar/http';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { provideFormlyConfig } from '@ngx-formly/core';
-import { QuillModule } from 'ngx-quill';
 
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
@@ -86,7 +85,6 @@ bootstrapApplication(AppComponent, {
       ReactiveFormsModule,
       NgbModule,
       FormlyBootstrapModule,
-      QuillModule.forRoot(),
     ),
     {
       provide: APP_INITIALIZER,

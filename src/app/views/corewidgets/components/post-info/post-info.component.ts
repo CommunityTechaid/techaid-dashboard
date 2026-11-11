@@ -129,7 +129,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
     },
     {
       key: 'content',
-      type: 'richtext',
+      type: 'htmleditor',
       className: 'col-md-12',
       defaultValue: '',
       templateOptions: {
