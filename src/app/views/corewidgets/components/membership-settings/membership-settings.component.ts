@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -30,19 +30,17 @@ interface Config {
 @Component({
   selector: 'app-membership-settings',
   templateUrl: './membership-settings.component.html',
-  changeDetection: ChangeDetectionStrategy.Default,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule],
 })
 export class MembershipSettingsComponent implements OnInit {
   readonly tiers = MEMBERSHIP_TIERS;
-  loading = true;
-  unavailable = false;
-  saving = false;
-  mode: MembershipOverLimitMode = 'BLOCK';
-  grace = 0;
+  readonly loading = signal(true);
+  readonly unavailable = signal(false);
+  readonly saving = signal(false);
+  readonly mode = signal<MembershipOverLimitMode>('BLOCK');
+  readonly grace = signal(0);
   private saved: Config = { membershipOverLimitMode: 'BLOCK', membershipGraceRequests: 0 };
-  // Written from Apollo callbacks: mark for check so the view repaints without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
     private apollo: Apollo,
@@ -52,39 +50,36 @@ export class MembershipSettingsComponent implements OnInit {
   ngOnInit(): void {
     this.apollo.query<{ adminConfig: Config }>({ query: CONFIG_QUERY, fetchPolicy: 'network-only' }).subscribe({
       next: ({ data, error }) => {
-        this.cdr.markForCheck();
         if (error || !data?.adminConfig) {
-          this.unavailable = true;
+          this.unavailable.set(true);
         } else {
           this.apply(data.adminConfig);
         }
-        this.loading = false;
+        this.loading.set(false);
       },
       error: () => {
-        this.cdr.markForCheck();
-        this.unavailable = true;
-        this.loading = false;
+        this.unavailable.set(true);
+        this.loading.set(false);
       },
     });
   }
 
   get dirty(): boolean {
     return (
-      this.mode !== this.saved.membershipOverLimitMode ||
-      Number(this.grace) !== this.saved.membershipGraceRequests
+      this.mode() !== this.saved.membershipOverLimitMode ||
+      Number(this.grace()) !== this.saved.membershipGraceRequests
     );
   }
 
   save(): void {
-    this.saving = true;
+    this.saving.set(true);
     const data = {
-      membershipOverLimitMode: this.mode,
-      membershipGraceRequests: Math.max(0, Math.floor(Number(this.grace) || 0)),
+      membershipOverLimitMode: this.mode(),
+      membershipGraceRequests: Math.max(0, Math.floor(Number(this.grace()) || 0)),
     };
     this.apollo.mutate<{ updateAdminConfig: Config }>({ mutation: UPDATE_CONFIG, variables: { data } }).subscribe({
       next: ({ data: res, error }) => {
-        this.cdr.markForCheck();
-        this.saving = false;
+        this.saving.set(false);
         if (error || !res?.updateAdminConfig) {
           this.toastr.error('Could not save membership settings');
           return;
@@ -93,8 +88,7 @@ export class MembershipSettingsComponent implements OnInit {
         this.toastr.success('Membership settings saved');
       },
       error: () => {
-        this.cdr.markForCheck();
-        this.saving = false;
+        this.saving.set(false);
         this.toastr.error('Could not save membership settings');
       },
     });
@@ -106,7 +100,7 @@ export class MembershipSettingsComponent implements OnInit {
       membershipOverLimitMode: c.membershipOverLimitMode,
       membershipGraceRequests: c.membershipGraceRequests,
     };
-    this.mode = this.saved.membershipOverLimitMode;
-    this.grace = this.saved.membershipGraceRequests;
+    this.mode.set(this.saved.membershipOverLimitMode);
+    this.grace.set(this.saved.membershipGraceRequests);
   }
 }
