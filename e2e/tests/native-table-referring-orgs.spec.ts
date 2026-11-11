@@ -138,7 +138,7 @@ test.describe('native tables: referring organisations @mocked', () => {
     await expect(page.locator('#referring-org-index tbody tr').first()).toContainText('Org 01');
     await th.nth(1).click();
     await expect(th.nth(1)).toHaveAttribute('aria-sort', 'ascending');
-    expect(lastOrgs(st).page!.sort).toEqual([{ key: 'name', value: 'asc' }]);
+    await expect.poll(() => lastOrgs(st).page!.sort).toEqual([{ key: 'name', value: 'asc' }]);
     const before = st.orgs.length;
     await th.nth(0).click();
     await page.waitForTimeout(300);
@@ -217,10 +217,10 @@ test.describe('native tables: referring organisations @mocked', () => {
 
     await th.nth(5).click();
     await expect(th.nth(5)).toHaveAttribute('aria-sort', 'ascending');
-    expect(lastReferees(st).page!.sort).toEqual([{ key: 'referringOrganisation.name', value: 'asc' }]);
+    await expect.poll(() => lastReferees(st).page!.sort).toEqual([{ key: 'referringOrganisation.name', value: 'asc' }]);
     await th.nth(5).click();
     await expect(th.nth(5)).toHaveAttribute('aria-sort', 'descending');
-    expect(lastReferees(st).page!.sort).toEqual([{ key: 'referringOrganisation.name', value: 'desc' }]);
+    await expect.poll(() => lastReferees(st).page!.sort).toEqual([{ key: 'referringOrganisation.name', value: 'desc' }]);
     // The organisation cell links to the organisation.
     await expect(page.locator('#referring-org-contact-index tbody tr').first().locator('td').nth(5).locator('a')).toHaveAttribute('href', /referring-organisations\/2$/);
 

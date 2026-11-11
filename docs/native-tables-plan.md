@@ -13,8 +13,9 @@ until the removal milestone).
 | M3 users-admin cluster | DONE (PR M2-M4, commit 2) |
 | M4 post-index, dashboard-index | DONE (PR M2-M4, commit 3) |
 | M5 referring organisations | DONE (PR M5-M7, commit 1) |
-| M6 donors | next (not started) |
-| M7 onward | not started |
+| M6 donors | DONE (PR M5-M7, commit 2) |
+| M7 devices and requests | next (not started) |
+| M8 onward | not started |
 
 ### Progress notes (newest last)
 
@@ -302,8 +303,20 @@ Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the curre
   `markForCheck()`. Z1 should turn these into signals.
 - New spec: `e2e/tests/native-table-referring-orgs.spec.ts` (5 tests, `@mocked`).
 
+**M6 (done).** donor-parent-index, donor-index and donor-component use `cta-table`.
+
+- Config kept verbatim: `simple_numbers`, page length 10, menu `[5, 10, 25, 50, 100]`. Order is Created
+  desc: column 5 on the two donor tables, column 4 on donor-parent-index. Table ids are hard-coded
+  in the templates and kept: `donor-index` (also the id of the embedded donor-component's table, a
+  pre-existing duplicate that the specs rely on), `donor-parent-index`.
+- Same filter-restore-before-first-request change as M5 (default saved model is `{ }` here, so the
+  first request sends `where: {}`). donor-component sends both `where` (the parent) and `filter`.
+- donor-parent-index derives `deviceCount` inside `source` with map + spread.
+- New spec: `e2e/tests/native-table-donors.spec.ts` (4 tests, `@mocked`). Creating a donor is not
+  covered in the mocked spec (the required parent is an ng-select typeahead); `donor-crud` (live) covers it.
+
 ### Where to resume
 
-Next is **M6** (donor-parent-index, donor-index, donor-component), same recipe as M3-M5. See the
-M5 notes for the filter-restore pattern (restore the saved filter in `ngOnInit`, before the shell's
-first request). Re-run `donor-onpush` and `donor-crud`.
+Next is **M7** (device-request-index, device-request-component, kit-component). device-request-index
+has a flag-dependent query, the Borough column/filter and a stacked Requests column; its old
+`stateLoadParams` column-count guard is not needed (new storage key).

@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, ViewEncapsulation, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -12,9 +11,10 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from '
 import { Select } from '@ngxs/store';
 import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DatePipe } from '@angular/common';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
+import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { RouterLink } from '@angular/router';
-import { warnIfFormInvalid, LatestDraw } from '@app/shared/utils';
+import { warnIfFormInvalid } from '@app/shared/utils';
 
 const QUERY_ENTITY = gql`
 query findAllDonorParents($page: PaginationInput,, $term: String, $where: DonorParentWhereInput!) {
@@ -72,25 +72,29 @@ mutation createDonorParent($data: CreateDonorParentInput!) {
     selector: 'donor-parent-index',
     styleUrls: ['donor-parent-index.scss'],
     templateUrl: './donor-parent-index.html',
-    imports: [AppGridDirective_1, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe],
+    imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, ReactiveFormsModule, FormlyModule, DatePipe],
     // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111):
     // this page's state only changes via the DataTables ajax callback and the
     // filter modal. Both paths run outside the host template's event tree, so
     // they call cdr.markForCheck() explicitly.
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DonorParentIndexComponent implements OnInit, OnDestroy, AfterViewInit {
-  /** Drops out-of-order ajax responses — see LatestDraw. */
-  private readonly draws = new LatestDraw();
-
-  @ViewChild(AppGridDirective) grid: AppGridDirective;
-  dtOptions: DataTables.Settings = {};
+export class DonorParentIndexComponent implements OnInit, OnDestroy {
+  readonly grid = viewChild(NativeTableComponent<any>);
+  readonly columns: TableColumn[] = [
+    { title: '', width: '15px', sortable: false },
+    { title: 'Name', key: 'name' },
+    { title: 'Address', key: 'address' },
+    { title: '# Donors / Devices', key: 'donorCount' },
+    { title: 'Created', key: 'createdAt' },
+    { title: 'Updated', key: 'updatedAt' },
+    { title: 'Type', key: 'type' },
+    { title: 'Archived', key: 'archived' },
+  ];
+  source: TableSource<any>;
   sub: Subscription;
-  table: any;
-  total: number;
   selections = {};
   selected = [];
-  entities = [];
   form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
@@ -229,7 +233,7 @@ export class DonorParentIndexComponent implements OnInit, OnDestroy, AfterViewIn
     // Called from the filter modal, whose view lives in NgbModal's window —
     // the host's filterCount badge won't repaint under OnPush without this.
     this.cdr.markForCheck();
-    this.table.ajax.reload(null, false);
+    this.grid()?.reload();
   }
 
   @Input()
@@ -244,23 +248,18 @@ export class DonorParentIndexComponent implements OnInit, OnDestroy, AfterViewIn
     this.selected = [];
   }
 
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
-  }
-
   ngOnInit() {
+    // Restore the saved filter before the table makes its first request (the shell starts in its own ngOnInit).
+    try {
+      this.filterModel = JSON.parse(localStorage.getItem(`donorParentFilters-${this.tableId}`)) || { };
+    } catch (_) {
+      this.filterModel = { };
+    }
+    try {
+      this.applyFilter(this.filterModel);
+    } catch (_) {
+    }
+
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_ENTITY,
@@ -269,101 +268,35 @@ export class DonorParentIndexComponent implements OnInit, OnDestroy, AfterViewIn
 
 
     this.sub = this.search$.subscribe(query => {
-      if (this.table) {
-        this.table.search(query);
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.search(query);
     });
 
-    this.dtOptions = {
-      pagingType: 'simple_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: 10,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [4, 'desc'],
-      serverSide: true,
-      stateSave: true,
-      processing: true,
-      searching: true,
-      ajax: (params: any, callback) => {
-        const drawToken = this.draws.start();
-        const sort = params.order.map(o => {
-          return {
-            key: this.dtOptions.columns[o.column].data,
-            value: o.dir
-          };
-        });
-
-        const vars = {
-          page: {
-            sort: sort,
-            size: params.length,
-            page: Math.round(params.start / params.length),
-          },
-          term: params['search']['value'],
-          where: this.filter
-        };
-
-        queryRef.refetch(vars).then(res => {
-          if (this.draws.isStale(drawToken)) {
-            return;
-          }
-          let data: any = {};
-          if (res.data) {
-            data = res['data']['donorParentsConnection'];
-            if (!this.total) {
-              this.total = data['totalElements'];
-            }
-
-            this.entities = data.content.map(d => ({
-              ...d,
-              deviceCount: d.donors ? d.donors.reduce((sum, k) => sum + k.kitCount, 0) : 0
-            }));
-          }
-          // The rows are rendered by Angular from `entities`, but this promise
-          // resolves outside the host template's event tree — mark for check
-          // or the table body never repaints under OnPush.
-          this.cdr.markForCheck();
-
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total,
-            recordsFiltered: data['totalElements'],
-            error: '',
-            data: []
-          });
-        }, err => {
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total || 0,
-            recordsFiltered: 0,
-            error: err.message,
-            data: []
-          });
-
-          this.toastr.warning(`
-            <small>${err.message}</small>
-          `, 'GraphQL Error', {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true
-            });
-        });
-      },
-      columns: [
-        { data: null, width: '15px', orderable: false },
-        { data: 'name' },
-        { data: 'address' },
-        { data: 'donorCount'},
-        { data: 'createdAt' },
-        { data: 'updatedAt' },
-        { data: 'type' },
-        { data: 'archived' }
-      ]
+    this.source = async (q) => {
+      const res = await queryRef.refetch({
+        page: {
+          sort: q.sort.map(s => ({ key: s.key, value: s.dir })),
+          size: q.size,
+          page: q.page,
+        },
+        term: q.term,
+        where: this.filter,
+      });
+      const data: any = res.data?.['donorParentsConnection'];
+      return { rows: (data?.content ?? []).map(d => ({
+        ...d,
+        deviceCount: d.donors ? d.donors.reduce((sum, k) => sum + k.kitCount, 0) : 0
+      })), total: data?.totalElements ?? 0 };
     };
+  }
+
+  onLoadError(err: any) {
+    this.toastr.warning(`
+      <small>${err?.message}</small>
+    `, 'GraphQL Error', {
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+      });
   }
 
   ngOnDestroy() {
@@ -373,33 +306,13 @@ export class DonorParentIndexComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
 
-  ngAfterViewInit() {
-    this.grid.dtInstance.then(tbl => {
-      this.table = tbl;
-      try {
-        this.filterModel = JSON.parse(localStorage.getItem(`donorParentFilters-${this.tableId}`)) || { };
-      } catch (_) {
-        this.filterModel = { };
-      }
-
-      try {
-        this.applyFilter(this.filterModel);
-        this.filterForm.patchValue(this.filterModel);
-      } catch (_) {
-      }
-    });
-  }
-
-
-
   createEntity(data: any) {
     if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
     this.apollo.mutate({
       mutation: CREATE_ENTITY,
       variables: { data }
     }).subscribe(data => {
-      this.total = null;
-      this.table.ajax.reload(null, false);
+      this.grid()?.reload();
     }, err => {
       this.toastr.error(`
       <small>${err.message}</small>

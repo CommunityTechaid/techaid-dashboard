@@ -31,23 +31,8 @@
       <div class="card-body">
         <div class="w-100">
           <div class="table-responsive">
-            <table id="donor-parent-index" class="table table-striped table-hover table-bordered table-md" datatable
-              [dtOptions]="dtOptions" style="width:100%;">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Name</th>
-                  <th>Address</th>
-                  <th># Donors / Devices</th>
-                  <th>Created</th>
-                  <th>Updated</th>
-                  <th>Type</th>
-                  <th>Archived</th>
-                </tr>
-              </thead>
-              @if (entities?.length;) {
-                <tbody>
-                  @for (dt of entities; track dt) {
+            <cta-table tableId="donor-parent-index" [columns]="columns" [source]="source" [order]="{ column: 4, dir: 'desc' }" (loadError)="onLoadError($event)">
+<ng-template ctaRow let-dt>
                     <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
                       <td>
                         <a href="#" [routerLink]="['./', dt.id]">
@@ -62,17 +47,8 @@
                       <td>{{ dt.type }}</td>
                       <td><input type="checkbox" [checked]="dt.archived" (click)="$event.preventDefault()"></td>
                     </tr>
-                  }
-                </tbody>
-              }
-              @if (!entities?.length) {
-                <tbody>
-                  <tr>
-                    <td colspan="4" class="no-data-available">No data!</td>
-                  </tr>
-                </tbody>
-              }
-            </table>
+</ng-template>
+</cta-table>
           </div>
         </div>
       </div>
