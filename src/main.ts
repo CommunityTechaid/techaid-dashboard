@@ -1,4 +1,4 @@
-import { enableProdMode, APP_INITIALIZER, LOCALE_ID, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { enableProdMode, APP_INITIALIZER, LOCALE_ID, importProvidersFrom, provideZonelessChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
@@ -43,7 +43,8 @@ if (environment.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideZoneChangeDetection(),
+    // Zoneless change detection (#115): views repaint via signals, markForCheck, async pipe and template events.
+    provideZonelessChangeDetection(),
     { provide: LOCALE_ID, useValue: 'en-GB' },
     provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
     provideAnimations(),
