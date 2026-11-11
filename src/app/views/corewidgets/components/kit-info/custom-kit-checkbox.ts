@@ -14,7 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms';
     <input type="checkbox" class="kit-checkbox-input" [formControl]="formControl" [formlyAttributes]="field">
   </div>
   `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ReactiveFormsModule, FormlyModule]
 })
 export class FormlyCustomKitCheckboxType extends FieldType<FieldTypeConfig> {

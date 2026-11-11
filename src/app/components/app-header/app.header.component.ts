@@ -1,7 +1,7 @@
 import { Select, Store } from '@ngxs/store';
 import { UserStateModel, UserState, User } from '@app/state/user/user.state';
 import { LogoutUser, LoginUser } from '@app/state/user/actions/user.actions';
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { concat, Subject, of, forkJoin, Observable, Subscription, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -24,19 +24,18 @@ import { LayoutService } from '@app/shared/services/layout.service';
             border-bottom: 1px solid #f8f9fa;
         }
     `],
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [AppInitialComponent, RouterLink, RouterLinkActive, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu]
 })
 export class AppHeader implements OnInit, OnDestroy {
     private sub: Subscription;
     apis$: Observable<any>;
-    public user: User;
+    readonly user = signal<User>(undefined);
     readonly isTestEnvironment =
         environment.environment !== 'production' ||
         window.location.hostname === 'app-testing.communitytechaid.org.uk';
-    deliveryBookingVisible = false;
+    readonly deliveryBookingVisible = signal(false);
     @Select(UserState.user) user$: Observable<User>;
-    private readonly cdr = inject(ChangeDetectorRef);
     constructor(
         private store: Store,
         private toastr: ToastrService,
@@ -55,12 +54,10 @@ export class AppHeader implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.sub = this.user$.subscribe(user => {
-            this.user = user;
-            this.cdr.markForCheck();
+            this.user.set(user);
         });
         this.featureFlags.deliveryBookingVisibility().subscribe(state => {
-            this.deliveryBookingVisible = state.visible;
-            this.cdr.markForCheck();
+            this.deliveryBookingVisible.set(state.visible);
         });
     }
 

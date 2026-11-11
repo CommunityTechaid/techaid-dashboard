@@ -10,7 +10,7 @@ import { ReactiveFormsModule } from '@angular/forms';
     <textarea class="form-control" #newNoteContent rows="4" [name]=key [formControl]="formControl" [placeholder]=to.placeholder (keyup.enter)="$event.stopPropagation()"></textarea>
   </div>
  `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ReactiveFormsModule]
 })
 export class FormlyCustomCreateNote extends FieldType  {

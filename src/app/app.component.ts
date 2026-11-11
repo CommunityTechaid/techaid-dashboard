@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { RouterNavigation } from '@ngxs/router-plugin';
@@ -22,20 +22,19 @@ import { LayoutService } from '@app/shared/services/layout.service';
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgProgressbar, NgProgressRouter, NgProgressHttp, AppSidebar, AppHeader, RouterOutlet]
 })
 export class AppComponent implements OnInit, OnDestroy {
   private actionSub: Subscription;
   version = APP_VERSION;
-  apiVersion = '';
-  backendStatus: BackendStatus = 'checking';
-  authLoading = true;
-  showInterstitial = false;
+  // Signals: written from subscriptions and a timer, so they repaint without zone.js (#115).
+  readonly apiVersion = signal('');
+  readonly backendStatus = signal<BackendStatus>('checking');
+  readonly authLoading = signal(true);
+  readonly showInterstitial = signal(false);
   private interstitialTimer: any;
   private readonly INTERSTITIAL_GRACE_MS = 1000;
-  // Fields below are written from subscriptions and a timer: mark for check so they repaint without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
     private toastr: ToastrService,
@@ -80,17 +79,15 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.actionSub.add(
       this.authService.isLoading$.subscribe(loading => {
-        this.authLoading = loading;
+        this.authLoading.set(loading);
         this.updateInterstitial();
-        this.cdr.markForCheck();
       })
     );
 
     this.actionSub.add(
       this.backendStatusService.status$.subscribe(status => {
-        this.backendStatus = status;
+        this.backendStatus.set(status);
         this.updateInterstitial();
-        this.cdr.markForCheck();
       })
     );
 
@@ -98,11 +95,10 @@ export class AppComponent implements OnInit, OnDestroy {
       this.backendStatusService.buildInfo$.subscribe(info => {
         if (info) {
           const time = info.time ? ' ' + info.time.replace(/T.*/, '') : '';
-          this.apiVersion = `${info.version} (${info.commit})${time}`;
-        } else if (this.backendStatus === 'error') {
-          this.apiVersion = 'unavailable';
+          this.apiVersion.set(`${info.version} (${info.commit})${time}`);
+        } else if (this.backendStatus() === 'error') {
+          this.apiVersion.set('unavailable');
         }
-        this.cdr.markForCheck();
       })
     );
 
@@ -139,19 +135,18 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private updateInterstitial() {
-    const loading = this.authLoading || this.backendStatus === 'checking';
+    const loading = this.authLoading() || this.backendStatus() === 'checking';
     if (loading) {
-      if (!this.showInterstitial && !this.interstitialTimer) {
+      if (!this.showInterstitial() && !this.interstitialTimer) {
         this.interstitialTimer = setTimeout(() => {
           this.interstitialTimer = null;
-          this.showInterstitial = true;
-          this.cdr.markForCheck();
+          this.showInterstitial.set(true);
         }, this.INTERSTITIAL_GRACE_MS);
       }
     } else {
       clearTimeout(this.interstitialTimer);
       this.interstitialTimer = null;
-      this.showInterstitial = false;
+      this.showInterstitial.set(false);
     }
   }
 
