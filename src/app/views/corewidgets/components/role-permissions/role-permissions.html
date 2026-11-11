@@ -8,7 +8,7 @@
       <div class="card-body">
         <div class="w-100">
           <div class="table-responsive">
-            <cta-table tableId="role-permissions" pagingType="full_numbers" [columns]="columns" [source]="source" [order]="{ column: 1, dir: 'desc' }" [pageLengths]="[10, 25, 50, 100]" tableClass="table table-striped table-hover table-borderedx table-md" (loadError)="onLoadError($event)">
+            <cta-table tableId="role-permissions" [searchable]="false" pagingType="full_numbers" [columns]="columns" [source]="source" [order]="{ column: 1, dir: 'desc' }" [pageLengths]="[10, 25, 50, 100]" tableClass="table table-striped table-hover table-borderedx table-md" (loadError)="onLoadError($event)">
 <ng-template ctaRow let-dt>
                     <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
                       <td>

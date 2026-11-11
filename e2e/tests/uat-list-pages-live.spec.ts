@@ -135,8 +135,8 @@ interface Table {
   extras?: 'devices' | 'distributions';
   /** The table does not save its state (client-side dashboard table: no stateSave). */
   noSavedState?: boolean;
-  /** The search box is wired but the table's query takes no filter (a known gap, see exerciseTable). */
-  searchIgnored?: boolean;
+  /** The table's query takes no filter, so it has no search box on purpose (issue #350). */
+  noSearch?: boolean;
 }
 
 const rowsOf = (w: Locator) =>
@@ -221,15 +221,15 @@ const activePane = (page: Page, plain = false) =>
  */
 function detailTable(
   name: string,
-  opts: { listPath: string; segment: string; tab?: RegExp; wantRows?: number; searchIgnored?: boolean; plain?: boolean },
+  opts: { listPath: string; segment: string; tab?: RegExp; wantRows?: number; noSearch?: boolean; plain?: boolean },
 ): Table {
-  const { listPath, segment, tab, wantRows = 6, searchIgnored, plain } = opts;
+  const { listPath, segment, tab, wantRows = 6, noSearch, plain } = opts;
   const openTab = async (page: Page) => {
     if (tab) await page.getByRole('tab', { name: tab }).click();
   };
   return {
     name,
-    searchIgnored,
+    noSearch,
     async locate(page) {
       await page.goto(listPath);
       // Record links only (the page also has static links such as /dashboard/devices/update-scanner),
@@ -291,10 +291,10 @@ const TABLES: Table[] = [
   listTable('dashboard status table (dashboard-index, client-side)', '/', 'status-count', undefined, true),
   listTable('dashboard post list (post-index, dashboard copy)', '/', 'post-index-dashboard'),
   // Child tabs on detail pages
-  detailTable('role users (role-users)', { listPath: '/dashboard/roles', segment: 'roles', tab: /^Users$/, searchIgnored: true }),
-  detailTable('role permissions (role-permissions)', { listPath: '/dashboard/roles', segment: 'roles', tab: /^Permissions$/, searchIgnored: true }),
-  detailTable('user roles (user-roles)', { listPath: '/dashboard/users', segment: 'users', tab: /^Roles$/, searchIgnored: true }),
-  detailTable('user permissions (user-permissions)', { listPath: '/dashboard/users', segment: 'users', tab: /^Permissions$/, searchIgnored: true }),
+  detailTable('role users (role-users)', { listPath: '/dashboard/roles', segment: 'roles', tab: /^Users$/, noSearch: true }),
+  detailTable('role permissions (role-permissions)', { listPath: '/dashboard/roles', segment: 'roles', tab: /^Permissions$/, noSearch: true }),
+  detailTable('user roles (user-roles)', { listPath: '/dashboard/users', segment: 'users', tab: /^Roles$/, noSearch: true }),
+  detailTable('user permissions (user-permissions)', { listPath: '/dashboard/users', segment: 'users', tab: /^Permissions$/, noSearch: true }),
   detailTable('organisation referees (referring-organisation-contact-component)', {
     listPath: '/dashboard/referring-organisations', segment: 'referring-organisations', tab: /^Referees$/,
   }),
@@ -452,26 +452,20 @@ async function exerciseTable(page: Page, table: Table, h: Handle) {
 
   // ── search ────────────────────────────────────────────────────────────────────────────────
   const search = searchOf(wrapper);
-  if ((await search.count()) === 0) {
+  if (table.noSearch) {
+    // These Auth0-backed nested lists have no filter in their GraphQL queries, so the box is hidden
+    // rather than left doing nothing (issue #350). A box coming back would be a regression.
+    await expect(search, 'this table has no search box').toHaveCount(0);
+    note('skipped step', 'search: table has no search box by design (#350)');
+  } else if ((await search.count()) === 0) {
     note('skipped step', 'search: table has no search box');
   } else {
     await search.scrollIntoViewIfNeeded();
     await search.fill('zzqxj-no-such-row');
     await search.press('Enter');
-    if (table.searchIgnored) {
-      // KNOWN GAP, found by this pass on 2026-11-11: these Auth0-backed nested lists send `term`
-      // but their GraphQL queries never use it, so the box filters nothing. Pin today's behaviour
-      // (the list is unchanged and nothing errors) so a migration cannot make it worse, and so a
-      // real fix shows up as this expectation failing.
-      note('known gap', 'search box is inert: the query takes no filter, so a no-match term hides nothing');
-      await settled(wrapper);
-      await page.waitForTimeout(1_500);
-      expect(await rows.count(), 'inert search leaves the rows alone').toBeGreaterThan(0);
-    } else {
-      await expect(rows).toHaveCount(0, { timeout: 60_000 });
-      await settled(wrapper);
-      if (hasInfo) await expect(info).toContainText('Showing 0 to 0 of 0', { timeout: 60_000 });
-    }
+    await expect(rows).toHaveCount(0, { timeout: 60_000 });
+    await settled(wrapper);
+    if (hasInfo) await expect(info).toContainText('Showing 0 to 0 of 0', { timeout: 60_000 });
     if (table.extras === 'devices') await devicesIdListPaste(page, wrapper, search);
     await search.fill('');
     await search.press('Enter');

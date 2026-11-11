@@ -8,8 +8,6 @@ import { query } from '@angular/animations';
 import { FormControl, UntypedFormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
-import { Select } from '@ngxs/store';
-import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { warnIfFormInvalid } from '@app/shared/utils';
@@ -89,7 +87,6 @@ export class RoleUsersComponent implements OnInit, OnDestroy {
   form: UntypedFormGroup = new UntypedFormGroup({});
   model = {};
 
-  @Select(CoreWidgetState.query) search$: Observable<string>;
 
   apis$: Observable<any>;
   apis: any[] = [];
@@ -149,10 +146,6 @@ export class RoleUsersComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.sub = this.search$.subscribe(query => {
-      this.grid()?.search(query);
-    });
-
     const queryRef = this.apollo
       .watchQuery({
         query: QUERY_USERS,
@@ -192,9 +185,9 @@ export class RoleUsersComponent implements OnInit, OnDestroy {
       )
     );
 
-    this.sub.add(this.apis$.subscribe(data => {
+    this.sub = this.apis$.subscribe(data => {
       this.appField.templateOptions['items'] = data;
-    }));
+    });
 
     this.source = async (q) => {
       const res = await queryRef.refetch({

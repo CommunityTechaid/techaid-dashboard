@@ -26,7 +26,7 @@
         </div>
         <div class="w-100">
           <div class="table-responsive">
-            <cta-table tableId="role-users" pagingType="full_numbers" [columns]="columns" [source]="source" [order]="{ column: 0, dir: 'desc' }" [pageLength]="5" tableClass="table table-striped table-hover table-borderedx table-md w-100" (loadError)="onLoadError($event)">
+            <cta-table tableId="role-users" [searchable]="false" pagingType="full_numbers" [columns]="columns" [source]="source" [order]="{ column: 0, dir: 'desc' }" [pageLength]="5" tableClass="table table-striped table-hover table-borderedx table-md w-100" (loadError)="onLoadError($event)">
 <ng-template ctaRow let-dt>
                     <tr [class.selected]="selections[dt.id]" (click)="select(dt)">
                       <td>
