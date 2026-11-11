@@ -11,8 +11,9 @@ until the removal milestone).
 | M1 shell + role-index pilot | DONE (PR #341) |
 | M2 audit tables | DONE (PR M2-M4, commit 1) |
 | M3 users-admin cluster | DONE (PR M2-M4, commit 2) |
-| M4 post-index, dashboard-index | not started |
-| M5 onward | not started |
+| M4 post-index, dashboard-index | DONE (PR M2-M4, commit 3) |
+| M5 referring organisations | next (not started) |
+| M6 onward | not started |
 
 ### Progress notes (newest last)
 
@@ -257,3 +258,34 @@ outside Angular's scheduling except the third-party libraries below.
 | Z5 | Ship to UAT first, soak, then release; update the architecture-contract skill (sections 6, 12) and CLAUDE.md | S | 1 h |
 
 Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the current build; most of it zone.js).
+
+**M4 (done).** post-index and dashboard-index.
+
+- post-index: ordinary shell page (`simple_numbers`, order `updatedAt` desc). It takes `tableId` and
+  `pageLength` as inputs because the dashboard embeds it (`post-index-dashboard`, 5 per page);
+  both are passed through to `cta-table`. Creating a post calls `grid()?.reload()` (current page kept).
+- **Client-side mode** is `clientSource(rows, accessors)` in `table-types.ts`, not a new shell
+  input: the shell stays server-shaped and the host hands it a `source` over a signal it holds.
+  Search is DataTables' "smart" client search (each word must match somewhere, case-insensitive),
+  strings sort case-insensitively, numbers numerically, stable. M5+ need nothing from it.
+- dashboard-index's table is now `status-count` (it was a second `donor-index` id), with
+  `pageLengths=[]` (no menu), `persistState=false` (it never had `stateSave`), order Status asc.
+  Rows are labels (`KIT_STATUS[status] || status`), so sorting and searching act on what the user sees.
+- Zoneless (#115): dashboard-index was `Eager` with `model`/`user` assigned in async callbacks; it is
+  now `OnPush` with `model` and `user` as signals (template reads `model()`/`user()`), so it repaints
+  without zone.js. `normalizeData` still mutates the local `styles` map before `model` is set; that
+  object is not an Apollo response.
+- New spec: `e2e/tests/native-table-posts-dashboard.spec.ts` (3 tests, `@mocked`). The dashboard page
+  had no e2e cover before this.
+
+### Where to resume
+
+Next is **M5** (referring-organisation-index, -contact-index, -contact-component): same recipe as
+M3/M4. Per component: replace the `dtOptions` block with `this.source = async q => ...` (keep the
+`watchQuery` ref in `ngOnInit`), put the `<tr>` inside `<cta-table><ng-template ctaRow>`, map
+`q.sort` to the resolver's format, call `grid()?.reload()` where `table.ajax.reload(null, false)` was,
+and the filter modals call `grid()?.reload(true)` where they used `reload(resetPaging)`. Add
+`sortable: false` for `orderable: false` columns. Check the existing `[pageLength]`/`lengthMenu` in each
+component rather than trusting the inventory table (it was wrong once, see M3). Run the existing
+`stale-search-response` and `onpush-fanout` specs, and add a parity spec per cluster.
+
