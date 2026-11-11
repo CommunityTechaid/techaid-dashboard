@@ -190,8 +190,11 @@ async function assertSearchRepaint(
       const totalMatch = unfilteredInfo.match(/of ([\d,]+) entr/i);
       const total = totalMatch ? parseInt(totalMatch[1].replace(/,/g, ''), 10) : 0;
       if (total > 1) {
-        const filteredInfo = (await infoLocator.textContent().catch(() => null))?.trim() ?? null;
-        expect(filteredInfo).not.toBe(unfilteredInfo);
+        // Poll: zoneless, the repaint lands a frame after the response, and the row checked above
+        // may be one that was already on the unfiltered page, so it doesn't prove the repaint.
+        await expect
+          .poll(async () => (await infoLocator.textContent().catch(() => null))?.trim() ?? null, { timeout: 10_000 })
+          .not.toBe(unfilteredInfo);
       }
     }
   }
