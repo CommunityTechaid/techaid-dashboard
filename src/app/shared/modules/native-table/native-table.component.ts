@@ -38,6 +38,17 @@ export class NativeTableRowDirective<T = unknown> {
 }
 
 /**
+ * Marks the `<ng-template>` that renders the header cell of every column flagged `custom`
+ * (context: `$implicit` = the column, `index`). The host keeps the control's state:
+ *
+ *   <ng-template ctaHeader><input type="checkbox" ...></ng-template>
+ */
+@Directive({ selector: 'ng-template[ctaHeader]' })
+export class NativeTableHeaderDirective {
+  readonly template = inject<TemplateRef<{ $implicit: TableColumn; index: number }>>(TemplateRef);
+}
+
+/**
  * Server-side paged, sortable, searchable table. Replaces the jQuery DataTables + AppGridDirective
  * pair: the host supplies a `source` function that turns a query (page, size, sort, term) into
  * rows and a total, and a row template. The shell owns paging, the sort cycle, the debounced
@@ -113,6 +124,7 @@ export class NativeTableComponent<T = unknown> implements OnInit {
   readonly loaded = signal(false);
 
   protected readonly rowTemplate = contentChild(NativeTableRowDirective);
+  protected readonly headerTemplate = contentChild(NativeTableHeaderDirective);
 
   protected readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize())));
   protected readonly atLastPage = computed(() => this.page() >= this.pageCount() - 1);

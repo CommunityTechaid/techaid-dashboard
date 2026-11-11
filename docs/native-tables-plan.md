@@ -16,7 +16,7 @@ until the removal milestone).
 | M6 donors | DONE (PR M5-M7, commit 2) |
 | M7 devices and requests | DONE (PR M5-M7, commit 3) |
 | M8a distributions-and-deliveries-index | DONE (PR M8, commit 1) |
-| M8b kit-index | next (blocked on PR #349, the ID-list separators change) |
+| M8b kit-index | DONE (PR M8, commit 2) |
 | M9 onward | not started |
 
 ### Progress notes (newest last)
@@ -363,9 +363,42 @@ Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the curre
   with `markForCheck()`. Z1 should turn them into signals.
 - New spec: `e2e/tests/native-table-dnd.spec.ts` (5 tests, `@mocked`).
 
+**M8b (done).** kit-index (the Devices list) uses `cta-table`.
+
+- Config kept verbatim: `simple_numbers`, `pageLength` input (default 10), menu `[5, 10, 25, 50, 100]`, order column 1
+  (Make) desc, sort keys `make`, `model`, `donor`, `createdAt`, `updatedAt`, `type`, `status`; column 0 (id link or bulk
+  checkbox) is not sortable.
+- The select-all checkbox lives in the header cell. The shell gained a `ctaHeader` template: a column flagged
+  `custom: true` renders the host's `<ng-template ctaHeader>` instead of its title, and the host keeps the state.
+- The saved filter (including the FIND_USERS lookup for the typeahead items) moved from `ngAfterViewInit` to the top of
+  `ngOnInit`, so the shell's first request carries it. DataTables used to make an unfiltered first request and then a
+  second, filtered one; there is one now. `applyFilter()`, bulk update and quick create call `grid()?.reload()` (page kept);
+  clearing an ID-list search calls `grid()?.search('')`.
+- `source` keeps the ID-list contract: it calls `syncIdListMode(term)` first (so `parseIdList`, the banner, the lookup and
+  the selection clearing are untouched), then sends `where` = filter AND `id _in` with `term: ''` while a list is active.
+  The host still holds `entities` and `total` (select-all, matched selection, the partial-selection warning); they are
+  written only by the newest request (`requestSeq`), because the shell drops a stale response's rows but not the host's copy.
+- **Deliberate differences.** `total` is now the current result count; it was frozen at the first non-zero answer, so the
+  partial-selection warning quoted a stale number after a filter change. The info line's "(filtered from N total entries)"
+  is now the count with no search term (as everywhere else), not the first count seen. A failed request empties `entities`
+  too (the old table left the previous rows).
+- Zoneless (#115): the host stays `OnPush` with `markForCheck()`; `bulkMode`, `selections`, `selected`, `allPageSelected`,
+  the ID-list state and `filterCount` are plain fields. Z1 should turn them into signals.
+- New spec: `e2e/tests/native-table-kits.spec.ts` (6 tests, `@mocked`).
+
 ### Where to resume
 
-Next is **M8b**, kit-index (1433 lines, two bulk mutations, exclude-status filter, default sales filter, ID-list paste
-into the search box). It waits for PR #349 (`parseIdList()` accepts new lines, spaces and tabs) so rebase on `dev`
-after that merges. Re-run `kit-id-list-bulk-update`, `exclude-status-filter`, `stale-search-response`, `onpush-fanout`,
-`issue-76-kit-filter-reset` and `kit-locked-status`. Do one commit for kit-index.
+M1-M8 are done: every DataTables page now uses `cta-table`. Next is **M9** (the two non-table jQuery uses: the header
+toggle and `sb-admin-2.min.js`), then **M10** (delete `AppGridDirective`, `datatables-types-shim.d.ts`, jquery, datatables
+packages, the `scripts` / `styles` entries; port the DataTables CSS the shell relies on, see section 2).
+
+Things M10 must know from M8:
+- The shell still leans on DataTables' class names and its Bootstrap stylesheet (`dt-container`, `dt-search`, `dt-info`,
+  `dt-paging`, `dt-column-order`, `dt-processing`, `dt-orderable-*`, `dt-ordering-*`); port those rules before dropping it.
+- Pager items are `<button class="page-link">`; DataTables rendered `<a>`. Specs written against DataTables used
+  `getByRole('link')`; the D&D spec was changed to `button`. Any remaining spec with that pattern fails after M10, so grep.
+- Shell inputs added in M8: `emptyText`, `keepTotalOnError`, `showFilteredFrom`, `TableColumn.hint`, `TableColumn.custom`
+  with `ctaHeader`.
+- Six `*-info` components (donor-info, donor-parent-info, kit-info, post-data, post-info, role-info) still carry an unused
+  `import { AppGridDirective }`; delete those imports in M10. `grep -rn "AppGridDirective\|dtOptions\|datatable" src` should then
+  list only the directive, the types shim and a doc comment in the shell.

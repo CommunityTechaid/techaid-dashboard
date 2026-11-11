@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, Input, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild, viewChild, Input, OnInit, OnDestroy } from '@angular/core';
 import { concat, Subject, of, Observable, Subscription, from } from 'rxjs';
-import { AppGridDirective } from '@app/shared/modules/grid/app-grid.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
@@ -17,8 +16,8 @@ import { User } from '@app/state/user/user.state';
 import { FeatureFlagService, UPDATE_SCANNER_FLAG } from '@app/shared/services/feature-flag.service';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { AppGridDirective as AppGridDirective_1 } from '../../../../shared/modules/grid/app-grid.directive';
-import { LatestDraw } from '@app/shared/utils';
+import { NativeTableComponent, NativeTableRowDirective, NativeTableHeaderDirective } from '@app/shared/modules/native-table/native-table.component';
+import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -247,19 +246,19 @@ query findAutocompleteLotIds($term: String, $ids: [String!]) {
     selector: 'kit-index',
     styleUrls: ['kit-index.scss'],
     templateUrl: './kit-index.html',
-    imports: [RouterLink, AppGridDirective_1, ReactiveFormsModule, FormlyModule, DatePipe],
+    imports: [RouterLink, NativeTableComponent, NativeTableRowDirective, NativeTableHeaderDirective, ReactiveFormsModule, FormlyModule, DatePipe],
     // OnPush (hygiene 6.5, fanned out from the donor-index pilot, PR #111).
     // Unlike the pilot, this page also has state assigned from two more async
-    // sources that don't roll up into a subsequent ajax reload, so each gets
+    // sources that don't roll up into a subsequent table reload, so each gets
     // its own cdr.markForCheck(): the scanner/bulk-edit flag & user
     // subscriptions in ngOnInit, and lookupIdList()'s own promise (a second,
-    // independent async chain from the DataTables ajax callback). See the
+    // independent async chain from the table's own request). See the
     // call sites below for why.
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
-  /** Drops out-of-order ajax responses — see LatestDraw. */
-  private readonly draws = new LatestDraw();
+export class KitIndexComponent implements OnInit, OnDestroy {
+  /** Counts requests so only the newest one writes host state (the shell drops stale rows itself). */
+  private requestSeq = 0;
 
   constructor(
     private modalService: NgbModal,
@@ -270,11 +269,25 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {
 
   }
-  @ViewChild(AppGridDirective) grid: AppGridDirective;
+  readonly grid = viewChild(NativeTableComponent<any>);
   @ViewChild('bulkUpdateModal') bulkUpdateModalTpl: any;
-  dtOptions: DataTables.Settings = {};
+  /**
+   * Default order is column 1 (Make) desc. Column 0 holds the id link or the bulk-select checkbox, so it
+   * is not sortable and its header renders the select-all checkbox (`ctaHeader` template).
+   */
+  readonly columns: TableColumn[] = [
+    { title: '', width: '15px', sortable: false, custom: true },
+    { title: 'Make', key: 'make' },
+    { title: 'Model', key: 'model' },
+    { title: 'Donor', key: 'donor' },
+    { title: 'Created', key: 'createdAt' },
+    { title: 'Updated', key: 'updatedAt' },
+    { title: 'Type', key: 'type' },
+    { title: 'Status', key: 'status' },
+  ];
+  source: TableSource<any>;
   sub: Subscription;
-  table: any;
+  /** Rows matching the current filter and search (the last answer), for the select-all warning. */
   total: number;
   selections: Record<string, any> = {};
   selected: any[] = [];
@@ -720,7 +733,9 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.idListIds.length) {
       this.lookupIdList();
     }
-    this.table.ajax.reload(null, false);
+    // A reload before the shell's ngOnInit is a no-op: ngOnInit restores the saved filter first, so the
+    // shell's own first request carries it.
+    this.grid()?.reload();
   }
 
   /** True when the active filter restricts the list to non-archived devices. */
@@ -891,8 +906,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     this.resetIdListState();
     this.clearSelectionOnIdListChange();
     this.idListTerm = '';
-    this.table.search('');
-    this.table.ajax.reload(null, false);
+    this.grid()?.search('');
   }
 
   selectAllMatched() {
@@ -934,23 +948,50 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     this.bulkStatusBreakdown = [];
   }
 
-  query(evt?: any, filter?: string) {
-    if (filter === undefined) {
-      filter = this.table.search();
-    }
-
-    if (evt) {
-      const code = (evt.keyCode ? evt.keyCode : evt.which);
-      if (code !== 13) {
-        return;
-      }
-    }
-
-    this.table.search(filter);
-    this.table.ajax.reload(null, false);
-  }
-
   ngOnInit() {
+    // Restore the saved filter before the table makes its first request (the shell starts in its own
+    // ngOnInit, after this method), so that request carries it.
+    try {
+      this.filterModel = JSON.parse(localStorage.getItem(`kitFilters-${this.tableId}`)) || {archived: [false]};
+      if (this.filterModel && (this.filterModel.deviceRequestIds || this.filterModel.donorParentId) ) {
+        this.apollo
+        .query({
+          query: FIND_USERS,
+          variables: {
+            deviceRequestIds: this.filterModel.deviceRequestIds || [],
+            donorParentId: this.filterModel.donorParentId || []
+          }
+        })
+        .toPromise()
+        .then(res => {
+          if (res.data) {
+            if (res.data['deviceRequests']) {
+              this.deviceRequestField.templateOptions['items'] = res.data['deviceRequests'].map(v => {
+                return {label: this.deviceRequestName(v), value: v.id };
+              });
+            }
+            if (res.data['donorParents']) {
+              this.donorParentField.templateOptions['items'] = res.data['donorParents'].map(v => {
+                return {label: this.donorParentName(v), value: v.id };
+              });
+            }
+          }
+        });
+      }
+      if (this.filterModel && this.filterModel.lotIds && this.filterModel.lotIds.length) {
+        this.lotIdField.templateOptions['items'] = this.filterModel.lotIds.map(lotId => {
+          return {label: lotId, value: lotId};
+        });
+      }
+    } catch (_) {
+      this.filterModel = {archived: [false]};
+    }
+
+    try {
+      this.applyFilter(this.filterModel);
+      this.filterForm.patchValue(this.filterModel);
+    } catch (_) {
+    }
 
     const queryRef = this.apollo
       .watchQuery({
@@ -959,10 +1000,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       });
 
     this.sub = this.search$.subscribe(query => {
-      if (this.table) {
-        this.table.search(query);
-        this.table.ajax.reload(null, false);
-      }
+      this.grid()?.search(query);
     });
 
     this.sub.add(
@@ -1146,99 +1184,58 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       this.lotIdField.templateOptions['items'] = data;
     }));
 
-    this.dtOptions = {
-      pagingType: 'simple_numbers',
-      dom:
-        '<\'row\'<\'col-sm-12 col-md-6\'l><\'col-sm-12 col-md-6\'f>>' +
-        '<\'row\'<\'col-sm-12\'tr>>' +
-        '<\'row\'<\'col-sm-12 col-md-5\'i><\'col-sm-12 col-md-7\'p>>',
-      pageLength: this.pageLength,
-      lengthMenu: [ 5, 10, 25, 50, 100 ],
-      order: [1, 'desc'],
-      serverSide: true,
-      stateSave: true,
-      processing: true,
-      searching: true,
-      ajax: (params: any, callback) => {
-        const drawToken = this.draws.start();
-        const sort = params.order.map(o => {
-          return {
-            key: this.dtOptions.columns[o.column].data,
-            value: o.dir
-          };
-        });
+    this.source = async (q) => {
+      const seq = ++this.requestSeq;
+      const term = q.term || '';
+      this.syncIdListMode(term);
+      const idListActive = this.idListIds.length > 0;
 
-        const term = params['search']['value'] || '';
-        this.syncIdListMode(term);
-        const idListActive = this.idListIds.length > 0;
+      const vars = {
+        page: {
+          sort: q.sort.map(s => ({ key: s.key, value: s.dir })),
+          size: q.size,
+          page: q.page,
+        },
+        where: idListActive ? this.idListWhere() : this.filter,
+        term: idListActive ? '' : term
+      };
 
-        const vars = {
-          page: {
-            sort: sort,
-            size: params.length,
-            page: Math.round(params.start / params.length),
-          },
-          where: idListActive ? this.idListWhere() : this.filter,
-          term: idListActive ? '' : term
-        };
-
-        queryRef.refetch(vars).then(res => {
-          if (this.draws.isStale(drawToken)) {
-            return;
-          }
-          let data: any = {};
-          if (res.data) {
-            data = res['data']['kitsConnection'];
-            if (!this.total) {
-              this.total = data['totalElements'];
-            }
-            this.entities = data.content.map(d => ({
-              ...d,
-              donorName: d.donor ? this.donorName(d.donor) : undefined
-            }));
-            this.allPageSelected = this.entities.length > 0 && this.entities.every(e => !!this.selections[e.id]);
-          }
-          // The rows are rendered by Angular from `entities`, but this promise
-          // resolves outside the host template's event tree — mark for check
-          // or the table body never repaints under OnPush.
+      let res: any;
+      try {
+        res = await queryRef.refetch(vars);
+      } catch (err) {
+        if (seq === this.requestSeq) {
+          // The rows on screen belong to the request before this one.
+          this.entities = [];
           this.cdr.markForCheck();
-
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total,
-            recordsFiltered: data['totalElements'],
-            error: '',
-            data: []
-          });
-        }, err => {
-          callback({
-            draw: params.draw,
-            recordsTotal: this.total || 0,
-            recordsFiltered: 0,
-            error: err.message,
-            data: []
-          });
-
-          this.toastr.warning(`
-            <small>${err.message}</small>
-          `, 'GraphQL Error', {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true
-            });
-        });
-      },
-      columns: [
-        { data: null, width: '15px', orderable: false  },
-        { data: 'make' },
-        { data: 'model' },
-        { data: 'donor' },
-        { data: 'createdAt'},
-        { data: 'updatedAt'},
-        { data: 'type' },
-        { data: 'status' },
-      ]
+        }
+        throw err;
+      }
+      const data: any = res.data?.['kitsConnection'];
+      const rows = data ? data.content.map(d => ({
+        ...d,
+        donorName: d.donor ? this.donorName(d.donor) : undefined
+      })) : [];
+      if (seq === this.requestSeq) {
+        this.total = data ? data['totalElements'] : 0;
+        this.entities = rows;
+        this.allPageSelected = rows.length > 0 && rows.every(e => !!this.selections[e.id]);
+        // Rows paint from the shell's own signals, but the select-all checkbox and the partial-selection
+        // warning read host state set here, outside the host template's event tree.
+        this.cdr.markForCheck();
+      }
+      return { rows, total: data ? data['totalElements'] : 0 };
     };
+  }
+
+  onLoadError(err: any) {
+    this.toastr.warning(`
+      <small>${err?.message}</small>
+    `, 'GraphQL Error', {
+        enableHtml: true,
+        timeOut: 15000,
+        disableTimeOut: true
+    });
   }
 
   deviceRequestName(data) {
@@ -1271,53 +1268,6 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  ngAfterViewInit() {
-    this.grid.dtInstance.then(tbl => {
-      this.table = tbl;
-      try {
-        this.filterModel = JSON.parse(localStorage.getItem(`kitFilters-${this.tableId}`)) || {archived: [false]};
-        if (this.filterModel && (this.filterModel.deviceRequestIds || this.filterModel.donorParentId) ) {
-          this.apollo
-          .query({
-            query: FIND_USERS,
-            variables: {
-              deviceRequestIds: this.filterModel.deviceRequestIds || [],
-              donorParentId: this.filterModel.donorParentId || []
-            }
-          })
-          .toPromise()
-          .then(res => {
-            if (res.data) {
-              if (res.data['deviceRequests']) {
-                this.deviceRequestField.templateOptions['items'] = res.data['deviceRequests'].map(v => {
-                  return {label: this.deviceRequestName(v), value: v.id };
-                });
-              }
-              if (res.data['donorParents']) {
-                this.donorParentField.templateOptions['items'] = res.data['donorParents'].map(v => {
-                  return {label: this.donorParentName(v), value: v.id };
-                });
-              }
-            }
-          });
-        }
-        if (this.filterModel && this.filterModel.lotIds && this.filterModel.lotIds.length) {
-          this.lotIdField.templateOptions['items'] = this.filterModel.lotIds.map(lotId => {
-            return {label: lotId, value: lotId};
-          });
-        }
-      } catch (_) {
-        this.filterModel = {archived: [false]};
-      }
-
-      try {
-        this.applyFilter(this.filterModel);
-        this.filterForm.patchValue(this.filterModel);
-      } catch (_) {
-      }
-    });
-  }
-
   quickCreateEntity(data:any){
     if (warnIfFormInvalid(this.quickForm, this.quickFields, this.toastr)) return;
 
@@ -1325,8 +1275,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       mutation: CREATE_QUICK_ENTITY,
       variables: { data }
     }).subscribe(data => {
-      this.total = null;
-      this.table.ajax.reload(null, false);
+      this.grid()?.reload();
        this.toastr.info(`
         <small>Successfully created device</small>
         `, '', {
@@ -1432,7 +1381,7 @@ export class KitIndexComponent implements OnInit, OnDestroy, AfterViewInit {
       this.toastr.info(`<small>Successfully updated ${ids.length} device(s)</small>`, 'Bulk Update', { enableHtml: true });
       this.clearSelection();
       this.allPageSelected = false;
-      this.table.ajax.reload(null, false);
+      this.grid()?.reload();
       close();
     }, (err: any) => {
       this.toastr.error(`<small>${err.message}</small>`, 'Bulk Update Error', { enableHtml: true, timeOut: 15000 });

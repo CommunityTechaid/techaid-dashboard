@@ -114,30 +114,17 @@
         }
         <div class="w-100">
           <div class="table-responsive">
-            <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable
-              [dtOptions]="dtOptions" style="width:100%;">
-              <thead>
-                <tr>
-                  <th>
-                    @if (bulkMode) {
-                      <input type="checkbox"
-                        [checked]="allPageSelected"
-                        (change)="toggleSelectAll()"
-                        title="Select all on this page">
-                    }
-                  </th>
-                  <th>Make</th>
-                  <th>Model</th>
-                  <th>Donor</th>
-                  <th>Created</th>
-                  <th>Updated</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              @if (entities?.length > 0;) {
-                <tbody>
-                  @for (dt of entities; track dt) {
+            <cta-table [tableId]="tableId" [columns]="columns" [source]="source" [pageLength]="pageLength"
+              [order]="{ column: 1, dir: 'desc' }" (loadError)="onLoadError($event)">
+              <ng-template ctaHeader>
+                @if (bulkMode) {
+                  <input type="checkbox"
+                    [checked]="allPageSelected"
+                    (change)="toggleSelectAll()"
+                    title="Select all on this page">
+                }
+              </ng-template>
+              <ng-template ctaRow let-dt>
                     <tr [class.selected]="bulkMode && selections[dt.id]" (click)="onRowClick(dt)">
                       <td>
                         @if (bulkMode) {
@@ -187,17 +174,8 @@
                       <td>{{ dt.type}}</td>
                       <td>{{ statusTypes[dt.status] || dt.status }}</td>
                     </tr>
-                  }
-                </tbody>
-              }
-              @if (entities?.length == 0) {
-                <tbody>
-                  <tr>
-                    <td colspan="9" class="no-data-available">No data!</td>
-                  </tr>
-                </tbody>
-              }
-            </table>
+              </ng-template>
+            </cta-table>
           </div>
         </div>
       </div>

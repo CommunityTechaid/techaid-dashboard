@@ -58,7 +58,13 @@
                 [attr.title]="col.hint ?? null"
                 (click)="onHeaderClick($index)">
                 <div class="dt-column-header">
-                  <div class="dt-column-title">{{ col.title }}</div>
+                  <div class="dt-column-title">
+                    @if (col.custom && headerTemplate(); as header) {
+                      <ng-container *ngTemplateOutlet="header.template; context: { $implicit: col, index: $index }" />
+                    } @else {
+                      {{ col.title }}
+                    }
+                  </div>
                   @if (isSortable(col)) {
                     <div
                       class="dt-column-order"
