@@ -114,6 +114,11 @@ export class NativeTableComponent<T = unknown> implements OnInit {
   readonly sortOrder = signal<TableOrder>({ column: 0, dir: 'desc' });
   /** The search term in force (and shown in the box). */
   readonly term = signal('');
+  /**
+   * What the search box shows. Kept apart from `term` so a pending repaint (zoneless CD runs after
+   * the event, not inside it) never writes an older term over text the user has typed since (#115).
+   */
+  protected readonly boxText = signal('');
   readonly rows = signal<readonly T[]>([]);
   /** Rows matching the term. */
   readonly total = signal(0);
@@ -179,6 +184,7 @@ export class NativeTableComponent<T = unknown> implements OnInit {
     }
     clearTimeout(this.searchTimer);
     this.term.set(term ?? '');
+    this.boxText.set(term ?? '');
     this.load();
   }
 
@@ -205,6 +211,7 @@ export class NativeTableComponent<T = unknown> implements OnInit {
 
   protected onSearchInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
+    this.boxText.set(value);
     clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => this.applySearch(value), SEARCH_DELAY_MS);
   }
@@ -358,6 +365,7 @@ export class NativeTableComponent<T = unknown> implements OnInit {
       }
       if (typeof saved.term === 'string') {
         this.term.set(saved.term);
+        this.boxText.set(saved.term);
       }
       const o = saved.order;
       const col = o ? this.columns()[o.column] : undefined;

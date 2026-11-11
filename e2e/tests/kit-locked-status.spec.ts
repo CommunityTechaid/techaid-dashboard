@@ -192,7 +192,11 @@ test.describe('kit-info locked status @mocked', () => {
     r = await probe(page);
     expect(r.nfiChecked, 'NFI should now be unchecked').toBe(false);
     expect(r.anyStatusDisabled, 'radios should re-enable as soon as NFI is unchecked, before Save').toBe(false);
-    expect(r.bannerVisible, 'banner should hide as soon as NFI is unchecked').toBe(false);
+    // Zoneless (#115): the radios and the banner can repaint a frame apart (the banner is a keyless
+    // formly template field whose hide is applied separately), so poll rather than read once.
+    await expect
+      .poll(async () => (await probe(page)).bannerVisible, { message: 'banner should hide as soon as NFI is unchecked', timeout: 5_000 })
+      .toBe(false);
   });
 
   test('Save sends the device type — type field is not coerced to null', async ({ page }) => {

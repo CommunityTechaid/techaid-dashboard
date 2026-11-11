@@ -27,7 +27,7 @@
             autocomplete="off"
             [id]="tableId() + '_search'"
             [attr.aria-controls]="tableId()"
-            [value]="term()"
+            [value]="boxText()"
             (input)="onSearchInput($event)"
             (keydown.enter)="onSearchEnter($event)" />
         </div>
