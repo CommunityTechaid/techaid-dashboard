@@ -64,6 +64,16 @@ jobs:
 
   e2e-mocked:
     runs-on: ubuntu-latest
+    # Run inside Microsoft's Playwright image: Chromium and its system libraries are already in it,
+    # so the job no longer depends on the Ubuntu apt mirrors (`playwright install --with-deps` failed
+    # on 2026-11-11 when the runners could not resolve security.ubuntu.com / azure.archive.ubuntu.com).
+    # The tag MUST match @playwright/test in package-lock.json; the first step below enforces it.
+    # When Dependabot bumps @playwright/test, bump this tag in the same PR.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      options: --ipc=host
+    env:
+      PLAYWRIGHT_IMAGE_VERSION: '1.65.0'
     steps:
       - uses: actions/checkout@v4
 
@@ -75,8 +85,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright chromium
-        run: npx playwright install chromium --with-deps
+      - name: Playwright image matches the locked @playwright/test
+        run: |
+          LOCKED=$(node -p "require('./node_modules/@playwright/test/package.json').version")
+          if [ "$LOCKED" != "$PLAYWRIGHT_IMAGE_VERSION" ]; then
+            echo "::error::@playwright/test is $LOCKED but the CI container is v$PLAYWRIGHT_IMAGE_VERSION. Bump the image tag and PLAYWRIGHT_IMAGE_VERSION in .github/workflows/ci.yml."
+            exit 1
+          fi
 
       - name: Mint fake token for the mocked subset
         # Fake credentials, real format: the SDK only checks structure and
