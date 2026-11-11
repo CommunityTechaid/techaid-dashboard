@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { KIT_TYPES, warnIfFormInvalid } from '@app/shared/utils';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -263,17 +263,20 @@ export class KitInfoComponent implements OnInit, OnDestroy {
     titleService.setTitle("TaDa - Device Info");
   }
 
-  public user: User;
+  // A signal: written from the store subscription (#115).
+  public readonly user = signal<User | undefined>(undefined);
   @Select(UserState.user) user$: Observable<User>;
 
   sub: Subscription;
-  // Written from Apollo/router/store callbacks: mark for check so the view repaints without zone.js (#115).
+  // model is written from Apollo/router callbacks and feeds formly-form, so it stays a plain field:
+  // mark for check so the view repaints without zone.js (#115).
   private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   model: any = {};
   deviceModel = {};
-  entityName: string;
+  // A signal: written from the same Apollo callbacks as model (#115).
+  readonly entityName = signal<string | undefined>(undefined);
   entityId: number;
   disabledStatuses = false;
 
@@ -906,11 +909,11 @@ export class KitInfoComponent implements OnInit, OnDestroy {
       if (res.data && res.data['kit']) {
         const data = res.data['kit'];
         this.model = this.normalizeData(data);
-        this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
+        this.entityName.set(this.formatMakeAndModel(this.model['make'], this.model['model']));
         this.updateDisabledStatusFlag(data);
       } else {
         this.model = {};
-        this.entityName = 'Not Found!';
+        this.entityName.set('Not Found!');
         this.toastr.error(`
         <small>Unable to find a device with the id: ${this.entityId}</small>
         `, 'GraphQL Error', {
@@ -1008,8 +1011,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
 
     this.sub.add(
       this.user$.subscribe((user) => {
-        this.cdr.markForCheck();
-        this.user = user;
+        this.user.set(user);
       })
     );
 
@@ -1061,9 +1063,9 @@ export class KitInfoComponent implements OnInit, OnDestroy {
     }).subscribe(res => {
       this.cdr.markForCheck();
       this.model = this.normalizeData(res.data['updateKit']);
-      this.entityName = this.formatMakeAndModel(this.model['make'], this.model['model']);
+      this.entityName.set(this.formatMakeAndModel(this.model['make'], this.model['model']));
       this.toastr.info(`
-      <small>Successfully updated device ${this.entityName}</small>
+      <small>Successfully updated device ${this.entityName()}</small>
       `, 'Updated Device', {
         enableHtml: true
       });
@@ -1081,10 +1083,9 @@ export class KitInfoComponent implements OnInit, OnDestroy {
       mutation: DELETE_ENTITY,
       variables: { id: this.entityId }
     }).subscribe(res => {
-      this.cdr.markForCheck();
       if (res.data.deleteKit) {
         this.toastr.info(`
-        <small>Successfully deleted device ${this.entityName}</small>
+        <small>Successfully deleted device ${this.entityName()}</small>
         `, 'Device Deleted', {
           enableHtml: true
         });
