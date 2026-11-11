@@ -267,6 +267,85 @@ outside Angular's scheduling except the third-party libraries below.
 
 Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the current build; most of it zone.js).
 
+### Z1 audit (done, zone.js still on)
+
+Branch `claude/issue-115-zoneless-z1`. Every `subscribe`, `.then`/`await`, `setTimeout`/`setInterval`,
+`addEventListener` and third-party callback in `src/app` was checked for writes to state a template reads.
+`src/main.ts` still calls `provideZoneChangeDetection()`, so nothing changes at runtime until Z3.
+
+How zoneless change detection decides what to repaint (checked in the Angular source, not assumed):
+
+- Every tick runs in *targeted* mode. A view refreshes only if it was marked (`markForCheck()`, a template
+  or host listener, an `async` pipe emission, an input change) or a signal it read changed.
+- `markForCheck()` marks the view and **all its ancestors** for refresh. A refreshed view then checks its
+  Default ("Eager") children, so one mark in the main tree repaints the whole Eager tree below the root.
+  That is why missing marks hide: something else usually marks. Each writer must still mark its own view.
+- `markForCheck()` only schedules a tick. Where it sits in a callback does not matter, so several fixes
+  put it first to cover early `return`s.
+- **NgbModal content is a separate view root** (`createEmbeddedView` and `appRef.attachView`). A click in
+  a modal footer does not mark the host. The host's `markForCheck()` does not reach the modal either.
+  So host state set from a modal footer needs the host's `markForCheck()`. State shown *inside* a modal
+  and written asynchronously needs signals (device-request-info's assign dialog).
+- Formly: `formly-form` is OnPush. Writes to `field.props`/`templateOptions` keys that existed when the
+  field was built are observed by formly, which marks the field component itself (zoneless-safe; this
+  covers every typeahead `items` subscription). `field.options.detectChanges(field)` works too.
+
+| File | Zone-dependent | Fix |
+|---|---|---|
+| `shared/services/backend-status.service.ts` | `attempt` (read by `statusMessage`) changed on each retry with no emission; `NgZone.run` wrappers | `attempt` is a signal; `NgZone` removed |
+| `app.component.ts` | `authLoading`, `backendStatus`, `apiVersion` from subscriptions; `showInterstitial` from a timer | markForCheck |
+| `components/app-header`, `components/app-sidebar` | `user` and `deliveryBookingVisible` from store/flag subscriptions | markForCheck |
+| `formly/components/gallery.component.ts` | `files` from `valueChanges` (also after the FileReader callback) | markForCheck |
+| `feature-flags`, `membership-settings`, `settings-history`, `borough-availability`, `delivery-configuration` | every Apollo callback (load, save, row search `loading`, `saveAllWindows` per-row state) | markForCheck |
+| `delivery-booking/place-autocomplete.directive.ts` | `suggestions` (read by the details-step template) from the HTTP stream and a blur timer | markForCheck (a directive's `ChangeDetectorRef` is its host view's) |
+| `delivery-booking/details-step` | `boroughWarning` from the ward-lookup stream | markForCheck |
+| `device-request-component` | `graceTotal` from Apollo; `filterCount` from the modal footer | `graceTotal` signal; markForCheck in `applyFilter` |
+| `device-request-info` | assign dialog state written in an `async` loop and shown in the modal; `deviceCount`, `model`, `generatingPdf`; a `document` click listener (toggle / clear date) | `isAssigning`, `assignmentResults` signals; markForCheck in callbacks, the listener and the PDF `finally` |
+| `kit-info` | Apollo/router/store callbacks; `setTimeout(setErrors)` on the status field | markForCheck; `options.detectChanges(statusField)` after `setErrors` |
+| `donor-info`, `donor-parent-info`, `referring-organisation-info`, `referring-organisation-contact-info`, `role-info`, `user-info`, `post-info`, `post-data` | `model`, names, `user`, `membershipEnabled` from Apollo/router/store/flag callbacks | markForCheck |
+| `kit-info/custom-notes.ts`, `device-request-info/custom-notes.ts`, `referring-organisation-contact-info/custom-notes.ts` | `to.notes` rewritten in the delete callback (key may not be observed) | markForCheck on the field |
+| `kit-info/custom-kit-info-input.ts` | `editable` toggled from its NgbModal footer | markForCheck on the field |
+| `org-request/org-request.ts` | health check retries, flags, membership config, CMS content, contact lookup, org membership, submit path (`membershipServerBlocked`, typeform switch), timer-up page | markForCheck (the existing `detectChanges()` calls are synchronous and stay) |
+| `referring-organisation-index`, `-contact-index`, `-contact-component`, `kit-component` (OnPush) | `filterCount` / `membershipEnabled` plain fields (already marked) | signals, as M5/M7 asked |
+| `kit-index` (OnPush) | bulk update cleared the selection and relied on the reload's later mark | explicit markForCheck |
+| `state/user/user.state.ts`, `views/corewidgets/state/corewidgets.state.ts`, `shared/pipes/yesno.pipe.ts`, `org-request.ts` | `zone.run(() => auth.logout())` and unused `NgZone` injections | removed; `src/app` now has no `NgZone` |
+
+Safe, no change (why):
+
+- Signals already: native-table shell, dashboard-index, the two audit lists, equalities-preview,
+  booking-flow, delivery-booking, kit-scanner, prep-mode, scan-input (and `ScanSession`).
+- OnPush hosts already marking every async writer (each callback checked): donor-index, donor-component,
+  donor-parent-index, device-request-index, post-index, role-index, user-index,
+  distributions-and-deliveries-index (`activeTab`, week buttons, `filterCount`, URL sync), kit-index (the
+  bulk/selection/ID-list fields and `filterCount`), referring-organisation-audit, postcode-location-step,
+  delivery-slots. M8a/M8b suggested signals for the D&D and kit-index fields; not done: every writer marks,
+  and converting a 1,400-line host adds risk for no behaviour change. Optional cleanup.
+- Table-only state: role-permissions, user-permissions (rows are shell signals; mutations call `reload()`).
+- role-users, user-roles: the typeahead `items` key exists at build time, so formly marks the field;
+  `apiLoading` is never read by a template (it is copied into `props.loading` once, at construction).
+- Inputs/template events only: app-404, app-initial, admin-panel, membership-badges/-meter,
+  membership-notice, app-local-css, the delivery-booking steps (confirmation, day, reference, window), the
+  shared `input-mask` (writes the DOM through `Renderer2`), formly button/choice/date/html-editor/
+  input-mask/repeat, the form-field wrapper, custom-create-note(s), custom-kit-checkbox.
+- `formly/components/datetime.component.ts`: its only `setTimeout` is in `ngAfterViewChecked_`, which is
+  never called (dead code).
+- `LayoutService`: `Renderer2` listeners change `body` classes and `style.display` directly, not template
+  state. `sidebar-layout.spec.ts` should still be run with zone.js off in Z3.
+- Modal footers that only start a mutation whose callback navigates, reloads the table, or resets a
+  `model` that a closed modal no longer shows: every `deleteEntity`/`deleteUser`/`deleteRole`/
+  `assignRoles` confirm dialog.
+
+For Z3 (not fixable cleanly here, or needs zone.js off to prove):
+
+- Formly `props` keys added after the field was built are not observed (`notes`, `kitId`, `refereeId`,
+  `requestId` in `normalizeData`). They repaint today because the same callback replaces `model`, which
+  changes `formly-form`'s input. Check the notes lists on kit, request and referee pages with zone.js off.
+- Reactive-form status written asynchronously (`setValue`/`setErrors`/`markAsTouched` from callbacks)
+  repaints only through the host's mark and `formly-form`'s `ngDoCheck`. Watch validation messages.
+- The typeform widget (`window.tf.createWidget` in `org-request.ngAfterViewChecked`) and Turnstile run
+  outside Angular. Turnstile writes signals; typeform writes no Angular state. Confirm both with zone.js off.
+- `org-request.html` reads `submiting` (sic), which no code sets. This is a pre-existing bug, unrelated to zone.js, and was not touched.
+
 **M4 (done).** post-index and dashboard-index.
 
 - post-index: ordinary shell page (`simple_numbers`, order `updatedAt` desc). It takes `tableId` and
@@ -423,3 +502,6 @@ Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the curre
 
 #113 is finished. The next project is **#115 (zoneless)**: read "5. Then #115 (zoneless)" above. The hosts' `markForCheck()`
 calls and plain-field state noted in M8a/M8b (and the earlier milestones) are Z1's starting list.
+
+#115 Z1 is done: see "Z1 audit" under §5 (branch `claude/issue-115-zoneless-z1`). Next is Z2 (third-party check) and Z3
+(remove `provideZoneChangeDetection()` and `zone.js`); start Z3 from the audit's "For Z3" list.
