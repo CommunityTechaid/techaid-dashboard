@@ -75,26 +75,9 @@
     <div class="card-body">
       <div class="w-100">
         <div class="table-responsive">
-          <table [id]="tableId" class="table table-striped table-hover table-bordered table-md" datatable
-            [dtOptions]="dtOptions" style="width:100%;">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th title="Each badge shows allocated / requested devices for that type">Requests</th>
-                <th>Referee</th>
-                <th>Organisation</th>
-                <th>Client Ref</th>
-                <th>Collection/Delivery</th>
-                <th>Collection/Delivery Date</th>
-                <th>Created</th>
-                <th>Updated</th>
-                <th>Status</th>
-                <th>Is Prepped</th>
-              </tr>
-            </thead>
-            @if (entities?.length != 0;) {
-              <tbody>
-                @for (dt of entities; track dt) {
+          <cta-table [tableId]="tableId" [columns]="columns" [source]="source" [order]="{ column: 0, dir: 'desc' }"
+            emptyText="No matching records found" [keepTotalOnError]="true" [showFilteredFrom]="false" (loadError)="onLoadError($event)">
+<ng-template ctaRow let-dt>
                   <tr>
                     <td>
                       <a href="#" [routerLink]="['./', dt.id]">
@@ -273,10 +256,8 @@
       <td><a href="#" [routerLink]="['./', dt.id]">{{ statusTypes[dt.status] || dt.status }}</a></td>
       <td><input type="checkbox" [checked]="dt.isPrepped" disabled aria-label="Prepped"></td>
     </tr>
-  }
-</tbody>
-}
-</table>
+</ng-template>
+</cta-table>
 </div>
 </div>
 </div>

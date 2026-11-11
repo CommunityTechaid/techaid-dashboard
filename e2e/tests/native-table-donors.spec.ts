@@ -161,7 +161,7 @@ test.describe('native tables: donors @mocked', () => {
     });
     await page.goto('/dashboard/donors');
     const W = '#donor-index_wrapper';
-    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entries');
+    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entry');
     expect(st.donors[0].vars.where).toEqual({ archived: { _in: [true] } });
     await expect(page.locator('.card-header .badge-danger')).toHaveText('1');
 
@@ -226,6 +226,6 @@ test.describe('native tables: donors @mocked', () => {
     const box = page.locator(`${W} .dt-search input`);
     await box.fill('Donor 07');
     await box.press('Enter');
-    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entries (filtered from 8 total entries)');
+    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entry (filtered from 8 total entries)');
   });
 });

@@ -224,6 +224,6 @@ test.describe('native tables: requests and devices @mocked', () => {
     const box = page.locator(`${W} .dt-search input`);
     await box.fill('Make 03');
     await box.press('Enter');
-    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entries (filtered from 8 total entries)');
+    await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entry (filtered from 8 total entries)');
   });
 });

@@ -55,9 +55,16 @@
                 [class]="headerClasses(col, $index)"
                 [style.width]="col.width ?? null"
                 [attr.aria-sort]="ariaSort($index)"
+                [attr.title]="col.hint ?? null"
                 (click)="onHeaderClick($index)">
                 <div class="dt-column-header">
-                  <div class="dt-column-title">{{ col.title }}</div>
+                  <div class="dt-column-title">
+                    @if (col.custom && headerTemplate(); as header) {
+                      <ng-container *ngTemplateOutlet="header.template; context: { $implicit: col, index: $index }" />
+                    } @else {
+                      {{ col.title }}
+                    }
+                  </div>
                   @if (isSortable(col)) {
                     <div
                       class="dt-column-order"
@@ -78,7 +85,7 @@
           }
           @if (loaded() && rows().length === 0) {
             <tr>
-              <td [attr.colspan]="columns().length" class="no-data-available">No data!</td>
+              <td [attr.colspan]="columns().length" class="no-data-available">{{ emptyText() }}</td>
             </tr>
           }
         </tbody>

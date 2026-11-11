@@ -6,6 +6,13 @@ export interface TableColumn {
   sortable?: boolean;
   width?: string;
   headerClass?: string;
+  /** Tooltip on the header cell (the `title` attribute). */
+  hint?: string;
+  /**
+   * Render the host's `<ng-template ctaHeader>` in place of the title (for a header that holds a
+   * control, such as a select-all checkbox). `title` is still the accessible name when it is not empty.
+   */
+  custom?: boolean;
 }
 
 export type SortDirection = 'asc' | 'desc';
