@@ -8,8 +8,29 @@ until the removal milestone).
 
 | Milestone | State |
 |---|---|
-| M1 shell + role-index pilot | DONE in this PR |
-| M2 onward | not started |
+| M1 shell + role-index pilot | DONE (PR #341) |
+| M2 audit tables | DONE (PR M2-M4, commit 1) |
+| M3 users-admin cluster | not started |
+| M4 post-index, dashboard-index | not started |
+| M5 onward | not started |
+
+### Progress notes (newest last)
+
+**M2 (done).** `kit-audit-component` and `device-request-audit-component` no longer use DataTables.
+They hold rows in signals (`entities` / `allEntities` / `loaded`), are `OnPush`, and keep their
+ids (`kit-audit-<id>`, `device-request-audit-<id>`) so `audit-system-label` and `bugs` still
+select them. Notes:
+
+- The old components sent a `page` variable the audit queries do not declare, and read a
+  `search$` term that was never forwarded. Both are dropped; the header-search subscription still
+  refetches (first emission skipped, it is the current value). The header search box has no
+  element in the template today (`postSearch()` is never bound), so that refetch cannot be driven
+  from e2e.
+- "No data!" now appears only after the first answer (it showed from the first paint before).
+- Zoneless (#115): nothing to do here, state is signals. Both were `Eager` before and only
+  repainted because zone.js re-checked them.
+- New spec: `e2e/tests/native-table-audit.spec.ts` (5 tests, `@mocked`; needs `admin:kits` and
+  `admin:organisations` on top of the staff set to see the Audit tab).
 
 Model strength: **S** = Sonnet-class is enough, **O** = Opus-class (design judgement, subtle
 behaviour). Effort in focused hours; a milestone is one sitting or less unless noted.
