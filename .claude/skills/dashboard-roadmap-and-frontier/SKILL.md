@@ -51,7 +51,7 @@ Part A — Platform health (the #112–#121 upgrade/debt train):
 | PH1 | Upgrade train: Angular 22 / apollo-angular 14 / NGXS 22 / TS 6 (#112) | open |
 | PH2 | Replace jQuery DataTables with native Angular tables (#113) | DONE (M9-M10 PR; jQuery and DataTables removed) |
 | PH3 | OnPush fan-out after donor-index pilot (#114) | ready-now |
-| PH4 | Zoneless change detection (#115) | blocked-internal |
+| PH4 | Zoneless change detection (#115) | DONE (#362, #363; ships in 2.4.0) |
 | PH5 | FontAwesome 5→7 (#116) | ready-now |
 | PH6 | Auth0 token cache out of localStorage (#117) | ready-now |
 | PH7 | quill XSS advisory watch (#118) | watch |
@@ -160,22 +160,13 @@ e2e specs green.
 
 **Sequencing:** unblocks **PH2** and **PH4**. This is the keystone of the Part-A CD work.
 
-### PH4. Zoneless change detection — status: blocked-internal (#115)
+### PH4. Zoneless change detection — status: DONE (#115)
 
-**Why:** dropping zone.js cuts bundle size and per-event CD cost app-wide.
-
-**Current state (verified):** not started; blocked by its two prerequisites still being open.
-
-**Leverage / dependencies:** requires **PH3** complete (zoneless needs explicit notification
-everywhere) and *strongly prefers* **PH2** first (DataTables callbacks run outside Angular
-scheduling). Third-party audit (toastr, ng-bootstrap, formly, ng-select, Apollo) at time of work.
-
-**First steps:** (1) do not start until PH3 is green and PH2 has landed (or accept auditing every
-jQuery callback path by hand); (2) enable zoneless on a branch; (3) full e2e + manual CD-smoke.
-
-**Result when:** the app runs zoneless with zone.js out of the bundle and the full e2e suite green.
-
-**Sequencing:** strictly **after PH3**, and after **PH2** unless you accept the callback-audit cost.
+Shipped to dev/UAT 2026-11-11 (#362 Z1 conversions, #363 the switch) and released in 2.4.0: the app
+runs with `provideZonelessChangeDetection()` and zone.js is out of the bundle. The rules for new code
+live in the architecture-contract skill §6; the per-file audit is `docs/native-tables-plan.md` §5.
+Optional follow-up (not scheduled): convert the remaining `Eager` components' plain fields + marks to
+signals.
 
 ### PH5. FontAwesome 5 → 7 — status: ready-now (#116)
 
