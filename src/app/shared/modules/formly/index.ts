@@ -2,7 +2,6 @@ import { Provider } from '@angular/core';
 import { UntypedFormControl } from '@angular/forms';
 import { provideFormlyConfig } from '@ngx-formly/core';
 import { ConfigOption } from '@ngx-formly/core';
-import { QuillModule } from 'ngx-quill';
 import { AppFormlyWrapperFormField } from './wrapper/form-field.wrapper';
 import { ChoiceInput } from './components/choice.component';
 import { PlaceInput } from './components/place.component';
@@ -10,7 +9,7 @@ import { DateInput } from './components/date.component';
 import { DateTimeInput, DateTimeInputWidget } from './components/datetime.component';
 import { MaskedInput } from './components/input-mask.component';
 import { GalleryInput } from './components/gallery.component';
-import { RichTextComponent } from './components/richtext.component';
+import { HtmlEditorComponent } from './components/html-editor.component';
 import { RepeatTypeComponent } from './components/repeat.component';
 import { FormlyFieldButton } from './components/button.component';
 
@@ -19,7 +18,7 @@ export { ChoiceInput } from './components/choice.component';
 export { DateInput } from './components/date.component';
 export { DateTimeInput, DateTimeInputWidget } from './components/datetime.component';
 export { MaskedInput } from './components/input-mask.component';
-export { RichTextComponent } from './components/richtext.component';
+export { HtmlEditorComponent } from './components/html-editor.component';
 export { RepeatTypeComponent } from './components/repeat.component';
 export { FormlyFieldButton } from './components/button.component';
 
@@ -112,8 +111,8 @@ export const FORMLYCONFIG: ConfigOption = {
         },
         { name: 'repeat', component: RepeatTypeComponent },
         {
-            name: 'richtext',
-            component: RichTextComponent,
+            name: 'htmleditor',
+            component: HtmlEditorComponent,
             wrappers: ['form-field'],
             defaultOptions: { templateOptions: { placeholder: '' } }
         },
