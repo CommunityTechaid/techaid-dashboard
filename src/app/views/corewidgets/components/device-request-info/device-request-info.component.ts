@@ -230,7 +230,8 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
   }
 
   sub: Subscription;
-  // Written from Apollo/router/store callbacks and a document listener: mark for check so the view repaints without zone.js (#115).
+  // model, requestId and options.formState are written from Apollo/router/store callbacks and a document listener:
+  // mark for check so the view repaints without zone.js (#115). model feeds formly-form, so it stays a plain field.
   private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
@@ -242,10 +243,11 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
   requestId: number;
   referringOrganisationId: number;
   referringOrganisationContactId: number;
-  public user: User;
+  // Signals: written from the store subscription, the device-count query and the PDF request (#115).
+  public readonly user = signal<User | undefined>(undefined);
   @Select(UserState.user) user$: Observable<User>;
   showAllDeviceTypes = false;
-  deviceCount = 0;
+  readonly deviceCount = signal(0);
 
   assignDeviceIds = '';
   readonly assignmentResults = signal<DeviceAssignmentResult[]>([]);
@@ -864,9 +866,8 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe(
         (res) => {
-          this.cdr.markForCheck();
           if (res.data && res.data['kitsConnection']) {
-            this.deviceCount = res.data['kitsConnection']['totalElements'];
+            this.deviceCount.set(res.data['kitsConnection']['totalElements']);
           }
         },
         (err) => {
@@ -921,7 +922,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
     this.sub.add(
       this.user$.subscribe((user) => {
         this.cdr.markForCheck();
-        this.user = user;
+        this.user.set(user);
         this.options.formState.disabled = !(user && user.authorities && (user.authorities['write:requests'] || user.authorities['write:organisations']));
       })
     );
@@ -1059,7 +1060,6 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe(
         (res) => {
-          this.cdr.markForCheck();
           if (res.data.deleteDeviceRequest) {
             this.toastr.info(
               `
@@ -1153,7 +1153,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
     this.isAssigning.set(false);
   }
 
-  generatingPdf = false;
+  readonly generatingPdf = signal(false);
 
   async generatePDF() {
     if (!this.model || !this.model.id) {
@@ -1166,7 +1166,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.generatingPdf = true;
+    this.generatingPdf.set(true);
 
     try {
       // Prepare the data for the PDF template
@@ -1229,8 +1229,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
         }
       );
     } finally {
-      this.generatingPdf = false;
-      this.cdr.markForCheck();
+      this.generatingPdf.set(false);
     }
   }
 }

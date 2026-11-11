@@ -6,7 +6,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './reference-step.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './reference-step.component.scss',
 })
 export class ReferenceStepComponent {

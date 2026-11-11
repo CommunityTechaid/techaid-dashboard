@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
@@ -175,20 +175,18 @@ function changeOf(c: SettingChange): string {
   standalone: true,
   imports: [DatePipe, FormsModule],
   templateUrl: './settings-history.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsHistoryComponent implements OnInit, OnDestroy {
   readonly types = SETTING_TYPES;
   settingType = '';
   settingKey = '';
-  rows: Row[] = [];
-  page = 0;
-  totalPages = 0;
-  loading = true;
-  failed = false;
+  readonly rows = signal<Row[]>([]);
+  readonly page = signal(0);
+  readonly totalPages = signal(0);
+  readonly loading = signal(true);
+  readonly failed = signal(false);
   private sub?: Subscription;
-  // Written from Apollo callbacks: mark for check so the view repaints without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(private readonly apollo: Apollo) {}
 
@@ -197,8 +195,8 @@ export class SettingsHistoryComponent implements OnInit, OnDestroy {
   }
 
   load(page: number): void {
-    this.loading = true;
-    this.failed = false;
+    this.loading.set(true);
+    this.failed.set(false);
     this.sub?.unsubscribe();
     this.sub = this.apollo
       .query<{ settingChanges: Page }>({
@@ -213,29 +211,27 @@ export class SettingsHistoryComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: ({ data, error }) => {
-          this.cdr.markForCheck();
-          this.loading = false;
+          this.loading.set(false);
           if (error || !data?.settingChanges) {
-            this.failed = true;
+            this.failed.set(true);
             return;
           }
           const result = data.settingChanges;
-          this.page = result.number;
-          this.totalPages = result.totalPages;
+          this.page.set(result.number);
+          this.totalPages.set(result.totalPages);
           // Apollo responses are frozen: build new row objects, never mutate.
-          this.rows = result.content.map((c) => ({
+          this.rows.set(result.content.map((c) => ({
             id: c.id,
             changedAt: c.changedAt,
             who: c.source === 'USER' ? c.changedByName || c.changedByEmail || 'Unknown user' : 'System',
             whoTitle: c.source === 'USER' ? c.changedByEmail : null,
             setting: settingOf(c),
             change: changeOf(c),
-          }));
+          })));
         },
         error: () => {
-          this.cdr.markForCheck();
-          this.loading = false;
-          this.failed = true;
+          this.loading.set(false);
+          this.failed.set(true);
         },
       });
   }

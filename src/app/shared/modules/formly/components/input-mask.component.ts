@@ -14,7 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms';
         '[class.d-inline-flex]': 'to.addonLeft || to.addonRight',
         '[class.custom-file]': 'to.addonLeft || to.addonRight',
     },
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [InputMaskComponent, ReactiveFormsModule, FormlyModule]
 })
 export class MaskedInput extends FieldType {

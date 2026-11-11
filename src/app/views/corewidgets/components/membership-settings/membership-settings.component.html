@@ -9,9 +9,9 @@
       organisation has used it.
     </p>
 
-    @if (loading) {
+    @if (loading()) {
       <div class="text-muted small">Loading membership settings…</div>
-    } @else if (unavailable) {
+    } @else if (unavailable()) {
       <div class="alert alert-info mb-0" data-testid="membership-unavailable">
         Membership settings will be available once the server update (techaid-server#311) is deployed.
       </div>
@@ -42,7 +42,7 @@
           name="grace"
           data-testid="membership-grace-requests"
           [(ngModel)]="grace"
-          [disabled]="mode !== 'GRACE'"
+          [disabled]="mode() !== 'GRACE'"
         />
         <div class="form-text">How many requests past the limit are accepted before new requests are blocked.</div>
       </div>
@@ -66,7 +66,7 @@
         type="button"
         class="btn btn-primary"
         data-testid="membership-settings-save"
-        [disabled]="saving || !dirty"
+        [disabled]="saving() || !dirty"
         (click)="save()"
       >
         Save

@@ -29,7 +29,7 @@ import { SettingsHistoryComponent } from '../settings-history/settings-history.c
   selector: 'admin-panel',
   styleUrls: ['admin-panel.component.scss'],
   templateUrl: './admin-panel.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
     FeatureFlagsComponent,

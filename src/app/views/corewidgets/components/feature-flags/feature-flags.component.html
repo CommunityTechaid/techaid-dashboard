@@ -10,12 +10,12 @@
       note under each one before changing it.
     </p>
 
-    @if (loading) {
+    @if (loading()) {
       <div class="text-muted small">Loading feature flags…</div>
-    } @else if (flags.length === 0) {
+    } @else if (flags().length === 0) {
       <div class="text-muted small">No feature flags are defined.</div>
     } @else {
-      @for (flag of flags; track flag.key) {
+      @for (flag of flags(); track flag.key) {
         <div class="d-flex justify-content-between align-items-start py-3 border-bottom">
           <div class="me-3">
             <div class="font-weight-bold">

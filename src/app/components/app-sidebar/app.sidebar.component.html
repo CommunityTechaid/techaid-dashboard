@@ -1,5 +1,5 @@
 <!-- Sidebar -->
-@if (user?.authenticated) {
+@if (user()?.authenticated) {
   <ul
     class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
     <!-- Sidebar - Brand -->
@@ -12,7 +12,7 @@
     <!-- Divider -->
     <hr class="sidebar-divider my-0">
     <!-- Nav Item - Dashboard -->
-    @if (user?.authorities['read:kits']) {
+    @if (user()?.authorities['read:kits']) {
       <li class="nav-item" routerLinkActive="active">
         <a class="nav-link" href="#" routerLink="/dashboard/devices">
           <i class="fas fa-laptop"></i>
@@ -20,11 +20,11 @@
         </li>
       }
       <!-- Divider -->
-      @if (user?.authorities['read:kits']) {
+      @if (user()?.authorities['read:kits']) {
         <hr class="sidebar-divider my-0">
       }
       <!-- Nav Item - Tables -->
-      @if (user?.authorities['read:donors']) {
+      @if (user()?.authorities['read:donors']) {
         <li class="nav-item" routerLinkActive="active">
           <a class="nav-link" href="#" routerLink="/dashboard/donors">
             <i class="fa fa-fw fa-table"></i>
@@ -32,7 +32,7 @@
           </li>
         }
         <!-- Nav Item - Tables -->
-        @if (user?.authorities['read:donorParents']) {
+        @if (user()?.authorities['read:donorParents']) {
           <li class="nav-item" routerLinkActive="active">
             <a class="nav-link" href="#" routerLink="/dashboard/donor-parents">
               <i class="fa fa-fw fa-sitemap"></i>
@@ -40,10 +40,10 @@
             </li>
           }
           <!-- Divider -->
-          @if (user?.authorities['read:donors']) {
+          @if (user()?.authorities['read:donors']) {
             <hr class="sidebar-divider my-0">
           }
-          @if (user?.authorities['read:organisations']) {
+          @if (user()?.authorities['read:organisations']) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/referring-organisations">
                 <i class="fas fa-address-book"></i>
@@ -51,7 +51,7 @@
               </a>
             </li>
           }
-          @if ((user?.authorities['read:referees'] || user?.authorities['read:organisations'])) {
+          @if ((user()?.authorities['read:referees'] || user()?.authorities['read:organisations'])) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/referring-organisation-contacts">
                 <i class="fas fa-users"></i>
@@ -59,7 +59,7 @@
               </a>
             </li>
           }
-          @if ((user?.authorities['read:requests'] || user?.authorities['read:organisations'])) {
+          @if ((user()?.authorities['read:requests'] || user()?.authorities['read:organisations'])) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/device-requests">
                 <i class="fas fa-hands"></i>
@@ -67,7 +67,7 @@
               </a>
             </li>
           }
-          @if ((user?.authorities['read:requests'] || user?.authorities['read:organisations'])) {
+          @if ((user()?.authorities['read:requests'] || user()?.authorities['read:organisations'])) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/distributions-and-deliveries">
                 <i class="fas fa-gift"></i>
@@ -75,7 +75,7 @@
               </a>
             </li>
           }
-          @if (prepModeEnabled && (user?.authorities['read:requests'] || user?.authorities['read:organisations'])) {
+          @if (prepModeEnabled && (user()?.authorities['read:requests'] || user()?.authorities['read:organisations'])) {
             <li class="nav-item" routerLinkActive="active">
               <a class="nav-link" href="#" routerLink="/dashboard/prep-mode">
                 <i class="fas fa-barcode"></i>
@@ -92,7 +92,7 @@
             </li>
           </ul>
         }
-        @if (!user?.authenticated) {
+        @if (!user()?.authenticated) {
           <ul
             class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
             <!-- Sidebar - Brand -->

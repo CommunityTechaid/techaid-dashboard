@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
@@ -207,22 +207,22 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     icon: ICONS[DEVICE_TYPE_LOOKUP[type.value]] ?? 'fas fa-box',
   }));
 
-  groups: GroupRow[] = [];
-  exceptions: ExceptionRow[] = [];
-  lastUpdated: string | null = null;
+  readonly groups = signal<GroupRow[]>([]);
+  readonly exceptions = signal<ExceptionRow[]>([]);
+  readonly lastUpdated = signal<string | null>(null);
 
   /**
    * The global offer, keyed by device type rather than by its `canPublicRequest*` name, so the
    * grid can look it up with the same key it uses for every borough cell.
    */
-  globalOffered: Record<string, boolean> = {};
+  readonly globalOffered = signal<Record<string, boolean>>({});
 
   /** Kept so the update mutation can be addressed to the existing row rather than creating one. */
   private adminConfigId: string | null = null;
 
-  loading = true;
-  saving = false;
-  loadError = false;
+  readonly loading = signal(true);
+  readonly saving = signal(false);
+  readonly loadError = signal(false);
 
   /**
    * The pristine server state, serialised. Every "is anything unsaved?" question is answered by
@@ -244,10 +244,11 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   private loaded = false;
 
   /** Which cell's editor row is open. Only ever one, per the design. */
-  editing: { groupId: string | null; key: string } | null = null;
+  readonly editing = signal<{ groupId: string | null; key: string } | null>(null);
 
   private sub = new Subscription();
-  // Written from Apollo/rxjs callbacks: mark for check so the view repaints without zone.js (#115).
+  // The organisation picker writes `loading`/`options` onto plain row objects from rxjs callbacks:
+  // mark for check so the view repaints without zone.js (#115).
   private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
@@ -261,17 +262,17 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.exceptions.forEach((row) => row.search.complete());
+    this.exceptions().forEach((row) => row.search.complete());
     this.sub.unsubscribe();
   }
 
   private load(): void {
-    this.loading = true;
-    this.loadError = false;
+    this.loading.set(true);
+    this.loadError.set(false);
     this.loaded = false;
     // The rows about to be replaced own live picker subjects; completing them tears down their
     // subscriptions rather than leaving a set per load on a screen that reloads after every save.
-    this.exceptions.forEach((row) => row.search.complete());
+    this.exceptions().forEach((row) => row.search.complete());
     this.apollo
       .query<{ boroughGroups: any[]; referrerLimitExceptions: any[] }>({
         query: QUERY,
@@ -279,8 +280,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: ({ data }) => {
-          this.cdr.markForCheck();
-          this.groups = (data?.boroughGroups ?? []).map((group) => ({
+          this.groups.set((data?.boroughGroups ?? []).map((group) => ({
             id: String(group.id),
             name: group.name,
             boroughs: [...(group.boroughs ?? [])],
@@ -288,8 +288,8 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
             maxPerReferee: group.maxPerReferee,
             modes: this.modesFrom(group.availability ?? []),
             updatedAt: group.updatedAt,
-          }));
-          this.exceptions = (data?.referrerLimitExceptions ?? []).map((row) =>
+          })));
+          this.exceptions.set((data?.referrerLimitExceptions ?? []).map((row) =>
             this.exceptionRow({
               organisationId: String(row.organisationId),
               boroughGroupId: String(row.boroughGroupId),
@@ -309,33 +309,32 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
                 },
               ],
             }),
-          );
+          ));
           const config = (data as any)?.adminConfig ?? null;
           this.adminConfigId = config?.id != null ? String(config.id) : null;
-          this.globalOffered = {};
+          const globalOffered: Record<string, boolean> = {};
           this.columns.forEach((column) => {
             const key = GLOBAL_KEY_BY_DEVICE_TYPE[column.key];
             // Absent config means nothing has been configured; treat as not offered rather than
             // assuming a permissive default we never read.
-            this.globalOffered[column.key] = key ? Boolean(config?.[key]) : false;
+            globalOffered[column.key] = key ? Boolean(config?.[key]) : false;
           });
+          this.globalOffered.set(globalOffered);
 
-          this.lastUpdated =
-            [...this.groups.map((g) => g.updatedAt), config?.updatedAt]
+          this.lastUpdated.set([...this.groups().map((g) => g.updatedAt), config?.updatedAt]
               .filter(Boolean)
               .sort()
-              .pop() ?? null;
+              .pop() ?? null);
           this.pristine = this.snapshot();
           this.loaded = true;
-          this.loading = false;
+          this.loading.set(false);
         },
         error: () => {
-          this.loading = false;
-          this.loadError = true;
-          this.cdr.markForCheck();
+          this.loading.set(false);
+          this.loadError.set(true);
           // Leave `loaded` false so nothing can be saved from a configuration we never read.
-          this.groups = [];
-          this.exceptions = [];
+          this.groups.set([]);
+          this.exceptions.set([]);
           this.toastr.error('Could not load the borough availability configuration');
         },
       });
@@ -351,8 +350,8 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
 
   private snapshot(): string {
     return JSON.stringify({
-      global: this.globalOffered,
-      groups: this.groups,
+      global: this.globalOffered(),
+      groups: this.groups(),
       exceptions: this.exceptionSnapshot(),
     });
   }
@@ -365,7 +364,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
    * organisation would otherwise rewrite `options` and report the configuration as edited.
    */
   private exceptionSnapshot(): Pick<ExceptionRow, 'organisationId' | 'boroughGroupId' | 'maxPerReferee'>[] {
-    return this.exceptions.map((row) => ({
+    return this.exceptions().map((row) => ({
       organisationId: row.organisationId,
       boroughGroupId: row.boroughGroupId,
       maxPerReferee: row.maxPerReferee,
@@ -380,22 +379,23 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
    * borough look misconfigured when the cause is one row above it.
    */
   isGloballyOff(key: string): boolean {
-    return !this.globalOffered[key];
+    return !this.globalOffered()[key];
   }
 
   toggleGlobal(key: string): void {
-    if (this.saving || !this.loaded) return;
-    this.globalOffered[key] = !this.globalOffered[key];
+    if (this.saving() || !this.loaded) return;
+    this.globalOffered.update((offered) => ({ ...offered, [key]: !offered[key] }));
     // A column that has just been switched off keeps its borough values. They are inert while the
     // global switch is off, and discarding them would lose the borough configuration on a toggle
     // that may well be temporary.
-    if (this.editing && this.isGloballyOff(this.editing.key)) this.editing = null;
+    const editing = this.editing();
+    if (editing && this.isGloballyOff(editing.key)) this.editing.set(null);
   }
 
   private globalChanged(): boolean {
     if (!this.pristine) return false;
     const before = (JSON.parse(this.pristine) as { global?: Record<string, boolean> }).global ?? {};
-    return this.columns.some((column) => Boolean(before[column.key]) !== Boolean(this.globalOffered[column.key]));
+    return this.columns.some((column) => Boolean(before[column.key]) !== Boolean(this.globalOffered()[column.key]));
   }
 
   /**
@@ -403,12 +403,12 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
    * a one-click wipe of the entire configuration after a failed read.
    */
   get dirty(): boolean {
-    return this.loaded && !this.loading && this.snapshot() !== this.pristine;
+    return this.loaded && !this.loading() && this.snapshot() !== this.pristine;
   }
 
   /** Whether Save may be pressed at all. */
   get canSave(): boolean {
-    return this.dirty && !this.saving;
+    return this.dirty && !this.saving();
   }
 
   /**
@@ -428,11 +428,11 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
 
     const globalBefore = before.global ?? {};
     this.columns.forEach((column) => {
-      if (Boolean(globalBefore[column.key]) !== Boolean(this.globalOffered[column.key])) count += 1;
+      if (Boolean(globalBefore[column.key]) !== Boolean(this.globalOffered()[column.key])) count += 1;
     });
 
     const byId = new Map(before.groups.map((g) => [g.id, g]));
-    this.groups.forEach((group) => {
+    this.groups().forEach((group) => {
       const original = byId.get(group.id);
       if (!original) {
         count += 1;
@@ -447,8 +447,8 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     // Count exception changes field by field rather than by row-count delta, so editing three
     // fields on one row does not report a single change.
     const beforeRows = before.exceptions;
-    count += Math.abs(this.exceptions.length - beforeRows.length);
-    this.exceptions.slice(0, beforeRows.length).forEach((row, i) => {
+    count += Math.abs(this.exceptions().length - beforeRows.length);
+    this.exceptions().slice(0, beforeRows.length).forEach((row, i) => {
       const original = beforeRows[i];
       if (original.organisationId !== row.organisationId) count += 1;
       if (original.boroughGroupId !== row.boroughGroupId) count += 1;
@@ -460,20 +460,20 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   // --- cell editing -------------------------------------------------------------------------
 
   isEditing(group: GroupRow, column: DeviceColumn): boolean {
-    return this.editing?.groupId === group.id && this.editing?.key === column.key;
+    return this.editing()?.groupId === group.id && this.editing()?.key === column.key;
   }
 
   /** Open this cell's editor, or close it if it is already the open one. */
   toggleEditor(group: GroupRow, column: DeviceColumn): void {
-    this.editing = this.isEditing(group, column) ? null : { groupId: group.id, key: column.key };
+    this.editing.set(this.isEditing(group, column) ? null : { groupId: group.id, key: column.key });
   }
 
   closeEditor(): void {
-    this.editing = null;
+    this.editing.set(null);
   }
 
   editingColumn(): DeviceColumn | null {
-    return this.columns.find((c) => c.key === this.editing?.key) ?? null;
+    return this.columns.find((c) => c.key === this.editing()?.key) ?? null;
   }
 
   setMode(group: GroupRow, key: string, mode: Mode): void {
@@ -505,20 +505,20 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   // --- exceptions ---------------------------------------------------------------------------
 
   addException(): void {
-    this.exceptions = [
-      ...this.exceptions,
+    this.exceptions.set([
+      ...this.exceptions(),
       this.exceptionRow({
         organisationId: null,
-        boroughGroupId: this.groups[0]?.id ?? null,
-        maxPerReferee: this.groups[0]?.maxPerReferee ?? 1,
+        boroughGroupId: this.groups()[0]?.id ?? null,
+        maxPerReferee: this.groups()[0]?.maxPerReferee ?? 1,
         options: [],
       }),
-    ];
+    ]);
   }
 
   removeException(index: number): void {
-    this.exceptions[index]?.search.complete();
-    this.exceptions = this.exceptions.filter((_, i) => i !== index);
+    this.exceptions()[index]?.search.complete();
+    this.exceptions.set(this.exceptions().filter((_, i) => i !== index));
   }
 
   /** Build a row and connect its picker. Every ExceptionRow must come from here. */
@@ -613,9 +613,9 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
   save(): void {
     // Never send a configuration we did not successfully read: the mutation replaces wholesale,
     // so an empty payload deletes everything.
-    if (!this.loaded || this.saving) return;
+    if (!this.loaded || this.saving()) return;
 
-    const incomplete = this.exceptions.some((e) => !e.organisationId || !e.boroughGroupId);
+    const incomplete = this.exceptions().some((e) => !e.organisationId || !e.boroughGroupId);
     if (incomplete) {
       this.toastr.error('Every exception needs an organisation and a borough group');
       return;
@@ -624,15 +624,15 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     // A cleared number input binds as null, and Number(null) is 0 — which would silently set a
     // borough's referees to zero permitted requests. Reject it rather than interpret it.
     const badLimit = [
-      ...this.groups.map((g) => g.maxPerReferee),
-      ...this.exceptions.map((e) => e.maxPerReferee),
+      ...this.groups().map((g) => g.maxPerReferee),
+      ...this.exceptions().map((e) => e.maxPerReferee),
     ].some((value) => value === null || value === undefined || `${value}` === '' || Number(value) < 0);
     if (badLimit) {
       this.toastr.error('Every request limit needs a number of 0 or more');
       return;
     }
 
-    this.saving = true;
+    this.saving.set(true);
 
     // Two mutations behind one button, because the global offer and the borough matrix are
     // separate records on the server. Each is sent only if that half actually changed, which is
@@ -648,7 +648,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
           variables: {
             data: this.columns.reduce<Record<string, boolean>>((data, column) => {
               const key = GLOBAL_KEY_BY_DEVICE_TYPE[column.key];
-              if (key) data[key] = Boolean(this.globalOffered[column.key]);
+              if (key) data[key] = Boolean(this.globalOffered()[column.key]);
               return data;
             }, {}),
           },
@@ -664,19 +664,17 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          this.saving = false;
-          this.editing = null;
+          this.saving.set(false);
+          this.editing.set(null);
           // The public form caches this per page load, so drop the cache here too — otherwise an
           // admin checking their own change on the request form would keep seeing the old config.
           this.availability.reload();
           this.toastr.success('Availability saved');
-          this.cdr.markForCheck();
           this.load();
         },
         error: (err) => {
-          this.saving = false;
+          this.saving.set(false);
           this.toastr.error(err?.message ?? 'Could not save the configuration');
-          this.cdr.markForCheck();
           // Re-read so the grid reflects whatever actually landed, including a partial save.
           this.load();
         },
@@ -689,7 +687,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
       if (!this.pristine) return true;
       const before = JSON.parse(this.pristine) as { groups: GroupRow[]; exceptions: unknown[] };
       return (
-        JSON.stringify(before.groups) !== JSON.stringify(this.groups) ||
+        JSON.stringify(before.groups) !== JSON.stringify(this.groups()) ||
         JSON.stringify(before.exceptions) !== JSON.stringify(this.exceptionSnapshot())
       );
     })();
@@ -701,7 +699,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
         mutation: SAVE,
         variables: {
           data: {
-            groups: this.groups.map((group) => ({
+            groups: this.groups().map((group) => ({
               id: group.id,
               name: group.name,
               boroughs: group.boroughs,
@@ -712,7 +710,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
                 mode: group.modes[column.key],
               })),
             })),
-            exceptions: this.exceptions.map((row) => ({
+            exceptions: this.exceptions().map((row) => ({
               organisationId: row.organisationId,
               boroughGroupId: row.boroughGroupId,
               maxPerReferee: Number(row.maxPerReferee),
@@ -735,7 +733,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
 
   discard(): void {
     if (!window.confirm('Discard all unsaved changes?')) return;
-    this.editing = null;
+    this.editing.set(null);
     this.load();
   }
 

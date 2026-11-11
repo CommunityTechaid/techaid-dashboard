@@ -10,7 +10,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
     selector: "app-local-css",
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: '<span style="display:none" [innerHTML]="this.safeString"></span>'
 })
 export class AppLocalCSS implements OnInit {

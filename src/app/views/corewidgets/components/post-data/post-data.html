@@ -1,4 +1,4 @@
-@if (!model) {
+@if (!model()) {
   <div class="ph-item">
     <div class="ph-col-12">
       <div class="ph-picture"></div>
@@ -15,7 +15,7 @@
     </div>
   </div>
 }
-@if (model && !model.content) {
+@if (model() && !model().content) {
   <div class="container">
     <h1>404</h1>
     <p><strong>File not found</strong></p>
@@ -29,12 +29,12 @@
     <a href="/" class="btn btn-primary btn-sm">Home</a>
   </div>
 }
-@if (model?.id?.length) {
+@if (model()?.id?.length) {
   <div class="d-flex justify-content-end">
-    @if ((user?.authorities)['write:content']) {
+    @if ((user()?.authorities)['write:content']) {
       <a
         href="#"
-        [routerLink]="['/dashboard/posts', model.id]"
+        [routerLink]="['/dashboard/posts', model().id]"
         class="btn btn-sm mb-1 btn-primary"
         >
         <i class="far fa-edit"></i> Edit
@@ -42,8 +42,8 @@
     }
   </div>
 }
-@if (model) {
+@if (model()) {
   <main role="main">
-    <div class="col-12" [innerHtml]="$safeNavigationMigration(model?.content)"></div>
+    <div class="col-12" [innerHtml]="$safeNavigationMigration(model()?.content)"></div>
   </main>
 }

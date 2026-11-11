@@ -5,7 +5,8 @@ import {
   ElementRef,
   Renderer2,
   ViewChild, OnInit, AfterViewInit, OnDestroy,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  signal
 } from '@angular/core';
 import { concat, from, Observable, of, Subject, Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -201,7 +202,7 @@ const QUERY_ADMIN_CONFIG = gql`
     selector: 'org-request',
     styleUrls: ['./org-request.scss'],
     templateUrl: './org-request.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule, PostcodeLocationStepComponent, MembershipNoticeComponent, MembershipBadgesComponent]
 })
 
@@ -210,16 +211,18 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   submitting = false;
-  content: any = {};
+  // Template state written from Apollo/flag/timer callbacks lives in signals so it repaints
+  // without zone.js (#115). model, fields and options are formly's and stay plain.
+  readonly content = signal<any>({});
   model: any = {
     showErrorState: false,
   };
   submited = false;
-  wardSubmitted = false;
+  readonly wardSubmitted = signal(false);
   responseId = null;
   public user: User;
   @Select(UserState.user) user$: Observable<User>;
-  isOrgAdmin = false;
+  readonly isOrgAdmin = signal(false);
 
   //TODO: not the ideal way to refresh the form, but it'll do for now
   reloadCurrentPage() {
@@ -229,20 +232,20 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   isOrganisationExists = true;
   newOrganisationName = ""
-  showTypeform = false;
+  readonly showTypeform = signal(false);
   borough = "";
   ward = "";
   unsupported = false;
 
   /** The accepted boroughs, from the flags. Passed to the postcode step so it can decide
    *  whether a resolved borough is one we actually take referrals from. */
-  supportedBoroughList: Borough[] = [...CORE_BOROUGHS];
+  readonly supportedBoroughList = signal<Borough[]>([...CORE_BOROUGHS]);
 
   /** Every device type the admin config permits, before any borough narrowing. */
   private allDeviceOptions: { value: string; label: string }[] = [];
 
   /** Amber note shown when the confirmed borough offers fewer device types than usual. */
-  deviceAvailabilityNote: string | null = null;
+  readonly deviceAvailabilityNote = signal<string | null>(null);
 
   /**
    * Set once the request has been refused for hitting the referrer's open-request limit.
@@ -253,50 +256,50 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
    * they cannot request anything. A flag rather than clearing the note itself, so a later
    * applyDeviceAvailability() cannot quietly bring it back.
    */
-  requestLimitReached = false;
+  readonly requestLimitReached = signal(false);
 
   /** Membership flag (techaid-server#311); off means nothing below is queried or shown. */
-  membershipEnabled = false;
+  readonly membershipEnabled = signal(false);
   /** Server config: what happens over the allowance. null until read, or if the read fails. */
-  membershipOverLimitMode: MembershipOverLimitMode | null = null;
-  membershipGraceRequests: number | null = null;
+  readonly membershipOverLimitMode = signal<MembershipOverLimitMode | null>(null);
+  readonly membershipGraceRequests = signal<number | null>(null);
   /** The organisation's allowance, from the referee lookup. */
-  membershipAllowance: MembershipPublic | null = null;
+  readonly membershipAllowance = signal<MembershipPublic | null>(null);
   /** Staff form only: the organisation's membership record, for its name and contacts. */
-  adminOrgMembership: any = null;
+  readonly adminOrgMembership = signal<any>(null);
   /** Set when the server refused the submit for the allowance, whatever the pre-check said. */
-  membershipServerBlocked = false;
+  readonly membershipServerBlocked = signal(false);
   /** The request page (Your client's needs) is showing. */
-  onRequestPage = false;
+  readonly onRequestPage = signal(false);
 
   get membershipNoticeKind(): MembershipNotice {
-    if (this.membershipServerBlocked) {
+    if (this.membershipServerBlocked()) {
       return 'block';
     }
-    return membershipNotice(this.membershipAllowance, this.membershipOverLimitMode);
+    return membershipNotice(this.membershipAllowance(), this.membershipOverLimitMode());
   }
 
   /** Disables the request fieldset and Submit. Seam for a future staff override. */
   get membershipBlocked(): boolean {
-    return this.membershipEnabled && this.membershipNoticeKind === 'block';
+    return this.membershipEnabled() && this.membershipNoticeKind === 'block';
   }
 
   get selectedOrganisationName(): string | null {
-    if (this.adminOrgMembership?.name) {
-      return this.adminOrgMembership.name;
+    if (this.adminOrgMembership()?.name) {
+      return this.adminOrgMembership().name;
     }
-    return this.selectedOrganisationLabel;
+    return this.selectedOrganisationLabel();
   }
 
-  private selectedOrganisationLabel: string | null = null;
+  private readonly selectedOrganisationLabel = signal<string | null>(null);
 
   get selectedContactIsMembershipContact(): boolean {
     const id = this.referringContactIdField.formControl?.value;
-    return !!this.adminOrgMembership?.membershipContacts?.some((c: any) => c.id == id);
+    return !!this.adminOrgMembership()?.membershipContacts?.some((c: any) => c.id == id);
   }
 
   get membershipContactName(): string | null {
-    return this.adminOrgMembership?.membershipContacts?.[0]?.fullName ?? null;
+    return this.adminOrgMembership()?.membershipContacts?.[0]?.fullName ?? null;
   }
 
   /**
@@ -310,24 +313,24 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   @ViewChild('tfForm') tfForm: ElementRef | undefined;
 
-  backendStatus: 'checking' | 'ready' | 'error' = 'checking';
-  private backendCheckAttempt = 0;
+  readonly backendStatus = signal<'checking' | 'ready' | 'error'>('checking');
+  private readonly backendCheckAttempt = signal(0);
   private readonly BACKEND_MAX_ATTEMPTS = 15;
   private readonly BACKEND_POLL_INTERVAL_MS = 4000;
   private backendPollTimer: any;
 
   get backendStatusMessage(): string {
-    if (this.backendCheckAttempt < 3) {
+    if (this.backendCheckAttempt() < 3) {
       return 'Starting up… this usually takes about 30 seconds.';
-    } else if (this.backendCheckAttempt < 8) {
+    } else if (this.backendCheckAttempt() < 8) {
       return 'Still warming up… almost there.';
     }
     return 'Taking a bit longer than usual, please hang on…';
   }
 
   startBackendHealthCheck() {
-    this.backendStatus = 'checking';
-    this.backendCheckAttempt = 0;
+    this.backendStatus.set('checking');
+    this.backendCheckAttempt.set(0);
     this.pollBackend();
   }
 
@@ -336,13 +339,11 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       query: QUERY_ADMIN_CONFIG,
       fetchPolicy: 'network-only'
     }).toPromise().then(res => {
-      // Every async write below repaints only if the view is marked (zoneless, #115).
-      this.changeDetectorRef.markForCheck();
       if (res && res.data) {
         this.processAdminConfig(res.data['adminConfig']);
         this.loadPageContent();
         this.loadFeatureFlags();
-        this.backendStatus = 'ready';
+        this.backendStatus.set('ready');
         this.changeDetectorRef.detectChanges();
       } else {
         this.scheduleBackendRetry();
@@ -353,10 +354,9 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
   private scheduleBackendRetry() {
-    this.backendCheckAttempt++;
-    this.changeDetectorRef.markForCheck();
-    if (this.backendCheckAttempt >= this.BACKEND_MAX_ATTEMPTS) {
-      this.backendStatus = 'error';
+    this.backendCheckAttempt.update(n => n + 1);
+    if (this.backendCheckAttempt() >= this.BACKEND_MAX_ATTEMPTS) {
+      this.backendStatus.set('error');
       this.changeDetectorRef.detectChanges();
       return;
     }
@@ -379,8 +379,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   private loadFeatureFlags(): void {
     this.flagsSub.add(
       this.featureFlags.isEnabled(MEMBERSHIP_FLAG).subscribe(enabled => {
-        this.changeDetectorRef.markForCheck();
-        this.membershipEnabled = enabled;
+        this.membershipEnabled.set(enabled);
         if (enabled) {
           this.loadMembershipConfig();
         }
@@ -389,8 +388,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
     this.flagsSub.add(
       this.featureFlags.supportedBoroughs().subscribe(boroughs => {
-        this.changeDetectorRef.markForCheck();
-        this.supportedBoroughList = boroughs;
+        this.supportedBoroughList.set(boroughs);
       })
     );
 
@@ -400,7 +398,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     // borough has been confirmed, which is several steps away.
     this.flagsSub.add(
       this.boroughAvailability.all().subscribe(availability => {
-        this.changeDetectorRef.markForCheck();
         this.availabilityByBorough = availability;
         // The borough may already be confirmed if the visitor moved quickly, so re-apply rather
         // than assuming this landed first.
@@ -414,10 +411,9 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       query: QUERY_MEMBERSHIP_CONFIG,
       fetchPolicy: 'network-only'
     }).toPromise().then(res => {
-      this.changeDetectorRef.markForCheck();
       const config = res?.data?.['adminConfig'];
-      this.membershipOverLimitMode = config?.membershipOverLimitMode ?? null;
-      this.membershipGraceRequests = config?.membershipGraceRequests ?? null;
+      this.membershipOverLimitMode.set(config?.membershipOverLimitMode ?? null);
+      this.membershipGraceRequests.set(config?.membershipGraceRequests ?? null);
     }).catch(err => {
       // No mode means no pre-emptive notice at the limit; the server still decides on submit.
       console.warn('Could not read membership config:', err);
@@ -473,7 +469,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       previous.some((option, i) => option.value !== available[i]?.value);
 
     this.deviceTypesPublic.templateOptions.options = available;
-    this.deviceAvailabilityNote = availabilityNote(this.borough, availability, this.allDeviceOptions);
+    this.deviceAvailabilityNote.set(availabilityNote(this.borough, availability, this.allDeviceOptions));
 
     // The SIM and broadband hub add-ons are separate fields with their own controls, and they
     // feed setDeviceRequestItems() independently of the device-type radio group. Narrowing only
@@ -494,8 +490,10 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     // Only reached when availability lands after the location step, which needs a slow cold
     // start. The user has just confirmed a postcode and has not filled anything in yet, so a
     // rebuild costs nothing here.
-    if (changed && this.wardSubmitted) {
+    if (changed && this.wardSubmitted()) {
       this.fields = [...this.fields];
+      // fields is a plain formly input and this can run from the availability subscription (#115).
+      this.changeDetectorRef.markForCheck();
     }
   }
 
@@ -503,9 +501,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.apollo.query({
       query: QUERY_CONTENT
     }).toPromise().then(res => {
-      this.changeDetectorRef.markForCheck();
       if (res.data) {
-        this.content = res.data['post'];
+        this.content.set(res.data['post']);
       }
     });
   }
@@ -532,7 +529,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
           // request page, so it can't be read back later.
           if (v != null) {
             const items: { label: string; value: any }[] = this.referringOrgField.templateOptions?.['items'] || [];
-            this.selectedOrganisationLabel = items.find(i => i.value == v)?.label ?? null;
+            this.selectedOrganisationLabel.set(items.find(i => i.value == v)?.label ?? null);
           }
         }));
       }
@@ -809,8 +806,9 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
             }
           })
           .finally(() => {
-            // createNewDeviceRequest writes host state (membershipServerBlocked, the typeform
-            // switch) after awaits on every path; this runs after all of them (zoneless, #115).
+            // The host state createNewDeviceRequest writes is in signals, but keep this mark: the
+            // Typeform widget is created in ngAfterViewChecked, which only runs when the view is
+            // checked through its parent, and a signal-only update does not do that (#115).
             this.changeDetectorRef.markForCheck();
             this.submitting = false;
             this.deviceRequestCreateButton.templateOptions.disabled = this.submitting
@@ -1161,13 +1159,12 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
     this.sub.add(
       this.user$.subscribe((user) => {
-        this.changeDetectorRef.markForCheck();
         console.log('getting user');
-        this.isOrgAdmin = (user && user.authorities && (user.authorities['write:requests'] || user.authorities['write:organisations']));
-        this.deviceTypesPublic.hide = this.isOrgAdmin;
-        this.deviceTypesAdmin.hide = !this.isOrgAdmin;
+        this.isOrgAdmin.set((user && user.authorities && (user.authorities['write:requests'] || user.authorities['write:organisations'])));
+        this.deviceTypesPublic.hide = this.isOrgAdmin();
+        this.deviceTypesAdmin.hide = !this.isOrgAdmin();
 
-        console.log(this.isOrgAdmin, this.deviceTypesPublic.hide, this.deviceTypesAdmin.hide);
+        console.log(this.isOrgAdmin(), this.deviceTypesPublic.hide, this.deviceTypesAdmin.hide);
       })
     );
 
@@ -1185,7 +1182,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   onLocationConfirmed(location: { borough: string; ward: string }) {
     this.ward = location.ward;
     this.borough = location.borough;
-    this.wardSubmitted = true;
+    this.wardSubmitted.set(true);
     // The borough is only known now, and it narrows which device types are on offer.
     this.applyDeviceAvailability();
   }
@@ -1215,7 +1212,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
           clearInterval(timerInterval);
           display.textContent = "Time's up!";
           this.showTimerUpPage();
-          this.changeDetectorRef.markForCheck();
         }
       }
     }, 1000);
@@ -1233,8 +1229,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.createNewOrganisationContactPrompt.hide = true;
     this.options.detectChanges?.(this.fields[0]);
 
-    this.membershipAllowance = null;
-    this.membershipServerBlocked = false;
+    this.membershipAllowance.set(null);
+    this.membershipServerBlocked.set(false);
     this.contactLimitStatus.clear();
     const variables = {
       email: this.emailField.formControl.value.trim(),
@@ -1243,14 +1239,13 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       borough: this.borough || null,
     };
     const lookup = (query: any) => this.apollo.query({ query, variables }).toPromise();
-    lookup(this.membershipEnabled ? FIND_ORGANISATION_CONTACT_MEMBERSHIP : FIND_ORGANISATION_CONTACT).catch(error => {
+    lookup(this.membershipEnabled() ? FIND_ORGANISATION_CONTACT_MEMBERSHIP : FIND_ORGANISATION_CONTACT).catch(error => {
       // An older server rejects the unknown requestLimitStatus field outright; look up without it
       // and carry on as before (the submit-time check still applies).
       const text = [...graphQLErrorMessages(error), errorText(error)].join(' ');
       if (!text.includes('requestLimitStatus')) throw error;
-      return lookup(this.membershipEnabled ? FIND_ORGANISATION_CONTACT_MEMBERSHIP_LEGACY : FIND_ORGANISATION_CONTACT_LEGACY);
+      return lookup(this.membershipEnabled() ? FIND_ORGANISATION_CONTACT_MEMBERSHIP_LEGACY : FIND_ORGANISATION_CONTACT_LEGACY);
     }).then(res => {
-      this.changeDetectorRef.markForCheck();
       const data = res["data"]["referringOrganisationContactsPublic"];
       (data || []).forEach(r => {
         const status = r.requestLimitStatus;
@@ -1258,7 +1253,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         if (status && typeof status.atLimit === 'boolean') this.contactLimitStatus.set(String(r.id), status);
       });
       // Organisation-level, so every matching contact carries the same allowance.
-      this.membershipAllowance = (data && data[0] && data[0].membershipAllowance) || null;
+      this.membershipAllowance.set((data && data[0] && data[0].membershipAllowance) || null);
 
       if (data && data.length > 1) {
         const contacts = data.map((r) => {
@@ -1279,7 +1274,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     }).catch(error => {
       console.warn('Error looking up contact:', error);
       this.toastr.warning('Could not look up your email. Please check your connection and try again.');
-      this.changeDetectorRef.markForCheck();
       this.referringOrganisationContactsDropDown.hide = true;
       this.createNewOrganisationContactPrompt.hide = true;
       this.options.detectChanges?.(this.fields[0]);
@@ -1301,7 +1295,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
   showThankYouPage() {
-    this.content = {}
+    this.content.set({});
     this.refOrganisationPage.hide = true;
     this.refContactPage.hide = true;
     this.requestPage.hide = true;
@@ -1314,8 +1308,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     // the field fresh on reveal, so this is the last moment the template can still change what
     // the user sees.
     this.applyRequestLimitCopy(detail);
-    this.content = {}
-    this.requestLimitReached = true;
+    this.content.set({});
+    this.requestLimitReached.set(true);
     this.refOrganisationPage.hide = true;
     this.refContactPage.hide = true;
     this.requestPage.hide = true;
@@ -1330,8 +1324,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
   showTimerUpPage() {
-    this.showTypeform = false;
-    this.content = {}
+    this.showTypeform.set(false);
+    this.content.set({});
     this.refOrganisationPage.hide = true;
     this.refContactPage.hide = true;
     this.requestPage.hide = true;
@@ -1341,7 +1335,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
 
   showRequestPage() {
-    this.onRequestPage = true;
+    this.onRequestPage.set(true);
     this.loadAdminOrgMembership();
     this.isLambethPage.hide = true;
     this.referringOrgField.hide = true;
@@ -1353,7 +1347,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   private loadAdminOrgMembership(): void {
     const id = this.referringOrgIdField.formControl?.value;
-    if (!this.membershipEnabled || !this.isOrgAdmin || !id) {
+    if (!this.membershipEnabled() || !this.isOrgAdmin() || !id) {
       return;
     }
     this.apollo.query({
@@ -1361,8 +1355,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       variables: { id },
       fetchPolicy: 'network-only'
     }).toPromise().then(res => {
-      this.adminOrgMembership = res?.data?.['referringOrganisationMembershipHint'] ?? null;
-      this.changeDetectorRef.markForCheck();
+      this.adminOrgMembership.set(res?.data?.['referringOrganisationMembershipHint'] ?? null);
     }).catch(err => console.warn('Could not read organisation membership:', err));
   }
 
@@ -1512,7 +1505,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   private submitDeviceRequest(data: any) {
     return this.apollo.mutate({
-      mutation: this.membershipEnabled ? CREATE_DEVICE_REQUEST_MEMBERSHIP : CREATE_DEVICE_REQUEST,
+      mutation: this.membershipEnabled() ? CREATE_DEVICE_REQUEST_MEMBERSHIP : CREATE_DEVICE_REQUEST,
       variables: { data }
     }).toPromise();
   }
@@ -1561,7 +1554,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       if (created && created.id) {
         this.deviceRequestId = created.id;
         if (created.membershipGraceIndex) {
-          const total = this.membershipGraceRequests ? ` of ${this.membershipGraceRequests}` : '';
+          const total = this.membershipGraceRequests() ? ` of ${this.membershipGraceRequests()}` : '';
           this.toastr.warning(`This is grace request ${created.membershipGraceIndex}${total} for your organisation.`, 'Membership');
         }
         this.displayTypeForm(created.correlationId);
@@ -1579,8 +1572,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       console.warn('createDeviceRequest failed (first attempt):', firstError);
       const parsed = this.parseApolloError(firstError);
 
-      if (this.membershipEnabled && this.isMembershipLimitError(firstError)) {
-        this.membershipServerBlocked = true;
+      if (this.membershipEnabled() && this.isMembershipLimitError(firstError)) {
+        this.membershipServerBlocked.set(true);
         return false;
       }
 
@@ -1608,8 +1601,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       } catch (retryError) {
         console.warn('createDeviceRequest failed (retry):', retryError);
         const retryParsed = this.parseApolloError(retryError);
-        if (this.membershipEnabled && this.isMembershipLimitError(retryError)) {
-          this.membershipServerBlocked = true;
+        if (this.membershipEnabled() && this.isMembershipLimitError(retryError)) {
+          this.membershipServerBlocked.set(true);
           return false;
         }
         if (retryParsed.isLimit) {
@@ -1623,19 +1616,19 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
   displayTypeForm(correlationId: any) {
-    if (!this.wardSubmitted) {
+    if (!this.wardSubmitted()) {
       console.warn('displayTypeForm: wardSubmitted was false — setting true so typeform can render.');
-      this.wardSubmitted = true;
+      this.wardSubmitted.set(true);
     }
-    this.showTypeform = true;
-    this.content = {};
+    this.showTypeform.set(true);
+    this.content.set({});
     this.pendingCorrelationId = correlationId;
     this.changeDetectorRef.detectChanges();
   }
 
   ngAfterViewChecked() {
     // Create typeform widget based on the condition
-    if (this.showTypeform && this.tfForm && this.pendingCorrelationId) {
+    if (this.showTypeform() && this.tfForm && this.pendingCorrelationId) {
       window.tf.createWidget('f93D0s88', {
         container: this.tfForm.nativeElement,
         hidden: {

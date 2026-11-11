@@ -11,7 +11,7 @@
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="#" [routerLink]="['../']">Referee</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ fullName }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ fullName() }}</li>
       </ol>
     </nav>
 
@@ -22,8 +22,8 @@
           <div class="card shadow mb-4 mt-1">
             <div class="card-header py-3">
               <div class="d-flex justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">{{fullName}} / <a href="#" [routerLink]="['/dashboard/referring-organisations', $safeNavigationMigration(model?.referringOrganisation?.id)]">{{model?.referringOrganisation?.name}}</a>
-                @if (membershipEnabled && model?.isMembershipContact) {
+                <h6 class="m-0 font-weight-bold text-primary">{{fullName()}} / <a href="#" [routerLink]="['/dashboard/referring-organisations', $safeNavigationMigration(model?.referringOrganisation?.id)]">{{model?.referringOrganisation?.name}}</a>
+                @if (membershipEnabled() && model?.isMembershipContact) {
                   <membership-badges class="ms-2" [contact]="true" [large]="true"></membership-badges>
                 }
               </h6>
@@ -34,7 +34,7 @@
               <formly-form [options]="options" (ngSubmit)="updateEntity(form.value)"
                 [form]="form" [model]="model" [fields]="fields">
               </formly-form>
-              @if (membershipEnabled && model?.referringOrganisation?.membership) {
+              @if (membershipEnabled() && model?.referringOrganisation?.membership) {
                 <div class="mb-3" data-testid="referee-org-membership">
                   <small class="text-muted d-block mb-1">Organisation membership</small>
                   <membership-badges [membership]="model.referringOrganisation.membership" [showUsage]="true"></membership-badges>
@@ -48,7 +48,7 @@
               }
             </form>
 
-            @if ((user?.authorities['delete:referees'] || user?.authorities['delete:organisations'])) {
+            @if ((user()?.authorities['delete:referees'] || user()?.authorities['delete:organisations'])) {
               <div class="delete-api mt-5 ">
                 <h3>Danger Zone</h3>
                 <div class="border-bottom-danger card">

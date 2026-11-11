@@ -19,7 +19,7 @@ import { BookingFlowComponent } from './booking-flow.component';
   standalone: true,
   imports: [BookingFlowComponent, AppLocalCSS],
   templateUrl: './delivery-booking.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './delivery-booking.component.scss',
 })
 export class DeliveryBookingComponent implements OnInit, OnDestroy {

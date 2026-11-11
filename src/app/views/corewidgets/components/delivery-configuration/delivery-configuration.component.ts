@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
@@ -138,30 +138,31 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
 
   activeSection: 'settings' | 'windows' | 'blocked' = 'settings';
 
-  loading = true;
-  savingSettings = false;
-  savingAllWindows = false;
+  readonly loading = signal(true);
+  readonly savingSettings = signal(false);
+  readonly savingAllWindows = signal(false);
 
-  enabled = true;
-  days: Record<number, boolean> = {};
-  leadTimeDays = 1;
-  advanceDays = 4;
-  configUpdatedAt?: string;
+  readonly enabled = signal(true);
+  readonly days = signal<Record<number, boolean>>({});
+  readonly leadTimeDays = signal(1);
+  readonly advanceDays = signal(4);
+  readonly configUpdatedAt = signal<string | undefined>(undefined);
 
-  boroughSchedulingEnabled = false;
+  readonly boroughSchedulingEnabled = signal(false);
   /** dayOfWeek (1=Mon..7=Sun) -> borough names ticked for that day. Empty/missing = open to any borough. */
-  dayBoroughs: Record<number, string[]> = {};
+  readonly dayBoroughs = signal<Record<number, string[]>>({});
   /** Snapshot as last loaded/saved from the server, to derive which days changed before saving. */
   private loadedDayBoroughs: Record<number, string[]> = {};
 
-  windows: WindowRow[] = [];
-  blocked: BlockedRow[] = [];
+  readonly windows = signal<WindowRow[]>([]);
+  readonly blocked = signal<BlockedRow[]>([]);
 
-  newBlockedDate = '';
-  newBlockedReason = '';
+  readonly newBlockedDate = signal('');
+  readonly newBlockedReason = signal('');
 
   private readonly sub = new Subscription();
-  // Written from Apollo/rxjs callbacks: mark for check so the view repaints without zone.js (#115).
+  // Window saves write saving/saveError/snapshot onto plain row objects (ngModel-bound) from
+  // Apollo callbacks: mark for check so the view repaints without zone.js (#115).
   private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
@@ -191,79 +192,79 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
   }
 
   load(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.sub.add(
       this.apollo
         .query<any>({ query: DATA_QUERY, fetchPolicy: 'network-only' })
         .subscribe({
           next: ({ data }) => {
             const cfg = data.deliveryConfig;
-            this.cdr.markForCheck();
-            this.enabled = cfg?.enabled ?? true;
-            this.leadTimeDays = cfg?.leadTimeDays ?? 1;
-            this.advanceDays = cfg?.advanceDays ?? 4;
-            this.configUpdatedAt = cfg?.updatedAt;
-            this.boroughSchedulingEnabled = cfg?.boroughSchedulingEnabled ?? false;
-            this.days = {};
+            this.enabled.set(cfg?.enabled ?? true);
+            this.leadTimeDays.set(cfg?.leadTimeDays ?? 1);
+            this.advanceDays.set(cfg?.advanceDays ?? 4);
+            this.configUpdatedAt.set(cfg?.updatedAt);
+            this.boroughSchedulingEnabled.set(cfg?.boroughSchedulingEnabled ?? false);
+            const days: Record<number, boolean> = {};
             (cfg?.daysOfWeek || '')
               .split(',')
               .map((s: string) => parseInt(s.trim(), 10))
               .filter((n: number) => n >= 1 && n <= 7)
-              .forEach((n: number) => (this.days[n] = true));
+              .forEach((n: number) => (days[n] = true));
+            this.days.set(days);
 
-            this.windows = (data.deliveryWindowsAdmin || []).map((w: any) => this.toRow(w));
-            this.blocked = (data.deliveryBlockedDates || []).map((b: any) => ({ ...b }));
+            this.windows.set((data.deliveryWindowsAdmin || []).map((w: any) => this.toRow(w)));
+            this.blocked.set((data.deliveryBlockedDates || []).map((b: any) => ({ ...b })));
 
-            this.dayBoroughs = {};
+            const dayBoroughs: Record<number, string[]> = {};
             (data.deliveryDayBoroughs || []).forEach((row: any) => {
-              this.dayBoroughs[row.dayOfWeek] = [...(row.boroughs || [])];
+              dayBoroughs[row.dayOfWeek] = [...(row.boroughs || [])];
             });
+            this.dayBoroughs.set(dayBoroughs);
             this.loadedDayBoroughs = {};
-            Object.keys(this.dayBoroughs).forEach((k) => {
-              this.loadedDayBoroughs[+k] = [...this.dayBoroughs[+k]];
+            Object.keys(dayBoroughs).forEach((k) => {
+              this.loadedDayBoroughs[+k] = [...dayBoroughs[+k]];
             });
 
-            this.loading = false;
+            this.loading.set(false);
           },
           error: () => {
-            this.loading = false;
+            this.loading.set(false);
             this.toastr.error('Could not load delivery slot settings');
-            this.cdr.markForCheck();
           },
         }),
     );
   }
 
   toggleDay(n: number): void {
-    this.days[n] = !this.days[n];
+    this.days.update((days) => ({ ...days, [n]: !days[n] }));
   }
 
   private daysCsv(): string {
     return this.dayDefs
-      .filter((d) => this.days[d.n])
+      .filter((d) => this.days()[d.n])
       .map((d) => d.n)
       .join(',');
   }
 
   /** Days we currently deliver on — the only days boroughs can be restricted for. */
   get enabledDayDefs() {
-    return this.dayDefs.filter((d) => this.days[d.n]);
+    return this.dayDefs.filter((d) => this.days()[d.n]);
   }
 
   isBoroughChecked(n: number, boroughName: string): boolean {
-    return (this.dayBoroughs[n] || []).includes(boroughName);
+    return (this.dayBoroughs()[n] || []).includes(boroughName);
   }
 
   toggleDayBorough(n: number, boroughName: string): void {
-    const current = this.dayBoroughs[n] || [];
+    const current = this.dayBoroughs()[n] || [];
     const next = current.includes(boroughName)
       ? current.filter((b) => b !== boroughName)
       : [...current, boroughName];
-    this.dayBoroughs = { ...this.dayBoroughs, [n]: next };
+    this.dayBoroughs.update((dayBoroughs) => ({ ...dayBoroughs, [n]: next }));
   }
 
   get anyDayHasBoroughRestriction(): boolean {
-    return this.enabledDayDefs.some((d) => (this.dayBoroughs[d.n] || []).length > 0);
+    return this.enabledDayDefs.some((d) => (this.dayBoroughs()[d.n] || []).length > 0);
   }
 
   private static boroughSetKey(list: string[] | undefined): string {
@@ -272,23 +273,23 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
 
   private dayBoroughsChanged(n: number): boolean {
     return (
-      DeliveryConfigurationComponent.boroughSetKey(this.dayBoroughs[n]) !==
+      DeliveryConfigurationComponent.boroughSetKey(this.dayBoroughs()[n]) !==
       DeliveryConfigurationComponent.boroughSetKey(this.loadedDayBoroughs[n])
     );
   }
 
   saveSettings(): void {
-    this.savingSettings = true;
+    this.savingSettings.set(true);
     const configObs = this.apollo
       .mutate<any>({
         mutation: UPDATE_CONFIG,
         variables: {
           data: {
-            enabled: this.enabled,
+            enabled: this.enabled(),
             daysOfWeek: this.daysCsv(),
-            leadTimeDays: Number(this.leadTimeDays) || 0,
-            advanceDays: Number(this.advanceDays) || 1,
-            boroughSchedulingEnabled: this.boroughSchedulingEnabled,
+            leadTimeDays: Number(this.leadTimeDays()) || 0,
+            advanceDays: Number(this.advanceDays()) || 1,
+            boroughSchedulingEnabled: this.boroughSchedulingEnabled(),
           },
         },
       })
@@ -302,7 +303,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
       this.apollo
         .mutate<any>({
           mutation: SET_DAY_BOROUGHS,
-          variables: { dayOfWeek: n, boroughs: this.dayBoroughs[n] || [] },
+          variables: { dayOfWeek: n, boroughs: this.dayBoroughs()[n] || [] },
         })
         .pipe(
           map(() => ({ ok: true as const, kind: 'day' as const, day: n })),
@@ -311,8 +312,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
     );
 
     forkJoin([configObs, ...dayObs]).subscribe((results) => {
-      this.cdr.markForCheck();
-      this.savingSettings = false;
+      this.savingSettings.set(false);
       const configResult = results[0] as { ok: boolean; updatedAt?: string };
       const failedDays = results.filter((r) => r.kind === 'day' && !r.ok) as { day: number }[];
 
@@ -328,21 +328,24 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.configUpdatedAt = configResult.updatedAt;
-      changedDays.forEach((n) => (this.loadedDayBoroughs[n] = [...(this.dayBoroughs[n] || [])]));
+      this.configUpdatedAt.set(configResult.updatedAt);
+      changedDays.forEach((n) => (this.loadedDayBoroughs[n] = [...(this.dayBoroughs()[n] || [])]));
       this.toastr.success('Delivery settings saved');
     });
   }
 
   addWindow(): void {
-    this.windows.push({
-      name: '',
-      startTime: '',
-      endTime: '',
-      capacity: 4,
-      sortOrder: this.windows.length + 1,
-      active: true,
-    });
+    this.windows.update((windows) => [
+      ...windows,
+      {
+        name: '',
+        startTime: '',
+        endTime: '',
+        capacity: 4,
+        sortOrder: windows.length + 1,
+        active: true,
+      },
+    ]);
   }
 
   adjustCapacity(w: WindowRow, delta: number): void {
@@ -356,11 +359,11 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
   }
 
   get windowsDirty(): boolean {
-    return this.windows.some((w) => this.isDirty(w));
+    return this.windows().some((w) => this.isDirty(w));
   }
 
   get dirtyWindowsCount(): number {
-    return this.windows.filter((w) => this.isDirty(w)).length;
+    return this.windows().filter((w) => this.isDirty(w)).length;
   }
 
   private snapshotOf(w: WindowRow): string {
@@ -411,9 +414,9 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
    * count on the button never falsely reaches zero.
    */
   saveAllWindows(): void {
-    const dirty = this.windows.filter((w) => this.isDirty(w));
-    if (dirty.length === 0 || this.savingAllWindows) return;
-    this.savingAllWindows = true;
+    const dirty = this.windows().filter((w) => this.isDirty(w));
+    if (dirty.length === 0 || this.savingAllWindows()) return;
+    this.savingAllWindows.set(true);
     let succeeded = 0;
     let failed = 0;
     from(dirty)
@@ -426,7 +429,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
         },
         complete: () => {
           this.cdr.markForCheck();
-          this.savingAllWindows = false;
+          this.savingAllWindows.set(false);
           if (failed === 0) {
             this.toastr.success(`Saved ${succeeded} window${succeeded === 1 ? '' : 's'}`);
           } else {
@@ -489,7 +492,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
 
   deleteWindow(w: WindowRow, index: number): void {
     if (!w.id) {
-      this.windows.splice(index, 1);
+      this.windows.update((windows) => windows.filter((_, i) => i !== index));
       return;
     }
     if (!confirm(`Delete "${w.name}"? This can't be undone.`)) {
@@ -497,9 +500,8 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
     }
     this.apollo.mutate<any>({ mutation: DELETE_WINDOW, variables: { id: w.id } }).subscribe({
       next: () => {
-        this.windows.splice(index, 1);
+        this.windows.update((windows) => windows.filter((_, i) => i !== index));
         this.toastr.success('Window deleted');
-        this.cdr.markForCheck();
       },
       error: (err) => {
         this.toastr.error(err?.message || 'Could not delete window');
@@ -508,28 +510,27 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
   }
 
   addBlocked(): void {
-    if (!this.newBlockedDate) {
+    if (!this.newBlockedDate()) {
       this.toastr.warning('Pick a date to block');
       return;
     }
     this.apollo
       .mutate<any>({
         mutation: ADD_BLOCKED,
-        variables: { data: { date: this.newBlockedDate, reason: this.newBlockedReason || null } },
+        variables: { data: { date: this.newBlockedDate(), reason: this.newBlockedReason() || null } },
       })
       .subscribe({
         next: ({ data }) => {
           const row = data.addDeliveryBlockedDate;
-          const existing = this.blocked.findIndex((b) => b.id === row.id);
+          const existing = this.blocked().findIndex((b) => b.id === row.id);
           if (existing >= 0) {
-            this.blocked[existing] = row;
+            this.blocked.update((blocked) => blocked.map((b, i) => (i === existing ? row : b)));
           } else {
-            this.blocked = [...this.blocked, row].sort((a, b) => a.date.localeCompare(b.date));
+            this.blocked.update((blocked) => [...blocked, row].sort((a, b) => a.date.localeCompare(b.date)));
           }
-          this.newBlockedDate = '';
-          this.newBlockedReason = '';
+          this.newBlockedDate.set('');
+          this.newBlockedReason.set('');
           this.toastr.success('Date blocked');
-          this.cdr.markForCheck();
         },
         error: () => this.toastr.error('Could not block that date'),
       });
@@ -538,9 +539,8 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
   removeBlocked(b: BlockedRow, index: number): void {
     this.apollo.mutate<any>({ mutation: DELETE_BLOCKED, variables: { id: b.id } }).subscribe({
       next: () => {
-        this.blocked.splice(index, 1);
+        this.blocked.update((blocked) => blocked.filter((_, i) => i !== index));
         this.toastr.success('Date unblocked');
-        this.cdr.markForCheck();
       },
       error: () => this.toastr.error('Could not remove that date'),
     });

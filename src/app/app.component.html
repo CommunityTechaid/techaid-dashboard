@@ -10,7 +10,7 @@
             <app-header></app-header>
             <!-- Begin Page Content -->
             <div class="container-fluid">
-                @if ((authLoading || backendStatus === 'checking') && showInterstitial) {
+                @if ((authLoading() || backendStatus() === 'checking') && showInterstitial()) {
                     <div class="row d-flex justify-content-center align-items-center" style="min-height: 60vh;">
                         <div class="col-lg-5 col-md-8 text-center">
                             <div class="card shadow p-5">
@@ -22,7 +22,7 @@
                             </div>
                         </div>
                     </div>
-                } @else if (backendStatus === 'error') {
+                } @else if (backendStatus() === 'error') {
                     <div class="row d-flex justify-content-center align-items-center" style="min-height: 60vh;">
                         <div class="col-lg-5 col-md-8 text-center">
                             <div class="card shadow p-5">
@@ -48,7 +48,7 @@
                 </div>
             </div>
 
-            <div style="position:absolute;bottom: 0; right: 0;" title="API: {{apiVersion || '...'}} / Web: {{version.version}} ({{version.commit}}) {{version.build}}">
+            <div style="position:absolute;bottom: 0; right: 0;" title="API: {{apiVersion() || '...'}} / Web: {{version.version}} ({{version.commit}}) {{version.build}}">
                 <small class="me-1"><sup>Version Info</sup></small>
             </div>
         </footer>

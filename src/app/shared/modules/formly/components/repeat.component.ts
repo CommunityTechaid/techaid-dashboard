@@ -43,7 +43,7 @@ import { FieldArrayType, FormlyModule } from '@ngx-formly/core';
       }
       <hr />
       `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormlyModule]
 })
   export class RepeatTypeComponent extends FieldArrayType {

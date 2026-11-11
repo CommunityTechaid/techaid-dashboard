@@ -16,7 +16,7 @@ import { NgClass } from '@angular/common';
       </button>
     </div>
   `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgClass]
 })
 export class FormlyFieldButton extends FieldType implements OnInit  {

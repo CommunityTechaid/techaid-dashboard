@@ -498,6 +498,37 @@ For Z3 (not fixable cleanly here, or needs zone.js off to prove):
   (now only bootstrap.js); main 1.11 MB -> 1.02 MB; styles 494.29 -> 479.95 kB.
 - Stale comments that still say "DataTables ajax callback" in some host components are history, not behaviour.
 
+### Signals cleanup (done 2026-11-11, after #115)
+
+Optional follow-up to #115: the components Z1 had left `Eager` with plain fields + `markForCheck()` now hold their
+async state in signals, and most went `OnPush`. 58 `Eager` components → **7**. Lint warnings 1386 → 1332 (0 errors).
+
+Still `Eager`, and why (each keeps only the marks it needs):
+
+- **kit-info, device-request-info, donor-info, donor-parent-info, post-info**: the Formly `model` (and
+  `options.formState`) is reassigned from Apollo/router callbacks and must stay a plain mutable object, so the host is
+  marked when it changes. Page chrome (`user`, `entityName`, counts, PDF state) is signals.
+- **borough-availability**: the organisation picker writes `row.loading`/`row.options` onto ngModel-bound exception rows
+  from rxjs callbacks.
+- **delivery-configuration**: a window save writes `saving`/`saveError`/`snapshot` onto ngModel-bound window rows.
+
+Things a reviewer should know:
+
+- **org-request** is OnPush with page state in signals, but keeps the `.finally` mark after submit: the Typeform widget
+  is created in `ngAfterViewChecked`, which a signal-only repaint does not run (pinned by the streamlined-ward-lookup
+  Typeform case: it fails without that mark). It also re-marks in `applyDeviceAvailability` where it reassigns `fields`.
+- delivery-slots and feature-flags now copy rows instead of mutating them so the signal fires; delivery-slots' delete
+  matches by `group.key`, not object identity.
+- `[(ngModel)]` binds straight to writable signals in delivery-configuration and membership-settings.
+- Formly custom types are OnPush: formly marks a field when a `props` key that existed at build time changes, on every
+  control event, and on `build()` with a new model; `formState` is deep-observed.
+
+Verified: production build; full `@mocked` suite 422/422 on the combined branch.
+
+Pre-existing bugs seen and left alone: the referee delete modal reads a non-existent `{{name}}` (blank);
+role-info/user-info `confirmDelete` templates call methods that don't exist (dead markup); org-request's `startTimer`
+targets a `#timerDisplay` that is commented out.
+
 ### Where to resume
 
 #113 is finished. The next project is **#115 (zoneless)**: read "5. Then #115 (zoneless)" above. The hosts' `markForCheck()`

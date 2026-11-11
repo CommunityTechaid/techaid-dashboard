@@ -72,7 +72,7 @@ import { ScanSession } from './scan-session';
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [
     `
       .scan-input {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, TemplateRef, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
 
 import { ReactiveFormsModule } from '@angular/forms';
@@ -41,7 +41,7 @@ Ideally, the input field should be dynamically rendered using custom selector bu
     <div style="font-size:smaller" class="d-flex">
   
       @if (to.type==='select') {
-        <select [hidden]="!editable" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field">
+        <select [hidden]="!editable()" (focusout)="toggleEdit()" [formControl]="formControl" [formlyAttributes]="field">
           @for (val of to.options; track val) {
             <option
               [value]="val.value" >
@@ -52,13 +52,13 @@ Ideally, the input field should be dynamically rendered using custom selector bu
       }
 
       @if (to.type!=='select') {
-        <input [hidden]="!editable" (focusout)="toggleEdit()" [type]="to.type" [formControl]="formControl" [formlyAttributes]="field">
+        <input [hidden]="!editable()" (focusout)="toggleEdit()" [type]="to.type" [formControl]="formControl" [formlyAttributes]="field">
       }
       @if (formControl.value != null && formControl.value !== '') {
-        <span [hidden]="editable" class="pr-1"  [innerText]="formControl.value"></span>
+        <span [hidden]="editable()" class="pr-1"  [innerText]="formControl.value"></span>
       }
       @if (formControl.value == null || formControl.value === '') {
-        <span [hidden]="editable" class="pr-1 pl-1">None</span>
+        <span [hidden]="editable()" class="pr-1 pl-1">None</span>
       }
       @if (to.descriptor) {
         <span class="pr-1">{{to.descriptor }}</span>
@@ -88,23 +88,21 @@ Ideally, the input field should be dynamically rendered using custom selector bu
     </div>
   </ng-template>
   `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ReactiveFormsModule, FormlyModule]
 })
 export class FormlyCustomKitInfoType extends FieldType<FieldTypeConfig> implements OnInit, OnDestroy {
-    editable = false;
+    // A signal: toggleEdit also runs from the NgbModal footer, a separate view root, so the field repaints without zone.js (#115).
+    readonly editable = signal(false);
     choice = false;
     private destroy$ = new Subject<void>();
-    private readonly cdr = inject(ChangeDetectorRef);
 
     constructor(private modalService: NgbModal) {
       super();
     }
 
     toggleEdit(){
-      this.editable = !this.editable
-      // Called from the NgbModal footer, a separate view root: mark this field for check (zoneless, #115).
-      this.cdr.markForCheck();
+      this.editable.update(e => !e);
     }
 
     confirmEditField(content: TemplateRef<any>){

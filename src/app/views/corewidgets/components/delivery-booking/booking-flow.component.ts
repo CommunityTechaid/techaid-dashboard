@@ -55,7 +55,7 @@ const STEP_LABELS: Record<Exclude<Step, 'confirmation'>, string> = {
     ConfirmationStepComponent,
   ],
   templateUrl: './booking-flow.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './booking-flow.component.scss',
 })
 export class BookingFlowComponent {

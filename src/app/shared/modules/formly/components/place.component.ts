@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgIf, NgFor } from '@angular/common';
@@ -23,27 +23,25 @@ const PLACES_PROXY = 'https://cta-places-proxy.community-techaid.workers.dev';
         <button class="btn btn-secondary" type="button" (click)="clear()">
           <i class="fa fa-times"></i>
         </button>
-        <ul class="list-group position-absolute w-100 shadow" style="top:100%; z-index:9999" *ngIf="suggestions.length > 0">
+        <ul class="list-group position-absolute w-100 shadow" style="top:100%; z-index:9999" *ngIf="suggestions().length > 0">
           <li class="list-group-item list-group-item-action"
               style="cursor:pointer"
-              *ngFor="let s of suggestions"
+              *ngFor="let s of suggestions()"
               (mousedown)="select(s)">
             {{ s.description }}
           </li>
         </ul>
     </div>
   `,
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ReactiveFormsModule, NgIf, NgFor]
 })
 export class PlaceInput extends FieldType implements OnInit, OnDestroy {
-  suggestions: any[] = [];
+  // A signal, so suggestions from the HTTP response or the blur timer repaint this OnPush
+  // view in every host (OnPush or not) without a manual markForCheck (#115).
+  readonly suggestions = signal<any[]>([]);
   private input$ = new Subject<string>();
   private sub?: Subscription;
-
-  // Hosts such as the referee and donor index pages are OnPush, so suggestions assigned
-  // from the HTTP response or the blur timer must mark this view for check themselves.
-  private cdr = inject(ChangeDetectorRef);
 
   constructor(private http: HttpClient) { super(); }
 
@@ -57,8 +55,7 @@ export class PlaceInput extends FieldType implements OnInit, OnDestroy {
         }).pipe(catchError(() => of({ predictions: [] })));
       })
     ).subscribe(r => {
-      this.suggestions = r.predictions || [];
-      this.cdr.markForCheck();
+      this.suggestions.set(r.predictions || []);
     });
   }
 
@@ -72,13 +69,12 @@ export class PlaceInput extends FieldType implements OnInit, OnDestroy {
 
   hideSuggestions() {
     setTimeout(() => {
-      this.suggestions = [];
-      this.cdr.markForCheck();
+      this.suggestions.set([]);
     }, 200);
   }
 
   select(suggestion: any) {
-    this.suggestions = [];
+    this.suggestions.set([]);
     if (this.to.postCode) {
       this.http.get<any>(`${PLACES_PROXY}/details`, {
         params: { place_id: suggestion.place_id }
@@ -94,6 +90,6 @@ export class PlaceInput extends FieldType implements OnInit, OnDestroy {
 
   clear() {
     this.formControl.setValue(null);
-    this.suggestions = [];
+    this.suggestions.set([]);
   }
 }

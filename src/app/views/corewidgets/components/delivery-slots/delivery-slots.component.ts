@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -152,28 +152,24 @@ interface BookingGroup {
   standalone: true,
   imports: [DatePipe, FormsModule, RouterLink],
   templateUrl: './delivery-slots.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './delivery-slots.component.scss',
-  // Stays on the Default strategy (hygiene 6.5, #114) — this component has no
-  // filter-modal-only state to make OnPush worthwhile. Its host,
-  // distributions-and-deliveries-index, is OnPush, though: every async
-  // callback here that writes template-bound state calls cdr.markForCheck()
-  // regardless, because that call also walks up and marks the OnPush ancestor
-  // dirty, which is what actually gets this subtree back into the next CD
-  // cycle. Without it, none of this component's own async repaints happen
-  // once it's embedded under an OnPush host.
+  // Every piece of template state written from an async callback is a signal (#115), so the view
+  // repaints itself under zoneless change detection and inside its OnPush host
+  // (distributions-and-deliveries-index). Booking rows are never mutated in place: a change
+  // replaces the group and row objects so the bookingGroups signal notifies.
 })
 export class DeliverySlotsComponent implements OnInit, OnDestroy {
-  loading = true;
-  exporting = false;
+  readonly loading = signal(true);
+  readonly exporting = signal(false);
 
-  bookingGroups: BookingGroup[] = [];
-  totalBookings = 0;
+  readonly bookingGroups = signal<BookingGroup[]>([]);
+  readonly totalBookings = signal(0);
 
   /** Windows for the exception-booking form, inactive ones included (any window is allowed). */
-  windows: { id: string; name: string; active: boolean }[] = [];
-  showExceptionForm = false;
-  savingException = false;
+  readonly windows = signal<{ id: string; name: string; active: boolean }[]>([]);
+  readonly showExceptionForm = signal(false);
+  readonly savingException = signal(false);
   exceptionForm: ExceptionForm = emptyExceptionForm();
 
   /**
@@ -182,7 +178,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
    * and a deleted booking stayed in the driver's CSV (#281).
    */
   private get allBookings(): BookingRow[] {
-    return this.bookingGroups.flatMap((g) => g.bookings);
+    return this.bookingGroups().flatMap((g) => g.bookings);
   }
 
   private readonly sub = new Subscription();
@@ -194,27 +190,24 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
    * limited to write:organisations (maintainer decision, #294) — volunteers must not delete.
    * Fails closed until the user state has loaded.
    */
-  canDeleteBooking = false;
+  readonly canDeleteBooking = signal(false);
 
   /** Admin exception bookings (techaid-server#73) are app:admin only. Fails closed like the above. */
-  canAddException = false;
+  readonly canAddException = signal(false);
 
   constructor(
     private readonly apollo: Apollo,
     private readonly toastr: ToastrService,
     private readonly featureFlags: FeatureFlagService,
     private readonly wardLookup: WardLookupService,
-    private readonly cdr: ChangeDetectorRef,
     private readonly host: ElementRef<HTMLElement>,
   ) {}
 
   ngOnInit(): void {
     this.sub.add(
       this.user$.subscribe((user) => {
-        this.canDeleteBooking = !!user?.authorities?.['write:organisations'];
-        this.canAddException = !!user?.authorities?.['app:admin'];
-        // Gates the Delete button inside an OnPush ancestor — mark for check.
-        this.cdr.markForCheck();
+        this.canDeleteBooking.set(!!user?.authorities?.['write:organisations']);
+        this.canAddException.set(!!user?.authorities?.['app:admin']);
       }),
     );
     this.loadWhenFirstVisible();
@@ -245,32 +238,26 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   }
 
   load(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.sub.add(
       this.apollo
         .query<any>({ query: DATA_QUERY, fetchPolicy: 'network-only' })
         .subscribe({
           next: ({ data }) => {
             this.groupBookings(data.deliveryBookingsAdmin || []);
-            this.windows = (data.deliveryWindowsAdmin || []).map((w: any) => ({ ...w }));
-            this.loading = false;
-            // Renders the bookings table (or keeps the "Loading…" state) via an
-            // OnPush ancestor — mark for check or the load never repaints.
-            this.cdr.markForCheck();
+            this.windows.set((data.deliveryWindowsAdmin || []).map((w: any) => ({ ...w })));
+            this.loading.set(false);
           },
           error: () => {
-            this.loading = false;
+            this.loading.set(false);
             this.toastr.error('Could not load delivery bookings');
-            // Flips `loading` off the same way the success path does — same
-            // OnPush-ancestor reasoning applies.
-            this.cdr.markForCheck();
           },
         }),
     );
   }
 
   private groupBookings(bookings: BookingRow[]): void {
-    this.totalBookings = bookings.length;
+    this.totalBookings.set(bookings.length);
     const groups = new Map<string, BookingGroup>();
     for (const b of bookings) {
       const key = `${b.date}::${b.window?.id ?? '?'}`;
@@ -285,7 +272,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
       // Apollo v4 freezes query responses — copy each row so it isn't a frozen object.
       groups.get(key)!.bookings.push({ ...b });
     }
-    this.bookingGroups = Array.from(groups.values());
+    this.bookingGroups.set(Array.from(groups.values()));
     this.resolveOutOfArea();
   }
 
@@ -298,7 +285,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
    */
   private resolveOutOfArea(): void {
     const postcodes = new Set<string>();
-    for (const group of this.bookingGroups) {
+    for (const group of this.bookingGroups()) {
       for (const b of group.bookings) {
         const pc = extractPostcode(b.address ?? '');
         if (pc) postcodes.add(pc);
@@ -324,16 +311,17 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
             outOfAreaPostcodes.add(pc);
           }
         });
-        for (const group of this.bookingGroups) {
-          for (const b of group.bookings) {
-            const pc = extractPostcode(b.address ?? '');
-            b.outOfArea = !!pc && outOfAreaPostcodes.has(pc);
-          }
-        }
-        // Drives the "outside delivery area" chiclet, resolved by a separate
-        // async chain from the initial load — mark for check or it never
-        // appears under the OnPush ancestor.
-        this.cdr.markForCheck();
+        // Drives the "outside delivery area" chiclet, resolved by a separate async chain from the
+        // initial load: replace the rows rather than flag them in place, so the signal notifies.
+        this.bookingGroups.update((groups) =>
+          groups.map((group) => ({
+            ...group,
+            bookings: group.bookings.map((b) => {
+              const pc = extractPostcode(b.address ?? '');
+              return { ...b, outOfArea: !!pc && outOfAreaPostcodes.has(pc) };
+            }),
+          })),
+        );
       }),
     );
   }
@@ -344,8 +332,8 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
   }
 
   toggleExceptionForm(): void {
-    this.showExceptionForm = !this.showExceptionForm;
-    if (this.showExceptionForm) this.exceptionForm = emptyExceptionForm();
+    this.showExceptionForm.update((shown) => !shown);
+    if (this.showExceptionForm()) this.exceptionForm = emptyExceptionForm();
   }
 
   submitExceptionBooking(): void {
@@ -355,7 +343,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
       this.toastr.warning('Fill in every field except access notes and reason.');
       return;
     }
-    this.savingException = true;
+    this.savingException.set(true);
     const input = {
       date: f.date,
       windowId: f.windowId,
@@ -370,23 +358,20 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
     };
     this.apollo.mutate<any>({ mutation: ADMIN_BOOKING, variables: { input } }).subscribe({
       next: () => {
-        this.savingException = false;
-        this.showExceptionForm = false;
+        this.savingException.set(false);
+        this.showExceptionForm.set(false);
         this.toastr.success('Exception booking added');
         this.load();
-        // Hides the form and re-enables the button under the OnPush ancestor.
-        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.savingException = false;
+        this.savingException.set(false);
         this.toastr.error(err?.message || 'Could not add the exception booking');
-        this.cdr.markForCheck();
       },
     });
   }
 
   deleteBooking(bk: BookingRow, group: BookingGroup): void {
-    if (!this.canDeleteBooking) {
+    if (!this.canDeleteBooking()) {
       return;
     }
     if (
@@ -413,21 +398,19 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
       .mutate<any>({ mutation: DELETE_BOOKING, variables: { id: bk.id, clearRequestDelivery } })
       .subscribe({
         next: () => {
-          group.bookings = group.bookings.filter((b) => b.id !== bk.id);
-          this.totalBookings = Math.max(0, this.totalBookings - 1);
-          if (group.bookings.length === 0) {
-            this.bookingGroups = this.bookingGroups.filter((g) => g.key !== group.key);
-          }
+          // Removes the row (and the whole group once it is empty) by replacing the groups, so the
+          // signal repaints the table. This is the site delivery-booking-admin-delete.spec.ts
+          // caught when it still mutated in place.
+          this.bookingGroups.update((groups) =>
+            groups
+              .map((g) => (g.key === group.key ? { ...g, bookings: g.bookings.filter((b) => b.id !== bk.id) } : g))
+              .filter((g) => g.key !== group.key || g.bookings.length > 0),
+          );
+          this.totalBookings.update((total) => Math.max(0, total - 1));
           this.toastr.success('Booking deleted');
-          // Removes the row (and possibly the whole group) from the table —
-          // mark for check or the deleted booking sticks around under the
-          // OnPush ancestor. This is the site delivery-booking-admin-delete.spec.ts
-          // caught.
-          this.cdr.markForCheck();
         },
         error: (err) => {
-          // Only a toastr here — no template-bound state changes, so no
-          // markForCheck needed (toastr renders outside this component's view).
+          // Only a toastr here — no template-bound state changes.
           this.toastr.error(err?.message || 'Could not delete booking');
         },
       });
@@ -440,10 +423,10 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
    * what you see is what you get; narrowing to a date range is left to the spreadsheet.
    */
   exportCsv(): void {
-    if (this.exporting || this.allBookings.length === 0) {
+    if (this.exporting() || this.allBookings.length === 0) {
       return;
     }
-    this.exporting = true;
+    this.exporting.set(true);
 
     const ids = Array.from(
       new Set(this.allBookings.map((b) => b.ctaReference).filter((r) => r !== null && r !== undefined)),
@@ -457,20 +440,14 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
             orgById.set(String(req.id), req.referringOrganisationContact?.referringOrganisation?.name ?? '');
           }
           this.downloadCsv(this.buildCsv(orgById));
-          this.exporting = false;
-          // Re-enables the Export CSV button (`exporting` gates [disabled] and
-          // its label) — mark for check or it stays stuck on "Exporting…"
-          // under the OnPush ancestor.
-          this.cdr.markForCheck();
+          this.exporting.set(false);
         },
         error: () => {
           // A failed org lookup shouldn't cost the user the export — every other column is
           // already in hand, so fall back to blank Org rather than nothing at all.
           this.downloadCsv(this.buildCsv(new Map()));
-          this.exporting = false;
+          this.exporting.set(false);
           this.toastr.warning('Exported without organisation names — the lookup failed.');
-          // Same `exporting` reset as the success path — same reasoning.
-          this.cdr.markForCheck();
         },
       }),
     );

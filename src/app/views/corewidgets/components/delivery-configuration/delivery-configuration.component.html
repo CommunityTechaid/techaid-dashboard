@@ -1,4 +1,4 @@
-@if (loading) {
+@if (loading()) {
   <div class="text-muted small p-3">Loading delivery slot settings…</div>
 } @else {
   <ul class="nav nav-pills mb-3">
@@ -20,15 +20,15 @@
   <div class="card shadow-sm mb-4" [hidden]="activeSection !== 'settings'">
     <div class="card-header py-2 d-flex justify-content-between align-items-center">
       <span class="font-weight-bold text-primary">Booking settings</span>
-      <button class="btn btn-sm btn-primary" [disabled]="savingSettings" (click)="saveSettings()">
-        {{ savingSettings ? 'Saving…' : 'Save settings' }}
+      <button class="btn btn-sm btn-primary" [disabled]="savingSettings()" (click)="saveSettings()">
+        {{ savingSettings() ? 'Saving…' : 'Save settings' }}
       </button>
     </div>
     <div class="card-body">
       <div class="form-check form-switch mb-3">
         <input class="form-check-input" type="checkbox" role="switch" id="dsEnabled" [(ngModel)]="enabled" />
         <label class="form-check-label" for="dsEnabled">
-          <strong>Delivery bookings {{ enabled ? 'enabled' : 'disabled' }}</strong>
+          <strong>Delivery bookings {{ enabled() ? 'enabled' : 'disabled' }}</strong>
           <span class="text-muted small"> — when off, the public page shows nothing bookable</span>
         </label>
       </div>
@@ -40,8 +40,8 @@
           <button
             type="button"
             class="btn btn-sm me-2 mb-2"
-            [class.btn-primary]="days[d.n]"
-            [class.btn-outline-secondary]="!days[d.n]"
+            [class.btn-primary]="days()[d.n]"
+            [class.btn-outline-secondary]="!days()[d.n]"
             (click)="toggleDay(d.n)"
           >
             {{ d.label }}
@@ -57,7 +57,7 @@
         </label>
       </div>
 
-      @if (boroughSchedulingEnabled) {
+      @if (boroughSchedulingEnabled()) {
         <div class="mb-3">
           @for (d of enabledDayDefs; track d.n) {
             <div class="mb-2">
@@ -75,7 +75,7 @@
                     <label class="form-check-label small" [for]="'dayBorough-' + d.n + '-' + b.code">{{ b.name }}</label>
                   </div>
                 }
-                @if ((dayBoroughs[d.n] || []).length === 0) {
+                @if ((dayBoroughs()[d.n] || []).length === 0) {
                   <span class="text-muted small">(open to any borough)</span>
                 }
               </div>
@@ -99,8 +99,8 @@
           <div class="text-muted small">How many upcoming delivery days to offer.</div>
         </div>
       </div>
-      @if (configUpdatedAt) {
-        <div class="text-muted small mt-2"><em>Last updated: {{ configUpdatedAt | date: 'medium' }}</em></div>
+      @if (configUpdatedAt()) {
+        <div class="text-muted small mt-2"><em>Last updated: {{ configUpdatedAt() | date: 'medium' }}</em></div>
       }
     </div>
   </div>
@@ -112,11 +112,11 @@
       <div class="d-flex align-items-center gap-2">
         <button
           class="btn btn-sm btn-primary"
-          [disabled]="!windowsDirty || savingAllWindows"
+          [disabled]="!windowsDirty || savingAllWindows()"
           (click)="saveAllWindows()"
         >
           {{
-            savingAllWindows
+            savingAllWindows()
               ? 'Saving…'
               : dirtyWindowsCount > 0
                 ? 'Save ' + dirtyWindowsCount + ' changed window' + (dirtyWindowsCount === 1 ? '' : 's')
@@ -130,10 +130,10 @@
       <div class="text-muted small mb-3">
         Each window can be booked by multiple people up to its capacity. A window disappears from the public page when full or inactive.
       </div>
-      @if (windows.length === 0) {
+      @if (windows().length === 0) {
         <div class="text-muted small">No windows yet — add one.</div>
       }
-      @for (w of windows; track $index) {
+      @for (w of windows(); track $index) {
         <div class="row g-2 align-items-end mb-3 pb-3 border-bottom">
           <div class="col-6 col-md-4">
             <label class="small text-muted">Name</label>
@@ -204,11 +204,11 @@
           <button class="btn btn-sm btn-outline-primary" (click)="addBlocked()"><i class="fas fa-plus"></i> Block date</button>
         </div>
       </div>
-      @if (blocked.length === 0) {
+      @if (blocked().length === 0) {
         <div class="text-muted small">No blocked dates.</div>
       } @else {
         <ul class="list-group list-group-flush">
-          @for (b of blocked; track b.id) {
+          @for (b of blocked(); track b.id) {
             <li class="list-group-item d-flex justify-content-between align-items-center px-0">
               <span><strong>{{ b.date }}</strong> @if (b.reason) { <span class="text-muted small">— {{ b.reason }}</span> }</span>
               <button class="btn btn-sm btn-outline-danger" (click)="removeBlocked(b, $index)">Remove</button>
