@@ -121,8 +121,8 @@
       } @else if (invalid('postcode')) {
         <div class="form-error">Enter your postcode.</div>
       }
-      @if (boroughWarning) {
-        <div class="alert alert-warning" data-testid="delivery-borough-warning">{{ boroughWarning }}</div>
+      @if (boroughWarning()) {
+        <div class="alert alert-warning" data-testid="delivery-borough-warning">{{ boroughWarning() }}</div>
       }
     </div>
 

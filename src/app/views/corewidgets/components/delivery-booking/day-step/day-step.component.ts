@@ -11,7 +11,7 @@ interface DayRow {
   standalone: true,
   imports: [],
   templateUrl: './day-step.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './day-step.component.scss',
 })
 export class DayStepComponent {

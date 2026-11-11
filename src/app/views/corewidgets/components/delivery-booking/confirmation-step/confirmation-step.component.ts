@@ -6,7 +6,7 @@ import { DeliveryBookingConfirmation } from '../models';
   standalone: true,
   imports: [],
   templateUrl: './confirmation-step.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './confirmation-step.component.scss',
 })
 export class ConfirmationStepComponent {

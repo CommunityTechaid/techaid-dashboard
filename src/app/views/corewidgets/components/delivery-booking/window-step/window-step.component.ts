@@ -6,7 +6,7 @@ import { DeliveryDayAvailability, DeliveryWindow } from '../models';
   standalone: true,
   imports: [],
   templateUrl: './window-step.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './window-step.component.scss',
 })
 export class WindowStepComponent {

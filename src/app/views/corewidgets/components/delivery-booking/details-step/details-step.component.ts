@@ -10,8 +10,7 @@ import {
   signal,
   SimpleChanges,
   ViewChild,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { combineLatest } from 'rxjs';
@@ -85,7 +84,7 @@ function ukPhoneValidator(control: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [ReactiveFormsModule, PlaceAutocompleteDirective],
   templateUrl: './details-step.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './details-step.component.scss',
 })
 export class DetailsStepComponent implements AfterViewInit, OnChanges {
@@ -114,15 +113,13 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
    * unsupported borough and a well-formed postcode the lookup table has no record of (out of
    * area, or newer than the table's edition) both warn — see checkBorough().
    */
-  boroughWarning: string | null = null;
+  readonly boroughWarning = signal<string | null>(null);
 
   readonly siteKey = (this.config.environment.turnstile_site_key ?? '').trim();
   readonly turnstileToken = signal<string | null>(null);
   readonly verificationPending = signal(false);
 
   private widgetId: string | null = null;
-  // `boroughWarning` is written from the ward-lookup stream: mark for check so it repaints without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly form = this.fb.nonNullable.group({
     firstName: ['', Validators.required],
@@ -261,18 +258,17 @@ export class DetailsStepComponent implements AfterViewInit, OnChanges {
    */
   private checkBorough(postcode: string): void {
     if (!UK_POSTCODE_PATTERN.test(postcode)) {
-      this.boroughWarning = null;
+      this.boroughWarning.set(null);
       return;
     }
     combineLatest([this.wardLookup.lookup(postcode), this.featureFlags.supportedBoroughs()]).subscribe(
       ([result, supported]) => {
-        this.cdr.markForCheck();
         if (result.status === 'resolved') {
           const covered = supported.some((b) => b.code === result.borough.code);
-          this.boroughWarning = covered ? null : OUT_OF_AREA_WARNING;
+          this.boroughWarning.set(covered ? null : OUT_OF_AREA_WARNING);
           return;
         }
-        this.boroughWarning = result.status === 'not-found' ? OUT_OF_AREA_WARNING : null;
+        this.boroughWarning.set(result.status === 'not-found' ? OUT_OF_AREA_WARNING : null);
       },
     );
   }
