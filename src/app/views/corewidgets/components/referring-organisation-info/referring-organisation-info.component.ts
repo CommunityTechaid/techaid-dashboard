@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { pairwise, startWith } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -174,7 +174,7 @@ const DELETE_ENTITY = gql`
     selector: 'app-referring-organisation-info',
     templateUrl: './referring-organisation-info.component.html',
     styleUrls: ['./referring-organisation-info.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, ReferringOrganisationContactComponent, DeviceRequestComponent, NgbNavOutlet, MembershipBadgesComponent, MembershipMeterComponent, ReferringOrganisationAuditComponent]
 })
 export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
@@ -188,7 +188,8 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
     private flags: FeatureFlagService
   ) {}
   sub: Subscription;
-  // Written from Apollo/router/store/flag callbacks: mark for check so the view repaints without zone.js (#115).
+  // model (the formly model), fields and options.formState stay plain and are marked for check where
+  // they are written async; name and user are signals (#115).
   private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
@@ -197,9 +198,9 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
     }
   };
   model: any = {};
-  name: string;
+  readonly name = signal<string>(undefined);
   orgId: number;
-  public user: User;
+  readonly user = signal<User>(undefined);
   @Select(UserState.user) user$: Observable<User>;
 
   fields: FormlyFieldConfig[] = [
@@ -330,10 +331,10 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
           if (res.data && res.data['referringOrganisation']) {
             const data = res.data['referringOrganisation'];
             this.model = this.normalizeData(data);
-            this.name = this.model['name'];
+            this.name.set(this.model['name']);
           } else {
             this.model = {};
-            this.name = 'Not Found!';
+            this.name.set('Not Found!');
           }
         },
         (err) => {
@@ -354,7 +355,6 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.activatedRoute.params.subscribe((params) => {
-      this.cdr.markForCheck();
       this.orgId = +params['orgId'];
       this.fetchData();
     });
@@ -371,8 +371,8 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
     );
     this.sub.add(
       this.user$.subscribe((user) => {
-        this.cdr.markForCheck();
-        this.user = user;
+        // The user signal repaints the host, which reads options.formState.disabled.
+        this.user.set(user);
         this.options.formState.disabled = !(user && user.authorities && user.authorities['write:organisations']);
       })
     );
@@ -409,10 +409,10 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
         (res) => {
           this.cdr.markForCheck();
           this.model = this.normalizeData(res.data['updateReferringOrganisation']);
-          this.name = this.model['name'];
+          this.name.set(this.model['name']);
           this.toastr.info(
             `
-      <small>Successfully updated referring organisation ${this.name}</small>
+      <small>Successfully updated referring organisation ${this.name()}</small>
       `,
             'Updated Referring Organisation',
             {
@@ -442,11 +442,10 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe(
         (res) => {
-          this.cdr.markForCheck();
           if (res.data.deleteReferringOrganisation) {
             this.toastr.info(
               `
-        <small>Successfully deleted referring organisation ${this.name}</small>
+        <small>Successfully deleted referring organisation ${this.name()}</small>
         `,
               'Referring Organisation Deleted',
               {

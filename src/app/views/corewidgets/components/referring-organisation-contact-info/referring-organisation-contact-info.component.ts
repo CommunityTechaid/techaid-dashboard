@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription, concat, from } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, switchMap, catchError } from 'rxjs/operators';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
@@ -131,7 +131,7 @@ const AUTOCOMPLETE_LIMIT = 50;
     selector: 'app-referring-organisation-contact-info',
     templateUrl: './referring-organisation-contact-info.component.html',
     styleUrls: ['./referring-organisation-contact-info.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RouterLink, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, ReactiveFormsModule, FormlyModule, DeviceRequestComponent, NgbNavOutlet, MembershipBadgesComponent]
 })
 export class ReferringOrganisationContactInfoComponent implements OnInit, OnDestroy {
@@ -145,7 +145,8 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
     private flags: FeatureFlagService
   ) {}
   sub: Subscription;
-  // Written from Apollo/router/store/flag callbacks: mark for check so the view repaints without zone.js (#115).
+  // model (the formly model), fields and options.formState stay plain and are marked for check where
+  // they are written async; fullName, user and membershipEnabled are signals (#115).
   private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {
@@ -154,10 +155,10 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
     }
   };
   model: any = {};
-  fullName: string;
+  readonly fullName = signal<string>(undefined);
   refereeId: number;
   referringOrganisationId: number;
-  public user: User;
+  readonly user = signal<User>(undefined);
   @Select(UserState.user) user$: Observable<User>;
 
   newNoteField: FormlyFieldConfig = {
@@ -315,7 +316,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
 
 
   /** Membership flag; null until the flag has loaded. */
-  membershipEnabled: boolean | null = null;
+  readonly membershipEnabled = signal<boolean | null>(null);
 
   private queryRef = this.apollo.watchQuery({
     query: QUERY_ENTITY,
@@ -357,11 +358,11 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
   }
 
   private fetchData() {
-    if (!this.refereeId || this.membershipEnabled === null) {
+    if (!this.refereeId || this.membershipEnabled() === null) {
       return;
     }
 
-    (this.membershipEnabled ? this.membershipQueryRef : this.queryRef)
+    (this.membershipEnabled() ? this.membershipQueryRef : this.queryRef)
       .refetch({
         id: this.refereeId,
       })
@@ -371,11 +372,11 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
           if (res.data && res.data['referringOrganisationContact']) {
             const data = res.data['referringOrganisationContact'];
             this.model = this.normalizeData(data);
-            this.fullName = this.model['fullName'];
+            this.fullName.set(this.model['fullName']);
             this.referringOrganisationId = this.model['referringOrganisation']['id'];
           } else {
             this.model = {};
-            this.fullName = 'Not Found!';
+            this.fullName.set('Not Found!');
           }
         },
         (err) => {
@@ -429,7 +430,6 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
     );
 
     this.sub = this.activatedRoute.params.subscribe((params) => {
-      this.cdr.markForCheck();
       this.refereeId = +params['refereeId'];
       this.fetchData();
     });
@@ -437,7 +437,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
     this.sub.add(
       this.flags.isEnabled(MEMBERSHIP_FLAG).subscribe((enabled) => {
         this.cdr.markForCheck();
-        this.membershipEnabled = enabled;
+        this.membershipEnabled.set(enabled);
         if (enabled) {
           // Between Address and Archived: Archived is the second-to-last group (notes are last).
           this.fields = [...this.fields.slice(0, -2), MEMBERSHIP_CONTACT_GROUP, ...this.fields.slice(-2)];
@@ -448,8 +448,8 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
 
     this.sub.add(
       this.user$.subscribe((user) => {
-        this.cdr.markForCheck();
-        this.user = user;
+        // The user signal repaints the host, which reads options.formState.disabled.
+        this.user.set(user);
         this.options.formState.disabled = !(user && user.authorities && (user.authorities['write:referees'] || user.authorities['write:organisations']));
       })
     );
@@ -486,7 +486,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
 
     this.apollo
       .mutate({
-        mutation: this.membershipEnabled ? UPDATE_ENTITY_MEMBERSHIP : UPDATE_ENTITY,
+        mutation: this.membershipEnabled() ? UPDATE_ENTITY_MEMBERSHIP : UPDATE_ENTITY,
         variables: {
           data,
         },
@@ -495,10 +495,10 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
         (res) => {
           this.cdr.markForCheck();
           this.model = this.normalizeData(res.data['updateReferringOrganisationContact']);
-          this.fullName = this.model['fullName'];
+          this.fullName.set(this.model['fullName']);
           this.toastr.info(
             `
-      <small>Successfully updated referee ${this.fullName}</small>
+      <small>Successfully updated referee ${this.fullName()}</small>
       `,
             'Updated Referee',
             {
@@ -528,11 +528,10 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
       })
       .subscribe(
         (res) => {
-          this.cdr.markForCheck();
           if (res.data.deleteReferringOrganisationContact) {
             this.toastr.info(
               `
-        <small>Successfully deleted referee ${this.fullName}</small>
+        <small>Successfully deleted referee ${this.fullName()}</small>
         `,
               'Referee Deleted',
               {
