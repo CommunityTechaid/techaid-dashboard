@@ -1,4 +1,4 @@
-import { Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, viewChild, ViewEncapsulation, Input, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Observable, Subscription, from, Subject, concat, of, firstValueFrom } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -107,7 +107,7 @@ query findMembershipGraceRequests {
     selector: 'device-request-component',
     styleUrls: ['device-request-component.component.scss'],
     templateUrl: './device-request-component.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NativeTableComponent, NativeTableRowDirective, RouterLink, NgbTooltip, ReactiveFormsModule, FormlyModule, DatePipe, MembershipBadgesComponent]
 })
 export class DeviceRequestComponent implements OnInit, OnDestroy {
@@ -120,8 +120,6 @@ export class DeviceRequestComponent implements OnInit, OnDestroy {
 
   /** Grace allowance M for "Grace N of M"; undefined until fetched (flag on only). A signal: it is set from an Apollo callback (#115). */
   readonly graceTotal = signal<number | undefined>(undefined);
-  // applyFilter runs from the NgbModal footer (a separate view root): mark for check so the badge repaints without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
 
   @Input()
   set where(where: any) {
@@ -157,7 +155,8 @@ export class DeviceRequestComponent implements OnInit, OnDestroy {
 
 
   filter: any = {};
-  filterCount = 0;
+  // A signal: applyFilter runs from the NgbModal footer (a separate view root), so the badge repaints without zone.js (#115).
+  readonly filterCount = signal(0);
   filterModel: any = {archived: [false]};
   filterForm: UntypedFormGroup = new UntypedFormGroup({});
   filterDeviceTypes = DEVICE_TYPES;
@@ -306,10 +305,9 @@ export class DeviceRequestComponent implements OnInit, OnDestroy {
 
     localStorage.setItem(`orgFilters-${this.tableId}`, JSON.stringify(data));
     this.filter = filter;
-    this.filterCount = count;
+    this.filterCount.set(count);
     this.filterModel = data;
     this.grid()?.reload();
-    this.cdr.markForCheck();
   }
 
   modal(content) {
