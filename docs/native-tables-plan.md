@@ -14,8 +14,9 @@ until the removal milestone).
 | M4 post-index, dashboard-index | DONE (PR M2-M4, commit 3) |
 | M5 referring organisations | DONE (PR M5-M7, commit 1) |
 | M6 donors | DONE (PR M5-M7, commit 2) |
-| M7 devices and requests | next (not started) |
-| M8 onward | not started |
+| M7 devices and requests | DONE (PR M5-M7, commit 3) |
+| M8 D&D and kit-index | next (not started) |
+| M9 onward | not started |
 
 ### Progress notes (newest last)
 
@@ -315,8 +316,33 @@ Expected saving: `zone.js` is part of `polyfills` (about 170 kB raw in the curre
 - New spec: `e2e/tests/native-table-donors.spec.ts` (4 tests, `@mocked`). Creating a donor is not
   covered in the mocked spec (the required parent is an ng-select typeahead); `donor-crud` (live) covers it.
 
+**M7 (done).** device-request-index, device-request-component and kit-component use `cta-table`.
+
+- Config kept verbatim: `simple_numbers`, menu `[5, 10, 25, 50, 100]`, order column 0 desc (ID) on both request
+  tables and column 1 desc (Make) on kit-component; page length 10, 10 and 5 (`pageLength` input, default 5).
+  On device-request-index Requests and Is Prepped are `sortable: false`; on device-request-component
+  Requests IS sortable (key `kitCount`), as before. Nested sort keys are sent verbatim
+  (`referringOrganisationContact.fullName`, `...referringOrganisation.name`, kit `donor`).
+- device-request-index: default `is_sales: [false]` and a saved filter are restored in `ngOnInit`, so the first
+  request carries them. `numericterm` is unchanged (`-1` for non-numeric text, `0` for an empty term). Rows get
+  `types`/`kitIds` in `source` (map + spread). The membership flag is read per request; `graceTotal` is fetched
+  once and repaints through `markForCheck()`.
+- **Dropped:** the `console.log('vars', ...)` debug line, and the DataTables `stateLoadParams` column-count guard.
+  The guard is not needed: storage uses a new key, and the shell ignores a saved order whose column no longer
+  exists or is not sortable. `device-request-borough-filter`'s "stale saved state" test was rewritten for that
+  (seeds a `cta-table_*` state sorting on column 12).
+- **Deliberate difference.** kit-component had `stateDuration: -1` (session storage); now 2 h in localStorage,
+  like the other embedded tables.
+- device-request-component stays `Eager` (it injects no `ChangeDetectorRef`; `graceTotal` repaints through zone.js).
+  Z1 must convert that. kit-component is `OnPush` and keeps `cdr.markForCheck()` for the filter badge.
+- kit-component keeps restoring its saved filter (incl. the FIND_USERS lookup for the typeahead items) in
+  `ngOnInit`; `donorParentId` set by the input is overwritten by the restore exactly as before.
+- New spec: `e2e/tests/native-table-requests-kits.spec.ts` (4 tests, `@mocked`).
+
 ### Where to resume
 
-Next is **M7** (device-request-index, device-request-component, kit-component). device-request-index
-has a flag-dependent query, the Borough column/filter and a stacked Requests column; its old
-`stateLoadParams` column-count guard is not needed (new storage key).
+Next is **M8**, the riskiest pair: distributions-and-deliveries-index (quick buttons call `reload(true)`,
+week-button date logic, `columnDefs orderSequence` override, `HostListener`), then kit-index (1433 lines,
+bulk actions, ID-list paste into the search box). Re-run `kit-id-list-bulk-update`,
+`distributions-and-deliveries-table`, `exclude-status-filter`, `stale-search-response` and `onpush-fanout`.
+Do one commit per component.

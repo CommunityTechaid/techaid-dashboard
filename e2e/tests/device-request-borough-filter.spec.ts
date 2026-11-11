@@ -281,7 +281,7 @@ test.describe('device request borough column + filter @mocked', () => {
     expect(filter.borough).toEqual({ _in: ['Tower Hamlets'] });
   });
 
-  test('a stale saved DataTables state (pre-borough 9 columns) does not break the table', async ({ page }) => {
+  test('a stale saved table state (order on a column that no longer exists) does not break the table', async ({ page }) => {
     test.setTimeout(60_000);
     const capturedRequests: string[] = [];
     await authenticate(page);
@@ -289,31 +289,23 @@ test.describe('device request borough column + filter @mocked', () => {
     await page.goto(INDEX_PATH);
     await expect(row(page, 'CR-TOWERHAMLETS')).toBeVisible({ timeout: 30_000 });
 
-    // Discover the exact key DataTables wrote its state under, rather than assuming it.
-    await page.waitForFunction(
-      () => Object.keys(localStorage).some((k) => k.startsWith('DataTables_')),
-      { timeout: 10_000 },
-    );
-    const stateKey = await page.evaluate(
-      () => Object.keys(localStorage).find((k) => k.startsWith('DataTables_')) ?? null,
-    );
-    expect(stateKey, 'expected DataTables to have saved its state to localStorage').toBeTruthy();
-    expect(stateKey).toBe(`DataTables_${TABLE_ID}_${INDEX_PATH}`);
-
-    // Downgrade the saved state to the pre-#180 column count (9) — the shape a browser that
-    // last visited before the Borough column shipped would still be carrying.
+    // The native table keeps its state under `cta-table_<id>_<path>` (it replaced DataTables'
+    // `DataTables_*` key in #113). Save a state that sorts on column 12, which this 10-column
+    // table does not have: the shell must ignore the order and fall back to ID desc, as the old
+    // `stateLoadParams` guard did for a stale column count.
+    const stateKey = `cta-table_${TABLE_ID}_${INDEX_PATH}`;
     await page.evaluate((key) => {
-      const state = JSON.parse(localStorage.getItem(key as string) ?? '{}');
-      if (Array.isArray(state.columns)) {
-        state.columns = state.columns.slice(0, 9);
-      }
-      localStorage.setItem(key as string, JSON.stringify(state));
+      localStorage.setItem(key, JSON.stringify({ time: Date.now(), page: 0, size: 10, term: '', order: { column: 12, dir: 'asc' } }));
     }, stateKey);
 
+    capturedRequests.length = 0;
     await page.reload();
     await expect(row(page, 'CR-TOWERHAMLETS')).toBeVisible({ timeout: 30_000 });
     await expect(row(page, 'CR-LAMBETH')).toBeVisible();
     await expect(row(page, 'CR-BLANK')).toBeVisible();
     await expect(page.locator(`#${TABLE_ID} thead th`).nth(4)).toHaveText('Borough');
+    await expect.poll(() => capturedRequests.length).toBeGreaterThan(0);
+    const parsed = JSON.parse(capturedRequests[capturedRequests.length - 1]);
+    expect(parsed.variables?.page?.sort).toEqual([{ key: 'id', value: 'desc' }]);
   });
 });
