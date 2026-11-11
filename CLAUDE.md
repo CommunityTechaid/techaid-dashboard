@@ -113,9 +113,12 @@ Server before dashboard because UI features depend on API mutations.
 Conventional commits matter here: release-please reads them to pick the
 version bump and to build the changelog. When squash-merging a PR, give
 it a conventional title (`fix: …`, `feat: …`, `chore: …`, `docs: …`,
-`feat!: …`) so the next release reflects the change correctly. Pure
-refactors, test-only changes, and CI tweaks (`chore:`, `test:`, `ci:`,
-`refactor:`) won't trigger a version bump or appear in the changelog.
+`feat!: …`) so the next release reflects the change correctly. `refactor:`
+appears in the changelog under "Code Refactoring" (`release-please-config.json`
+`changelog-sections`) and on its own triggers a patch release, so use it for
+rewrites staff will notice (e.g. the native-table migration). Test-only
+changes, docs and CI tweaks (`chore:`, `test:`, `docs:`, `ci:`) won't trigger
+a version bump or appear in the changelog.
 
 Safety rails:
 - Never push to `main` other than the fast-forward described above.

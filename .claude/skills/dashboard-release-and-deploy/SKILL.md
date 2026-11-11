@@ -102,8 +102,9 @@ component in the tag — so `v1.1.0`, not `angular-template-v1.1.0`) and
 `chore(dev): release 1.2.0` PR #125 outstanding).
 
 - Conventional-commit **titles** drive both the version bump and the changelog: `fix:` →
-  patch, `feat:` → minor, `feat!:` or a `BREAKING CHANGE:` footer → major. `chore:`, `test:`,
-  `ci:`, `refactor:` don't bump or appear in the changelog.
+  patch, `feat:` → minor, `feat!:` or a `BREAKING CHANGE:` footer → major. `refactor:` is a
+  visible "Code Refactoring" changelog section (`release-please-config.json` `changelog-sections`)
+  and alone makes a patch release. `chore:`, `test:`, `docs:`, `ci:` don't bump or appear.
 - Because most merges into `dev` are **squash merges**, the squash commit's title *is* the
   conventional-commit message release-please reads — get the PR title right, not just the
   commits inside it.
