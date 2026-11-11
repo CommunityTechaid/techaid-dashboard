@@ -79,7 +79,7 @@ interface LastResult {
   imports: [RouterLink, DatePipe],
   providers: [ScanSession, KitScannerApiService],
   templateUrl: './kit-scanner.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./kit-scanner.component.scss'],
 })
 export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrategy {

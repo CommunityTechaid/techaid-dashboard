@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -68,12 +68,14 @@ export class PostInfoComponent implements OnInit, OnDestroy {
 
   }
   sub: Subscription;
-  // Written from Apollo/router callbacks: mark for check so the view repaints without zone.js (#115).
+  // The formly `model` is reassigned from Apollo callbacks and must stay a plain object: mark for
+  // check so the form repaints without zone.js (#115). Keeps this component Eager.
   private readonly cdr = inject(ChangeDetectorRef);
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
   model = {};
-  entityName: string;
+  // A signal so the delete-confirmation modal (its own view root) also sees an async update.
+  readonly entityName = signal<string | undefined>(undefined);
   entityId: number;
   fields: FormlyFieldConfig[] = [
     {
@@ -170,10 +172,10 @@ export class PostInfoComponent implements OnInit, OnDestroy {
       if (res.data && res.data['post']) {
         const data = res.data['post'];
         this.model = this.normalizeData(data);
-        this.entityName = this.model['title'];
+        this.entityName.set(this.model['title']);
       } else {
         this.model = {};
-        this.entityName = 'Not Found!';
+        this.entityName.set('Not Found!');
       }
     }, err => {
       this.toastr.warning(`
@@ -188,7 +190,6 @@ export class PostInfoComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.activatedRoute.params.subscribe(params => {
-      this.cdr.markForCheck();
       this.entityId = +params['postId'];
       this.fetchData();
     });
@@ -211,9 +212,9 @@ export class PostInfoComponent implements OnInit, OnDestroy {
     }).subscribe(res => {
       this.cdr.markForCheck();
       this.model = this.normalizeData(res.data['updatePost']);
-      this.entityName = this.model['title'];
+      this.entityName.set(this.model['title']);
       this.toastr.info(`
-      <small>Successfully updated Post ${this.entityName}</small>
+      <small>Successfully updated Post ${this.entityName()}</small>
       `, 'Updated Post', {
           enableHtml: true
         });
@@ -231,10 +232,9 @@ export class PostInfoComponent implements OnInit, OnDestroy {
       mutation: DELETE_ENTITY,
       variables: { id: this.entityId }
     }).subscribe(res => {
-      this.cdr.markForCheck();
       if (res.data.deletePost) {
         this.toastr.info(`
-        <small>Successfully deleted Post ${this.entityName}</small>
+        <small>Successfully deleted Post ${this.entityName()}</small>
         `, 'Post Deleted', {
             enableHtml: true
           });

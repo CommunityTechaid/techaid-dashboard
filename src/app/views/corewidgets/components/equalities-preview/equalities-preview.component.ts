@@ -21,7 +21,7 @@ import { EQUALITIES_INTRO, EQUALITIES_QUESTIONS, EqualitiesQuestion } from './eq
   imports: [AppLocalCSS],
   templateUrl: './equalities-preview.component.html',
   styleUrl: './equalities-preview.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EqualitiesPreviewComponent implements OnInit, OnDestroy {
   readonly intro = EQUALITIES_INTRO;

@@ -1,4 +1,4 @@
-import { forwardRef, Component, ViewChild, ElementRef, HostListener, Input, Output, Renderer2, SimpleChanges, OnChanges, ChangeDetectionStrategy } from '@angular/core';
+import { forwardRef, Component, ViewChild, ElementRef, HostListener, Input, Output, Renderer2, SimpleChanges, OnChanges, ChangeDetectionStrategy, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, COMPOSITION_BUFFER_MODE, FormControl } from '@angular/forms';
 import { createNumberMask } from './createNumberMask';
 
@@ -26,7 +26,7 @@ export interface MaskOptions {
 @Component({
     selector: 'input-mask',
     template: `
-    <input [placeholder]="placeholder || ''" (blur)="onTouched()" #instance class="form-control" [disabled]="disabled" type="text">
+    <input [placeholder]="placeholder || ''" (blur)="onTouched()" #instance class="form-control" [disabled]="disabled()" type="text">
     `,
     providers: [
         {
@@ -35,7 +35,7 @@ export interface MaskOptions {
             multi: true
         }
     ],
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '(input)': '_handleInput($event.target.value)'
     }
@@ -83,7 +83,8 @@ export class InputMaskComponent implements ControlValueAccessor, OnChanges {
     private rawValue: string;
     private config: InputMaskOptions = new InputMaskOptions({});
 
-    disabled = false;
+    // Set by the forms API (control.disable()/enable()), which can happen outside any event here.
+    readonly disabled = signal(false);
 
     private state = {
         previousConformedValue: '',
@@ -140,7 +141,7 @@ export class InputMaskComponent implements ControlValueAccessor, OnChanges {
     }
 
     setDisabledState?(isDisabled: boolean) {
-        this.disabled = isDisabled;
+        this.disabled.set(isDisabled);
     }
 
     public _handleInput(value: string): void {

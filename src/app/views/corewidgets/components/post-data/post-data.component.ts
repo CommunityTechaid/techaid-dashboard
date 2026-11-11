@@ -1,4 +1,4 @@
-import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Subject, of, forkJoin, Observable, Subscription } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -39,15 +39,14 @@ query findPost($slug: String) {
     selector: 'post-data',
     styleUrls: ['post-data.scss'],
     templateUrl: './post-data.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RouterLink]
 })
 export class PostDataComponent implements OnInit, OnDestroy {
   sub: Subscription;
-  // Written from Apollo/router callbacks: mark for check so the view repaints without zone.js (#115).
-  private readonly cdr = inject(ChangeDetectorRef);
-  model: any;
-  user: User;
+  // Written from Apollo/store callbacks: signals so the view repaints without zone.js (#115).
+  readonly model = signal<any>(undefined);
+  readonly user = signal<User | undefined>(undefined);
   @Select(UserState.user) user$: Observable<User>;
 
   constructor(
@@ -71,21 +70,19 @@ export class PostDataComponent implements OnInit, OnDestroy {
 
   private fetchData(vars) {
     this.queryRef.refetch(vars).then(res => {
-      this.cdr.markForCheck();
       if (res.data && res.data['post']) {
         const data = res.data['post'];
-        this.model = this.normalizeData(data);
+        this.model.set(this.normalizeData(data));
         this.titleService.setTitle(data.title);
       } else {
-        this.model = {};
+        this.model.set({});
       }
     });
   }
 
   ngOnInit() {
     this.sub = this.user$.subscribe(user => {
-        this.cdr.markForCheck();
-        this.user = user;
+        this.user.set(user);
     });
     const url = (this.router.url || '').split('?', 2)[0].replace(/^\//, '');
     if (url.trim().length > 0) {
