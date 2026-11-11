@@ -216,12 +216,10 @@ export function formatWeekLabel(start: Date, end: Date): string {
     // subscription, which gates the Delivery Slots tab and resolves from an
     // HTTP call outside the host template's event tree.
     //
-    // The template also embeds <app-delivery-slots>, which stays on the
-    // Default strategy and runs its own independent Apollo queries/mutations.
-    // An OnPush ancestor that's never marked dirty skips that whole subtree on
-    // the child's own async callbacks — see delivery-slots.component.ts, which
-    // now calls cdr.markForCheck() at each of its own async state-assignment
-    // sites for exactly this reason (caught by delivery-booking-admin-delete.spec.ts).
+    // The template also embeds <app-delivery-slots>, which runs its own
+    // independent Apollo queries/mutations. It is OnPush with its state in
+    // signals, so its async callbacks repaint it without this host being
+    // marked (pinned by delivery-booking-admin-delete.spec.ts).
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestroy {
