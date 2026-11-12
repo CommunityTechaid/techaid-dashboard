@@ -33,8 +33,11 @@ function readProductionCsp(): string {
 
 export const PRODUCTION_CSP = readProductionCsp();
 
-/** Messages that mean the CSP blocked something, or that an eval was refused. */
-const VIOLATION = /Content Security Policy|EvalError|unsafe-eval/i;
+/**
+ * Messages that mean the CSP blocked something, or that an eval was refused, or (since Formly types are
+ * registered lazily by formlyTypesGuard) that a form host rendered without its Formly types registered.
+ */
+const VIOLATION = /Content Security Policy|EvalError|unsafe-eval|\[Formly Error\] The (type|wrapper|validator) ".*" could not be found/i;
 
 /** Page documents only: no file extension, and never the GraphQL endpoint the specs stub. */
 const isDocumentUrl = (url: URL) => !url.pathname.includes('graphql') && !/\.[a-z0-9]+$/i.test(url.pathname);

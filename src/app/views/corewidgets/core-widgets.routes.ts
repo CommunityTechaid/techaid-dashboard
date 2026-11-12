@@ -5,6 +5,7 @@ import { nonProductionGuard } from '@app/shared/services/non-production.guard';
 import { deliveryBookingVisibleGuard } from '@app/shared/services/delivery-booking-visible.guard';
 import { prepModeEnabledGuard } from './components/prep-mode/prep-mode-enabled.guard';
 import { updateScannerVisibleGuard } from './components/kit-scanner/update-scanner-visible.guard';
+import { formlyTypesGuard } from '@app/shared/modules/formly/formly-types.guard';
 import { CoreWidgetState } from './state/corewidgets.state';
 
 // Every route lazy-loads its component so esbuild emits one chunk per route
@@ -16,16 +17,7 @@ export const CORE_WIDGET_ROUTES: Routes = [
     path: '',
     providers: [provideStates([CoreWidgetState])],
     children: [
-      // Guarded like its '/dashboard' alias below — same component, so the same lock.
-      // Until this was added, an anonymous visitor reached the dashboard and was bounced to
-      // Auth0 only as a side effect of the findAll query failing to get a token
-      // (graphql.module.ts REAUTH_ERROR_CODES). That query now waits for authentication, so
-      // the redirect has to be intentional or the landing page renders blank.
-      // NB Auth0 returns every user to this route (main.ts sets redirect_uri to the origin);
-      // AuthGuard's isLoading$ gate is what stops that callback from looping.
-      { path: '', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: '' }, canActivate: [AuthGuard] },
-      { path: 'device-request-admin', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' }, canActivate: [AuthGuard] },
-      { path: 'organisation-device-request', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' } },
+      // ---- Routes that never render a <formly-form> (no Formly types needed) ----
       // Public device-delivery booking page — no AuthGuard so members of the public can book without a login.
       // deliveryBookingVisibleGuard hides it on production until the delivery-booking feature flag is on.
       { path: 'delivery-booking', loadComponent: () => import('./components/delivery-booking/delivery-booking.component').then(m => m.DeliveryBookingComponent), data: { title: 'Book a delivery' }, canActivate: [deliveryBookingVisibleGuard] },
@@ -33,31 +25,52 @@ export const CORE_WIDGET_ROUTES: Routes = [
       // shared by URL only — and 404s on production. Public, like the request form it would sit in.
       { path: 'preview/equalities-491d341f15', loadComponent: () => import('./components/equalities-preview/equalities-preview.component').then(m => m.EqualitiesPreviewComponent), data: { title: 'Equalities (prototype)' }, canActivate: [nonProductionGuard] },
       { path: 'dashboard/admin-panel', loadComponent: () => import('./components/admin-panel/admin-panel.component').then(m => m.AdminPanelComponent), data: { title: 'Admin Panel' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/devices', loadComponent: () => import('./components/kit-index/kit-index.component').then(m => m.KitIndexComponent), data: { title: 'Devices' }, canActivate: [AuthGuard] },
       // MUST stay above 'dashboard/devices/:kitId' — Angular matches in order, so
       // a later declaration would be swallowed as a kitId of "update-scanner".
       { path: 'dashboard/devices/update-scanner', loadComponent: () => import('./components/kit-scanner/kit-scanner.component').then(m => m.KitScannerComponent), data: { title: 'Update Scanner' }, canActivate: [AuthGuard, updateScannerVisibleGuard] },
-      { path: 'dashboard/devices/:kitId', loadComponent: () => import('./components/kit-info/kit-info.component').then(m => m.KitInfoComponent), canActivate: [AuthGuard] },
-      { path: 'dashboard/donors', loadComponent: () => import('./components/donor-index/donor-index.component').then(m => m.DonorIndexComponent), data: { title: 'Donors' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/donors/:donorId', loadComponent: () => import('./components/donor-info/donor-info.component').then(m => m.DonorInfoComponent), data: { title: 'Donor' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/donor-parents', loadComponent: () => import('./components/donor-parent-index/donor-parent-index.component').then(m => m.DonorParentIndexComponent), data: { title: 'Parent Donors' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/donor-parents/:donorParentId', loadComponent: () => import('./components/donor-parent-info/donor-parent-info.component').then(m => m.DonorParentInfoComponent), data: { title: 'Parent Donor' }, canActivate: [AuthGuard] },
       { path: 'dashboard/roles', loadComponent: () => import('./components/role-index/role-index.component').then(m => m.RoleIndexComponent), data: { title: 'Roles' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/roles/:roleId', loadComponent: () => import('./components/role-info/role-info.component').then(m => m.RoleInfoComponent), data: { title: 'Role' }, canActivate: [AuthGuard] },
       { path: 'dashboard/users', loadComponent: () => import('./components/user-index/user-index.component').then(m => m.UserIndexComponent), data: { title: 'Users' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/users/:userId', loadComponent: () => import('./components/user-info/user-info.component').then(m => m.UserInfoComponent), data: { title: 'User' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/posts', loadComponent: () => import('./components/post-index/post-index.component').then(m => m.PostIndexComponent), data: { title: 'Posts' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/posts/:postId', loadComponent: () => import('./components/post-info/post-info.component').then(m => m.PostInfoComponent), data: { title: 'Post' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/device-requests', loadComponent: () => import('./components/device-request-index/device-request-index.component').then(m => m.DeviceRequestIndexComponent), data: { title: 'Device Requests' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/device-requests/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
       { path: 'dashboard/prep-mode', loadComponent: () => import('./components/prep-mode/prep-mode.component').then(m => m.PrepModeComponent), data: { title: 'Prep Mode' }, canActivate: [AuthGuard, prepModeEnabledGuard] },
-      { path: 'dashboard/distributions-and-deliveries', loadComponent: () => import('./components/distributions-and-deliveries-index/distributions-and-deliveries-index.component').then(m => m.DistributionsAndDeliveriesIndexComponent), data: { title: 'Distributions and Deliveries' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/distributions-and-deliveries/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
-      { path: 'dashboard/referring-organisations', loadComponent: () => import('./components/referring-organisation-index/referring-organisation-index.component').then(m => m.ReferringOrganisationIndexComponent), data: { title: 'Organisations' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/referring-organisations/:orgId', loadComponent: () => import('./components/referring-organisation-info/referring-organisation-info.component').then(m => m.ReferringOrganisationInfoComponent), data: { title: 'Organisation' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/referring-organisation-contacts', loadComponent: () => import('./components/referring-organisation-contact-index/referring-organisation-contact-index.component').then(m => m.ReferringOrganisationContactIndexComponent), data: { title: 'Referees' }, canActivate: [AuthGuard] },
-      { path: 'dashboard/referring-organisation-contacts/:refereeId', loadComponent: () => import('./components/referring-organisation-contact-info/referring-organisation-contact-info.component').then(m => m.ReferringOrganisationContactInfoComponent), data: { title: 'Referee' }, canActivate: [AuthGuard] },
-      { path: 'dashboard', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: 'Dashboard' }, canActivate: [AuthGuard] },
+      // ---- Routes that render a <formly-form>, directly or through a child component ----
+      // formlyTypesGuard loads and registers the Formly types before any of them activates. They are
+      // no longer registered at bootstrap (main.ts), so a form host OUTSIDE this group fails with
+      // "There is no type by the name ...". Add any new form-hosting route here. The group sits after
+      // the routes above on purpose: it is only entered once the URL actually matches one of its children.
+      {
+        path: '',
+        canActivate: [formlyTypesGuard],
+        children: [
+        // Guarded like its '/dashboard' alias below — same component, so the same lock.
+        // Until this was added, an anonymous visitor reached the dashboard and was bounced to
+        // Auth0 only as a side effect of the findAll query failing to get a token
+        // (graphql.module.ts REAUTH_ERROR_CODES). That query now waits for authentication, so
+        // the redirect has to be intentional or the landing page renders blank.
+        // NB Auth0 returns every user to this route (main.ts sets redirect_uri to the origin);
+        // AuthGuard's isLoading$ gate is what stops that callback from looping.
+        { path: '', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: '' }, canActivate: [AuthGuard] },
+        { path: 'device-request-admin', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' }, canActivate: [AuthGuard] },
+        { path: 'organisation-device-request', loadComponent: () => import('./components/org-request/org-request').then(m => m.OrgRequestComponent), data: { title: 'Device Request' } },
+        { path: 'dashboard/devices', loadComponent: () => import('./components/kit-index/kit-index.component').then(m => m.KitIndexComponent), data: { title: 'Devices' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/devices/:kitId', loadComponent: () => import('./components/kit-info/kit-info.component').then(m => m.KitInfoComponent), canActivate: [AuthGuard] },
+        { path: 'dashboard/donors', loadComponent: () => import('./components/donor-index/donor-index.component').then(m => m.DonorIndexComponent), data: { title: 'Donors' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/donors/:donorId', loadComponent: () => import('./components/donor-info/donor-info.component').then(m => m.DonorInfoComponent), data: { title: 'Donor' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/donor-parents', loadComponent: () => import('./components/donor-parent-index/donor-parent-index.component').then(m => m.DonorParentIndexComponent), data: { title: 'Parent Donors' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/donor-parents/:donorParentId', loadComponent: () => import('./components/donor-parent-info/donor-parent-info.component').then(m => m.DonorParentInfoComponent), data: { title: 'Parent Donor' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/roles/:roleId', loadComponent: () => import('./components/role-info/role-info.component').then(m => m.RoleInfoComponent), data: { title: 'Role' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/users/:userId', loadComponent: () => import('./components/user-info/user-info.component').then(m => m.UserInfoComponent), data: { title: 'User' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/posts', loadComponent: () => import('./components/post-index/post-index.component').then(m => m.PostIndexComponent), data: { title: 'Posts' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/posts/:postId', loadComponent: () => import('./components/post-info/post-info.component').then(m => m.PostInfoComponent), data: { title: 'Post' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/device-requests', loadComponent: () => import('./components/device-request-index/device-request-index.component').then(m => m.DeviceRequestIndexComponent), data: { title: 'Device Requests' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/device-requests/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
+        { path: 'dashboard/distributions-and-deliveries', loadComponent: () => import('./components/distributions-and-deliveries-index/distributions-and-deliveries-index.component').then(m => m.DistributionsAndDeliveriesIndexComponent), data: { title: 'Distributions and Deliveries' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/distributions-and-deliveries/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
+        { path: 'dashboard/referring-organisations', loadComponent: () => import('./components/referring-organisation-index/referring-organisation-index.component').then(m => m.ReferringOrganisationIndexComponent), data: { title: 'Organisations' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/referring-organisations/:orgId', loadComponent: () => import('./components/referring-organisation-info/referring-organisation-info.component').then(m => m.ReferringOrganisationInfoComponent), data: { title: 'Organisation' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/referring-organisation-contacts', loadComponent: () => import('./components/referring-organisation-contact-index/referring-organisation-contact-index.component').then(m => m.ReferringOrganisationContactIndexComponent), data: { title: 'Referees' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/referring-organisation-contacts/:refereeId', loadComponent: () => import('./components/referring-organisation-contact-info/referring-organisation-contact-info.component').then(m => m.ReferringOrganisationContactInfoComponent), data: { title: 'Referee' }, canActivate: [AuthGuard] },
+        { path: 'dashboard', loadComponent: () => import('./components/dashboard-index/dashboard-index.component').then(m => m.DashboardIndexComponent), data: { title: 'Dashboard' }, canActivate: [AuthGuard] },
+        ]
+      },
       { path: '**', loadComponent: () => import('./components/post-data/post-data.component').then(m => m.PostDataComponent) },
     ]
   }
