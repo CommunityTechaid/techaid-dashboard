@@ -49,6 +49,14 @@ async function trackGraphQL(page: import('@playwright/test').Page): Promise<stri
     } catch {
       /* non-JSON body — leave it unnamed, it can't be the query under test */
     }
+    if (raw.includes('buildInfo')) {
+      // The app's health probe ({ buildInfo }): unanswered, "Server is starting up" replaces the page after 1 s.
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: { buildInfo: { version: '1.0.0-test', commit: 'abc', time: '2026-01-01T00:00:00Z' } } }),
+      });
+    }
     operations.push(operationName);
 
     if (operationName === 'findAll') {
