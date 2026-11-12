@@ -129,7 +129,7 @@ The only file that needs this today is `kit-info.component.ts` (the `subStatus.*
 the hardware-attribute fields). Pinned by `e2e/tests/kit-resetonhide.spec.ts`. Custom field types are
 registered centrally in `src/app/shared/modules/formly/index.ts` (`FORMLYCONFIG.types` —
 `mask`/`percentage`/`number`/`choice`/`repeat`/`richtext`/`place`/`gallery`/`date`/`datetime`/`button`);
-register new types there, not ad hoc.
+register new types there, not ad hoc. Types are NOT registered at bootstrap: `formlyTypesGuard` (`formly/formly-types.guard.ts`) dynamically imports `formly/formly-setup.ts`, which writes everything (incl. the note/kit custom types) into the root `FormlyConfig`, before any route in the guarded group of `core-widgets.routes.ts` activates. A new route that renders a `<formly-form>` (directly or via a child component) MUST go in that group or it throws `[Formly Error] The type "x" could not be found`; a new custom type goes in `formly-setup.ts` or `FORMLYCONFIG`. Pinned by `formly-types-lazy.spec.ts` and the Formly-error check in `e2e/helpers/csp.ts`.
 
 ---
 

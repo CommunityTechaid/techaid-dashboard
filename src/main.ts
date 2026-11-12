@@ -8,8 +8,6 @@ import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideToastr } from 'ngx-toastr';
 import { provideAuth0 } from '@auth0/auth0-angular';
 import { provideNgProgressHttp, progressInterceptor } from 'ngx-progressbar/http';
-import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
-import { provideFormlyConfig } from '@ngx-formly/core';
 
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
@@ -18,16 +16,7 @@ import { appSharedProviders } from '@app/shared';
 import { appStateProviders } from '@app/state/state.module';
 import { graphqlProviders } from './app/graphql.module';
 import { appRoutes } from './app/app.routing.module';
-import { formlyProviders } from './app/shared/modules/formly';
-import { dateRangeValidator, configServiceFactory } from './app/app.module';
-import { FormlyCustomNote } from './app/views/corewidgets/components/kit-info/custom-notes';
-import { FormlyCustomCreateNote } from './app/views/corewidgets/components/kit-info/custom-create-note';
-import { FormlyCustomDeviceRequestNote } from './app/views/corewidgets/components/device-request-info/custom-notes';
-import { FormlyCustomCreateDeviceRequestNote } from './app/views/corewidgets/components/device-request-info/custom-create-notes';
-import { FormlyCustomReferringOrganisationContactNote } from './app/views/corewidgets/components/referring-organisation-contact-info/custom-notes';
-import { FormlyCustomCreateReferringOrganisationContactNote } from './app/views/corewidgets/components/referring-organisation-contact-info/custom-create-notes';
-import { FormlyCustomKitCheckboxType } from './app/views/corewidgets/components/kit-info/custom-kit-checkbox';
-import { FormlyCustomKitInfoType } from './app/views/corewidgets/components/kit-info/custom-kit-info-input';
+import { configServiceFactory } from './app/app.module';
 import { GlobalErrorHandler } from './app/shared/services/global-error-handler';
 
 // Every date on this dashboard is a UK date. Angular's default LOCALE_ID is 'en-US', which
@@ -51,20 +40,8 @@ bootstrapApplication(AppComponent, {
     appStateProviders,
     ...graphqlProviders,
     ...appSharedProviders,
-    ...formlyProviders,
-    provideFormlyConfig({
-      validators: [{ name: 'dateRange', validation: dateRangeValidator }],
-      types: [
-        { name: 'notes', component: FormlyCustomNote },
-        { name: 'new-note', component: FormlyCustomCreateNote },
-        { name: 'device-request-notes', component: FormlyCustomDeviceRequestNote },
-        { name: 'device-request-new-note', component: FormlyCustomCreateDeviceRequestNote },
-        { name: 'referee-notes', component: FormlyCustomReferringOrganisationContactNote },
-        { name: 'referee-new-note', component: FormlyCustomCreateReferringOrganisationContactNote },
-        { name: 'kit-checkbox', component: FormlyCustomKitCheckboxType },
-        { name: 'kit-info-input', component: FormlyCustomKitInfoType },
-      ]
-    }),
+    // Formly types are NOT registered here: formlyTypesGuard loads them with the routes that render
+    // a <formly-form> (src/app/shared/modules/formly/formly-types.guard.ts).
     provideAuth0({
       domain: 'techaid-auth.eu.auth0.com',
       clientId: environment.auth_client_id,
@@ -83,7 +60,6 @@ bootstrapApplication(AppComponent, {
     importProvidersFrom(
       FormsModule,
       ReactiveFormsModule,
-      FormlyBootstrapModule,
     ),
     {
       provide: APP_INITIALIZER,
