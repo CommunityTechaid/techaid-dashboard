@@ -20,6 +20,9 @@
 import { Page, Route } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
 
+// Any Formly failure: a missing type/wrapper/validator, or the missing-forRoot error an unguarded form route throws.
+const FORMLY_ERROR = /\[Formly Error\]|NgxFormly:/;
+
 // Strings that exist only in the library code, so a response body containing one means it was shipped
 // to the browser. Formly core: its "type could not be found" error; ng-select: its dropdown panel
 // selector. (ngb-bootstrap is one prebundled file under the dev server and the header already needs it, so it cannot be used as a marker here; the production build output shows it only in lazy chunks.)
@@ -106,7 +109,7 @@ test.describe('Formly types load on demand @mocked', () => {
     test.setTimeout(90_000);
     await stubGraphql(page);
     const formlyErrors: string[] = [];
-    page.on('console', m => /\[Formly Error\]/.test(m.text()) && formlyErrors.push(m.text()));
+    page.on('console', m => FORMLY_ERROR.test(m.text()) && formlyErrors.push(m.text()));
 
     // /dashboard/roles is in the non-form group: no types registered yet.
     await page.goto('/dashboard/roles');
@@ -137,8 +140,8 @@ test.describe('Formly types load on demand @mocked', () => {
       test.setTimeout(90_000);
       await stubGraphql(page);
       const formlyErrors: string[] = [];
-      page.on('console', m => /\[Formly Error\]/.test(m.text()) && formlyErrors.push(m.text()));
-      page.on('pageerror', e => /\[Formly Error\]/.test(String(e)) && formlyErrors.push(String(e)));
+      page.on('console', m => FORMLY_ERROR.test(m.text()) && formlyErrors.push(m.text()));
+      page.on('pageerror', e => FORMLY_ERROR.test(String(e)) && formlyErrors.push(String(e)));
 
       await page.goto(h.route);
       await page.getByRole('link', { name: h.open }).or(page.getByRole('button', { name: h.open })).first().click();
