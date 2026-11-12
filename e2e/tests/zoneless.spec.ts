@@ -32,6 +32,11 @@ test.describe('zoneless change detection @mocked', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           data: {
+            // Also answers the app's health probe ({ buildInfo }). Without it the probe never
+            // succeeds, and once the interstitial grace period passes "Server is starting up"
+            // replaces the router outlet for good: the test then failed whenever the page took
+            // longer than that grace period to render (about 1 run in 10).
+            buildInfo: { version: '1.0.0-test', commit: 'abc', time: '2026-01-01T00:00:00Z' },
             post: {
               __typename: 'Post',
               id: '1',

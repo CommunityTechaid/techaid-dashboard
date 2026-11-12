@@ -32,6 +32,7 @@ const CONNECTION_STRING =
 const SDK_MODULE = /applicationinsights-web/;
 
 interface Envelope {
+  tags?: Record<string, string>;
   data?: {
     baseType?: string;
     baseData?: { url?: string; properties?: Record<string, string>; exceptions?: { message?: string }[] };
@@ -52,9 +53,10 @@ function parseEnvelopes(body: string): Envelope[] {
 }
 
 /** Stubs everything the public post page and the SDK touch. */
-async function setUp(page: Page, connectionString: string): Promise<{ pageViews: string[]; sdkRequests: string[]; exceptions: TrackedException[] }> {
+async function setUp(page: Page, connectionString: string): Promise<{ pageViews: string[]; sdkRequests: string[]; exceptions: TrackedException[]; roles: string[] }> {
   const pageViews: string[] = [];
   const exceptions: TrackedException[] = [];
+  const roles: string[] = [];
   const sdkRequests: string[] = [];
   page.on('request', r => { if (SDK_MODULE.test(r.url())) sdkRequests.push(r.url()); });
 
@@ -66,6 +68,7 @@ async function setUp(page: Page, connectionString: string): Promise<{ pageViews:
   await page.route(`https://${INGEST_HOST}/**`, async (route: Route) => {
     const envelopes = parseEnvelopes(route.request().postData() ?? '');
     for (const env of envelopes) {
+      roles.push(env.tags?.['ai.cloud.role'] ?? '');
       if (env.data?.baseType === 'PageviewData' && env.data.baseData?.url) {
         pageViews.push(env.data.baseData.url);
       }
@@ -94,6 +97,8 @@ async function setUp(page: Page, connectionString: string): Promise<{ pageViews:
     contentType: 'application/json',
     body: JSON.stringify({
       data: {
+        // The app's health probe: without it the "Server is starting up" interstitial replaces the page.
+        buildInfo: { version: '1.0.0-test', commit: 'abc', time: '2026-01-01T00:00:00Z' },
         post: {
           __typename: 'Post', id: 'e2e-ai', title: 'e2e-ai', slug: 'e2e-ai-landing',
           content: '<p>App Insights landing page</p>', published: true, secured: false,
@@ -101,7 +106,7 @@ async function setUp(page: Page, connectionString: string): Promise<{ pageViews:
       },
     }),
   }));
-  return { pageViews, sdkRequests, exceptions };
+  return { pageViews, sdkRequests, exceptions, roles };
 }
 
 /** In-app navigation without a link: Angular's Location listens to popstate. */
@@ -117,7 +122,7 @@ test.describe('Application Insights lazy load @mocked', () => {
 
   test('the first route and a later navigation are both tracked as page views', async ({ page }) => {
     test.setTimeout(120_000);
-    const { pageViews } = await setUp(page, CONNECTION_STRING);
+    const { pageViews, roles } = await setUp(page, CONNECTION_STRING);
 
     await page.goto('/e2e-ai-landing');
     await expect(page.getByText('App Insights landing page')).toBeVisible({ timeout: 30_000 });
@@ -133,6 +138,7 @@ test.describe('Application Insights lazy load @mocked', () => {
       .toContain('/e2e-ai-second');
 
     expect(pageViews.filter(u => u === '/e2e-ai-landing'), 'landing page tracked exactly once').toHaveLength(1);
+    expect(new Set(roles), 'every envelope carries the dashboard role name').toEqual(new Set(['techaid-dashboard']));
   });
 
   test('without a connection string the SDK is never fetched', async ({ page }) => {

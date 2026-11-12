@@ -9,6 +9,8 @@ declare const window: Window & { __env?: { appInsightsConnectionString?: string 
 
 type Telemetry = (ai: ApplicationInsights) => void;
 
+const CLOUD_ROLE = 'techaid-dashboard';
+
 /** Upper bound on calls buffered while the SDK loads, so a stuck import cannot grow without limit. */
 const MAX_PENDING = 100;
 
@@ -67,6 +69,12 @@ export class AppInsightsService {
         config: { connectionString, enableAutoRouteTracking: false }
       });
       ai.loadAppInsights();
+      // Label browser rows (`AppRoleName` in Log Analytics): production shares its resource with
+      // the API, whose rows are `techaid-api`; without this the dashboard's role name is empty.
+      ai.addTelemetryInitializer(item => {
+        item.tags = item.tags ?? [];
+        item.tags['ai.cloud.role'] = CLOUD_ROLE;
+      });
       this.appInsights = ai;
       const queued = this.pending ?? [];
       this.pending = null;
