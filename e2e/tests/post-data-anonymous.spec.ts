@@ -52,6 +52,14 @@ test.describe('anonymous visitor on a public content page @mocked', () => {
       } catch {
         /* non-JSON body — not one of ours */
       }
+      if (raw.includes('buildInfo')) {
+        // The app's health probe ({ buildInfo }): unanswered, "Server is starting up" replaces the page after 1 s.
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { buildInfo: { version: '1.0.0-test', commit: 'abc', time: '2026-01-01T00:00:00Z' } } }),
+        });
+      }
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
