@@ -427,6 +427,54 @@ test.describe('streamlined ward lookup @mocked', () => {
     await expect(page.locator('formly-form')).toHaveCount(0);
   });
 
+  /**
+   * The Typeform embed is injected on demand (#371). If it cannot load at page open AND again at
+   * submit, the request is still saved, so the requester must be told that instead of being left
+   * with an empty panel.
+   */
+  test('a submit when the Typeform embed cannot load says the request was saved', async ({ page }) => {
+    test.setTimeout(90_000);
+    let embedAttempts = 0;
+    await page.route('**://embed.typeform.com/**', route => {
+      embedAttempts += 1;
+      return route.abort('failed');
+    });
+    await installMocks(page, { towerHamlets: true, streamlinedLookup: true });
+    await page.route('**/graphql', async route => {
+      const raw = route.request().postData() ?? '';
+      if (raw.includes('createDeviceRequest')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: { createDeviceRequest: { id: 4243, correlationId: 'corr-fail-4243', membershipGraceIndex: null } },
+          }),
+        });
+      }
+      return route.fallback();
+    });
+    await openReadyPage(page);
+
+    await fillSubmittableTowerHamletsRequest(page);
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    const notice = page.getByTestId('typeform-unavailable');
+    await expect(notice).toBeVisible({ timeout: 15_000 });
+    await expect(notice).toContainText('Your request has been received and saved');
+    await expect(notice).toContainText('equalities form could not be displayed');
+    await expect(notice).toContainText(
+      'Please email distributions@communitytechaid.org.uk and let us know that you still need to complete the equalities form to complete your request.',
+    );
+    await expect(notice.getByRole('link', { name: 'distributions@communitytechaid.org.uk' })).toHaveAttribute(
+      'href',
+      'mailto:distributions@communitytechaid.org.uk',
+    );
+    await expect(notice).not.toContainText('7 days');
+    expect(embedAttempts).toBeGreaterThanOrEqual(2); // page-open warm-up + the retry at submit
+    await expect(page.locator('#tf-form')).toHaveCount(0);
+    await expect(page.locator('formly-form')).toHaveCount(0);
+  });
+
   test('Tower Hamlets is out of area when its borough flag is off', async ({ page }) => {
     test.setTimeout(90_000);
     await installMocks(page, { towerHamlets: false, streamlinedLookup: true });
