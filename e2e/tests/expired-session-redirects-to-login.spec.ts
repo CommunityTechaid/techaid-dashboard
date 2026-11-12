@@ -60,6 +60,18 @@ test.describe('expired staff session still re-prompts for login @mocked', () => 
 
     let graphqlAttempts = 0;
     await page.route('**/graphql', route => {
+      // The app's startup health probe (a raw `{ buildInfo }` fetch from BackendStatusService)
+      // also hits /graphql, from outside any component. Answer it, but don't count it: only a
+      // query issued from inside the component proves the redirect came from the auth link.
+      if ((route.request().postData() ?? '').includes('buildInfo')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: { buildInfo: { version: '1.0.0-test', commit: 'abc', time: '2026-01-01T00:00:00Z' } },
+          }),
+        });
+      }
       graphqlAttempts++;
       return route.fulfill({
         status: 200,
