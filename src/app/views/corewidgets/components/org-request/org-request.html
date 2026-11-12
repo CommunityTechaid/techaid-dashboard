@@ -55,7 +55,15 @@
           }
           @if (showTypeform() && wardSubmitted()) {
             <div class="col-md-12">
-              <div #tfForm id="tf-form" style="width: 100%; height: 800px"></div>
+              @if (typeformUnavailable()) {
+                <div class="alert alert-warning border-left-warning" data-testid="typeform-unavailable">
+                  Your request has been received and saved. The follow-up equalities form could not be displayed.
+                  We are currently dealing with a high volume of requests and will do our best to contact you
+                  in the next 7 days.
+                </div>
+              } @else {
+                <div #tfForm id="tf-form" style="width: 100%; height: 800px"></div>
+              }
             </div>
           }
         </div>

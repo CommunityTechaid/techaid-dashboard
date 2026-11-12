@@ -268,6 +268,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   isOrganisationExists = true;
   newOrganisationName = ""
   readonly showTypeform = signal(false);
+  readonly typeformUnavailable = signal(false);
   borough = "";
   ward = "";
   unsupported = false;
@@ -1614,7 +1615,8 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     // loading (or failed earlier and is retried here), repaint when it arrives.
     loadTypeformEmbed().then(
       () => this.changeDetectorRef.markForCheck(),
-      () => undefined
+      // Failed again after the retry: the request is saved, so say so instead of an empty panel.
+      () => this.typeformUnavailable.set(true)
     );
   }
 
