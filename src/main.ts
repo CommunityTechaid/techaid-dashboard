@@ -4,7 +4,6 @@ import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/ht
 import { registerLocaleData } from '@angular/common';
 import localeEnGb from '@angular/common/locales/en-GB';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideToastr } from 'ngx-toastr';
@@ -47,7 +46,6 @@ bootstrapApplication(AppComponent, {
     provideZonelessChangeDetection(),
     { provide: LOCALE_ID, useValue: 'en-GB' },
     provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
-    provideAnimations(),
     provideHttpClient(withXhr(), withInterceptors([progressInterceptor])),
     appStateProviders,
     ...graphqlProviders,

@@ -4,7 +4,6 @@ import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-import { query } from '@angular/animations';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 
