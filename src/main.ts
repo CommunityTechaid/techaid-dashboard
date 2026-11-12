@@ -5,7 +5,6 @@ import { registerLocaleData } from '@angular/common';
 import localeEnGb from '@angular/common/locales/en-GB';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { provideRouter, withRouterConfig } from '@angular/router';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideToastr } from 'ngx-toastr';
 import { provideAuth0 } from '@auth0/auth0-angular';
 import { provideNgProgressHttp, progressInterceptor } from 'ngx-progressbar/http';
@@ -82,7 +81,6 @@ bootstrapApplication(AppComponent, {
     importProvidersFrom(
       FormsModule,
       ReactiveFormsModule,
-      NgbModule,
       FormlyBootstrapModule,
     ),
     {
