@@ -1,12 +1,10 @@
-import { enableProdMode, APP_INITIALIZER, LOCALE_ID, importProvidersFrom, provideZonelessChangeDetection } from '@angular/core';
+import { enableProdMode, APP_INITIALIZER, ErrorHandler, LOCALE_ID, importProvidersFrom, provideZonelessChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
 import localeEnGb from '@angular/common/locales/en-GB';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withRouterConfig } from '@angular/router';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideToastr } from 'ngx-toastr';
 import { provideAuth0 } from '@auth0/auth0-angular';
 import { provideNgProgressHttp, progressInterceptor } from 'ngx-progressbar/http';
@@ -30,6 +28,7 @@ import { FormlyCustomReferringOrganisationContactNote } from './app/views/corewi
 import { FormlyCustomCreateReferringOrganisationContactNote } from './app/views/corewidgets/components/referring-organisation-contact-info/custom-create-notes';
 import { FormlyCustomKitCheckboxType } from './app/views/corewidgets/components/kit-info/custom-kit-checkbox';
 import { FormlyCustomKitInfoType } from './app/views/corewidgets/components/kit-info/custom-kit-info-input';
+import { GlobalErrorHandler } from './app/shared/services/global-error-handler';
 
 // Every date on this dashboard is a UK date. Angular's default LOCALE_ID is 'en-US', which
 // renders `| date:'short'` as 8/22/26, 9:57 AM — read as 8 August by UK staff. Registering
@@ -45,9 +44,9 @@ bootstrapApplication(AppComponent, {
   providers: [
     // Zoneless change detection (#115): views repaint via signals, markForCheck, async pipe and template events.
     provideZonelessChangeDetection(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: LOCALE_ID, useValue: 'en-GB' },
     provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
-    provideAnimations(),
     provideHttpClient(withXhr(), withInterceptors([progressInterceptor])),
     appStateProviders,
     ...graphqlProviders,
@@ -84,7 +83,6 @@ bootstrapApplication(AppComponent, {
     importProvidersFrom(
       FormsModule,
       ReactiveFormsModule,
-      NgbModule,
       FormlyBootstrapModule,
     ),
     {
