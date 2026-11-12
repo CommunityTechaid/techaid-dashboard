@@ -1,12 +1,12 @@
 ---
 name: dashboard-testing-and-e2e
-description: Load BEFORE writing or changing any techaid-dashboard test, when deciding what evidence a change needs to count as done, when a Playwright spec fails and you need to know what it guards, or when adding a new spec and picking a pattern to copy. Covers the red/green rule from the issue-triage workflow, the two-tier @mocked/live-UAT Playwright suite, the certified spec inventory (what each spec pins and when you must extend it), the hygiene/cleanup tooling, known flakes, and the acceptance ladder from green CI to production.
+description: Load BEFORE writing or changing any techaid-dashboard test, when deciding what evidence a change needs to count as done, when a Playwright spec fails and you need to know what it guards, or when adding a new spec and picking a pattern to copy. Covers the red/green rule from the issue-triage workflow, the two-tier @mocked/live-UAT Playwright suite, the key specs worth knowing (what each pins and when you must extend it), the hygiene/cleanup tooling, known flakes, and the acceptance ladder from green CI to production.
 ---
 
 # TechAid Dashboard — Testing & E2E
 
 What counts as evidence in this repo, the Playwright test discipline every change must follow, and
-the certified inventory of the 30 specs under `e2e/tests/` — what each pins and when you are required
+a curated list of the key specs under `e2e/tests/` — what each pins and when you are required
 to extend it. It adds depth to `CLAUDE.md`'s Testing and Issue Triage sections; it does not restate
 them.
 
@@ -28,7 +28,7 @@ before the fix and passes after.**
 2. Run it. **Watch it fail** for the right reason — not a syntax/compile error, not a missing fixture.
 3. Implement the minimal fix.
 4. Verify `ng build --configuration production` **and** the new spec both pass.
-5. Keep the spec in the suite permanently — it becomes a certified inventory entry (§3).
+5. Keep the spec in the suite permanently — it belongs in the key-specs table (§3) if it pins a behavior worth knowing.
 
 `ng build --configuration production` is the **primary structural signal** — stricter than the dev
 build or `ng serve` (per `CLAUDE.md`). A clean production build plus a green red/green spec is the
@@ -119,10 +119,10 @@ npx playwright test --config playwright.config.uat.ts live-booking-smoke --grep 
 
 ---
 
-## 3. The certified spec inventory
+## 3. Key specs and what they pin
 
-All 30 files under `e2e/tests/`. Do not delete or weaken any of these without understanding what
-regression it re-opens.
+A curated list of the specs worth knowing, not an exhaustive inventory — list `e2e/tests/` for the full
+set. Do not delete or weaken any of these without understanding what regression it re-opens.
 
 | Spec(s) | What it pins | Tag | Extend when… |
 |---|---|---|---|
@@ -147,7 +147,7 @@ regression it re-opens.
 | `typeform-on-demand.spec.ts` | The equalities Typeform embed (script + stylesheet) is injected by `org-request.ts` only on the public request form, no longer from `index.html`: a staff page (`/dashboard/donors`) makes zero requests to `embed.typeform.com`, and `/organisation-device-request` requests `/next/embed.js`. The Typeform host is stubbed. | `@mocked` | Touching `org-request.ts`'s Typeform loader or `index.html` script tags. It cannot see the real third party: run `e2e/typeform-probe.mjs` (§4) after the deploy. |
 | `app-insights-lazy.spec.ts` | Application Insights is a lazy chunk (`AppInsightsService`): the landing route's buffered page view is flushed exactly once after the SDK loads and a later navigation is tracked, all with role name `techaid-dashboard`; no connection string (`assets/env.js` stubbed) means the SDK is never requested; a failed chunk load only warns and the app keeps working; an error Angular catches (a lazy route whose chunk fails) reaches Azure as an exception with `source: angular-error-handler` (`GlobalErrorHandler`). `assets/env.js`, the ingestion host and the SDK's CDN config fetch are stubbed; the poll timeouts are long because the SDK batches sends (15 s). | `@mocked` | Changing `AppInsightsService`, `GlobalErrorHandler`, or how/when telemetry initialises. Architecture: `dashboard-architecture-contract` §13. |
 
-Grouped 30 files into 14 table rows; the Batch 5 and delivery-booking families are each one row
+The Batch 5 and delivery-booking families are each one row
 because they share fixtures, teardown pattern, and incident (see §7 for their exemplar files
 individually when copying a pattern).
 
@@ -386,8 +386,8 @@ spec (a route string, a selector) rather than special-casing the script.
 ## Coverage posture (honest, as of 2026-07-19)
 
 - No coverage-percentage tooling is wired into this suite (unlike techaid-server's JaCoCo report) —
-  the certified inventory in §3 is the coverage signal: a behavior with no row in that table has no
-  pinning spec.
+  the key-specs table in §3 is a curated guide, not a coverage signal: list `e2e/tests/` to see whether
+  a behavior has a pinning spec.
 - Several env-gated specs (`audit-system-label.spec.ts`, `exclude-status-filter.spec.ts`,
   `referee-notes.spec.ts`) cannot run inside the sandbox host allowlist used for some automated runs —
   they still count as certified (they ran and passed at authoring time against real UAT) but need a
@@ -399,14 +399,14 @@ spec (a route string, a selector) rather than special-casing the script.
 
 ## Provenance and maintenance
 
-Authored 2026-07-19 against branch `docs/dashboard-skill-library`, from direct reads of all 30 files
+Authored 2026-07-19 against branch `docs/dashboard-skill-library`, from direct reads of the spec files
 under `e2e/tests/`, `e2e/helpers/*.ts`, `e2e/*.mjs`, `playwright.config.ts`, `playwright.config.uat.ts`,
 `package.json`, and `.github/workflows/ci.yml`.
 
 Re-verify before trusting volatile facts:
 
 ```bash
-ls e2e/tests/*.spec.ts | wc -l                                  # inventory drift (30 as of 2026-07-19)
+ls e2e/tests/*.spec.ts | wc -l                                  # how many specs exist (do not hard-code the count)
 grep -rn "@mocked\|@live-smoke" e2e/tests | grep "test.describe" # which specs carry which tag
 grep -n "SKIP_RATIO_MAX\|threshold" e2e/check-skips.mjs          # skip-hygiene ceiling
 grep -n "jobs:" -A2 .github/workflows/ci.yml                    # what CI actually gates on
