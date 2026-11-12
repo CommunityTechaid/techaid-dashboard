@@ -1040,20 +1040,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
 
-  timerUpPage: FormlyFieldConfig = {
-    hideExpression: true,
-    fieldGroup: [
-      {
-        className: 'row my-4',
-        template: '<h3 class="font-weight-bold text-primary">Oops! Unfortunately, your request has been timed out.</h3>'
-      },
-      {
-        className: 'row',
-        template: '<p>If you wish to make a request, please start a new one.</p>'
-      }
-    ]
-  }
-
 
   fields: FormlyFieldConfig[] = [
     {
@@ -1062,8 +1048,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         this.refContactPage,
         this.requestPage,
         this.thankYouPage,
-        this.moreThanThreeRequestsPage,
-        this.timerUpPage
+        this.moreThanThreeRequestsPage
       ]
     },
     this.referringOrgIdField,
@@ -1200,23 +1185,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
 
   }
 
-  startTimer() {
-    let duration = 15 * 60; // 15 minutes in seconds
-    const display = document.getElementById('timerDisplay');
-    const timerInterval = setInterval(() => {
-      const minutes = Math.floor(duration / 60);
-      const seconds = duration % 60;
-      if (display) {
-        display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        if (--duration < 0) {
-          clearInterval(timerInterval);
-          display.textContent = "Time's up!";
-          this.showTimerUpPage();
-        }
-      }
-    }, 1000);
-  }
-
   getRefContact() {
 
     if (this.emailField.formControl.errors) {
@@ -1321,16 +1289,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     const group = this.moreThanThreeRequestsPage.fieldGroup;
     if (!group) return;
     group[1].template = requestLimitCopy(detail);
-  }
-
-  showTimerUpPage() {
-    this.showTypeform.set(false);
-    this.content.set({});
-    this.refOrganisationPage.hide = true;
-    this.refContactPage.hide = true;
-    this.requestPage.hide = true;
-    this.timerUpPage.hide = false;
-    this.options.detectChanges?.(this.fields[0]);
   }
 
 
@@ -1638,7 +1596,6 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         }
       });
       this.pendingCorrelationId = null;
-      this.startTimer();
     }
 
   }
