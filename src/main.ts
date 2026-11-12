@@ -18,7 +18,7 @@ import { appSharedProviders } from '@app/shared';
 import { appStateProviders } from '@app/state/state.module';
 import { graphqlProviders } from './app/graphql.module';
 import { appRoutes } from './app/app.routing.module';
-import { FORMLYCONFIG, formlyProviders } from './app/shared/modules/formly';
+import { formlyProviders } from './app/shared/modules/formly';
 import { dateRangeValidator, configServiceFactory } from './app/app.module';
 import { FormlyCustomNote } from './app/views/corewidgets/components/kit-info/custom-notes';
 import { FormlyCustomCreateNote } from './app/views/corewidgets/components/kit-info/custom-create-note';
