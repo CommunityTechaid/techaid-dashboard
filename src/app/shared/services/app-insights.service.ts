@@ -16,7 +16,7 @@ const MAX_PENDING = 100;
  * Application Insights, loaded lazily.
  *
  * The SDK is only fetched when `window.__env.appInsightsConnectionString` is set (deploy-time
- * `assets/env.js`), and only once the first render is done and the browser is idle. Page views and
+ * `assets/env.js`), and only once the first render is done. Page views and
  * exceptions that happen before it is ready are buffered and sent once it loads, so the first
  * navigation is still tracked. A failed import is logged and telemetry is dropped; it never breaks
  * the app.
@@ -40,11 +40,15 @@ export class AppInsightsService {
       this.send(ai => ai.trackPageView({ uri: event.urlAfterRedirects }));
     });
 
-    afterNextRender(() => whenIdle(() => this.load(connectionString)));
+    // Straight after the first render, not on idle: the SDK only records API calls made once it
+    // has patched fetch/XHR, and a visitor who leaves within the idle wait would lose their
+    // landing page view. The import is async, so it still does not block that first render.
+    afterNextRender(() => void this.load(connectionString));
   }
 
-  trackException(error: Error): void {
-    const exception: IExceptionTelemetry = { exception: error };
+  /** `properties` become custom dimensions on the exception row (`Properties` in Log Analytics). */
+  trackException(error: Error, properties?: Record<string, string>): void {
+    const exception: IExceptionTelemetry = { exception: error, properties };
     this.send(ai => ai.trackException(exception));
   }
 
@@ -71,14 +75,5 @@ export class AppInsightsService {
       this.pending = null;
       console.warn('Application Insights failed to load; telemetry is disabled for this session.', err);
     }
-  }
-}
-
-/** requestIdleCallback where available (not Safari), otherwise a short timeout. */
-function whenIdle(task: () => void): void {
-  if (typeof requestIdleCallback === 'function') {
-    requestIdleCallback(task, { timeout: 3000 });
-  } else {
-    setTimeout(task, 200);
   }
 }

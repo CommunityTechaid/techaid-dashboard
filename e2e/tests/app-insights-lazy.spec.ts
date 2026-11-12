@@ -2,7 +2,7 @@
  * Application Insights is loaded lazily (perf: it was ~210 kB of the eager main bundle).
  *
  * AppInsightsService now fetches `@microsoft/applicationinsights-web` with a dynamic import()
- * after the first render, when the browser is idle. The first NavigationEnd fires BEFORE the SDK
+ * straight after the first render. The first NavigationEnd fires BEFORE the SDK
  * has arrived, so the service buffers page views and flushes them once it loads. A regression
  * here would be silent: the app works, and Azure just loses the landing page of every session
  * (or all telemetry). This spec pins:
@@ -10,7 +10,10 @@
  *     in-app navigation after load produces another, posted to the configured ingestion
  *     endpoint under the production CSP;
  *   - with no connection string (local dev, the `assets/env.js` default) the SDK is never fetched;
- *   - if the SDK chunk fails to load, the app still renders and navigates; it only warns.
+ *   - if the SDK chunk fails to load, the app still renders and navigates; it only warns;
+ *   - an error Angular catches (here: a lazy route whose chunk fails to load) reaches Azure as an
+ *     exception tagged `source: angular-error-handler` (GlobalErrorHandler). Before, Angular only
+ *     logged these to the console and Azure never saw them.
  *
  * How: `assets/env.js` is stubbed to set a connection string whose IngestionEndpoint is a
  * hostname covered by the CSP's `https://*.in.applicationinsights.azure.com`, and that host is
@@ -28,7 +31,13 @@ const CONNECTION_STRING =
 /** The SDK module request: a vite dep under `ng serve` (`@microsoft_applicationinsights-web.js`). */
 const SDK_MODULE = /applicationinsights-web/;
 
-interface Envelope { data?: { baseType?: string; baseData?: { url?: string } } }
+interface Envelope {
+  data?: {
+    baseType?: string;
+    baseData?: { url?: string; properties?: Record<string, string>; exceptions?: { message?: string }[] };
+  };
+}
+interface TrackedException { message: string; properties: Record<string, string> }
 
 function parseEnvelopes(body: string): Envelope[] {
   const trimmed = body.trim();
@@ -43,8 +52,9 @@ function parseEnvelopes(body: string): Envelope[] {
 }
 
 /** Stubs everything the public post page and the SDK touch. */
-async function setUp(page: Page, connectionString: string): Promise<{ pageViews: string[]; sdkRequests: string[] }> {
+async function setUp(page: Page, connectionString: string): Promise<{ pageViews: string[]; sdkRequests: string[]; exceptions: TrackedException[] }> {
   const pageViews: string[] = [];
+  const exceptions: TrackedException[] = [];
   const sdkRequests: string[] = [];
   page.on('request', r => { if (SDK_MODULE.test(r.url())) sdkRequests.push(r.url()); });
 
@@ -58,6 +68,12 @@ async function setUp(page: Page, connectionString: string): Promise<{ pageViews:
     for (const env of envelopes) {
       if (env.data?.baseType === 'PageviewData' && env.data.baseData?.url) {
         pageViews.push(env.data.baseData.url);
+      }
+      if (env.data?.baseType === 'ExceptionData') {
+        exceptions.push({
+          message: env.data.baseData?.exceptions?.[0]?.message ?? '',
+          properties: env.data.baseData?.properties ?? {},
+        });
       }
     }
     return route.fulfill({
@@ -85,7 +101,7 @@ async function setUp(page: Page, connectionString: string): Promise<{ pageViews:
       },
     }),
   }));
-  return { pageViews, sdkRequests };
+  return { pageViews, sdkRequests, exceptions };
 }
 
 /** In-app navigation without a link: Angular's Location listens to popstate. */
@@ -125,7 +141,7 @@ test.describe('Application Insights lazy load @mocked', () => {
 
     await page.goto('/e2e-ai-landing');
     await expect(page.getByText('App Insights landing page')).toBeVisible({ timeout: 30_000 });
-    // Give the idle callback (3 s timeout) ample time to have fired if it were wrongly scheduled.
+    // Ample time for the post-render load to have fired if it were wrongly scheduled.
     await page.waitForTimeout(5_000);
 
     expect(sdkRequests, 'SDK module requested with no connection string').toEqual([]);
@@ -151,5 +167,26 @@ test.describe('Application Insights lazy load @mocked', () => {
     await navigateInApp(page, '/e2e-ai-second');
     await expect(page.getByText('App Insights landing page')).toBeVisible();
     expect(pageErrors, 'uncaught errors after a failed SDK load').toEqual([]);
+  });
+
+  test('an error caught by Angular is reported as an exception', async ({ page }) => {
+    test.setTimeout(120_000);
+    const { exceptions } = await setUp(page, CONNECTION_STRING);
+    // A lazy route whose chunk cannot be fetched: the router hands the failure to ErrorHandler.
+    await page.route(/org-request[^/]*\.js/, route => route.abort());
+    const consoleErrors: string[] = [];
+    page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+
+    await page.goto('/e2e-ai-landing');
+    await expect(page.getByText('App Insights landing page')).toBeVisible({ timeout: 30_000 });
+    await navigateInApp(page, '/organisation-device-request');
+
+    await expect.poll(() => exceptions.filter(e => e.properties.source === 'angular-error-handler'),
+      { timeout: 45_000, intervals: [1_000] }).not.toEqual([]);
+    const reported = exceptions.find(e => e.properties.source === 'angular-error-handler');
+    expect(reported.properties.route).toBeTruthy();
+    expect(reported.message).not.toBe('');
+    // The default handler's console output is kept.
+    expect(consoleErrors.some(t => t.includes('ERROR'))).toBe(true);
   });
 });
