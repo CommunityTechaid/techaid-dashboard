@@ -33,19 +33,3 @@
 <div [ngbNavOutlet]="nav"></div>
     </div>
 </div>
-
-<ng-template #confirmDelete let-c="close" let-d="dismiss">
-    <div class="modal-header">
-        <h4 class="modal-title">Are you absolutely sure?</h4>
-    </div>
-    <div class="modal-body">
-        <small>
-            <p>Are you really sure you want to delete "<strong>{{model().name}}</strong>"? This cannot be undone!</p>
-        </small>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light" (click)="c('Close click')">CANCEL</button>
-        <button type="button" class="btn btn-danger" (click)="deleteRole(); c('Close click')">YES, DELETE
-            IT</button>
-    </div>
-</ng-template>

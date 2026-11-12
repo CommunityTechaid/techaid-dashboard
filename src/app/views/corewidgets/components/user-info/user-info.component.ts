@@ -1,6 +1,6 @@
 import { Component, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { NgbModal, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
+import { NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
@@ -34,7 +34,6 @@ query findUser($id: String!) {
 export class UserInfoComponent implements OnInit, OnDestroy {
 
   constructor(
-    private modalService: NgbModal,
     private activatedRoute: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
@@ -54,10 +53,6 @@ export class UserInfoComponent implements OnInit, OnDestroy {
       query: QUERY_USER,
       variables: {}
     });
-
-  modal(content) {
-    this.modalService.open(content, { centered: true });
-  }
 
   private fetchData() {
     if (!this.userId()) {
