@@ -15,7 +15,7 @@ test.describe('Typeform loads on demand @mocked', () => {
     test.setTimeout(60_000);
     const typeformRequests: string[] = [];
     page.on('request', req => {
-      if (req.url().includes('embed.typeform.com')) typeformRequests.push(req.url());
+      if (new URL(req.url()).hostname === 'embed.typeform.com') typeformRequests.push(req.url());
     });
     await page.route('**://embed.typeform.com/**', route => route.fulfill({ status: 200, body: '' }));
     await page.route('**/graphql', async route => {
