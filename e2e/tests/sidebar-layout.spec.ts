@@ -58,6 +58,9 @@ test.describe('sidebar and scroll-to-top @mocked', () => {
     await page.goto('/dashboard/roles');
     await expect(page.locator('#role-index tbody tr')).toHaveCount(10);
     expect(await toggled(page)).toBe(true);
+    // The old phone-only search icon (no menu behind it) is gone; the user menu is the only item left.
+    await expect(page.locator('#searchDropdown')).toHaveCount(0);
+    await expect(page.locator('#userDropdown')).toBeVisible();
     await expect(sidebar(page)).toBeHidden();
 
     await page.locator('#sidebarToggleTop').click();
