@@ -192,7 +192,15 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
       multiple: false,
       searchable: true,
       items: [],
-      required: false
+      // The server's UpdateReferringOrganisationContactInput.referringOrganisationId is @NotNull: an
+      // empty select used to send null and the whole save failed with "Illegal arguments".
+      required: true
+    },
+    validation: {
+      show: false,
+    },
+    expressionProperties: {
+      'validation.show': (model) => !!model?.showErrorState,
     },
   };
 
@@ -373,7 +381,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
             const data = res.data['referringOrganisationContact'];
             this.model = this.normalizeData(data);
             this.fullName.set(this.model['fullName']);
-            this.referringOrganisationId = this.model['referringOrganisation']['id'];
+            this.referringOrganisationId = this.model['referringOrganisation']?.['id'];
           } else {
             this.model = {};
             this.fullName.set('Not Found!');
