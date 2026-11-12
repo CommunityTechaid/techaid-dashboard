@@ -265,6 +265,8 @@ Point at techaid-server's `techaid-domain-reference` (meaning) and `techaid-arch
 
 ---
 
+---
+
 ## 11. The invariants checklist
 
 Check any diff against this table. "MUST" means a violation is a blocking review finding.
@@ -301,6 +303,38 @@ rules).
 | CSP is hand-maintained in `staticwebapp.config.json` | Accepted, fragile | New external origins silently break in prod only. `csp-probe.mjs` is the post-deploy check; run it after any origin change. |
 | Zoneless repaint relies on discipline | Accepted, partly guarded | A forgotten signal/`markForCheck()` gives stale UI with no error (§6). Missing marks often hide because another mark repaints the tree; they surface on quiet pages or under timing changes. Guards: the Z1 audit, `zoneless.spec.ts`, the OnPush specs, live `onpush-live-repaint`. ~58 components are still `Eager` with plain fields + marks; converting them to signals is optional cleanup, not required. |
 | Public-form close-toggle off-repo | Accepted (edge) | Lives at the Cloudflare edge; not discoverable or changeable from this repo. |
+
+---
+
+## 13. Error reporting and Application Insights (lazy) — how browser telemetry works
+
+Browser telemetry goes to Azure Application Insights, and the design is deliberately lazy and capped:
+
+- **The SDK is a lazy chunk.** `AppInsightsService` (`src/app/shared/services/app-insights.service.ts`)
+  imports `@microsoft/applicationinsights-web` dynamically, straight after the first render
+  (`afterNextRender`), and only if `window.__env.appInsightsConnectionString` is set (deploy-time
+  `assets/env.js`; absent in local dev, so the SDK is never fetched). It was ~210-240 kB of the eager
+  bundle. Page views and exceptions raised before it arrives are buffered (up to 100) and flushed on
+  load; a failed import logs a warning and drops telemetry, never breaking the app. The role name is
+  `techaid-dashboard` (`ai.cloud.role`, `AppRoleName` in Log Analytics), since prod shares a resource
+  with the API's `techaid-api` rows.
+- **`GlobalErrorHandler`** (`src/app/shared/services/global-error-handler.ts`) replaces Angular's
+  `ErrorHandler`. Angular swallows errors from templates, event handlers, lifecycle hooks and failed
+  navigations into `ErrorHandler`, which only logs to the console, so they never reached
+  `window.onerror` or the SDK's own collection. The handler keeps the `console.error`, then forwards to
+  `AppInsightsService.trackException` with properties `source=angular-error-handler` and `route`
+  (`location.pathname`), **capped at 50 reports per page load** so an error thrown on every repaint
+  cannot flood Azure. Reporting is wrapped in try/catch (it must never throw: that would recurse), and
+  the service is resolved through `Injector` on first use because it depends on `Router`, which itself
+  asks for `ErrorHandler` (constructor injection would be a cycle).
+- **Trade-off:** the SDK only records API calls (dependencies) made after it has patched `fetch`/XHR,
+  so requests issued before the chunk loads are not recorded as dependencies. Loading straight after
+  first render rather than on idle keeps that window, and lost landing page views, small; it does not
+  remove it.
+
+Pinned by `e2e/tests/app-insights-lazy.spec.ts`. **Invariant: do not move the SDK back into the eager
+bundle, and do not remove the 50-report cap or the try/catch.** Any new external telemetry origin
+follows the CSP rule (§8).
 
 ---
 

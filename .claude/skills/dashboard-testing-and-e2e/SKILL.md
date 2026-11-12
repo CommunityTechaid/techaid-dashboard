@@ -144,6 +144,8 @@ regression it re-opens.
 | `delivery-booking-public.spec.ts`, `delivery-booking-flag-gating.spec.ts`, `delivery-booking-address-autocomplete.spec.ts`, `delivery-booking-admin-delete.spec.ts`, `delivery-slots-badges.spec.ts` | **delivery-booking family** (2026-07 booking hardening) — the public flow's Turnstile gate + single-use-token reset on error + `BookingApiError` classification contract; feature-flag visibility/preview-banner gating; Places autocomplete as a pure non-gating suggestion aid (free text always valid, a failing proxy degrades silently); the admin per-booking delete control (`deleteDeliveryBooking`, not yet deployed to UAT hence mocked-only); and the Delivery Slots tab's matched/unmatched/closed booking badges. | all `@mocked` | Any change to `booking-flow.component`, `details-step.component`, `booking-api.service`, `feature-flag.service`, `delivery-slots.component`, or `place-autocomplete.directive`. |
 | `live-booking-smoke.spec.ts` | Real end-to-end booking against the **deployed** UAT origin — real availability, real Turnstile round-trip (UAT's siteKey is Cloudflare's always-pass test key), a real `submitDeliveryBookingPublic` write + confirmation email. Catches the class of bug the mocked spec structurally cannot (CSP stripping the widget, FE/BE schema drift, real-availability edge cases). | `@live-smoke` (excluded by default, §2) | Any change that could only break against the real deployed server/CSP — run it manually before/after such a deploy. |
 | `uat-list-pages-live.spec.ts` | Live-UAT, strictly read-only pass over every list table (the 18 paged tables, the dashboard status and post tables, both audit lists; detail-page tables via real records): rows, info line, page length, paging, sort flip-and-back (`aria-sort` never cleared, #336), search, saved state, no CSP/GraphQL errors/page errors, any mutation fails it. Implementation-agnostic: it passed before and after the native-table migration (#113, finished). Run: `npx playwright test --config playwright.config.uat.ts uat-list-pages-live` | live UAT | **After each native-tables merge once UAT redeploys, and in the release preflight**; add a row to `TABLES` for any new list page |
+| `typeform-on-demand.spec.ts` | The equalities Typeform embed (script + stylesheet) is injected by `org-request.ts` only on the public request form, no longer from `index.html`: a staff page (`/dashboard/donors`) makes zero requests to `embed.typeform.com`, and `/organisation-device-request` requests `/next/embed.js`. The Typeform host is stubbed. | `@mocked` | Touching `org-request.ts`'s Typeform loader or `index.html` script tags. It cannot see the real third party: run `e2e/typeform-probe.mjs` (§4) after the deploy. |
+| `app-insights-lazy.spec.ts` | Application Insights is a lazy chunk (`AppInsightsService`): the landing route's buffered page view is flushed exactly once after the SDK loads and a later navigation is tracked, all with role name `techaid-dashboard`; no connection string (`assets/env.js` stubbed) means the SDK is never requested; a failed chunk load only warns and the app keeps working; an error Angular catches (a lazy route whose chunk fails) reaches Azure as an exception with `source: angular-error-handler` (`GlobalErrorHandler`). `assets/env.js`, the ingestion host and the SDK's CDN config fetch are stubbed; the poll timeouts are long because the SDK batches sends (15 s). | `@mocked` | Changing `AppInsightsService`, `GlobalErrorHandler`, or how/when telemetry initialises. Architecture: `dashboard-architecture-contract` §13. |
 
 Grouped 30 files into 14 table rows; the Batch 5 and delivery-booking families are each one row
 because they share fixtures, teardown pattern, and incident (see §7 for their exemplar files
@@ -186,6 +188,20 @@ individually when copying a pattern).
   ```
   Exit 0 = Turnstile `api.js` loaded, challenge iframe attached, zero CSP violations. Deploy-verification
   depth → `dashboard-release-and-deploy`.
+- **`e2e/typeform-probe.mjs`** — the counterpart for the public request form's equalities Typeform;
+  not part of CI. Every spec either stubs `embed.typeform.com` or runs under a Playwright config
+  that maps it to 127.0.0.1, so a green suite says nothing about the real embed script, and
+  `csp-probe.mjs` only covers the booking page. Anonymous, needs no token, submits nothing
+  (`createDeviceRequest` is blocked at the network). It asserts that `/organisation-device-request`
+  fetches the real `embed.js` (200) and `widget.css` and `window.tf.createWidget` becomes a function;
+  that creating a widget renders a Typeform iframe that actually loads (script-src, style-src and
+  frame-src all allow it); zero CSP violations; and that a non-form page (`/404`) makes no request to
+  `embed.typeform.com`. Run it after any deploy touching `org-request.ts`'s loader, `index.html` or the CSP:
+  ```bash
+  node e2e/typeform-probe.mjs https://app.communitytechaid.org.uk   # prod
+  node e2e/typeform-probe.mjs                                       # UAT (default)
+  ```
+  Exit 0 = clean.
 - **`e2e/tests/teardown-helper.spec.ts`** — see §3; it is the regression cover for the helper above,
   not for product code.
 
@@ -209,6 +225,17 @@ individually when copying a pattern).
   a regression — live tokens last 24h, so anything saved yesterday is expired. Re-save (`E2E_BEARER_TOKEN=<fresh> node e2e/save-token.mjs`) and
   re-judge before assuming a real break. If `npm run e2e:fast` is green but the live suite fails broadly
   on auth, it's the token.
+- **A mocked spec must answer `{ buildInfo }`.** The app polls a `buildInfo` GraphQL health probe at
+  startup; if a `page.route('**/graphql')` stub does not answer it, the probe stays pending and the
+  spec races the "Server is starting up" interstitial that appears after
+  `INTERSTITIAL_GRACE_MS` (1000 ms, `app.component.ts`), covering the page mid-assertion. Return
+  `{ buildInfo: { version, commit, time } }` first in every stub, as `typeform-on-demand.spec.ts` does.
+- **No spec reaches Typeform or Application Insights for real.** Both Playwright configs
+  (`playwright.config.ts`, `playwright.config.uat.ts`) pass `--host-resolver-rules` mapping
+  `embed.typeform.com`, `api.typeform.com`, `*.in.applicationinsights.azure.com` and
+  `*.livediagnostics.monitor.azure.com` to 127.0.0.1, so an un-stubbed request fails locally instead of
+  reaching the third party. Specs that need those hosts stub them with `page.route`; keep any new
+  third-party host in both configs' lists.
 - **UAT data isn't guaranteed internally consistent** — e.g. a request can show a device badge on the
   index while its own detail page shows "No Devices Assigned" for a one-directional relationship. Don't
   assume a spec picking "the first row" will find a self-consistent record; either target a
