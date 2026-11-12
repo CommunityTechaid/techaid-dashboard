@@ -127,6 +127,13 @@ query findAutocompleteReferringOrganisations($term: String) {
 `;
 const AUTOCOMPLETE_LIMIT = 50;
 
+// The fullName a GDPR-erased contact is left with. Mirrors the server's
+// ReferringOrganisationContact.GDPR_ERASED_NAME (set by the gdpr.performgdprcleanup SQL), which also
+// blanks email, phone and address. Staff must still be able to archive / un-archive an erased contact
+// from this form, so its blank email and address are not required.
+const GDPR_ERASED_NAME = 'Contact - Erased due to GDPR policy';
+const isErased = (model: any): boolean => model?.fullName === GDPR_ERASED_NAME;
+
 @Component({
     selector: 'app-referring-organisation-contact-info',
     templateUrl: './referring-organisation-contact-info.component.html',
@@ -242,7 +249,10 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
             type: 'email',
             pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
             placeholder: '',
-            required: false
+            // The server's UpdateReferringOrganisationContactInput.email is @NotBlank @Email: an emptied
+            // field used to send '' and the whole save failed with a raw "must not be blank" error.
+            // GDPR-erased contacts are exempt (see GDPR_ERASED_NAME).
+            required: true
           },
           validation: {
             show: false,
@@ -250,6 +260,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
           expressionProperties: {
             'validation.show': (model) => !!model?.showErrorState,
             'templateOptions.disabled': (model, formState) => !!formState?.disabled,
+            'templateOptions.required': (model) => !isErased(model),
           },
         },
         {
@@ -289,6 +300,8 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
           },
           expressionProperties: {
             'validation.show': (model) => !!model?.showErrorState,
+            // An erased contact's address is '' (see GDPR_ERASED_NAME); it must not block archiving.
+            'templateOptions.required': (model) => !isErased(model),
           }
         }
       ]
