@@ -41,6 +41,41 @@ import {
 
 declare let window: any;
 
+const TYPEFORM_EMBED_JS = 'https://embed.typeform.com/next/embed.js';
+const TYPEFORM_WIDGET_CSS = 'https://embed.typeform.com/next/css/widget.css';
+let typeformEmbedPromise: Promise<void> | null = null;
+
+/**
+ * Loads the Typeform embed (script + stylesheet) once, only when the public request form needs it.
+ * Typeform's evergreen embed script mutates upstream, so SRI pinning is not possible; script-src
+ * CSP allowlisting is the compensating control. Do NOT set a crossorigin attribute: Typeform's CDN
+ * sends no CORS headers, so adding it makes the browser block the resource entirely.
+ */
+function loadTypeformEmbed(): Promise<void> {
+  if (typeformEmbedPromise) {
+    return typeformEmbedPromise;
+  }
+  typeformEmbedPromise = new Promise<void>((resolve, reject) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = TYPEFORM_WIDGET_CSS;
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = TYPEFORM_EMBED_JS;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      typeformEmbedPromise = null;
+      script.remove();
+      link.remove();
+      console.warn('Typeform embed failed to load');
+      reject(new Error('Typeform embed failed to load'));
+    };
+    document.head.appendChild(script);
+  });
+  return typeformEmbedPromise;
+}
+
 /** What the server tells us when it refuses a request for exceeding the referrer's cap. */
 export interface RequestLimitDetail {
   /** Null when the figure comes from the pre-form lookup, which deliberately does not expose the count. */
@@ -1173,16 +1208,9 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   }
 
   ngAfterViewInit() {
-
-
-
-    /*// Create the script element dynamically
-    const script = this.renderer.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://embed.typeform.com/next/embed.js'; // Correct URL
-    this.renderer.appendChild(this.elementRef.nativeElement, script);*/
-
-
+    // Warm the Typeform embed in the background so it is ready by the time the user submits.
+    // A failure is logged and retried by displayTypeForm.
+    loadTypeformEmbed().catch(() => undefined);
   }
 
   getRefContact() {
@@ -1582,11 +1610,17 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     this.content.set({});
     this.pendingCorrelationId = correlationId;
     this.changeDetectorRef.detectChanges();
+    // ngAfterViewChecked creates the widget once the embed script is present; if it is still
+    // loading (or failed earlier and is retried here), repaint when it arrives.
+    loadTypeformEmbed().then(
+      () => this.changeDetectorRef.markForCheck(),
+      () => undefined
+    );
   }
 
   ngAfterViewChecked() {
     // Create typeform widget based on the condition
-    if (this.showTypeform() && this.tfForm && this.pendingCorrelationId) {
+    if (this.showTypeform() && this.tfForm && this.pendingCorrelationId && window.tf?.createWidget) {
       window.tf.createWidget('f93D0s88', {
         container: this.tfForm.nativeElement,
         hidden: {
