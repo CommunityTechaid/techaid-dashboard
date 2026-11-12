@@ -462,6 +462,14 @@ test.describe('streamlined ward lookup @mocked', () => {
     await expect(notice).toBeVisible({ timeout: 15_000 });
     await expect(notice).toContainText('Your request has been received and saved');
     await expect(notice).toContainText('equalities form could not be displayed');
+    await expect(notice).toContainText(
+      'Please email distributions@communitytechaid.org.uk and let us know that you still need to complete the equalities form to complete your request.',
+    );
+    await expect(notice.getByRole('link', { name: 'distributions@communitytechaid.org.uk' })).toHaveAttribute(
+      'href',
+      'mailto:distributions@communitytechaid.org.uk',
+    );
+    await expect(notice).not.toContainText('7 days');
     expect(embedAttempts).toBeGreaterThanOrEqual(2); // page-open warm-up + the retry at submit
     await expect(page.locator('#tf-form')).toHaveCount(0);
     await expect(page.locator('formly-form')).toHaveCount(0);
