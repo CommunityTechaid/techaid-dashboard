@@ -22,7 +22,6 @@
             ],
             "allowedCommonJsDependencies": [
               "graphql-tag",
-              "ngx-lightbox",
               "lodash",
               "zen-observable"
             ],
@@ -44,17 +43,13 @@
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.css",
               "src/app/shared/modules/native-table/native-table.css",
-              "node_modules/prismjs/themes/prism.css",
-              "node_modules/ngx-lightbox/lightbox.css",
               "node_modules/@ng-select/ng-select/themes/default.theme.css",
               "node_modules/ngx-toastr/toastr.css",
               "src/fontawesome-subset.css",
               "src/styles.css",
               "src/sb-admin.css"
             ],
-            "scripts": [
-              "node_modules/bootstrap/dist/js/bootstrap.js"
-            ],
+            "scripts": [],
             "extractLicenses": false,
             "sourceMap": true,
             "optimization": false,

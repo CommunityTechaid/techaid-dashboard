@@ -108,6 +108,9 @@ then ship; API before UI:
    verifies the booking page's Turnstile/CSP on the prod origin. `<id>` is a production
    device request in status `PROCESSING_EQUALITIES_DATA_COMPLETE`; the probe cannot look one
    up on production (the saved E2E token is for the Dev & UAT Auth0 app) and submits nothing.
+   `node e2e/typeform-probe.mjs https://app.communitytechaid.org.uk` does the same for the public
+   request form's equalities Typeform (real embed script + CSP; needs no token, submits nothing) —
+   the Playwright suite never reaches the real Typeform host.
 
 Why this order: deploying before merging the release PR ships a build stamped
 with the old version, and the tag lands on a commit that isn't what's deployed.
