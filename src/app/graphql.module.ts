@@ -17,6 +17,22 @@ const REAUTH_ERROR_CODES = ['login_required', 'consent_required', 'missing_refre
 
 const isReauthError = (err: any) => Boolean(err) && REAUTH_ERROR_CODES.includes(err.error);
 
+// auth0-spa-js answers a refresh grant the tenant rejects (token expired, rotated away, revoked)
+// with GenericError('invalid_grant') — there is no iframe fallback (useRefreshTokensFallback is
+// off) and the dead refresh token stays cached, so every later attempt fails the same way.
+// It is deliberately NOT in REAUTH_ERROR_CODES: a refresh-token rotation race also answers
+// invalid_grant, and that one recovers on a retry (the winner has written a fresh token to the
+// cache). So it gets ONE retry, and if it still fails the session is dead: send staff to login.
+const DEAD_REFRESH_TOKEN_CODE = 'invalid_grant';
+const DEAD_REFRESH_TOKEN_RETRIES = 1;
+const isDeadRefreshToken = (err: any) => Boolean(err) && err.error === DEAD_REFRESH_TOKEN_CODE;
+
+// The signed-in staff areas (guarded routes in core-widgets.routes.ts: '', '/dashboard/**',
+// '/device-request-admin'). Everything else — the public request form, delivery booking, CMS
+// posts — is public. Defaulting unknown paths to public is the safe direction: a new guarded
+// route missing here degrades to the old behaviour, never to a login bounce for a visitor.
+const isStaffArea = () => /^\/(dashboard(\/|$)|device-request-admin(\/|$)|$)/.test(window.location.pathname);
+
 // A transient token failure is usually a lost race, not a broken session, and the winner of that
 // race has by then written a fresh token to the cache — so a retry typically resolves from cache
 // immediately rather than going back to the network. Two attempts is plenty; more would just
@@ -84,7 +100,10 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
           // these) it would delay the public form for no reason.
           retry({
             count: TOKEN_RETRY_COUNT,
-            delay: (err) => (isReauthError(err) ? throwError(() => err) : timer(TOKEN_RETRY_DELAY_MS)),
+            delay: (err, retryCount) =>
+              isReauthError(err) || (isDeadRefreshToken(err) && retryCount > DEAD_REFRESH_TOKEN_RETRIES)
+                ? throwError(() => err)
+                : timer(TOKEN_RETRY_DELAY_MS),
           }),
           map(token => ({ headers: new HttpHeaders({ 'Authorization': `Bearer ${token}` }) })),
           catchError(err => {
@@ -100,10 +119,17 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
               return of({});
             }
 
+            if (isDeadRefreshToken(err) && !isStaffArea()) {
+              // A dead refresh token on a PUBLIC page: an ex-staff browser whose cached identity
+              // still reads as signed in. Treat them as the anonymous visitor they now are — send
+              // the request without a token and never redirect (see the incident note above).
+              return of({});
+            }
+
             // From here on the user is known to be authenticated, so an unauthenticated request
             // would be strictly wrong: the API would answer "Access Denied" and the UI would
             // show empty tables with no explanation.
-            if (isReauthError(err)) {
+            if (isReauthError(err) || isDeadRefreshToken(err)) {
               // Session genuinely gone mid-use — re-prompt.
               redirectToLogin();
             }
