@@ -8,6 +8,7 @@ import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { warnIfFormInvalid } from '@app/shared/utils';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ENTITY = gql`
 query findPost($id: Long!) {
@@ -180,13 +181,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
         this.entityName.set('Not Found!');
       }
     }, err => {
-      this.toastr.warning(`
-          <small>${err.message}</small>
-        `, 'GraphQL Error', {
-          enableHtml: true,
-          timeOut: 15000,
-          disableTimeOut: true
-        });
+      toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
     });
   }
 
@@ -221,11 +216,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
           enableHtml: true
         });
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Update Error', {
-          enableHtml: true
-        });
+      toastError(this.toastr, err, 'Update Error');
     });
   }
 
@@ -243,11 +234,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
         this.router.navigate(['/dashboard/posts']);
       }
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Error Deleting Post', {
-          enableHtml: true
-        });
+      toastError(this.toastr, err, 'Error Deleting Post');
     });
   }
 }

@@ -46,6 +46,7 @@
 import { Page } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
 import { stubPlacesProxy } from '../helpers/places-proxy';
+import { withRef } from '../../src/app/shared/utils/error-toast';
 
 /** The exact rejection copy the server returns as a BAD_REQUEST, `<ref>` interpolated in. */
 const rejectionMessage = (ref: string): string =>
@@ -220,6 +221,18 @@ function issueToken(page: Page, token: string): Promise<void> {
 
 const resetCount = (page: Page) =>
   page.evaluate(() => (window as unknown as { __turnstile: { resets: string[] } }).__turnstile.resets.length);
+
+
+/** The X-CTA-Ref header of each booking submit the page sent (#381). */
+function submitRefs(page: Page): string[] {
+  const refs: string[] = [];
+  page.on('request', request => {
+    if (request.method() === 'POST' && (request.postData() ?? '').includes('submitDeliveryBookingPublic')) {
+      refs.push(request.headers()['x-cta-ref']);
+    }
+  });
+  return refs;
+}
 
 test.describe('public delivery-booking flow @mocked', () => {
   // A genuine member of the public: no Auth0 cache, no cookies. See the file header.
@@ -398,6 +411,7 @@ test.describe('public delivery-booking flow @mocked', () => {
     const submits: unknown[] = [];
     await stubTurnstile(page);
     await installBookingMocks(page, outcome, submits);
+    const refs = submitRefs(page);
 
     await reachDetailsStepAndFill(page);
     expect(await resetCount(page), 'no reset before any submit').toBe(0);
@@ -405,8 +419,10 @@ test.describe('public delivery-booking flow @mocked', () => {
     await issueToken(page, 'fake-token-1');
     await page.locator('button[type="submit"]').click();
 
-    // BAD_REQUEST → verbatim server copy in the banner.
-    await expect(page.locator('.form-error--banner')).toHaveText(message, { timeout: 10_000 });
+    // BAD_REQUEST → verbatim server copy in the banner, plus the request's error ref (#381).
+    await expect.poll(() => refs.length, { timeout: 10_000 }).toBeGreaterThan(0);
+    await expect(page.locator('.form-error--banner')).toHaveText(withRef(message, refs[0]), { timeout: 10_000 });
+    expect(refs[0]).toMatch(/^[A-Z2-9]{8}$/);
     // …and the single-use token was reset for the next attempt.
     await expect.poll(() => resetCount(page), { timeout: 5_000 }).toBeGreaterThan(0);
   });
@@ -418,13 +434,15 @@ test.describe('public delivery-booking flow @mocked', () => {
     const submits: unknown[] = [];
     await stubTurnstile(page);
     await installBookingMocks(page, outcome, submits);
+    const refs = submitRefs(page);
 
     await reachDetailsStepAndFill(page);
     await issueToken(page, 'fake-token-2');
     await page.locator('button[type="submit"]').click();
 
     const banner = page.locator('.form-error--banner');
-    await expect(banner).toHaveText('Something went wrong booking your delivery. Please try again.', { timeout: 10_000 });
+    await expect.poll(() => refs.length, { timeout: 10_000 }).toBeGreaterThan(0);
+    await expect(banner).toHaveText(`Something went wrong booking your delivery. Please try again. Ref: ${refs[0]}`, { timeout: 10_000 });
     await expect(banner, 'the raw internal error must never be shown to the public').not.toContainText('NullPointerException');
   });
 

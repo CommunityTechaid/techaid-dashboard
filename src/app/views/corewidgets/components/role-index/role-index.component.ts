@@ -9,6 +9,7 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { RouterLink } from '@angular/router';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ROLES = gql`
 query findAllRoles($page: PaginationInput!, $term: String) {
@@ -85,13 +86,7 @@ export class RoleIndexComponent implements OnInit, OnDestroy {
   };
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnInit() {

@@ -68,6 +68,14 @@ const remember = (key: unknown, ref: string) => {
 };
 
 /**
+ * Records the ref of a request made outside the Apollo chain that set its own `X-CTA-Ref` (the
+ * public booking service), so refForError finds it on the error that request produced.
+ */
+export function rememberRef(error: unknown, ref: string): void {
+  remember(error, ref);
+}
+
+/**
  * The ref of the operation that produced `error`, as given to a subscriber's error callback (or as
  * `result.error` from a watchQuery), or undefined when it never reached the API: for example a
  * failed token fetch, which has no server row to find.

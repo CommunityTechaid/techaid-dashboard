@@ -13,6 +13,7 @@ import { warnIfFormInvalid } from '@app/shared/utils';
 
 import { AppInitialComponent } from '../../../../shared/components/app-initial/app-initial.component';
 import { RouterLink } from '@angular/router';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_USERS = gql`
 query findAllUsers($page: PaginationInput, $roleId: String!) {
@@ -205,13 +206,7 @@ export class RoleUsersComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {
@@ -232,12 +227,7 @@ export class RoleUsersComponent implements OnInit, OnDestroy {
       this.model = {};
       this.grid()?.reload();
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Assign User Roles Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
+      toastError(this.toastr, err, 'Assign User Roles Error', { timeOut: 15000 });
     });
   }
 
@@ -251,11 +241,7 @@ export class RoleUsersComponent implements OnInit, OnDestroy {
     }).subscribe(res => {
       this.grid()?.reload();
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Error Deleting Role', {
-          enableHtml: true
-        });
+      toastError(this.toastr, err, 'Error Deleting Role');
     });
   }
 

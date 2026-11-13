@@ -35,7 +35,7 @@ const post = (title: string) => ({
   createdAt: TS, updatedAt: TS,
 });
 
-type Failure = { status: number; body: unknown };
+interface Failure { status: number; body: unknown }
 
 async function fulfill(route: Route, status: number, body: unknown): Promise<void> {
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });

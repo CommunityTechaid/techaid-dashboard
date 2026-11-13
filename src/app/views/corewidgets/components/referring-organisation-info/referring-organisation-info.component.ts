@@ -22,6 +22,7 @@ import { MembershipMeterComponent } from '@app/shared/membership/membership-mete
 import { ReferringOrganisationContactComponent } from '../referring-organisation-contact-component/referring-organisation-contact-component.component';
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 import { ReferringOrganisationAuditComponent } from '../referring-organisation-audit/referring-organisation-audit.component';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const queryEntity = (membership: string) => gql`
   query findReferringOrganisation($id: Long) {
@@ -338,17 +339,7 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
           }
         },
         (err) => {
-          this.toastr.warning(
-            `
-          <small>${err.message}</small>
-        `,
-            'GraphQL Error',
-            {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true,
-            }
-          );
+          toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
         }
       );
   }
@@ -421,15 +412,7 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
           );
         },
         (err) => {
-          this.toastr.error(
-            `
-      <small>${err.message}</small>
-      `,
-            'Update Error',
-            {
-              enableHtml: true,
-            }
-          );
+          toastError(this.toastr, err, 'Update Error');
         }
       );
   }
@@ -456,15 +439,7 @@ export class ReferringOrganisationInfoComponent implements OnInit, OnDestroy {
           }
         },
         (err) => {
-          this.toastr.error(
-            `
-      <small>${err.message}</small>
-      `,
-            'Error Deleting Referring Organisation',
-            {
-              enableHtml: true,
-            }
-          );
+          toastError(this.toastr, err, 'Error Deleting Referring Organisation');
         }
       );
   }

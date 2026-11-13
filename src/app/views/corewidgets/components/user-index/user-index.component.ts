@@ -14,6 +14,7 @@ import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modul
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { DatePipe } from '@angular/common';
 import { AppInitialComponent } from '../../../../shared/components/app-initial/app-initial.component';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_USERS = gql`
 query findAllUsers($page: PaginationInput!, $term: String) {
@@ -102,13 +103,7 @@ export class UserIndexComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {

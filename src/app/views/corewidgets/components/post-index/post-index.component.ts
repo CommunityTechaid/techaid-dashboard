@@ -14,6 +14,7 @@ import { TableColumn, TableSource } from '@app/shared/modules/native-table/table
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { warnIfFormInvalid } from '@app/shared/utils';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ENTITY = gql`
 query findAllPosts($page: PaginationInput,, $term: String) {
@@ -187,13 +188,7 @@ export class PostIndexComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {
@@ -211,12 +206,7 @@ export class PostIndexComponent implements OnInit, OnDestroy {
     }).subscribe(data => {
       this.grid()?.reload();
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Create Post Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
+      toastError(this.toastr, err, 'Create Post Error', { timeOut: 15000 });
     });
   }
 

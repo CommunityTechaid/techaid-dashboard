@@ -18,6 +18,7 @@ import { User } from '@app/state/user/user.state';
 
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
 import { KitAuditComponent } from '../kit-audit-component/kit-audit-component.component';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 export const KIT_STATUS = {
   'DONATION_NEW': 'New device registered',
@@ -923,13 +924,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
         });
       }
     }, err => {
-      this.toastr.warning(`
-          <small>${err.message}</small>
-        `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+      toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
     });
   }
 
@@ -1070,11 +1065,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
         enableHtml: true
       });
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Update Error', {
-        enableHtml: true
-      });
+      toastError(this.toastr, err, 'Update Error');
     });
   }
 
@@ -1092,11 +1083,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
         this.router.navigate(['/dashboard/devices']);
       }
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Error Deleting Device', {
-        enableHtml: true
-      });
+      toastError(this.toastr, err, 'Error Deleting Device');
     });
   }
 }

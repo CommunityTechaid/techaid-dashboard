@@ -30,6 +30,7 @@ import { DatePipe } from '@angular/common';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { RouterLink } from '@angular/router';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -588,13 +589,7 @@ export class KitComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   deviceRequestName(data) {

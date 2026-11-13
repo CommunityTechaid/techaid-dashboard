@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { concat, from, Observable, of, Subject, Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import { toastError } from '@app/shared/utils/error-toast';
 import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
@@ -1510,10 +1511,22 @@ This device type is not currently being offered. Please choose a different item.
     return {
       isLimit: false,
       isNetwork: false,
-      message: 'Something went wrong while saving your request. Please try again, or contact distributions@communitytechaid.org.uk if it persists.',
+      message: this.SUBMIT_FAILED_TEXT,
       limit: null,
     };
   }
+
+  /**
+   * The toast for a failed submit that is not a limit or device-type refusal (#381): the server's
+   * own words when they are meant for people, this form's friendly copy otherwise, plus the error
+   * ref, as plain text. Limit detection above still reads the raw message (parseApolloError).
+   */
+  private showSubmitError(error: unknown): void {
+    toastError(this.toastr, error, '', { unexpected: this.SUBMIT_FAILED_TEXT });
+  }
+
+  private readonly SUBMIT_FAILED_TEXT =
+    'Something went wrong while saving your request. Please try again, or contact distributions@communitytechaid.org.uk if it persists.';
 
   private async probeBackendReady(timeoutMs = 45000): Promise<boolean> {
     const start = Date.now();
@@ -1623,7 +1636,7 @@ This device type is not currently being offered. Please choose a different item.
 
       // Only retry on transport-level failures — GraphQL business errors won't change on retry.
       if (!parsed.isNetwork) {
-        this.toastr.error(parsed.message);
+        this.showSubmitError(firstError);
         return false;
       }
 
@@ -1651,7 +1664,7 @@ This device type is not currently being offered. Please choose a different item.
         if (this.handleDeviceTypeNotOffered(retryError)) {
           return false;
         }
-        this.toastr.error(retryParsed.message);
+        this.showSubmitError(retryError);
         return false;
       }
     }

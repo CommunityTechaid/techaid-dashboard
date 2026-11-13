@@ -6,6 +6,7 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 
 const QUERY_PERMISSIONS = gql`
@@ -139,13 +140,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {
@@ -169,11 +164,7 @@ export class UserPermissionsComponent implements OnInit, OnDestroy {
     }).subscribe(res => {
       this.grid()?.reload();
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Error Removing Permission', {
-          enableHtml: true
-        });
+      toastError(this.toastr, err, 'Error Removing Permission');
     });
   }
 

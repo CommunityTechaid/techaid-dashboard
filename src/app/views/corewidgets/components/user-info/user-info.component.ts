@@ -8,6 +8,7 @@ import { UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UserRolesComponent } from '../user-roles/user-roles.component';
 import { UserPermissionsComponent } from '../user-permissions/user-permissions.component';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_USER = gql`
 query findUser($id: String!) {
@@ -71,13 +72,7 @@ export class UserInfoComponent implements OnInit, OnDestroy {
         this.userName.set('Not Found!');
       }
     }, err => {
-      this.toastr.warning(`
-          <small>${err.message}</small>
-        `, 'GraphQL Error', {
-          enableHtml: true,
-          timeOut: 15000,
-          disableTimeOut: true
-        });
+      toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
     });
   }
 

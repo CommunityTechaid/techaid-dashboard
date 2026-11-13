@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
+import { toastError } from '@app/shared/utils/error-toast';
 import { combineLatest, Observable, Subscription } from 'rxjs';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { WardLookupService } from '@app/shared/services/ward-lookup.service';
@@ -365,7 +366,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.savingException.set(false);
-        this.toastr.error(err?.message || 'Could not add the exception booking');
+        toastError(this.toastr, err, '', { unexpected: 'Could not add the exception booking.' });
       },
     });
   }
@@ -411,7 +412,7 @@ export class DeliverySlotsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           // Only a toastr here — no template-bound state changes.
-          this.toastr.error(err?.message || 'Could not delete booking');
+          toastError(this.toastr, err, '', { unexpected: 'Could not delete the booking.' });
         },
       });
   }

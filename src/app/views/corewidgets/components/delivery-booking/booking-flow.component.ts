@@ -1,5 +1,7 @@
 import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { BookingApiError, BookingApiService } from './booking-api.service';
+import { refForError } from '@app/shared/utils/error-ref';
+import { withRef } from '@app/shared/utils/error-toast';
 import {
   DeliveryBookingConfirmation,
   DeliveryBookingInput,
@@ -206,10 +208,11 @@ export class BookingFlowComponent {
       },
       error: (err: unknown) => {
         this.submitting.set(false);
+        // The classification decides the wording as before; the ref is shown either way (#381).
         if (err instanceof BookingApiError && err.classification === 'BAD_REQUEST') {
-          this.submitError.set(err.message);
+          this.submitError.set(withRef(err.message, refForError(err)));
         } else {
-          this.submitError.set('Something went wrong booking your delivery. Please try again.');
+          this.submitError.set(withRef('Something went wrong booking your delivery. Please try again.', refForError(err)));
         }
       },
     });

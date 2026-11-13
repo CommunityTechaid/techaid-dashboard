@@ -11,6 +11,7 @@ import { UpdateFormDirty } from '@ngxs/form-plugin';
 import { Select } from '@ngxs/store';
 import { RoleUsersComponent } from '../role-users/role-users.component';
 import { RolePermissionsComponent } from '../role-permissions/role-permissions.component';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ROLE = gql`
 query findRole($id: String!) {
@@ -125,13 +126,7 @@ export class RoleInfoComponent implements OnInit, OnDestroy {
         this.roleName.set('Not Found!');
       }
     }, err => {
-      this.toastr.warning(`
-          <small>${err.message}</small>
-        `, 'GraphQL Error', {
-          enableHtml: true,
-          timeOut: 15000,
-          disableTimeOut: true
-        });
+      toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
     });
   }
 

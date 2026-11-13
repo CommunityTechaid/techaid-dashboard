@@ -17,6 +17,7 @@ import { TableColumn, TableSource } from '@app/shared/modules/native-table/table
 import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
 import { DeliverySlotsComponent } from '../delivery-slots/delivery-slots.component';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ENTITY = gql`
 query findAllDeviceRequests($page: PaginationInput, $numericterm: Long, $term: String, $filter: DeviceRequestWhereInput!) {
@@ -706,13 +707,7 @@ export class DistributionsAndDeliveriesIndexComponent implements OnInit, OnDestr
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-    });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   /**

@@ -5,7 +5,8 @@
  *
  * The public form must show that inline, next to the device-type choice, in plain wording, rather
  * than raising the server's own sentence ("... Please refresh the form.") as a generic error toast.
- * Any other error keeps the existing path (a toast carrying the server's message).
+ * Any other error keeps the existing path (an error toast; since #381 its text comes from the shared
+ * error-toast helper, so an INTERNAL_ERROR shows friendly copy and the ref, not the server's message).
  *
  * The mocked error uses the REAL server shape (DeviceRequestMutations.kt, handleDeviceTypeNotOffered):
  * ErrorType.BAD_REQUEST -> `extensions.classification`, plus `extensions.code`, message
@@ -183,8 +184,11 @@ test.describe('device type not offered, inline @mocked', () => {
     await fillSubmittableRequest(page);
     await page.getByRole('button', { name: 'Next' }).click();
 
-    // Existing path: the server's message is raised as an error toast.
-    await expect(page.getByText('Something else went wrong on the server')).toBeVisible({ timeout: 15_000 });
+    // Existing path: an error toast. An INTERNAL_ERROR is not meant for people, so since #381 it
+    // shows the form's friendly copy (plus the error ref) instead of the server's text.
+    await expect(page.locator('.toast-error', { hasText: 'Something went wrong while saving your request' }))
+      .toContainText(/Ref: [A-Z2-9]{8}/, { timeout: 15_000 });
+    await expect(page.getByText('Something else went wrong on the server')).toHaveCount(0);
     await expect(inlineMessage(page.locator('formly-form'))).toHaveCount(0);
   });
 });

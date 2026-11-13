@@ -10,6 +10,7 @@ import { CoreWidgetState } from '@views/corewidgets/state/corewidgets.state';
 import { DEVICE_REQUEST_STATUS } from '../device-request-info/device-request-info.component';
 import { DatePipe } from '@angular/common';
 import { LatestDraw } from '@app/shared/utils';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ENTITY = gql`
   query getDeviceRequestAuditTrail($id: Long!) {
@@ -110,9 +111,7 @@ export class DeviceRequestAuditComponent implements OnInit {
           return;
         }
         this.loaded.set(true);
-        this.toastr.warning(`
-            <small>${err.message}</small>
-          `, 'GraphQL Error', { enableHtml: true, timeOut: 15000, disableTimeOut: true });
+        toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
       },
     );
   }

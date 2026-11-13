@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { ConfigService } from '@app/shared/services/config.service';
+import { newRef, REF_HEADER, rememberRef } from '@app/shared/utils/error-ref';
 import {
   DeliveryBookingConfirmation,
   DeliveryBookingEligibility,
@@ -80,8 +81,13 @@ export class BookingApiService {
   ) {}
 
   private request<T>(query: string, variables?: Record<string, unknown>): Observable<T> {
+    // The request's own ref (#381), so whatever error reaches the page can show it: the
+    // interceptor leaves a request that already carries one alone.
+    const ref = newRef();
     return this.http
-      .post<GraphQlResponse<T>>(this.config.environment.graphql_endpoint, { query, variables })
+      .post<GraphQlResponse<T>>(this.config.environment.graphql_endpoint, { query, variables }, {
+        headers: { [REF_HEADER]: ref },
+      })
       .pipe(
         map((response) => {
           if (response.errors && response.errors.length) {
@@ -92,6 +98,10 @@ export class BookingApiService {
             throw new Error('No data returned from the server.');
           }
           return response.data;
+        }),
+        catchError((error: unknown) => {
+          rememberRef(error, ref);
+          return throwError(() => error);
         }),
       );
   }
