@@ -55,13 +55,13 @@ Ideally, the input field should be dynamically rendered using custom selector bu
         <input [hidden]="!editable()" (focusout)="toggleEdit()" [type]="to.type" [formControl]="formControl" [formlyAttributes]="field">
       }
       @if (formControl.value != null && formControl.value !== '') {
-        <span [hidden]="editable()" class="pr-1"  [innerText]="formControl.value"></span>
+        <span [hidden]="editable()" class="pe-1"  [innerText]="formControl.value"></span>
       }
       @if (formControl.value == null || formControl.value === '') {
-        <span [hidden]="editable()" class="pr-1 pl-1">None</span>
+        <span [hidden]="editable()" class="pe-1 ps-1">None</span>
       }
       @if (to.descriptor) {
-        <span class="pr-1">{{to.descriptor }}</span>
+        <span class="pe-1">{{to.descriptor }}</span>
       }
     </div>
     <div>

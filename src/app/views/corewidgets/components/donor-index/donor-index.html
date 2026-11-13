@@ -8,7 +8,7 @@
       <div class="card-header py-3">
         <div class="d-flex justify-content-between">
           <div>
-            <h6 class="m-0 font-weight-bold text-primary">Individual Donors</h6>
+            <h6 class="m-0 fw-bold text-primary">Individual Donors</h6>
           </div>
           <div>
             <a href="#" (click)="modal(filters); false;" class="btn btn-info btn-icon-split btn-sm me-1 mb-1">
@@ -16,7 +16,7 @@
                 <i class="fas fa-filter"></i>
               </span>
               <span class="text">Filter @if (filterCount > 0) {
-                <span class="badge badge-danger">{{filterCount}}</span>
+                <span class="badge text-bg-danger">{{filterCount}}</span>
               }</span>
             </a>
             <a href="#" data-testid="donor-create-open" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm me-1 mb-1">
@@ -57,7 +57,7 @@
                         </div>
                       </td>
                       <td>
-                        <span class="badge badge-info">{{dt.kitCount}}</span>
+                        <span class="badge text-bg-info">{{dt.kitCount}}</span>
                       </td>
                       <td>{{ dt.postCode }}</td>
                       <td>@if (dt.donorParent?.id) {

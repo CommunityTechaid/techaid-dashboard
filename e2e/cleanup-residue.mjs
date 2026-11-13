@@ -87,7 +87,7 @@ const ENTITY_DESCRIPTORS = [
   },
   {
     kind: 'deviceRequest',
-    list: `query { deviceRequestConnection(page:{size:500}, where:{ clientRef:{_contains:"${MARKER}"} }){ content{ id clientRef } } }`,
+    list: `query { deviceRequestConnection(page:{size:500}, where:{ clientRef:{_contains:"${MARKER}"} }){ content{ id clientRef kits{ id model } referringOrganisationContact{ id referringOrganisation{ id } } } } }`,
     pick: d => d.deviceRequestConnection.content,
     label: r => r.clientRef,
     del: 'mutation($id: ID!) { deleteDeviceRequest(id: $id) }',
@@ -98,7 +98,13 @@ const ENTITY_DESCRIPTORS = [
 // pass is enough.
 const ENTITIES = inDeleteOrder(ENTITY_DESCRIPTORS);
 
-let found = 0, deleted = 0, denied = 0, failed = 0;
+let found = 0, deleted = 0, denied = 0, failed = 0, skipped = 0, skippedReferees = 0;
+
+// deleteDeviceRequest cascades to the request's kits, so a sample request that holds a kit which
+// is NOT a sample (same test as the kit descriptor: model contains MARKER) must not be deleted.
+// Its referee contact and organisation stay too: they cannot be deleted while it exists.
+const isSampleKit = k => (k.model ?? '').includes(MARKER);
+const protectedIds = { referringOrganisationContact: new Set(), referringOrganisation: new Set() };
 
 for (const e of ENTITIES) {
   const res = await gql(e.list);
@@ -111,6 +117,25 @@ for (const e of ENTITIES) {
   console.log(`\n${e.kind}: ${rows.length} sample record(s)`);
   for (const row of rows) {
     const tag = `#${row.id} "${e.label(row)}"${row.archived ? ' (archived)' : ''}`;
+    let reason = null;
+    if (e.kind === 'deviceRequest') {
+      const real = (row.kits ?? []).filter(k => !isSampleKit(k));
+      if (real.length) {
+        reason = `holds non-sample kit(s) ${real.map(k => `#${k.id}`).join(', ')} that deleting the request would cascade to`;
+        const c = row.referringOrganisationContact;
+        if (c) {
+          protectedIds.referringOrganisationContact.add(String(c.id));
+          if (c.referringOrganisation) protectedIds.referringOrganisation.add(String(c.referringOrganisation.id));
+        }
+      }
+    } else if (protectedIds[e.kind]?.has(String(row.id))) {
+      reason = 'still referenced by a skipped device request';
+    }
+    if (reason) {
+      if (e.kind === 'deviceRequest') skipped++; else skippedReferees++;
+      console.log(`  SKIPPED ${tag} - ${reason}`);
+      continue;
+    }
     if (!DELETE) {
       console.log(`  would delete ${tag}`);
       continue;
@@ -128,6 +153,7 @@ for (const e of ENTITIES) {
 
 console.log('\n=== summary ===');
 console.log(`found: ${found}`);
+console.log(`skipped: ${skipped} device request(s) with non-sample kits, plus ${skippedReferees} referee record(s) they point at (kept on purpose, see SKIPPED lines above)`);
 if (DELETE) {
   console.log(`deleted: ${deleted}, access-denied: ${denied}, failed: ${failed}`);
   if (denied) {

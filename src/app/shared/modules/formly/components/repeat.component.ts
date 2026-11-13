@@ -19,7 +19,7 @@ import { FieldArrayType, FormlyModule } from '@ngx-formly/core';
                   }
                   @if (state.remove[i]) {
                     <div class="">
-                      <button class="btn btn-sm btn-danger mr-1" type="button" (click)="delete(i)">
+                      <button class="btn btn-sm btn-danger me-1" type="button" (click)="delete(i)">
                         <i class="fas fa-trash-alt"></i>
                         Click again to remove
                       </button>
@@ -37,7 +37,7 @@ import { FieldArrayType, FormlyModule } from '@ngx-formly/core';
       }
       @if (!to.maxItems || size != to.maxItems) {
         <div class="d-flex justify-content-between mt-3 mb-3">
-          <span class="text-muted mr-1">{{to.description}}</span>
+          <span class="text-muted me-1">{{to.description}}</span>
           <button class="btn btn-primary btn-sm" type="button" (click)="add()"><i class="fas fa-plus-circle"></i> {{ to.addText }}</button>
         </div>
       }

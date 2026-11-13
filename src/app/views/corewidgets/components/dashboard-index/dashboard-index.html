@@ -8,10 +8,10 @@
       <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-primary shadow h-100 py-2">
           <div class="card-body">
-            <div class="row no-gutters align-items-center">
+            <div class="row g-0 align-items-center">
               <div class="col me-2">
-                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Devices</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">{{model.kits.totalElements}}</div>
+                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Devices</div>
+                <div class="h5 mb-0 fw-bold text-gray-800">{{model.kits.totalElements}}</div>
               </div>
               <div class="col-auto">
                 <i class="fas fa-laptop fa-2x text-gray-300"></i>
@@ -24,10 +24,10 @@
       <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-success shadow h-100 py-2">
           <div class="card-body">
-            <div class="row no-gutters align-items-center">
+            <div class="row g-0 align-items-center">
               <div class="col me-2">
-                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Donors</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">{{model.donors.totalElements}}</div>
+                <div class="text-xs fw-bold text-success text-uppercase mb-1">Donors</div>
+                <div class="h5 mb-0 fw-bold text-gray-800">{{model.donors.totalElements}}</div>
               </div>
               <div class="col-auto">
                 <i class="fa fa-table fa-2x text-gray-300"></i>
@@ -42,7 +42,7 @@
       <div class="col-lg-6">
         <div class="card shadow mb-4">
           <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Devices</h6>
+            <h6 class="m-0 fw-bold text-primary">Devices</h6>
           </div>
           <div class="card-body">
             <div class="d-flex justify-content-end">
@@ -50,7 +50,7 @@
             </div>
             @for (s of model.typeCount; track s) {
               <div>
-                <h4 class="small font-weight-bold">{{styles[s.type].title}}<span class="float-end">{{model.requestCount[s.type]}} / {{s.count}}</span></h4>
+                <h4 class="small fw-bold">{{styles[s.type].title}}<span class="float-end">{{model.requestCount[s.type]}} / {{s.count}}</span></h4>
                 <div class="mb-2">
                   <ngb-progressbar [type]="styles[s.type].style" [value]="styles[s.type].progress"></ngb-progressbar>
                 </div>
@@ -62,7 +62,7 @@
       <div class="col-lg-6">
         <div class="card shadow mb-4">
           <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Status</h6>
+            <h6 class="m-0 fw-bold text-primary">Status</h6>
           </div>
           <div class="card-body">
             <div class="w-100">

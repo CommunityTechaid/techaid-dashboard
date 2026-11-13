@@ -7,7 +7,7 @@ import { NgbTooltip, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'form-formly-wrapper-form-field',
     template: `
-    <div class="form-group" [class.has-error]="showError">
+    <div class="mb-3" [class.has-error]="showError">
       @if (to.label && to.hideLabel !== true) {
         <label [attr.for]="id">
           {{ to.label }} @if (to.required && to.hideRequiredMarker !== true) {

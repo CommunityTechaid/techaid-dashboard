@@ -177,7 +177,7 @@ test.describe('native tables: referring organisations @mocked', () => {
     await expect(page.locator('#referring-org-index tbody tr').first()).toContainText('Org 23');
     // The very first request already carried the saved filter (no wasted unfiltered one).
     expect(st.orgs[0].filter).toEqual(expect.objectContaining({ archived: { _in: [true] } }));
-    await expect(page.locator('.card-header .badge-danger')).toHaveText('1');
+    await expect(page.locator('.card-header .text-bg-danger')).toHaveText('1');
 
     // Page 2, then change the filter: the table reloads and keeps its page.
     await page.getByRole('link', { name: /Filter/ }).click();
@@ -186,7 +186,7 @@ test.describe('native tables: referring organisations @mocked', () => {
     await modal.getByRole('button', { name: 'Filter' }).click();
     await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 10 of 23 entries');
     expect(lastOrgs(st).filter!.archived!._in.sort()).toEqual([false, true]);
-    await expect(page.locator('.card-header .badge-danger')).toHaveText('2');
+    await expect(page.locator('.card-header .text-bg-danger')).toHaveText('2');
   });
 
   test('organisation index: creating an organisation reloads the table', async ({ page }) => {

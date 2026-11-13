@@ -203,7 +203,7 @@ export class DonorComponent implements OnInit, OnDestroy {
         {
           key: 'isLeadContact',
           type: 'checkbox',
-          className: 'col-md-6 text-right mt-4',
+          className: 'col-md-6 text-end mt-4',
           defaultValue: false,
           templateOptions: {
             label: 'Is a lead contact?',

@@ -20,11 +20,11 @@
                       <td>{{dt.description}}</td>
                       <td>
                         @if (dt.direct) {
-                          <span class="badge badge-secondary me-1">Direct</span>
+                          <span class="badge text-bg-secondary me-1">Direct</span>
                         }
                         @if (dt.byRole) {
                           <span [ngbPopover]="dt.mappedRoles" triggers="mouseenter:mouseleave"
-                          class="badge badge-primary">{{dt.roles?.length}} Role(s)</span>
+                          class="badge text-bg-primary">{{dt.roles?.length}} Role(s)</span>
                         }
                       </td>
                       <td>

@@ -162,17 +162,17 @@ test.describe('delivery-slots booking badges @mocked', () => {
     const closedRow = page.locator('tr', { hasText: 'Carol Closedmatch' });
 
     // Unmatched → amber badge with explanatory tooltip.
-    const unmatchedBadge = unmatchedRow.locator('span.badge-warning');
+    const unmatchedBadge = unmatchedRow.locator('span.text-bg-warning');
     await expect(unmatchedBadge).toBeVisible({ timeout: 15_000 });
     await expect(unmatchedBadge).toHaveText('unmatched');
     await expect(unmatchedBadge).toHaveAttribute('title', 'No device request found with this id');
 
     // Matched + open → no badge in the CTA-ref cell.
-    await expect(openRow.locator('span.badge-warning')).toHaveCount(0);
-    await expect(openRow.locator('span.badge-secondary')).toHaveCount(0);
+    await expect(openRow.locator('span.text-bg-warning')).toHaveCount(0);
+    await expect(openRow.locator('span.text-bg-secondary')).toHaveCount(0);
 
     // Matched + closed → grey badge naming the matched request id and status.
-    const closedBadge = closedRow.locator('span.badge-secondary');
+    const closedBadge = closedRow.locator('span.text-bg-secondary');
     await expect(closedBadge).toBeVisible();
     await expect(closedBadge).toHaveText('closed');
     await expect(closedBadge).toHaveAttribute(
@@ -195,7 +195,7 @@ test.describe('delivery-slots booking badges @mocked', () => {
     const supportedRow = page.locator('tr', { hasText: 'Erin Local' });
     const unmatchedRow = page.locator('tr', { hasText: 'Alice Unmatched' });
 
-    const outOfAreaBadge = outOfAreaRow.locator('span.badge-danger');
+    const outOfAreaBadge = outOfAreaRow.locator('span.text-bg-danger');
     await expect(outOfAreaBadge).toBeVisible({ timeout: 15_000 });
     await expect(outOfAreaBadge).toHaveText('outside delivery area');
     await expect(outOfAreaBadge).toHaveAttribute(
@@ -203,8 +203,8 @@ test.describe('delivery-slots booking badges @mocked', () => {
       "This postcode doesn't resolve to one of our currently supported delivery boroughs",
     );
 
-    await expect(supportedRow.locator('span.badge-danger')).toHaveCount(0);
+    await expect(supportedRow.locator('span.text-bg-danger')).toHaveCount(0);
     // A booking with no extractable postcode in its address must stay silent, not flagged.
-    await expect(unmatchedRow.locator('span.badge-danger')).toHaveCount(0);
+    await expect(unmatchedRow.locator('span.text-bg-danger')).toHaveCount(0);
   });
 });

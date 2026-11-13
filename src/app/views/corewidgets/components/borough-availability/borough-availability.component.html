@@ -1,7 +1,7 @@
 <div class="card shadow mb-4">
   <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
-      <h6 class="m-0 font-weight-bold text-primary">Borough Availability</h6>
+      <h6 class="m-0 fw-bold text-primary">Borough Availability</h6>
       @if (lastUpdated()) {
         <div class="text-muted small mt-1"><em>Last updated: {{ lastUpdated() }}</em></div>
       }
@@ -66,7 +66,7 @@
                  so the precedence is visible instead of having to be known. -->
             <tr class="table-secondary" data-testid="global-row">
               <th scope="row" class="fw-normal">
-                <div class="font-weight-bold"><i class="fas fa-globe"></i> All boroughs</div>
+                <div class="fw-bold"><i class="fas fa-globe"></i> All boroughs</div>
                 <div class="text-muted small">Service-wide. Switching a device off here removes it everywhere.</div>
               </th>
 
@@ -93,7 +93,7 @@
             @for (group of groups(); track group.id) {
               <tr [attr.data-testid]="'group-row-' + group.id">
                 <th scope="row" class="fw-normal">
-                  <div class="font-weight-bold">{{ group.name }}</div>
+                  <div class="fw-bold">{{ group.name }}</div>
                   <div class="text-muted small">
                     {{ group.boroughs.join(', ') }}
                     @if (group.boroughs.length > 1) {
@@ -160,7 +160,7 @@
                   <td [attr.colspan]="columns.length + 2">
                     <div class="d-flex justify-content-between align-items-start gap-3 p-2">
                       <div>
-                        <div class="font-weight-bold">
+                        <div class="fw-bold">
                           <i [class]="column.icon"></i> {{ column.label }} — {{ group.name }}
                         </div>
                         <div class="btn-group btn-group-sm mt-2" role="group">
@@ -247,7 +247,7 @@
 
 <div class="card shadow mb-4">
   <div class="card-header py-3 d-flex justify-content-between align-items-center">
-    <h6 class="m-0 font-weight-bold text-primary">Request limits — exceptions by organisation</h6>
+    <h6 class="m-0 fw-bold text-primary">Request limits — exceptions by organisation</h6>
     <button type="button" class="btn btn-primary btn-sm" data-testid="add-exception" [disabled]="saving()" (click)="addException()">
       Add exception
     </button>

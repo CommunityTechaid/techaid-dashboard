@@ -64,7 +64,7 @@ type StepState =
   ],
   template: `
     <div class="postcode-step py-4">
-      <h3 class="h5 font-weight-bold text-primary text-center">Where does your client live?</h3>
+      <h3 class="h5 fw-bold text-primary text-center">Where does your client live?</h3>
       <p class="text-muted text-center">
         Enter their postcode — we'll work out the borough and ward.
       </p>
@@ -101,7 +101,7 @@ type StepState =
       <div id="postcode-result" aria-live="polite">
         @if (covered; as resolved) {
           <div class="alert alert-success postcode-result" data-testid="postcode-covered">
-            <div class="font-weight-bold">
+            <div class="fw-bold">
               <i class="fas fa-check-circle"></i> We support this area
             </div>
             <p class="mb-3 mt-2">
@@ -115,7 +115,7 @@ type StepState =
 
         @if (state === 'out-of-area') {
           <div class="alert alert-danger postcode-result" data-testid="postcode-out-of-area">
-            <div class="font-weight-bold">{{ result?.postcode }}</div>
+            <div class="fw-bold">{{ result?.postcode }}</div>
             <p class="mb-0 mt-2">
               Unfortunately we don't support this area at the moment. Please
               <a [href]="'mailto:' + distributionsEmail">email us</a> for further information.

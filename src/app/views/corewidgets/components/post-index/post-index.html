@@ -8,7 +8,7 @@
       <div class="card-header py-3">
         <div class="d-flex justify-content-between">
           <div>
-            <h6 class="m-0 font-weight-bold text-primary">Posts</h6>
+            <h6 class="m-0 fw-bold text-primary">Posts</h6>
           </div>
           <div>
             <a href="#" (click)="model={}; modal(createApi); false;" class="btn btn-primary btn-icon-split btn-sm">
@@ -37,7 +37,7 @@
                             <div>
                               <a href="#" [routerLink]="['/dashboard/posts', dt.id]">{{ dt.title }}</a>
                               <div class="text-muted snippet" [innerHtml]="dt.content"></div>
-                              <span class="badge badge-secondary">{{dt.slug}}</span>
+                              <span class="badge text-bg-secondary">{{dt.slug}}</span>
                             </div>
                           </div>
                         </div>
@@ -47,10 +47,10 @@
                       </td>
                       <td>
                         @if (dt.published) {
-                          <span class="badge badge-success">Published</span>
+                          <span class="badge text-bg-success">Published</span>
                         }
                         @if (!dt.published) {
-                          <span class="badge badge-warning">Draft</span>
+                          <span class="badge text-bg-warning">Draft</span>
                         }
                       </td>
                     </tr>

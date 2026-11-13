@@ -173,7 +173,7 @@ individually when copying a pattern).
   deviceRequest. Dry-run by default; only ever touches records matching that marker (real CommunityTechAid
   records never do), and only ever talks to `api-testing` (UAT), never prod. It deletes in dependency
   order (`e2e/cleanup-order.mjs`: device requests before the referee contacts and organisations that
-  hold foreign keys from them), so one `--delete` pass is enough. Run it periodically to
+  hold foreign keys from them), so one `--delete` pass is enough. A sample device request that holds a non-sample kit is SKIPPED (the server cascades request deletes to kits), along with the referee contact/organisation it points at; see `e2e/tests/cleanup-kit-guard.spec.ts`. Run it periodically to
   clear write-flow residue, or immediately after a crashed Batch 5 run.
 - **`e2e/check-skips.mjs`** — reads the Playwright JSON report, prints a pass/fail/skip/flaky
   breakdown + skip reasons, and **fails (non-zero exit) if skipped share exceeds 40%**

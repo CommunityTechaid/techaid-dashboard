@@ -151,7 +151,7 @@ async function openDeliverySlotsTab(page: Page) {
 }
 
 function bookingCountBadge(page: Page) {
-  return page.locator('.card', { hasText: "Who's booked" }).locator('.badge.badge-secondary');
+  return page.locator('.card', { hasText: "Who's booked" }).locator('.badge.text-bg-secondary');
 }
 
 function bookingRow(page: Page, name: string) {

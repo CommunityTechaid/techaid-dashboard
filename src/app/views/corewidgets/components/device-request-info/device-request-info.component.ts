@@ -307,7 +307,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
   referringOrganisationContactField: FormlyFieldConfig = {
     key: 'referringOrganisationContactId',
     type: 'choice',
-    className: 'text-left',
+    className: 'text-start',
     templateOptions: {
       label: 'Referee',
       description: 'The referee this request is currently assigned to.',
