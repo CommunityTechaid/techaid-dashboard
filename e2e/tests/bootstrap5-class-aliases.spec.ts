@@ -63,6 +63,7 @@ const PROBE = `
   <div id="bs5-probe">
     ${BADGES.map(([cls]) => `<span class="badge ${cls}" data-probe="${cls}">12</span>`).join('')}
     <a href="#" class="badge text-bg-light" data-probe="link-badge">501</a>
+    <div class="progress"><div class="progress-bar text-bg-primary" style="width: 50%" data-probe="progress-bar">50</div></div>
     <div class="row g-0" data-probe="g0-row"><div class="col me-2" data-probe="g0-col">a</div><div class="col-auto" data-probe="g0-col-auto">b</div></div>
     <div class="row" data-probe="plain-row"><div class="col" data-probe="plain-col">a</div></div>
     <div class="mb-3" data-probe="mb-3">field</div>
@@ -104,6 +105,14 @@ test.describe('Bootstrap 5 class names keep the sb-admin look @mocked', () => {
     expect(box.top).toBeCloseTo(0.25, 2);
     expect(box.left).toBeCloseTo(0.4, 2);
     expect(box.radius).toBe('5.6px');
+  });
+
+  test('a non-badge text-bg-* (the ngb-progressbar bar on the dashboard cards) keeps the Bootstrap 5 colour', async ({ page }) => {
+    test.setTimeout(60_000);
+    await injectProbe(page);
+    // <ngb-progressbar [type]="'primary'"> renders `progress-bar text-bg-primary`; it was #0d6efd before the rename
+    // and the badge aliases must not reach it.
+    expect(await css(page, 'progress-bar', 'background-color')).toBe('rgb(13, 110, 253)');
   });
 
   test('a link badge (kit-ID links) keeps the v4 hover shade', async ({ page }) => {
