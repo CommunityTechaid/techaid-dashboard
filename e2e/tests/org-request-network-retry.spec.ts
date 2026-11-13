@@ -4,10 +4,11 @@
  * server", polls until the API answers, then sends createDeviceRequest again.
  *
  * Regression: parseApolloError put `errorText(error)` into its list of message sources. For a
- * transport failure that text is never empty (Angular's "Http failure response for ...: 0 Unknown
- * Error", or Apollo's "Response not successful: Received status code 503"), so the "has a message"
- * branch always won, `isNetwork` was never true, and the wake-up retry never ran: the user got an
- * error toast on the first refused connection.
+ * transport failure that text is never empty (Apollo's "Response not successful: Received status
+ * code 503"), so the "has a message" branch always won, `isNetwork` was never true, and the wake-up
+ * retry never ran: the user got an error toast on the first failure. A refused connection had a
+ * second cause: apollo-angular's HttpLink rethrows a status-0 HttpErrorResponse as a plain Error
+ * ("Http failure response for /graphql: 0 Unknown Error"), which isNetworkError does not recognise.
  *
  * What it pins: an aborted first submit and an HTTP 503 first submit are each retried once, and
  * the second (successful) attempt carries on to the equalities step. A GraphQL business error is
