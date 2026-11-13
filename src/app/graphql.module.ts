@@ -1,13 +1,15 @@
-import { Provider } from '@angular/core';
+import { Injector, Provider } from '@angular/core';
 import { HttpHeaders } from '@angular/common/http';
 import { Apollo, APOLLO_OPTIONS } from 'apollo-angular';
 import { HttpLink } from 'apollo-angular/http';
-import { ApolloClientOptions, InMemoryCache } from '@apollo/client/core';
+import { ApolloClientOptions, ApolloLink, InMemoryCache } from '@apollo/client/core';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { ServerError } from '@apollo/client/errors';
 import { ConfigService } from '@app/shared/services/config.service';
 import { AuthenticationService } from './shared/services/authentication.service';
+import { AppInsightsService } from './shared/services/app-insights.service';
+import { createErrorRefLink, failedOperationError, FailedOperation, refHeaderLink } from './shared/utils/error-ref';
 import { firstValueFrom, of, throwError, timer } from 'rxjs';
 import { catchError, map, retry, switchMap, take } from 'rxjs/operators';
 
@@ -59,7 +61,16 @@ const withoutAuthorization = (headers: unknown): HttpHeaders | Record<string, st
   return rest;
 };
 
-export function createApollo(httpLink: HttpLink, config: ConfigService, authService: AuthenticationService): ApolloClientOptions {
+// Upper bound on failed operations reported per page load, as GlobalErrorHandler caps its own
+// reports: a page that polls a failing query must not flood Azure.
+const MAX_REPORTED_OPERATION_ERRORS = 50;
+
+export function createApollo(
+  httpLink: HttpLink,
+  config: ConfigService,
+  authService: AuthenticationService,
+  injector: Injector,
+): ApolloClientOptions {
   const http = httpLink.create({
     uri: config.environment.graphql_endpoint
   });
@@ -201,8 +212,39 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
     }
   });
 
+  // #381: one exception per failed operation that reached the API, HTTP-200 GraphQL errors and
+  // transport errors alike, so errors a component catches and toasts are no longer invisible to
+  // Azure. Only safe parts are sent (see failedOperationError): no variables, no server message.
+  // AppInsightsService is resolved on first use, as GlobalErrorHandler does: it depends on Router.
+  // With no connection string it drops the call, so nothing is fetched and nothing throws.
+  let reportedOperationErrors = 0;
+  const reportFailedOperation = (failure: FailedOperation) => {
+    if (reportedOperationErrors >= MAX_REPORTED_OPERATION_ERRORS) {
+      return;
+    }
+    reportedOperationErrors++;
+    try {
+      injector.get(AppInsightsService).trackException(failedOperationError(failure), {
+        source: 'apollo-error-link',
+        route: location.pathname,
+        ref: failure.ref,
+        operation: failure.operationName,
+        kind: failure.kind,
+        ...(failure.classifications.length ? { classification: failure.classifications.join('/') } : {}),
+      });
+    } catch (reportingError) {
+      console.warn('Could not report a GraphQL error to Application Insights', reportingError);
+    }
+  };
+
+  // Order matters (#381):
+  //   errorRefLink  outermost: gives each operation its ref and reports the FINAL outcome only,
+  //                 so errorHandler's tokenless retry (#391) is reported once at most, same ref;
+  //   errorHandler  401 handling (#391 retry re-enters below this point);
+  //   asyncAuthLink sets `headers` wholesale on the token path;
+  //   refHeaderLink adds X-CTA-Ref last, so neither auth branch nor the retry can drop it.
   return {
-    link: errorHandler.concat(asyncAuthLink.concat(http)),
+    link: ApolloLink.from([createErrorRefLink(reportFailedOperation), errorHandler, asyncAuthLink, refHeaderLink, http]),
     cache: new InMemoryCache(),
   };
 }
@@ -212,6 +254,6 @@ export const graphqlProviders: Provider[] = [
   {
     provide: APOLLO_OPTIONS,
     useFactory: createApollo,
-    deps: [HttpLink, ConfigService, AuthenticationService],
+    deps: [HttpLink, ConfigService, AuthenticationService, Injector],
   },
 ];
