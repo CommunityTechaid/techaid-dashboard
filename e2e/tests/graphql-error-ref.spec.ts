@@ -82,7 +82,7 @@ async function setUp(
   const exceptions: Exception[] = [];
   const pageViews: string[] = [];
   const ingestRequests: string[] = [];
-  page.on('request', r => { if (r.url().includes(INGEST_HOST)) ingestRequests.push(r.url()); });
+  page.on('request', r => { if (new URL(r.url()).hostname === INGEST_HOST) ingestRequests.push(r.url()); });
 
   await page.route('**/assets/env.js', route => route.fulfill({
     status: 200,
