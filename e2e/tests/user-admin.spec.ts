@@ -284,12 +284,10 @@ test.describe('User / role / permission admin vs real UAT Auth0 (server PR #246)
     descDates.filter(Boolean).forEach((d: string) => expect(Date.parse(d), `parseable lastLogin ${d}`).not.toBeNaN());
     assertMonotonic(descDates, byDate, -1, 'last_login desc');
 
-    // DataTables 2 cycles desc → unsorted → asc; the unsorted state must not error either.
+    // The native table cycles asc then desc (it never offers an unsorted state), so the first
+    // click on the default-descending Last Login header sends the ascending request.
     const header = page.locator('#user-index thead th', { hasText: 'Last Login' });
-    let since = gql.exchanges.length;
-    await header.click();
-    await gql.next('findAllUsers', v => (v.page?.sort ?? []).length === 0, since);
-    since = gql.exchanges.length;
+    const since = gql.exchanges.length;
     await header.click();
     const asc = await gql.next('findAllUsers', v => v.page?.sort?.[0]?.key === 'last_login' && v.page.sort[0].value === '1', since);
     const ascUsers = asc.body.data.users.content;
