@@ -117,10 +117,15 @@ async function trackGraphQL(
       viaApollo: !NON_APOLLO_PUBLIC_PROBES.some(probe => raw.includes(probe)),
     });
 
+    // Answer the app's health probe properly (still recorded above, as non-Apollo): unanswered,
+    // the "Server is starting up" interstitial covers the page after a 1 s grace window.
+    const buildInfo = { version: '1.0.0-test', commit: 'abc', time: '2026-01-01T00:00:00Z' };
+    const probeAnswer = raw.includes('buildInfo') ? { data: { buildInfo } } : undefined;
+
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(responder(operationName, raw) ?? { data: {} }),
+      body: JSON.stringify(probeAnswer ?? responder(operationName, raw) ?? { data: {} }),
     });
   });
 
