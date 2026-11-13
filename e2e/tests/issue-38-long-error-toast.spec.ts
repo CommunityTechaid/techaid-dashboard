@@ -14,7 +14,9 @@
  * triggers Save, and asserts the rendered toast text is bounded.
  *
  * Red (before fix): the toast renders the full raw message (>200 chars).
- * Green (after fix): the toast is capped and contains the truncation marker.
+ * Green (after fix): the toast is capped. Originally by truncating with a "(full error in console)"
+ * marker; since #381 the shared error-toast helper replaces any message longer than 300 characters
+ * (or an INTERNAL_ERROR) with friendly text plus the error ref, which is bounded by construction.
  */
 import { test, expect } from '../helpers/csp';
 import { loginWith } from '../helpers/auth0-cache';
@@ -184,11 +186,11 @@ test.describe('Issue #38: long GraphQL error toast is truncated @mocked', () => 
         `Toast text length (${visibleText.length}) must be ≤ 300 chars — got: "${visibleText.slice(0, 310)}"`,
       ).toBeLessThanOrEqual(300);
 
-      // The truncation marker must be present when the raw message was longer than 200 chars
-      expect(
-        visibleText,
-        'Toast must contain the truncation marker when the error is long',
-      ).toContain('(full error in console)');
+      // Since #381 the shared error-toast helper bounds it: a multi-kilobyte INTERNAL_ERROR is not a
+      // message for people, so the toast shows friendly text and the error ref instead of any of it.
+      expect(visibleText).toContain('Something went wrong.');
+      expect(visibleText).toMatch(/Ref: [A-Z2-9]{8}/);
+      expect(visibleText, 'none of the raw message may be shown').not.toContain('AAAAAAAAAA');
     },
   );
 });

@@ -17,6 +17,7 @@ import { environment } from '@env/environment';
 
 import { KitComponent } from '../kit-component/kit-component.component';
 import { DeviceRequestAuditComponent } from '../device-request-audit-component/device-request-audit-component.component';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 export const DEVICE_REQUEST_STATUS = {
     'NEW':'New request',
@@ -834,17 +835,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
           }
         },
         (err) => {
-          this.toastr.warning(
-            `
-          <small>${err.message}</small>
-        `,
-            'GraphQL Error',
-            {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true,
-            }
-          );
+          toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
         }
       );
   }
@@ -1036,18 +1027,8 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
         },
         (err) => {
           console.error('updateDeviceRequest failed:', err);
-          const raw: string = err.message ?? String(err);
-          const MAX = 200;
-          const toast = raw.length > MAX ? raw.slice(0, MAX) + '… (full error in console)' : raw;
-          this.toastr.error(
-            `
-      <small>${toast}</small>
-      `,
-            'Update Error',
-            {
-              enableHtml: true,
-            }
-          );
+          // The full error stays in the console; the toast is bounded by the helper (#38, #381).
+          toastError(this.toastr, err, 'Update Error');
         }
       );
   }
@@ -1074,15 +1055,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
           }
         },
         (err) => {
-          this.toastr.error(
-            `
-      <small>${err.message}</small>
-      `,
-            'Error Deleting Device Request',
-            {
-              enableHtml: true,
-            }
-          );
+          toastError(this.toastr, err, 'Error Deleting Device Request');
         }
       );
   }

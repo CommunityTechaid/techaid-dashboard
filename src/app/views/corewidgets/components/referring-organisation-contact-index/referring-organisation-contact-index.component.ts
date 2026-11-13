@@ -18,6 +18,7 @@ import { take } from 'rxjs/operators';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION } from '@app/shared/membership/membership';
 import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const queryEntity = (contact: string, org: string) => gql`
 query findAllReferringOrgContacts(
@@ -346,13 +347,7 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {
@@ -384,12 +379,7 @@ export class ReferringOrganisationContactIndexComponent implements OnInit, OnDes
     }).subscribe(data => {
       this.grid()?.reload();
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Create Referee Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
+      toastError(this.toastr, err, 'Create Referee Error', { timeOut: 15000 });
     });
   }
 }

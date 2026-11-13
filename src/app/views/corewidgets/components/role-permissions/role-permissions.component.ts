@@ -9,6 +9,7 @@ import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 
 const QUERY_PERMISSIONS = gql`
@@ -100,13 +101,7 @@ export class RolePermissionsComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {

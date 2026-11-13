@@ -14,6 +14,7 @@ import { User, UserState } from '@app/state/user/user.state';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
 
 import { KitComponent } from '../kit-component/kit-component.component';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ENTITY = gql`
 query findDonor($id: Long) {
@@ -340,13 +341,7 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
         this.entityName.set('Not Found!');
       }
     }, err => {
-      this.toastr.warning(`
-          <small>${err.message}</small>
-        `, 'GraphQL Error', {
-          enableHtml: true,
-          timeOut: 15000,
-          disableTimeOut: true
-        });
+      toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
     });
   }
 
@@ -437,11 +432,7 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
           enableHtml: true
         });
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Update Error', {
-          enableHtml: true
-        });
+      toastError(this.toastr, err, 'Update Error');
     });
   }
 
@@ -459,11 +450,7 @@ export class DonorInfoComponent implements OnInit, OnDestroy {
         this.router.navigate(['/dashboard/donors']);
       }
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Error Deleting Donor', {
-          enableHtml: true
-        });
+      toastError(this.toastr, err, 'Error Deleting Donor');
     });
   }
 }

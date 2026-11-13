@@ -17,6 +17,7 @@ import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION } from '@app/shared/membership/membership';
 import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
 import { DeviceRequestComponent } from '../device-request-component/device-request-component.component';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const queryEntity = (contact: string, org: string) => gql`
   query findReferringOrganisationContact($id: Long) {
@@ -401,17 +402,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
           }
         },
         (err) => {
-          this.toastr.warning(
-            `
-          <small>${err.message}</small>
-        `,
-            'GraphQL Error',
-            {
-              enableHtml: true,
-              timeOut: 15000,
-              disableTimeOut: true,
-            }
-          );
+          toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
         }
       );
   }
@@ -528,15 +519,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
           );
         },
         (err) => {
-          this.toastr.error(
-            `
-      <small>${err.message}</small>
-      `,
-            'Update Error',
-            {
-              enableHtml: true,
-            }
-          );
+          toastError(this.toastr, err, 'Update Error');
         }
       );
   }
@@ -563,15 +546,7 @@ export class ReferringOrganisationContactInfoComponent implements OnInit, OnDest
           }
         },
         (err) => {
-          this.toastr.error(
-            `
-      <small>${err.message}</small>
-      `,
-            'Error Deleting Referee',
-            {
-              enableHtml: true,
-            }
-          );
+          toastError(this.toastr, err, 'Error Deleting Referee');
         }
       );
   }

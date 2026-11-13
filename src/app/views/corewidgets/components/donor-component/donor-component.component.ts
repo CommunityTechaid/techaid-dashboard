@@ -14,6 +14,7 @@ import { NativeTableComponent, NativeTableRowDirective } from '@app/shared/modul
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
 import { RouterLink } from '@angular/router';
 import { warnIfFormInvalid } from '@app/shared/utils';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ENTITY = gql`
 query findAllDonors(
@@ -324,13 +325,7 @@ export class DonorComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {
@@ -349,12 +344,7 @@ export class DonorComponent implements OnInit, OnDestroy {
     }).subscribe(data => {
       this.grid()?.reload();
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Create Donor Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
+      toastError(this.toastr, err, 'Create Donor Error', { timeOut: 15000 });
     });
   }
 

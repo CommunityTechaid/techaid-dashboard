@@ -5,6 +5,7 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 import { DatePipe } from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { toastError } from '@app/shared/utils/error-toast';
 
 const DELETE_NOTE = gql`
 mutation deleteReferringOrganisationContactNote($id: ID!) {
@@ -85,11 +86,7 @@ export class FormlyCustomReferringOrganisationContactNote extends FieldType {
             });
             this.removeNote(id);
         }, err => {
-            this.toastr.error(`
-          <small>${err.message}</small>
-          `, 'Error Deleting Note', {
-                enableHtml: true
-            });
+            toastError(this.toastr, err, 'Error Deleting Note');
         });
     }
 

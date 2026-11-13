@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
+import { toastError } from '@app/shared/utils/error-toast';
 import { Subscription, catchError, concatMap, forkJoin, from, map, of } from 'rxjs';
 import { ALL_BOROUGHS } from '@app/shared/utils/boroughs';
 
@@ -504,7 +505,7 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
         this.toastr.success('Window deleted');
       },
       error: (err) => {
-        this.toastr.error(err?.message || 'Could not delete window');
+        toastError(this.toastr, err, '', { unexpected: 'Could not delete the window.' });
       },
     });
   }

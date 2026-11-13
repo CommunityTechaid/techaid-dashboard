@@ -19,6 +19,7 @@ import { take } from 'rxjs/operators';
 import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
 import { MEMBERSHIP_FLAG, MEMBERSHIP_SELECTION } from '@app/shared/membership/membership';
 import { MembershipBadgesComponent } from '@app/shared/membership/membership-badges.component';
+import { toastWarning } from '@app/shared/utils/error-toast';
 
 /**
  * The value used for "borough was never captured".
@@ -384,13 +385,7 @@ export class DeviceRequestIndexComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {

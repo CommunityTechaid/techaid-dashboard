@@ -18,6 +18,7 @@ import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { NativeTableComponent, NativeTableRowDirective, NativeTableHeaderDirective } from '@app/shared/modules/native-table/native-table.component';
 import { TableColumn, TableSource } from '@app/shared/modules/native-table/table-types';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_ENTITY = gql`
   query findAllKits(
@@ -1229,13 +1230,7 @@ export class KitIndexComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-    });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   deviceRequestName(data) {
@@ -1282,12 +1277,7 @@ export class KitIndexComponent implements OnInit, OnDestroy {
             enableHtml: true
           });
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Create Device Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
+      toastError(this.toastr, err, 'Create Device Error', { timeOut: 15000 });
     });
   }
 
@@ -1387,7 +1377,7 @@ export class KitIndexComponent implements OnInit, OnDestroy {
       this.grid()?.reload();
       close();
     }, (err: any) => {
-      this.toastr.error(`<small>${err.message}</small>`, 'Bulk Update Error', { enableHtml: true, timeOut: 15000 });
+      toastError(this.toastr, err, 'Bulk Update Error', { timeOut: 15000 });
     });
   }
 }

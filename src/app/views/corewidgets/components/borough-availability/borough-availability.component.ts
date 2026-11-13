@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
+import { toastError } from '@app/shared/utils/error-toast';
 import { Subject, Subscription, catchError, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
 import { NgSelectComponent } from '@ng-select/ng-select';
 import { BoroughAvailabilityService } from '@app/shared/services/borough-availability.service';
@@ -190,6 +191,16 @@ export interface ExceptionRow {
   /** Search terms from this row's picker, wired to the lookup in `wireOrganisationSearch`. */
   search: Subject<string>;
   loading: boolean;
+}
+
+/**
+ * One half of the two-mutation save failed. Keeps the original error, so the toast can find its
+ * ref and judge its text (#381), and the prefix that says which half landed.
+ */
+class SaveStageError extends Error {
+  constructor(readonly prefix: string, readonly original: unknown) {
+    super(prefix);
+  }
 }
 
 @Component({
@@ -658,7 +669,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
     globalFirst
       .pipe(
         catchError((err) => {
-          throw new Error(`The global device settings could not be saved: ${err?.message ?? err}`);
+          throw new SaveStageError('The global device settings could not be saved: ', err);
         }),
         switchMap(() => this.saveMatrix()),
       )
@@ -674,7 +685,13 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.saving.set(false);
-          this.toastr.error(err?.message ?? 'Could not save the configuration');
+          // Server text goes through the shared helper (#381): its own words when deliberate (the
+          // validation errors that name a borough or device type), friendly text otherwise, plus the ref.
+          const stage = err instanceof SaveStageError ? err : null;
+          toastError(this.toastr, stage ? stage.original : err, '', {
+            prefix: stage?.prefix,
+            unexpected: 'Could not save the configuration.',
+          });
           // Re-read so the grid reflects whatever actually landed, including a partial save.
           this.load();
         },
@@ -726,7 +743,7 @@ export class BoroughAvailabilityComponent implements OnInit, OnDestroy {
           const prefix = this.globalChanged()
             ? 'The global device settings were saved, but the borough matrix was not: '
             : '';
-          throw new Error(`${prefix}${err?.message ?? err}`);
+          throw new SaveStageError(prefix, err);
         }),
       );
   }

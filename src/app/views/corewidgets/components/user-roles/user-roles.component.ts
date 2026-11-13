@@ -12,6 +12,7 @@ import { TableColumn, TableSource } from '@app/shared/modules/native-table/table
 import { warnIfFormInvalid } from '@app/shared/utils';
 
 import { RouterLink } from '@angular/router';
+import { toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 const QUERY_PERMISSIONS = gql`
 query findRoles($page: PaginationInput, $userId: String!) {
@@ -196,13 +197,7 @@ export class UserRolesComponent implements OnInit, OnDestroy {
   }
 
   onLoadError(err: any) {
-    this.toastr.warning(`
-      <small>${err?.message}</small>
-    `, 'GraphQL Error', {
-        enableHtml: true,
-        timeOut: 15000,
-        disableTimeOut: true
-      });
+    toastWarning(this.toastr, err, 'GraphQL Error', { timeOut: 15000, disableTimeOut: true });
   }
 
   ngOnDestroy() {
@@ -229,12 +224,7 @@ export class UserRolesComponent implements OnInit, OnDestroy {
       this.form.markAsPristine();
       this.grid()?.reload();
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Assign Role Error', {
-          enableHtml: true,
-          timeOut: 15000
-        });
+      toastError(this.toastr, err, 'Assign Role Error', { timeOut: 15000 });
     });
   }
 
@@ -248,11 +238,7 @@ export class UserRolesComponent implements OnInit, OnDestroy {
     }).subscribe(res => {
       this.grid()?.reload();
     }, err => {
-      this.toastr.error(`
-      <small>${err.message}</small>
-      `, 'Error Deleting Role', {
-          enableHtml: true
-        });
+      toastError(this.toastr, err, 'Error Deleting Role');
     });
   }
 
