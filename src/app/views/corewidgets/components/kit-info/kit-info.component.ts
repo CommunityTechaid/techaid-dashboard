@@ -286,7 +286,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
   donorField: FormlyFieldConfig = {
     key: 'donorId',
     type: 'choice',
-    className: 'px-2 ms-auto justify-content-end text-right',
+    className: 'px-2 ms-auto justify-content-end text-end',
     templateOptions: {
       label: 'Donor',
       //description: 'The donor this device is currently assigned to.',
@@ -564,13 +564,13 @@ export class KitInfoComponent implements OnInit, OnDestroy {
           ]
         },
         {
-          fieldGroupClassName: 'd-flex flex-column justify-content-between text-right',
+          fieldGroupClassName: 'd-flex flex-column justify-content-between text-end',
           className: 'col-md-4',
           fieldGroup: [
             {
               key: 'subStatus.network',
               type: 'choice',
-              className: 'text-left',
+              className: 'text-start',
               templateOptions: {
                 label: 'Network provider?',
                 description: '',
@@ -597,7 +597,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
             {
               key: 'subStatus.network',
               type: 'choice',
-              className: 'text-left',
+              className: 'text-start',
               templateOptions: {
                 label: 'Network provider?',
                 description: '',
@@ -623,7 +623,7 @@ export class KitInfoComponent implements OnInit, OnDestroy {
             {
                 key: 'subStatus.installedOSName',
                 type: 'choice',
-                className: 'text-left',
+                className: 'text-start',
                 resetOnHide: false,
                 templateOptions: {
                   label: 'Installed OS',

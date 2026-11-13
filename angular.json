@@ -47,7 +47,8 @@
               "node_modules/ngx-toastr/toastr.css",
               "src/fontawesome-subset.css",
               "src/styles.css",
-              "src/sb-admin.css"
+              "src/sb-admin.css",
+              "src/bs5-aliases.css"
             ],
             "scripts": [],
             "extractLicenses": false,

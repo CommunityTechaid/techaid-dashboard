@@ -1,0 +1,29 @@
+/*
+ * Bootstrap 5 class-name aliases (Bootstrap 4 -> 5 migration, stage 1).
+ *
+ * Templates now use Bootstrap 5 class names, but src/sb-admin.css (Bootstrap 4.4.1 + SB Admin 2) still loads
+ * after bootstrap.css and wins every equal-specificity tie. Where a Bootstrap 5 class does not already render
+ * exactly like the Bootstrap 4 class it replaced, the rules below give it the old sb-admin look, so the rename
+ * is pixel-neutral. This sheet loads LAST (after sb-admin.css, see angular.json).
+ *
+ * Renames that need NO rule here, because Bootstrap 5 ships the same declaration (value and !important) as
+ * sb-admin's v4 rule: fw-bold, text-end/text-start, me-1/pe-1/ps-1, fst-italic, mb-3 (was form-group).
+ *
+ * Stage 2 (theme layer) and stage 3 (delete the v4 region of sb-admin.css) should fold these rules into the
+ * theme and then delete this file.
+ */
+
+/* no-gutters -> g-0.
+ * BS5 .g-0 only zeroes --bs-gutter-x/y, but sb-admin's v4 .row margins and .col-* paddings are hard-coded
+ * (they do not read the variable) and win by load order, so .g-0 alone changes nothing. Reproduce v4's
+ * .no-gutters. */
+.g-0 {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.g-0 > .col,
+.g-0 > [class*="col-"] {
+  padding-right: 0;
+  padding-left: 0;
+}
