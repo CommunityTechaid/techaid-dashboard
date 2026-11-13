@@ -219,6 +219,16 @@ points at the Auth0 redirect-URI / callback config; a single `Access Denied` *af
 missing scope on the token — decode the JWT (`permissions` claim) and check the resolver's gate in
 techaid-server. Auth link + error link design → `dashboard-architecture-contract` §3.
 
+**Finding one failed GraphQL call (#381):** every Apollo request carries an `X-CTA-Ref` header
+(8 characters, e.g. `K7QM2XPA`; DevTools → Network → the `/graphql` request headers). A failed
+operation that reached the API is reported once to Application Insights as an exception with
+`source: apollo-error-link` and that `ref` in its properties (message: operation name, kind —
+`GraphQL` / `HTTP <status>` / `network` — classification, ref; never the server message or
+variables). Search the ref in the browser's exceptions and, once techaid-server#371 is deployed, in
+the API's `AppTraces`. No exception for a ref means either it never reached the API (a failed token
+fetch: no ref, not tracked), a public-page 401 that the tokenless retry recovered, the 50-per-page
+cap, or no App Insights connection string (local dev).
+
 ## 8. Public booking page: Turnstile widget missing / CSP violations
 
 **First check** — the browser console will name the blocked directive. The CSP is served by Azure

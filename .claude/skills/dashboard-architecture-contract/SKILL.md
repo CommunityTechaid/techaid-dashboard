@@ -122,6 +122,21 @@ The single Apollo client is built in `createApollo`. Three behaviours are delibe
   and redirecting on it would cause a login loop. **Do not "simplify" this to redirect on any auth
   error.** Pinned by `expired-session-redirects-to-login.spec.ts`, `invalid-grant-reauth.spec.ts`,
   `auth-link-no-anonymous-downgrade.spec.ts` and `anon-public-request-no-login-redirect.spec.ts`.
+- **Error ref + tracking (#381)** — the chain is `ApolloLink.from([errorRefLink, errorHandler,
+  asyncAuthLink, refHeaderLink, http])` (links in `src/app/shared/utils/error-ref.ts`). The outermost
+  link gives each operation an 8-character ref (`crypto.getRandomValues`, alphabet without 0/O/1/I/L)
+  kept on the operation context, so #391's tokenless retry re-sends the **same** ref; the innermost
+  link adds it as `X-CTA-Ref` **after** the auth link, because the auth link replaces `headers` on the
+  token path. Being outermost, the ref link sees only the final outcome: one `trackException`
+  (`source: apollo-error-link`, `route`, `ref`, `operation`, `kind`, `classification`) per failed
+  operation that reached the HTTP link, built from those safe parts only — never variables or the
+  server's message — capped at 50 per page load; a failed token fetch is neither tracked nor given
+  a ref. Errors pass through unchanged (callers parse messages). `refForError(err)` returns the ref
+  for the object a subscriber receives: Apollo hands GraphQL errors over as a **new**
+  `CombinedGraphQLErrors` holding the result's own `errors` objects, so the WeakMap keys those too.
+  Direct HttpClient GraphQL posts (feature flags, borough availability, booking) get a ref from
+  `errorRefInterceptor` and are not tracked. Pinned by `graphql-error-ref.spec.ts` and
+  `graphql-error-ref-instances.spec.ts`.
 - **Cache** — `new InMemoryCache()` with **no `typePolicies`**. Lists are re-fetched, not normalized-
   merged. Adding type policies / field merge functions is an architectural change with real cache-
   identity risk, not a tuning knob — treat as such.
