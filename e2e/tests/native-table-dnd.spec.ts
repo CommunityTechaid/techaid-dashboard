@@ -132,7 +132,7 @@ test.describe('native tables: distributions and deliveries @mocked', () => {
     expect(st.reqs[0].filter.isPrepped).toEqual({ _in: [false] });
     expect(st.reqs[0].filter.status._in).toContain('REQUEST_COLLECTION_DELIVERY_FAILED');
     expect(st.reqs[0].filter.AND.length).toBe(2);
-    await expect(page.locator('.card-header .badge-danger')).toHaveText('4');
+    await expect(page.locator('.card-header .text-bg-danger')).toHaveText('4');
   });
 
   test('a quick button goes back to the first page; paging and search keep working', async ({ page }) => {

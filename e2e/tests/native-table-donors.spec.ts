@@ -145,7 +145,7 @@ test.describe('native tables: donors @mocked', () => {
     // Row render: name link, email under it, devices badge, parent link.
     const row = page.locator('#donor-index tbody tr').first();
     await expect(row.locator('td').nth(1)).toContainText('@example.org');
-    await expect(row.locator('td').nth(2).locator('.badge-info')).toHaveCount(1);
+    await expect(row.locator('td').nth(2).locator('.text-bg-info')).toHaveCount(1);
     await expect(row.locator('td').nth(4).locator('a')).toHaveAttribute('href', /donor-parents\/\d$/);
   });
 
@@ -163,14 +163,14 @@ test.describe('native tables: donors @mocked', () => {
     const W = '#donor-index_wrapper';
     await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 1 of 1 entry');
     expect(st.donors[0].vars.where).toEqual({ archived: { _in: [true] } });
-    await expect(page.locator('.card-header .badge-danger')).toHaveText('1');
+    await expect(page.locator('.card-header .text-bg-danger')).toHaveText('1');
 
     await page.getByRole('link', { name: /Filter/ }).click();
     const modal = page.locator('.modal-content');
     await modal.getByText('Active Donors').click();
     await modal.getByRole('button', { name: 'Filter' }).click();
     await expect(page.locator(`${W} .dt-info`)).toHaveText('Showing 1 to 10 of 23 entries');
-    await expect(page.locator('.card-header .badge-danger')).toHaveText('2');
+    await expect(page.locator('.card-header .text-bg-danger')).toHaveText('2');
   });
 
   test('donor-parent-index: Created desc (column 4), donor/device counts, Type filter', async ({ page }) => {
@@ -207,7 +207,7 @@ test.describe('native tables: donors @mocked', () => {
     await modal.getByRole('button', { name: 'Filter' }).click();
     await expect(page.locator(`${W} .dt-info`)).toHaveText(/of 6 entries \(filtered from 12 total entries\)|of 6 entries/);
     expect(st.parents.at(-1)!.where.type).toEqual({ _in: ['BUSINESS'] });
-    await expect(page.locator('.card-header .badge-danger')).toHaveText('1');
+    await expect(page.locator('.card-header .text-bg-danger')).toHaveText('1');
   });
 
   test('parent donor: the Individual Donors tab sends the parent where and keeps id donor-index', async ({ page }) => {

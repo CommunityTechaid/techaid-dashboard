@@ -32,7 +32,7 @@
                 <i class="fas fa-filter"></i>
               </span>
               <span class="text">Filter @if (filterCount > 0) {
-                <span class="badge badge-danger">{{filterCount}}</span>
+                <span class="badge text-bg-danger">{{filterCount}}</span>
               }</span>
             </a>
 
@@ -81,7 +81,7 @@
                   <tr>
                     <td>
                       <a href="#" [routerLink]="['./', dt.id]">
-                        <span class="badge badge-primary">
+                        <span class="badge text-bg-primary">
                           {{dt.id}}
                         </span>
                       </a>
@@ -92,56 +92,56 @@
                           <div>
                             @if (dt.deviceRequestItems.other > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary" title="allocated / requested">
-                                  <span class="badge badge-secondary">Other</span>
+                                <span class="badge text-bg-primary" title="allocated / requested">
+                                  <span class="badge text-bg-secondary">Other</span>
                                   {{dt.types['OTHER'] || 0}}  / {{dt.deviceRequestItems.other || 0}}
                                 </span>
                               </span>
                             }
                             @if (dt.deviceRequestItems.laptops > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary" title="allocated / requested">
-                                  <span class="badge badge-secondary">Laptops</span>
+                                <span class="badge text-bg-primary" title="allocated / requested">
+                                  <span class="badge text-bg-secondary">Laptops</span>
                                   {{dt.types['LAPTOPS'] || 0}}  / {{dt.deviceRequestItems.laptops || 0}}
                                 </span>
                               </span>
                             }
                             @if (dt.deviceRequestItems.tablets > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary" title="allocated / requested">
-                                  <span class="badge badge-secondary">Tablets</span>
+                                <span class="badge text-bg-primary" title="allocated / requested">
+                                  <span class="badge text-bg-secondary">Tablets</span>
                                   {{dt.types['TABLETS'] || 0}}  / {{dt.deviceRequestItems.tablets || 0}}
                                 </span>
                               </span>
                             }
                             @if (dt.deviceRequestItems.allInOnes > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary" title="allocated / requested">
-                                  <span class="badge badge-secondary">All-in-ones</span>
+                                <span class="badge text-bg-primary" title="allocated / requested">
+                                  <span class="badge text-bg-secondary">All-in-ones</span>
                                   {{dt.types['ALLINONES'] || 0}}  / {{dt.deviceRequestItems.allInOnes || 0}}
                                 </span>
                               </span>
                             }
                             @if (dt.deviceRequestItems.desktops > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary" title="allocated / requested">
-                                  <span class="badge badge-secondary">Desktops</span>
+                                <span class="badge text-bg-primary" title="allocated / requested">
+                                  <span class="badge text-bg-secondary">Desktops</span>
                                   {{dt.types['DESKTOPS'] || 0}}  / {{dt.deviceRequestItems.desktops || 0}}
                                 </span>
                               </span>
                             }
                             @if (dt.deviceRequestItems.phones > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary" title="allocated / requested">
-                                  <span class="badge badge-secondary">Phones</span>
+                                <span class="badge text-bg-primary" title="allocated / requested">
+                                  <span class="badge text-bg-secondary">Phones</span>
                                   {{dt.types['PHONES'] || 0}}  / {{dt.deviceRequestItems.phones || 0}}
                                 </span>
                               </span>
                             }
                             @if (dt.deviceRequestItems.commsDevices > 0) {
                               <span class="me-1 mb-1">
-                                <span class="badge badge-primary" title="allocated / requested">
-                                  <span class="badge badge-secondary">Comms Devices</span>
+                                <span class="badge text-bg-primary" title="allocated / requested">
+                                  <span class="badge text-bg-secondary">Comms Devices</span>
                                   {{dt.types['COMMSDEVICES'] || 0}}  / {{dt.deviceRequestItems.commsDevices || 0}}
                                 </span>
                               </span>
@@ -155,7 +155,7 @@
                                     <strong>Other:</strong>
                                     @for (kitId of dt.kitIds['OTHER']; track kitId; let last = $last) {
                                       <span>
-                                        <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                        <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge text-bg-light">{{kitId}}</a>@if (!last) {
                                         <span>, </span>
                                       }
                                     </span>
@@ -167,7 +167,7 @@
                                   <strong>Laptops:</strong>
                                   @for (kitId of dt.kitIds['LAPTOPS']; track kitId; let last = $last) {
                                     <span>
-                                      <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                      <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge text-bg-light">{{kitId}}</a>@if (!last) {
                                       <span>, </span>
                                     }
                                   </span>
@@ -179,7 +179,7 @@
                                 <strong>Tablets:</strong>
                                 @for (kitId of dt.kitIds['TABLETS']; track kitId; let last = $last) {
                                   <span>
-                                    <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                    <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge text-bg-light">{{kitId}}</a>@if (!last) {
                                     <span>, </span>
                                   }
                                 </span>
@@ -191,7 +191,7 @@
                               <strong>All-in-ones:</strong>
                               @for (kitId of dt.kitIds['ALLINONES']; track kitId; let last = $last) {
                                 <span>
-                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                  <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge text-bg-light">{{kitId}}</a>@if (!last) {
                                   <span>, </span>
                                 }
                               </span>
@@ -203,7 +203,7 @@
                             <strong>Desktops:</strong>
                             @for (kitId of dt.kitIds['DESKTOPS']; track kitId; let last = $last) {
                               <span>
-                                <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                                <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge text-bg-light">{{kitId}}</a>@if (!last) {
                                 <span>, </span>
                               }
                             </span>
@@ -215,7 +215,7 @@
                           <strong>Phones:</strong>
                           @for (kitId of dt.kitIds['PHONES']; track kitId; let last = $last) {
                             <span>
-                              <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                              <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge text-bg-light">{{kitId}}</a>@if (!last) {
                               <span>, </span>
                             }
                           </span>
@@ -227,7 +227,7 @@
                         <strong>Comms Devices:</strong>
                         @for (kitId of dt.kitIds['COMMSDEVICES']; track kitId; let last = $last) {
                           <span>
-                            <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge badge-light">{{kitId}}</a>@if (!last) {
+                            <a href="#" [routerLink]="['/dashboard/devices', kitId]" class="badge text-bg-light">{{kitId}}</a>@if (!last) {
                             <span>, </span>
                           }
                         </span>

@@ -37,7 +37,7 @@
                             <div>
                               <a href="#" [routerLink]="['/dashboard/posts', dt.id]">{{ dt.title }}</a>
                               <div class="text-muted snippet" [innerHtml]="dt.content"></div>
-                              <span class="badge badge-secondary">{{dt.slug}}</span>
+                              <span class="badge text-bg-secondary">{{dt.slug}}</span>
                             </div>
                           </div>
                         </div>
@@ -47,10 +47,10 @@
                       </td>
                       <td>
                         @if (dt.published) {
-                          <span class="badge badge-success">Published</span>
+                          <span class="badge text-bg-success">Published</span>
                         }
                         @if (!dt.published) {
-                          <span class="badge badge-warning">Draft</span>
+                          <span class="badge text-bg-warning">Draft</span>
                         }
                       </td>
                     </tr>

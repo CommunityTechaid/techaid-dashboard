@@ -132,7 +132,7 @@ test.describe('native tables: requests and devices @mocked', () => {
     const first = page.locator('#device-request-index tbody tr').first();
     await expect(first.locator('td').nth(1)).toContainText('Laptops');
     await expect(first.locator('td').nth(1)).toContainText('2  / 2');
-    await expect(first.locator('td').nth(1).locator('a.badge-light')).toHaveText(['501', '502']);
+    await expect(first.locator('td').nth(1).locator('a.text-bg-light')).toHaveText(['501', '502']);
     // The Borough column renders "Not recorded" for a blank borough.
     await expect(page.locator('#device-request-index tbody tr').nth(1).locator('td').nth(4)).toContainText('Lambeth');
 
@@ -175,7 +175,7 @@ test.describe('native tables: requests and devices @mocked', () => {
     await page.goto('/dashboard/device-requests');
     await expect(page.locator('#device-request-index_wrapper .dt-info')).toHaveText('Showing 1 to 10 of 23 entries');
     expect(st.index[0].filter).toEqual({ isSales: { _in: [true] }, borough: { _in: ['Lambeth'] } });
-    await expect(page.locator('.card-header .badge-danger')).toHaveText('2');
+    await expect(page.locator('.card-header .text-bg-danger')).toHaveText('2');
   });
 
   test('organisation Requests tab: 10 per page, ID desc, sends the organisation where', async ({ page }) => {

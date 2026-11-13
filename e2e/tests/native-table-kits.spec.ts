@@ -118,7 +118,7 @@ test.describe('native tables: devices list @mocked', () => {
     await page.waitForTimeout(500);
     expect(st.kits.length).toBe(1);
     expect(st.kits[0].where).toMatchObject({ type: { _in: ['LAPTOP'] }, archived: { _in: [false] }, AND: [{ status: { _neq: 'DONATION_NEW' } }] });
-    await expect(page.locator('.card-header .badge-danger')).toHaveText('3');
+    await expect(page.locator('.card-header .text-bg-danger')).toHaveText('3');
   });
 
   test('bulk mode: the select-all checkbox is in the header, selects the page and warns about the rest', async ({ page }) => {
