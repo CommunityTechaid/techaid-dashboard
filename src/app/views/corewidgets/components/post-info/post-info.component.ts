@@ -86,7 +86,9 @@ export class PostInfoComponent implements OnInit, OnDestroy {
       templateOptions: {
         label: 'Title',
         placeholder: '',
-        required: false
+        // updatePost's title and slug are String! + @NotBlank on the server: an emptied field used to
+        // send '' and fail with a raw server error. Required here, as on the create form (post-index).
+        required: true
       }
     },
     {
@@ -101,7 +103,7 @@ export class PostInfoComponent implements OnInit, OnDestroy {
             label: 'Slug',
             description: 'The url to the post',
             placeholder: '',
-            required: false
+            required: true
           }
         },
         {
