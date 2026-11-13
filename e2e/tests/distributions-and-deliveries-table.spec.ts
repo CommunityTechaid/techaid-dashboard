@@ -1263,11 +1263,11 @@ test.describe('DnD table: counts and row badges @mocked', () => {
     await expectIds(page, [8]);
     const cell = dataRows(page).first().locator('td:nth-child(2)');
     // Row 8 asked for 3 laptops and holds 2 laptop kits (+1 smartphone it did not ask for).
-    await expect(cell.locator('.badge-primary', { hasText: 'Laptops' })).toContainText(/2\s*\/\s*3/);
+    await expect(cell.locator('.text-bg-primary', { hasText: 'Laptops' })).toContainText(/2\s*\/\s*3/);
     await expect(cell).toContainText('9001');
     await expect(cell).toContainText('9003');
     // No request for tablets -> no tablets badge.
-    await expect(cell.locator('.badge-primary', { hasText: 'Tablets' })).toHaveCount(0);
+    await expect(cell.locator('.text-bg-primary', { hasText: 'Tablets' })).toHaveCount(0);
   });
 
   test('an allocated kit of type OTHER is counted and listed on the row', async ({ page }) => {
@@ -1282,7 +1282,7 @@ test.describe('DnD table: counts and row badges @mocked', () => {
       await h.after(() => searchBox(page).fill('CR-020'));
       await expectIds(page, [20]);
       const cell = dataRows(page).first().locator('td:nth-child(2)');
-      await expect(cell.locator('.badge-primary', { hasText: 'Other' })).toContainText(/1\s*\/\s*1/);
+      await expect(cell.locator('.text-bg-primary', { hasText: 'Other' })).toContainText(/1\s*\/\s*1/);
       await expect(cell).toContainText('9010');
     } finally {
       FIX.rows[19].deviceRequestItems.other = 0;
@@ -1707,7 +1707,7 @@ test.describe('DnD table: labels and hints @mocked', () => {
     const h = await setup(page);
     await load(page, h);
     await expect(table(page).locator('thead th', { hasText: 'Requests' })).toHaveAttribute('title', /allocated \/ requested/);
-    const badges = table(page).locator('tbody span.badge.badge-primary[title="allocated / requested"]');
+    const badges = table(page).locator('tbody span.badge.text-bg-primary[title="allocated / requested"]');
     expect(await badges.count()).toBeGreaterThan(0);
   });
 });

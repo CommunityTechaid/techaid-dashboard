@@ -1,7 +1,7 @@
 <!-- Rendered as a tab inside the Admin Panel, so no breadcrumb/layout wrapper of its own. -->
 <div class="card shadow mb-4 mt-1">
   <div class="card-header py-3">
-    <h6 class="m-0 font-weight-bold text-primary">Membership allowance</h6>
+    <h6 class="m-0 fw-bold text-primary">Membership allowance</h6>
   </div>
   <div class="card-body">
     <p class="text-muted small mb-4">
@@ -17,7 +17,7 @@
       </div>
     } @else {
       <fieldset class="mb-3" data-testid="membership-mode">
-        <legend class="fs-6 font-weight-bold">When an organisation reaches its limit</legend>
+        <legend class="fs-6 fw-bold">When an organisation reaches its limit</legend>
         <div class="form-check">
           <input class="form-check-input" type="radio" name="mode" id="mode-grace" value="GRACE" [(ngModel)]="mode" />
           <label class="form-check-label" for="mode-grace">
@@ -33,7 +33,7 @@
       </fieldset>
 
       <div class="mb-4" style="max-width: 20rem">
-        <label class="form-label font-weight-bold" for="grace-requests">Grace requests allowed</label>
+        <label class="form-label fw-bold" for="grace-requests">Grace requests allowed</label>
         <input
           id="grace-requests"
           type="number"

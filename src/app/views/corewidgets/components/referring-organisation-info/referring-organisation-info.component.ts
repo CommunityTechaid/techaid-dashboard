@@ -70,7 +70,7 @@ const MEMBERSHIP_FIELD_GROUP: FormlyFieldConfig = {
   fieldGroup: [
     {
       className: 'col-12',
-      template: '<h6 class="font-weight-bold text-primary mb-2">Membership</h6>',
+      template: '<h6 class="fw-bold text-primary mb-2">Membership</h6>',
     },
     {
       key: 'membershipTier',

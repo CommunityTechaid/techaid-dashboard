@@ -1,0 +1,69 @@
+/*
+ * Bootstrap 5 class-name aliases (Bootstrap 4 -> 5 migration, stage 1).
+ *
+ * Templates now use Bootstrap 5 class names, but src/sb-admin.css (Bootstrap 4.4.1 + SB Admin 2) still loads
+ * after bootstrap.css and wins every equal-specificity tie. Where a Bootstrap 5 class does not already render
+ * exactly like the Bootstrap 4 class it replaced, the rules below give it the old sb-admin look, so the rename
+ * is pixel-neutral. This sheet loads LAST (after sb-admin.css, see angular.json).
+ *
+ * Renames that need NO rule here, because Bootstrap 5 ships the same declaration (value and !important) as
+ * sb-admin's v4 rule: fw-bold, text-end/text-start, me-1/pe-1/ps-1, fst-italic, mb-3 (was form-group).
+ *
+ * Stage 2 (theme layer) and stage 3 (delete the v4 region of sb-admin.css) should fold these rules into the
+ * theme and then delete this file.
+ */
+
+/* no-gutters -> g-0.
+ * BS5 .g-0 only zeroes --bs-gutter-x/y, but sb-admin's v4 .row margins and .col-* paddings are hard-coded
+ * (they do not read the variable) and win by load order, so .g-0 alone changes nothing. Reproduce v4's
+ * .no-gutters. */
+.g-0 {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.g-0 > .col,
+.g-0 > [class*="col-"] {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+/* badge-* -> text-bg-*.
+ * The .badge base (padding .25em .4em, 75%, radius .35rem) is unchanged: it still comes from sb-admin's v4 .badge.
+ * BS5's .text-bg-* set colour and background with !important from the BS5 palette (#0d6efd, #6c757d, ...) and give
+ * warning/info/light dark text; the v4 sb-admin .badge-* used the SB palette with white text on every variant except
+ * light. Scoped to .badge: ng-bootstrap's <ngb-progressbar [type]> renders `text-bg-{type}` on its bar (the dashboard
+ * summary cards), and that bar has always had the BS5 colours, so an unscoped alias would recolour it.
+ * !important is needed to beat BS5's rule. Values copied from sb-admin.css (.badge-* and a.badge-*:hover/:focus). Hover/focus rules apply to <a> badges
+ * (kit-ID links in the request and distribution tables). */
+.badge.text-bg-primary { color: #fff !important; background-color: var(--ctablue) !important; }
+a.badge.text-bg-primary:hover, a.badge.text-bg-primary:focus { color: #fff !important; background-color: #2653d4 !important; }
+a.badge.text-bg-primary:focus, a.badge.text-bg-primary.focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.5); }
+
+.badge.text-bg-secondary { color: #fff !important; background-color: #858796 !important; }
+a.badge.text-bg-secondary:hover, a.badge.text-bg-secondary:focus { color: #fff !important; background-color: #6b6d7d !important; }
+a.badge.text-bg-secondary:focus, a.badge.text-bg-secondary.focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(133, 135, 150, 0.5); }
+
+.badge.text-bg-success { color: #fff !important; background-color: #1cc88a !important; }
+a.badge.text-bg-success:hover, a.badge.text-bg-success:focus { color: #fff !important; background-color: #169b6b !important; }
+a.badge.text-bg-success:focus, a.badge.text-bg-success.focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(28, 200, 138, 0.5); }
+
+.badge.text-bg-info { color: #fff !important; background-color: #36b9cc !important; }
+a.badge.text-bg-info:hover, a.badge.text-bg-info:focus { color: #fff !important; background-color: #2a96a5 !important; }
+a.badge.text-bg-info:focus, a.badge.text-bg-info.focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(54, 185, 204, 0.5); }
+
+.badge.text-bg-warning { color: #fff !important; background-color: #f6c23e !important; }
+a.badge.text-bg-warning:hover, a.badge.text-bg-warning:focus { color: #fff !important; background-color: #f4b30d !important; }
+a.badge.text-bg-warning:focus, a.badge.text-bg-warning.focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(246, 194, 62, 0.5); }
+
+.badge.text-bg-danger { color: #fff !important; background-color: #e74a3b !important; }
+a.badge.text-bg-danger:hover, a.badge.text-bg-danger:focus { color: #fff !important; background-color: #d52a1a !important; }
+a.badge.text-bg-danger:focus, a.badge.text-bg-danger.focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(231, 74, 59, 0.5); }
+
+.badge.text-bg-light { color: #3a3b45 !important; background-color: #f8f9fc !important; }
+a.badge.text-bg-light:hover, a.badge.text-bg-light:focus { color: #3a3b45 !important; background-color: #d4daed !important; }
+a.badge.text-bg-light:focus, a.badge.text-bg-light.focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(248, 249, 252, 0.5); }
+
+.badge.text-bg-dark { color: #fff !important; background-color: #5a5c69 !important; }
+a.badge.text-bg-dark:hover, a.badge.text-bg-dark:focus { color: #fff !important; background-color: #42444e !important; }
+a.badge.text-bg-dark:focus, a.badge.text-bg-dark.focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(90, 92, 105, 0.5); }

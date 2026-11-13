@@ -249,14 +249,14 @@ test.describe('device request borough column + filter @mocked', () => {
     await page.goto(INDEX_PATH);
     await expect(row(page, 'CR-TOWERHAMLETS')).toBeVisible({ timeout: 30_000 });
 
-    await expect(page.locator('a.btn-info .badge-danger')).toHaveCount(0);
+    await expect(page.locator('a.btn-info .text-bg-danger')).toHaveCount(0);
 
     await openFilterModal(page);
     await page.getByLabel('Lambeth').check();
     await page.getByLabel('Tower Hamlets').check();
     await applyFilterModal(page, capturedRequests);
 
-    await expect(page.locator('a.btn-info .badge-danger')).toHaveText('2');
+    await expect(page.locator('a.btn-info .text-bg-danger')).toHaveText('2');
   });
 
   test('the filter survives a reload, restored from localStorage', async ({ page }) => {

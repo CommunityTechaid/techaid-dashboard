@@ -98,7 +98,7 @@ test.describe('native tables: post-index and dashboard @mocked', () => {
     await expect(page.locator(`${W} .dt-paging button.page-link.next`)).toHaveCount(1);
     expect(st.posts[0].page).toEqual({ sort: [{ key: 'updatedAt', value: 'desc' }], size: 10, page: 0 });
     await expect(rows.first()).toContainText('Post title 23');
-    await expect(rows.first().locator('.badge-success, .badge-warning')).toHaveCount(1);
+    await expect(rows.first().locator('.text-bg-success, .text-bg-warning')).toHaveCount(1);
 
     const postTh = page.locator('#post-index thead th').nth(1);
     await postTh.click();

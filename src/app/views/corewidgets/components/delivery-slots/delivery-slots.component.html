@@ -35,7 +35,7 @@
     <!-- Admin exception booking (techaid-server#73): any day, any window, doesn't take a slot. -->
     <div class="card shadow-sm mb-4" data-testid="exception-booking-form">
       <div class="card-header py-2">
-        <span class="font-weight-bold text-primary">Exception booking</span>
+        <span class="fw-bold text-primary">Exception booking</span>
         <span class="text-muted small ms-2">Admins only. Any day and any window, even a full one. It doesn't take a public slot, and the normal confirmation email is sent.</span>
       </div>
       <div class="card-body">
@@ -79,8 +79,8 @@
   <!-- Bookings -->
   <div class="card shadow-sm mb-4">
     <div class="card-header py-2 d-flex justify-content-between align-items-center">
-      <span class="font-weight-bold text-primary">Who's booked</span>
-      <span class="badge badge-secondary">{{ totalBookings() }} booking{{ totalBookings() === 1 ? '' : 's' }}</span>
+      <span class="fw-bold text-primary">Who's booked</span>
+      <span class="badge text-bg-secondary">{{ totalBookings() }} booking{{ totalBookings() === 1 ? '' : 's' }}</span>
     </div>
     <div class="card-body">
       @if (bookingGroups().length === 0) {
@@ -88,9 +88,9 @@
       } @else {
         @for (group of bookingGroups(); track group.key) {
           <div class="mb-4">
-            <div class="font-weight-bold mb-2">
+            <div class="fw-bold mb-2">
               {{ group.dayLabel }} · {{ group.windowName }}
-              <span class="badge badge-primary ms-1">{{ group.bookings.length }}</span>
+              <span class="badge text-bg-primary ms-1">{{ group.bookings.length }}</span>
             </div>
             <div class="table-responsive">
               <table class="table table-sm table-striped mb-0 bookings-table">
@@ -116,13 +116,13 @@
                       <td>
                         {{ bk.ctaReference }}
                         @if (bk.adminException) {
-                          <span class="badge badge-info ms-1" data-testid="admin-exception-badge" [title]="exceptionTitle(bk)">admin exception</span>
+                          <span class="badge text-bg-info ms-1" data-testid="admin-exception-badge" [title]="exceptionTitle(bk)">admin exception</span>
                         }
                         @if (!bk.matchedRequestId) {
-                          <span class="badge badge-warning ms-1" title="No device request found with this id">unmatched</span>
+                          <span class="badge text-bg-warning ms-1" title="No device request found with this id">unmatched</span>
                         } @else if (bk.matchedRequestOpen === false) {
                           <span
-                            class="badge badge-secondary ms-1"
+                            class="badge text-bg-secondary ms-1"
                             [title]="'Matched device request #' + bk.matchedRequestId + ' (' + bk.matchedRequestStatus + ')'"
                           >closed</span>
                         }
@@ -133,7 +133,7 @@
                         {{ bk.address }}
                         @if (bk.outOfArea) {
                           <span
-                            class="badge badge-danger ms-1"
+                            class="badge text-bg-danger ms-1"
                             title="This postcode doesn't resolve to one of our currently supported delivery boroughs"
                           >outside delivery area</span>
                         }

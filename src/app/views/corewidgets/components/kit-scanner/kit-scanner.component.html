@@ -6,7 +6,7 @@
         <div class="small text-muted mb-1">
           <a routerLink="/dashboard/devices">Devices</a> <span class="mx-1">/</span> Update Scanner
         </div>
-        <h1 class="h4 m-0 font-weight-bold text-primary d-flex align-items-center">
+        <h1 class="h4 m-0 fw-bold text-primary d-flex align-items-center">
           <i class="fas fa-barcode me-2"></i>Update Scanner
         </h1>
       </div>
@@ -18,7 +18,7 @@
 
     <div class="card shadow mb-4">
       <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h6 class="m-0 font-weight-bold text-primary">Bench scanner</h6>
+        <h6 class="m-0 fw-bold text-primary">Bench scanner</h6>
         <span class="badge bg-light text-primary border">
           <i class="fas fa-keyboard me-1"></i>Keyboard-only · scanner ready
         </span>
@@ -115,7 +115,7 @@
 
             <div class="card mb-3">
               <div class="card-body">
-                <h6 class="font-weight-bold mb-1">Choose a mode</h6>
+                <h6 class="fw-bold mb-1">Choose a mode</h6>
                 <p class="small text-muted mb-2">Scan a printed mode card, or pick one here:</p>
                 <select
                   class="form-select mb-3"
@@ -138,7 +138,7 @@
 
             <div class="card mb-3">
               <div class="card-body">
-                <h6 class="font-weight-bold mb-1">Note for every scan</h6>
+                <h6 class="fw-bold mb-1">Note for every scan</h6>
                 <p class="small text-muted mb-2">
                   Optional. Added as a note on each device you scan from here on.
                 </p>
@@ -189,7 +189,7 @@
             <div class="card">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h6 class="font-weight-bold m-0">This session</h6>
+                  <h6 class="fw-bold m-0">This session</h6>
                   <span class="small text-muted">since {{ sessionStarted | date: 'HH:mm' }}</span>
                 </div>
                 <div class="d-flex align-items-baseline gap-2 mb-3">
@@ -201,7 +201,7 @@
                     <div class="d-flex align-items-center gap-2 small">
                       <span [class]="'scanner-card__chip scanner-card__chip--' + mode.tone"></span>
                       <span class="flex-fill">{{ mode.label }}</span>
-                      <span class="font-weight-bold">{{ countFor(mode) }}</span>
+                      <span class="fw-bold">{{ countFor(mode) }}</span>
                     </div>
                   }
                 </div>

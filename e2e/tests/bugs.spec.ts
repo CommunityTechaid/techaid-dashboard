@@ -1194,7 +1194,7 @@ test.describe('BUG-20: Devices tab on device-request record shows assigned kits'
     }
 
     // Find a row whose "Requests" (2nd) column cell contains kit-ID badge links
-    // (rendered as `a.badge-light[href*="/dashboard/devices/"]`). These badges
+    // (rendered as `a.text-bg-light[href*="/dashboard/devices/"]`). These badges
     // only appear when kits are actually assigned to the request, so picking such
     // a row guarantees the Devices tab will have at least one row to assert on.
     const allRows = page.locator('table tbody tr');

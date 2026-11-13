@@ -48,12 +48,12 @@ interface GalleryFile { url: string; image: string; id: string | number | null; 
   <div [class.is-invalid]="showError">
     <div class="">
       @for (f of files(); track f) {
-        <div class="file mr-1">
+        <div class="file me-1">
           <img class="img-thumbnail" [src]="f.image || to.prefix + f.url" />
           <a href="#" (click)="remove(f)"><i class="fas fa-times"></i></a>
         </div>
       }
-      <div class="file file-button img-thumbnail mr-1">
+      <div class="file file-button img-thumbnail me-1">
         <label class="btn btn-sm btn-primary btn-outline">
           <i class="fas fa-plus"></i>
           <input (change)="fileChange($event)" #fileInput type="file" accept=".jpg,.jpeg,.png,.bmp,.gif" multiple style="display: none;">

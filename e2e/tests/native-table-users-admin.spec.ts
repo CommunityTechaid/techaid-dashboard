@@ -227,8 +227,8 @@ test.describe('native tables: users-admin cluster @mocked', () => {
     await expect(rows).toHaveCount(2);
     await expect(page.locator('#user-permissions_wrapper .dt-info')).toHaveText('Showing 1 to 2 of 2 entries');
     // Rows derived by map + spread (Apollo v4 freezes responses): the badges prove they render.
-    await expect(rows.filter({ hasText: 'read:direct' }).locator('.badge-secondary')).toHaveText('Direct');
-    await expect(rows.filter({ hasText: 'read:viaRole' }).locator('.badge-primary')).toContainText('1 Role(s)');
+    await expect(rows.filter({ hasText: 'read:direct' }).locator('.text-bg-secondary')).toHaveText('Direct');
+    await expect(rows.filter({ hasText: 'read:viaRole' }).locator('.text-bg-primary')).toContainText('1 Role(s)');
     await expect(rows.filter({ hasText: 'read:viaRole' }).locator('[data-testid="permission-remove"]')).toBeDisabled();
     expect(last(st, 'user-permissions').page).toMatchObject({ size: 10, sort: [{ key: 'description', value: 'desc' }] });
 

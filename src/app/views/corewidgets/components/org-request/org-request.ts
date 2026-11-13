@@ -729,7 +729,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     fieldGroup: [
       {
         className: 'col-md-12',
-        template: '<h6 class="m-0 font-weight-bold text-primary">About you</h6>'
+        template: '<h6 class="m-0 fw-bold text-primary">About you</h6>'
       },
       {
         fieldGroupClassName: 'row',
@@ -814,7 +814,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     fieldGroup: [
       {
         className: 'col-md-12',
-        template: '<h6 class="m-0 font-weight-bold text-primary">About your organisation</h6>'
+        template: '<h6 class="m-0 fw-bold text-primary">About your organisation</h6>'
       },
       this.referringOrgField,
       this.createNewOrganisationPrompt
@@ -994,7 +994,7 @@ This device type is not currently being offered. Please choose a different item.
     fieldGroup: [
       {
         className: 'col-md-12',
-        template: '<h6 class="m-0 font-weight-bold text-primary">Your client\'s needs</h6>'
+        template: '<h6 class="m-0 fw-bold text-primary">Your client\'s needs</h6>'
       },/*
       {
         className: 'col-md-12',
@@ -1088,7 +1088,7 @@ This device type is not currently being offered. Please choose a different item.
     fieldGroup: [
       {
         className: 'row',
-        template: '<h3 class="font-weight-bold text-primary">Thank You</h3>'
+        template: '<h3 class="fw-bold text-primary">Thank You</h3>'
       },
       {
         className: 'row',
@@ -1111,7 +1111,7 @@ This device type is not currently being offered. Please choose a different item.
     fieldGroup: [
       {
         className: 'row',
-        template: '<h3 class="font-weight-bold text-primary">Oops!</h3>'
+        template: '<h3 class="fw-bold text-primary">Oops!</h3>'
       },
       {
         className: 'row',
