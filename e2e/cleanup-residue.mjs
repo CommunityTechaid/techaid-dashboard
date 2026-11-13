@@ -25,6 +25,7 @@
  */
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { inDeleteOrder } from './cleanup-order.mjs';
 
 const ENDPOINT = 'https://api-testing.communitytechaid.org.uk/graphql';
 const MARKER = 'E2E'; // matches "E2E Sample …" and legacy "E2E-5.x" / "E2E teardown …"
@@ -55,7 +56,7 @@ const gql = async (query, variables = {}) => {
 };
 
 // One descriptor per entity: how to list its sample records and how to delete one.
-const ENTITIES = [
+const ENTITY_DESCRIPTORS = [
   {
     kind: 'donor',
     list: `query { donorsConnection(page:{size:500}, where:{ name:{_contains:"${MARKER}"} }){ content{ id name archived } } }`,
@@ -92,6 +93,10 @@ const ENTITIES = [
     del: 'mutation($id: ID!) { deleteDeviceRequest(id: $id) }',
   },
 ];
+
+// Dependency order (see cleanup-order.mjs): requests before the referees they point at, so one
+// pass is enough.
+const ENTITIES = inDeleteOrder(ENTITY_DESCRIPTORS);
 
 let found = 0, deleted = 0, denied = 0, failed = 0;
 
