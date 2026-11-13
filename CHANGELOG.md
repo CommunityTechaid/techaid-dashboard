@@ -9,6 +9,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.4.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.3.0...v2.4.0) (2026-11-13)
+
+
+### Features
+
+* friendly error toasts with an error ref ([#381](https://github.com/CommunityTechaid/techaid-dashboard/issues/381)) ([#400](https://github.com/CommunityTechaid/techaid-dashboard/issues/400)) ([3f77755](https://github.com/CommunityTechaid/techaid-dashboard/commit/3f77755f98de4f792cd56b475a524b97dbb558d1))
+* friendly inline error messages with an error ref ([#381](https://github.com/CommunityTechaid/techaid-dashboard/issues/381)) ([#402](https://github.com/CommunityTechaid/techaid-dashboard/issues/402)) ([2ca2734](https://github.com/CommunityTechaid/techaid-dashboard/commit/2ca2734e373fb5983d22d1c465631df597c0bd0e))
+* organisation allowance filter and membership history tab ([#331](https://github.com/CommunityTechaid/techaid-dashboard/issues/331)) ([ef3d1a5](https://github.com/CommunityTechaid/techaid-dashboard/commit/ef3d1a5429d2b0622d2370988b4cacff5fde089f)), closes [#234](https://github.com/CommunityTechaid/techaid-dashboard/issues/234)
+* send an error ref with every GraphQL request and report GraphQL errors to App Insights ([#381](https://github.com/CommunityTechaid/techaid-dashboard/issues/381)) ([#397](https://github.com/CommunityTechaid/techaid-dashboard/issues/397)) ([9e402a3](https://github.com/CommunityTechaid/techaid-dashboard/commit/9e402a385302592f7797dfc6622a1703fdd15bad))
+* simplify battery health colour coding to green/red at 50% ([#231](https://github.com/CommunityTechaid/techaid-dashboard/issues/231)) ([#313](https://github.com/CommunityTechaid/techaid-dashboard/issues/313)) ([f4adc37](https://github.com/CommunityTechaid/techaid-dashboard/commit/f4adc374deb7405bc58eaa3d784e98e6a340037e))
+
+
+### Bug Fixes
+
+* a failed feature-flags request is no longer cached for the page load ([#326](https://github.com/CommunityTechaid/techaid-dashboard/issues/326)) ([#333](https://github.com/CommunityTechaid/techaid-dashboard/issues/333)) ([d336f9b](https://github.com/CommunityTechaid/techaid-dashboard/commit/d336f9bc929f3a4ef13b51f7fdb4699c1c220446))
+* a header click on any table reverses the sort instead of clearing it ([#336](https://github.com/CommunityTechaid/techaid-dashboard/issues/336)) ([270b324](https://github.com/CommunityTechaid/techaid-dashboard/commit/270b3248d834ed880eb4484628bdee731d19f4cb))
+* a stale staff session never sends a public-page visitor to login ([#390](https://github.com/CommunityTechaid/techaid-dashboard/issues/390)) ([86d3e3f](https://github.com/CommunityTechaid/techaid-dashboard/commit/86d3e3f5453e3ecd86b29d70dc9cd68eef86eb74))
+* address suggestions render as soon as they arrive on OnPush forms ([#327](https://github.com/CommunityTechaid/techaid-dashboard/issues/327)) ([#328](https://github.com/CommunityTechaid/techaid-dashboard/issues/328)) ([29b33fb](https://github.com/CommunityTechaid/techaid-dashboard/commit/29b33fbbb550071aea03d40e2051cd5a825cdd40))
+* creating a parent donor works after clearing the address ([#385](https://github.com/CommunityTechaid/techaid-dashboard/issues/385)) ([97a48df](https://github.com/CommunityTechaid/techaid-dashboard/commit/97a48df472b3c873060c755a4f78cba27386afa9))
+* D&D explains hidden rows, counts the commercial filter once and labels badges ([#340](https://github.com/CommunityTechaid/techaid-dashboard/issues/340)) ([cf35c0e](https://github.com/CommunityTechaid/techaid-dashboard/commit/cf35c0e93163fa49cb50941d7ca715accc1dc0f2))
+* D&D table loads once, keeps its pager after an error and gains a filter RESET ([#291](https://github.com/CommunityTechaid/techaid-dashboard/issues/291)) ([#335](https://github.com/CommunityTechaid/techaid-dashboard/issues/335)) ([03d184c](https://github.com/CommunityTechaid/techaid-dashboard/commit/03d184cbc0f15315954458ad6c3289ebaa1a7aad))
+* devices search accepts ID lists separated by new lines or spaces ([#349](https://github.com/CommunityTechaid/techaid-dashboard/issues/349)) ([b4b6b15](https://github.com/CommunityTechaid/techaid-dashboard/commit/b4b6b155ea1e30aefe8c2dbfefcf9d5ec0a8b9ee)), closes [#348](https://github.com/CommunityTechaid/techaid-dashboard/issues/348)
+* Distributions prepped ticks show blue again instead of greyed out ([#361](https://github.com/CommunityTechaid/techaid-dashboard/issues/361)) ([16bea0d](https://github.com/CommunityTechaid/techaid-dashboard/commit/16bea0dd5afd12215e1c1cc18908eace1899fd12))
+* donor page no longer crashes for a donor with no parent donor ([#364](https://github.com/CommunityTechaid/techaid-dashboard/issues/364)) ([cf939a3](https://github.com/CommunityTechaid/techaid-dashboard/commit/cf939a34b7a8d485cc1120b7c79fc26f11964c36))
+* hide the non-functional search box on role and user detail tables ([#351](https://github.com/CommunityTechaid/techaid-dashboard/issues/351)) ([440174b](https://github.com/CommunityTechaid/techaid-dashboard/commit/440174b72f2974579bda1a8c4f52334d8d225d72)), closes [#350](https://github.com/CommunityTechaid/techaid-dashboard/issues/350)
+* organisation History tab reloads after every save, not just the first ([#347](https://github.com/CommunityTechaid/techaid-dashboard/issues/347)) ([f8ff0e1](https://github.com/CommunityTechaid/techaid-dashboard/commit/f8ff0e1eef232ef3be1bf4b418e4a53d4919c7b0))
+* post title and slug are required when editing a post ([#384](https://github.com/CommunityTechaid/techaid-dashboard/issues/384)) ([ca9aa55](https://github.com/CommunityTechaid/techaid-dashboard/commit/ca9aa55547bec3d462fc65cc0307ef1d43b3da67))
+* public pages retry once without the token after a 401 ([#391](https://github.com/CommunityTechaid/techaid-dashboard/issues/391)) ([#395](https://github.com/CommunityTechaid/techaid-dashboard/issues/395)) ([4bc372b](https://github.com/CommunityTechaid/techaid-dashboard/commit/4bc372bdeb1e762159d1d08715dd36e778e251b7))
+* public request form retries when the API is waking up ([#403](https://github.com/CommunityTechaid/techaid-dashboard/issues/403)) ([53b0191](https://github.com/CommunityTechaid/techaid-dashboard/commit/53b0191798517adbffcd6e85285131839b9f6f81))
+* referee contact requires a referring organisation before saving ([#373](https://github.com/CommunityTechaid/techaid-dashboard/issues/373)) ([#376](https://github.com/CommunityTechaid/techaid-dashboard/issues/376)) ([10b542b](https://github.com/CommunityTechaid/techaid-dashboard/commit/10b542b460766aa0599942c616e2164aff206100))
+* referee delete confirmation names the referee ([#368](https://github.com/CommunityTechaid/techaid-dashboard/issues/368)) ([ee39c45](https://github.com/CommunityTechaid/techaid-dashboard/commit/ee39c45f8df838ddc43ca3db284f7361349b92d0))
+* referee email is required before saving ([#383](https://github.com/CommunityTechaid/techaid-dashboard/issues/383)) ([8048115](https://github.com/CommunityTechaid/techaid-dashboard/commit/8048115a400b3b185b90a0531bd8752e16c01d58))
+* remove the dead phone-only search icon from the header ([#374](https://github.com/CommunityTechaid/techaid-dashboard/issues/374)) ([02c0ec7](https://github.com/CommunityTechaid/techaid-dashboard/commit/02c0ec78d7b60d58d0c100c899552b2bcb5be36c))
+* replace the Quill editor with plain HTML editing for CMS posts ([#342](https://github.com/CommunityTechaid/techaid-dashboard/issues/342)) ([060a46c](https://github.com/CommunityTechaid/techaid-dashboard/commit/060a46c9ea23650555af8edace73331ad2490840)), closes [#118](https://github.com/CommunityTechaid/techaid-dashboard/issues/118)
+* send staff with an expired session to login instead of failing silently ([#378](https://github.com/CommunityTechaid/techaid-dashboard/issues/378)) ([#380](https://github.com/CommunityTechaid/techaid-dashboard/issues/380)) ([b873bed](https://github.com/CommunityTechaid/techaid-dashboard/commit/b873beddd56c10fca3974d34ceff7720c59c447c))
+* show an inline message when the requested device type is not currently offered ([#388](https://github.com/CommunityTechaid/techaid-dashboard/issues/388)) ([f316ecb](https://github.com/CommunityTechaid/techaid-dashboard/commit/f316ecb75f9f89a5418888b43dccb307db96c30b))
+* tell the requester their request was saved when the equalities form cannot load ([#377](https://github.com/CommunityTechaid/techaid-dashboard/issues/377)) ([dd77d41](https://github.com/CommunityTechaid/techaid-dashboard/commit/dd77d41da717eefa4c0f2be467f9a0e8bd0b76fb))
+* the posts pages require the content permission, like the menu link does ([#389](https://github.com/CommunityTechaid/techaid-dashboard/issues/389)) ([e34ecbc](https://github.com/CommunityTechaid/techaid-dashboard/commit/e34ecbc224fb205c36863f3e772f698d552ff71e))
+
+
+### Performance Improvements
+
+* drop dead polyfills, bootstrap.js and unused CSS; load Typeform only on the request form ([#371](https://github.com/CommunityTechaid/techaid-dashboard/issues/371)) ([14ef464](https://github.com/CommunityTechaid/techaid-dashboard/commit/14ef464a0019bd0d871f924bb759ac11abddbc3a))
+* lazy-load Application Insights, drop the unused animations engine; report Angular errors to Azure ([#372](https://github.com/CommunityTechaid/techaid-dashboard/issues/372)) ([feae8ea](https://github.com/CommunityTechaid/techaid-dashboard/commit/feae8eace3e0ac9bf2d352a469013888e2e3f32c))
+* register Formly types per route instead of at bootstrap ([#382](https://github.com/CommunityTechaid/techaid-dashboard/issues/382)) ([ff50e9e](https://github.com/CommunityTechaid/techaid-dashboard/commit/ff50e9e10beb4c8920449b1cb7a581bf94a4965f))
+
+
+### Code Refactoring
+
+* component state as signals, most components on OnPush ([#367](https://github.com/CommunityTechaid/techaid-dashboard/issues/367)) ([0886d5a](https://github.com/CommunityTechaid/techaid-dashboard/commit/0886d5a74ceb2c8724e2a80b0712e35d201a8643))
+* native table shell, piloted on role-index ([#341](https://github.com/CommunityTechaid/techaid-dashboard/issues/341)) ([e780854](https://github.com/CommunityTechaid/techaid-dashboard/commit/e7808546fe2b09651a05a3f2e77b7923b4292ee4))
+* native tables for audit, users-admin, posts and dashboard ([#344](https://github.com/CommunityTechaid/techaid-dashboard/issues/344)) ([4cb5571](https://github.com/CommunityTechaid/techaid-dashboard/commit/4cb55713ad6f7f9203c4a1565769db4f9f1a4739))
+* native tables for Distributions & Deliveries and the devices list ([#352](https://github.com/CommunityTechaid/techaid-dashboard/issues/352)) ([dd6954b](https://github.com/CommunityTechaid/techaid-dashboard/commit/dd6954b874ee6c28d885b7a9e12005c73b7b21c2))
+* native tables for organisations, donors, requests and kit sub-tables ([#346](https://github.com/CommunityTechaid/techaid-dashboard/issues/346)) ([be46960](https://github.com/CommunityTechaid/techaid-dashboard/commit/be4696032548b64a2d898ee99947013b455dab7c))
+* remove jQuery and DataTables now every table is native ([#354](https://github.com/CommunityTechaid/techaid-dashboard/issues/354)) ([f8f5093](https://github.com/CommunityTechaid/techaid-dashboard/commit/f8f509323fac2afb9389b1b7a73550cb90114b4a))
+* run the dashboard zoneless and drop zone.js ([#363](https://github.com/CommunityTechaid/techaid-dashboard/issues/363)) ([ef22b62](https://github.com/CommunityTechaid/techaid-dashboard/commit/ef22b62c82495794aebc2fde12a2572397176c0b)), closes [#115](https://github.com/CommunityTechaid/techaid-dashboard/issues/115)
+* use Bootstrap 5 class names in templates (no visual change) ([#396](https://github.com/CommunityTechaid/techaid-dashboard/issues/396)) ([55de089](https://github.com/CommunityTechaid/techaid-dashboard/commit/55de089e4b614a771ccea8ee6f2e9e07184a69d1))
+* zoneless-safe repaints across components, zone.js still on ([#362](https://github.com/CommunityTechaid/techaid-dashboard/issues/362)) ([eaa4786](https://github.com/CommunityTechaid/techaid-dashboard/commit/eaa47865329f139a5e1453dbadf5d0c1fa802e8b))
+
 ## [2.3.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.2.0...v2.3.0) (2026-11-10)
 
 
