@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { provideStates } from '@ngxs/store';
 import { AuthGuard } from '@app/shared/services/auth.guard';
+import { requirePermission } from '@app/shared/services/permission.guard';
 import { nonProductionGuard } from '@app/shared/services/non-production.guard';
 import { deliveryBookingVisibleGuard } from '@app/shared/services/delivery-booking-visible.guard';
 import { prepModeEnabledGuard } from './components/prep-mode/prep-mode-enabled.guard';
@@ -58,8 +59,8 @@ export const CORE_WIDGET_ROUTES: Routes = [
         { path: 'dashboard/donor-parents/:donorParentId', loadComponent: () => import('./components/donor-parent-info/donor-parent-info.component').then(m => m.DonorParentInfoComponent), data: { title: 'Parent Donor' }, canActivate: [AuthGuard] },
         { path: 'dashboard/roles/:roleId', loadComponent: () => import('./components/role-info/role-info.component').then(m => m.RoleInfoComponent), data: { title: 'Role' }, canActivate: [AuthGuard] },
         { path: 'dashboard/users/:userId', loadComponent: () => import('./components/user-info/user-info.component').then(m => m.UserInfoComponent), data: { title: 'User' }, canActivate: [AuthGuard] },
-        { path: 'dashboard/posts', loadComponent: () => import('./components/post-index/post-index.component').then(m => m.PostIndexComponent), data: { title: 'Posts' }, canActivate: [AuthGuard] },
-        { path: 'dashboard/posts/:postId', loadComponent: () => import('./components/post-info/post-info.component').then(m => m.PostInfoComponent), data: { title: 'Post' }, canActivate: [AuthGuard] },
+        { path: 'dashboard/posts', loadComponent: () => import('./components/post-index/post-index.component').then(m => m.PostIndexComponent), data: { title: 'Posts' }, canActivate: [AuthGuard, requirePermission('read:content')] },
+        { path: 'dashboard/posts/:postId', loadComponent: () => import('./components/post-info/post-info.component').then(m => m.PostInfoComponent), data: { title: 'Post' }, canActivate: [AuthGuard, requirePermission('write:content')] },
         { path: 'dashboard/device-requests', loadComponent: () => import('./components/device-request-index/device-request-index.component').then(m => m.DeviceRequestIndexComponent), data: { title: 'Device Requests' }, canActivate: [AuthGuard] },
         { path: 'dashboard/device-requests/:requestId', loadComponent: () => import('./components/device-request-info/device-request-info.component').then(m => m.DeviceRequestInfoComponent), canActivate: [AuthGuard] },
         { path: 'dashboard/distributions-and-deliveries', loadComponent: () => import('./components/distributions-and-deliveries-index/distributions-and-deliveries-index.component').then(m => m.DistributionsAndDeliveriesIndexComponent), data: { title: 'Distributions and Deliveries' }, canActivate: [AuthGuard] },
