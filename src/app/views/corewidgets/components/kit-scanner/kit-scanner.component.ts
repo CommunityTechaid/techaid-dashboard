@@ -6,7 +6,8 @@ import { ToastrService } from 'ngx-toastr';
 import { ScanModeStrategy, ScanSession } from '../scan/scan-session';
 import { KIT_STATUS } from '../kit-info/kit-info.component';
 import { KitScannerApiService, ScannerKit } from './kit-scanner-api.service';
-import { errorText, isNetworkError } from '@app/shared/utils';
+import { isNetworkError } from '@app/shared/utils';
+import { errorToastText, toastError } from '@app/shared/utils/error-toast';
 
 /**
  * A mode the scanner can be set to. `code` is the payload on the printed
@@ -400,10 +401,11 @@ export class KitScannerComponent implements OnInit, AfterViewInit, ScanModeStrat
    * fail too; a plain GraphQL rejection is per-device and stays inline.
    */
   private reportFailure(context: string, err: unknown): void {
-    const detail = errorText(err);
+    // Friendly or deliberate text plus the request's ref (#381), never the raw server text.
+    const detail = errorToastText(err);
     this.banner.set({ kind: 'error', kicker: 'Failed', text: `${context} — ${detail}` });
     if (isNetworkError(err)) {
-      this.toastr.error(detail, 'Connection problem');
+      toastError(this.toastr, err, 'Connection problem');
     }
   }
 

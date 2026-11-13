@@ -12,12 +12,12 @@ import { Select } from '@ngxs/store';
 import { UserState } from '@app/state/state.module';
 import { User } from '@app/state/user/user.state';
 import { Title } from '@angular/platform-browser';
-import { errorText, getKitTypeLabel, warnIfFormInvalid } from '@app/shared/utils';
+import { getKitTypeLabel, warnIfFormInvalid } from '@app/shared/utils';
 import { environment } from '@env/environment';
 
 import { KitComponent } from '../kit-component/kit-component.component';
 import { DeviceRequestAuditComponent } from '../device-request-audit-component/device-request-audit-component.component';
-import { toastError, toastWarning } from '@app/shared/utils/error-toast';
+import { errorToastText, toastError, toastWarning } from '@app/shared/utils/error-toast';
 
 export const DEVICE_REQUEST_STATUS = {
     'NEW':'New request',
@@ -1115,7 +1115,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
           this.assignmentResults.update(r => [...r, { deviceId: kitId, status: 'error', message: 'Device not found' }]);
         }
       } catch (err) {
-        this.assignmentResults.update(r => [...r, { deviceId: kitId, status: 'error', message: errorText(err) }]);
+        this.assignmentResults.update(r => [...r, { deviceId: kitId, status: 'error', message: errorToastText(err) }]);
       }
     }
 

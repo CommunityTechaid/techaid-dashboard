@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import { ToastrService } from 'ngx-toastr';
-import { toastError } from '@app/shared/utils/error-toast';
+import { errorToastText, toastError } from '@app/shared/utils/error-toast';
 import { Subscription, catchError, concatMap, forkJoin, from, map, of } from 'rxjs';
 import { ALL_BOROUGHS } from '@app/shared/utils/boroughs';
 
@@ -484,7 +484,8 @@ export class DeliveryConfigurationComponent implements OnInit, OnDestroy {
         }),
         catchError((err) => {
           w.saving = false;
-          w.saveError = err?.message || 'Could not save window';
+          // Friendly or deliberate text plus the request's ref (#381), never the raw server text.
+          w.saveError = errorToastText(err, { unexpected: 'Could not save window.' });
           w.saveErrorKind = 'error';
           return of(false);
         }),

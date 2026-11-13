@@ -126,6 +126,14 @@ const UPDATE_ENTITY = gql`
   }
 `;
 
+/**
+ * A failure this service detected itself, with a message written for the operator (shown as is).
+ * Anything else that fails goes through errorToastText (#381).
+ */
+export class PrepError extends Error {
+  override name = 'PrepError';
+}
+
 export interface QueueRange {
   /** ISO instant, inclusive lower bound on collectionDate. */
   startISO: string;
@@ -237,7 +245,7 @@ export class PrepApiService {
   async markPrepped(requestId: string | number): Promise<void> {
     const fresh = await this.loadRequest(requestId);
     if (!fresh) {
-      throw new Error(`Device request ${requestId} could not be loaded to mark prepped.`);
+      throw new PrepError(`Device request ${requestId} could not be loaded to mark prepped.`);
     }
     const data = this.buildPreppedUpdateInput(fresh);
     await firstValueFrom(
