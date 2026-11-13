@@ -1464,6 +1464,13 @@ This device type is not currently being offered. Please choose a different item.
     /This user already has (\d+) requests? open in (.+?) \(limit (\d+)\)/;
   // GraphQL emits this boilerplate alongside any non-nullable mutation that returns null.
   // It's noisy and unhelpful; strip it before showing anything to the user.
+  /**
+   * Messages of a request that never got an HTTP response: Angular's "Http failure response for
+   * /graphql: 0 Unknown Error" (status 0, which apollo-angular rethrows as a plain Error) and the
+   * browser's own fetch / CORS wording.
+   */
+  private readonly TRANSPORT_FAILURE_RE = /network|fetch|cors|Http failure response for .*: 0 /i;
+
   private readonly NULL_BUBBLE_RE =
     /\s*The field at path '[^']*' was declared as a non null type[\s\S]*?within parent type '[^']*'\.?\s*/g;
 
@@ -1493,20 +1500,28 @@ This device type is not currently being offered. Please choose a different item.
       };
     }
 
-    const cleaned = sources
-      .map(m => m.replace(this.NULL_BUBBLE_RE, ' ').replace(/\s{2,}/g, ' ').trim())
-      .filter(Boolean);
-
-    if (cleaned.length > 0) {
-      return { isLimit: false, isNetwork: false, message: cleaned[0], limit: null };
-    }
-    if (isNetworkError(error) || /network|fetch|cors/i.test(rawMessage)) {
+    // A transport failure with no GraphQL body is the API waking up (or briefly unreachable), so
+    // the caller retries it. This must be decided before the message check below: errorText is
+    // never empty for a transport failure ("Http failure response for ...: 0 Unknown Error"), so
+    // checking messages first meant isNetwork was never true and the retry never ran.
+    // A refused or dropped connection (status 0) is not an HttpErrorResponse by the time it gets
+    // here: apollo-angular's HttpLink turns it into a plain Error carrying Angular's message, so
+    // that message shape is matched too.
+    if (gqlMessages.length === 0 && (isNetworkError(error) || this.TRANSPORT_FAILURE_RE.test(rawMessage))) {
       return {
         isLimit: false,
         isNetwork: true,
         message: "We couldn't reach the server. Please check your connection and try again in a moment.",
         limit: null,
       };
+    }
+
+    const cleaned = sources
+      .map(m => m.replace(this.NULL_BUBBLE_RE, ' ').replace(/\s{2,}/g, ' ').trim())
+      .filter(Boolean);
+
+    if (cleaned.length > 0) {
+      return { isLimit: false, isNetwork: false, message: cleaned[0], limit: null };
     }
     return {
       isLimit: false,
