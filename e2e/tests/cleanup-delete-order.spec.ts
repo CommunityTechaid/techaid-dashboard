@@ -8,7 +8,7 @@
  * @mocked
  */
 import { test, expect } from '@playwright/test';
-// @ts-ignore - plain ESM script module with no type declarations
+// @ts-expect-error - plain ESM script module with no type declarations
 import { DELETE_ORDER, inDeleteOrder } from '../cleanup-order.mjs';
 
 const idx = (kind: string) => (DELETE_ORDER as string[]).indexOf(kind);
