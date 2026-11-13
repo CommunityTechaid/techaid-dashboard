@@ -331,7 +331,9 @@ async function exerciseTable(page: Page, table: Table, h: Handle) {
   }
   await settled(wrapper);
   const hasInfo = (await info.count()) > 0; // read only once the table has rendered
-  const total = await totalOf(wrapper);
+  // Not const: Auth0-backed lists can change while the test runs (a role count was seen going 9 to 10),
+  // so the total is re-read after each refetch and rows are compared with that fresh value.
+  let total = await totalOf(wrapper);
   expect(total, 'row total').toBeGreaterThan(0);
 
   // ── info line ─────────────────────────────────────────────────────────────────────────────
@@ -365,8 +367,17 @@ async function exerciseTable(page: Page, table: Table, h: Handle) {
         continue;
       }
       await lengthMenu.selectOption(size);
-      await expect(rows).toHaveCount(Math.min(Number(size), total), { timeout: 60_000 });
+      await expect
+        .poll(
+          async () => {
+            total = await totalOf(wrapper);
+            return (await rows.count()) - Math.min(Number(size), total);
+          },
+          { timeout: 60_000, message: `length ${size}: rows should equal min(${size}, freshly read total)` },
+        )
+        .toBe(0);
       await settled(wrapper);
+      total = await totalOf(wrapper);
       await checkInfo(`length ${size}`);
       pageSize = Math.min(Number(size), total);
     }
@@ -470,8 +481,11 @@ async function exerciseTable(page: Page, table: Table, h: Handle) {
     await search.fill('');
     await search.press('Enter');
     await expect(rows.first()).toBeVisible({ timeout: 60_000 });
-    if (hasInfo) await expect(info).toContainText(`of ${fmt(total)} `, { timeout: 60_000 });
     await settled(wrapper);
+    // Clearing the search refetches the full list: compare with the total as it stands now.
+    total = await totalOf(wrapper);
+    expect(total, 'row total after clearing the search').toBeGreaterThan(0);
+    if (hasInfo) await expect(info).toContainText(`of ${fmt(total)} `, { timeout: 60_000 });
   }
 
   if (table.extras === 'distributions') await distributionsQuickFilter(page, wrapper);
