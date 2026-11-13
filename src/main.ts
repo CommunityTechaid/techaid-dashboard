@@ -18,6 +18,7 @@ import { graphqlProviders } from './app/graphql.module';
 import { appRoutes } from './app/app.routing.module';
 import { configServiceFactory } from './app/app.module';
 import { GlobalErrorHandler } from './app/shared/services/global-error-handler';
+import { errorRefInterceptor } from './app/shared/services/error-ref.interceptor';
 
 // Every date on this dashboard is a UK date. Angular's default LOCALE_ID is 'en-US', which
 // renders `| date:'short'` as 8/22/26, 9:57 AM — read as 8 August by UK staff. Registering
@@ -36,7 +37,7 @@ bootstrapApplication(AppComponent, {
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: LOCALE_ID, useValue: 'en-GB' },
     provideRouter(appRoutes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
-    provideHttpClient(withXhr(), withInterceptors([progressInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([progressInterceptor, errorRefInterceptor])),
     appStateProviders,
     ...graphqlProviders,
     ...appSharedProviders,
