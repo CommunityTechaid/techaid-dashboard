@@ -26,6 +26,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Every job only checks out, installs, builds and tests (artifact upload needs no token scope).
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
