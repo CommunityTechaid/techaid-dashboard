@@ -199,10 +199,9 @@ Where a redirect can come from, after the public-page fix:
   API → login, once. The request is failed, never sent tokenless.
 - **Public pages** (request form, delivery booking, equalities preview, CMS posts): **never** a
   redirect. A re-auth error or dead refresh token sends the request tokenless, like an anonymous
-  visitor; a 401 just fails the request. A visitor bounced to Auth0 from a public page is a bug (the
-  2026-07-28 incident class) — check `isStaffArea()` first. Known gap: after a public-page 401 the
-  request form keeps retrying `adminConfig` with the same rejected token for about a minute, then
-  shows its retry message.
+  visitor; a 401 makes the error link re-send that operation once without the token (context flag
+  `tokenlessRetryAfter401`, #391), and if that is also rejected the request fails. A visitor bounced
+  to Auth0 from a public page is a bug (the 2026-07-28 incident class) — check `isStaffArea()` first.
 
 A GraphQL `Access Denied` for an **authenticated** user is a real permission result — the caller's
 Auth0 token lacks the required scope, a server-side gate — not a client bug.

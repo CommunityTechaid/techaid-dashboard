@@ -40,6 +40,10 @@
  *   staff area  (/dashboard)                    -> re-auth code / 401 -> redirect to login
  *   public page (/organisation-device-request)  -> re-auth code / 401 -> no redirect, page stays
  *
+ * And for a 401 specifically (#391): on a public page the error link re-sends the operation once
+ * without the token, so the form loads as it would for an anonymous visitor; in the staff area
+ * nothing is ever re-sent tokenless (the last describe block).
+ *
  * How each code is produced (auth0-spa-js, Auth0Client._getTokenUsingRefreshToken):
  *   - missing_refresh_token: expired access token and no refresh token in the cache; thrown
  *     locally, no network call.
@@ -363,8 +367,126 @@ test.describe('a stale staff session never sends a public-page visitor to login 
 
     await expect(page).toHaveURL(/organisation-device-request/);
     expect(auth0Hits, 'a public page must never bounce to Auth0').toBe(0);
-    // Out of scope here, recorded so the next reader is not surprised: the page does NOT
-    // recover. Every adminConfig retry carries the same rejected token, so the form stays on its
-    // "Starting up" poll and then shows its retry message.
+  });
+
+  // #391. Red before the fix: every adminConfig poll (every 4 s, up to 15 times) carried the
+  // same rejected token, so the form sat on "Starting up" for about a minute and then showed its
+  // retry message. The fix retries the rejected operation once, without the token.
+  //
+  // The "authenticated" flag below is read from the request the browser actually sent
+  // (route.request().allHeaders()); nothing in this file injects an Authorization header, so a
+  // tokenless call here really left the app without one.
+  test('an HTTP 401 on the public request form is retried once without the token and the form renders', async ({ page }) => {
+    test.setTimeout(90_000);
+
+    let auth0Hits = 0;
+    await page.route(AUTH0_ORIGIN, route => {
+      auth0Hits++;
+      return route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>stub auth0 login</body></html>' });
+    });
+
+    await loginWith(page, ['read:kits']);
+    const calls = await stubPublicForm(page, { rejectTokens: true });
+
+    await page.goto('/organisation-device-request');
+
+    // Well inside the first 4 s poll interval: the form renders off the first poll, not a
+    // later one (each poll before the fix was rejected the same way, so it never rendered).
+    await expect(page.getByText('E2E public request page content')).toBeVisible({ timeout: 10_000 });
+    await expect(page).toHaveURL(/organisation-device-request/);
+    expect(auth0Hits, 'a public page must never bounce to Auth0').toBe(0);
+
+    const adminConfig = calls.filter(call => call.operation === 'adminConfig');
+    // One rejected attempt with the token, then the same operation again without it, then done.
+    expect(adminConfig.map(call => call.authenticated)).toEqual([true, false]);
+  });
+
+  // #391 guard rail: the tokenless retry happens at most once per operation. If the anonymous
+  // attempt is also rejected, the link gives up and the request fails as before (the page's own
+  // poll then decides what to do), rather than looping.
+  test('an anonymous retry that is also rejected with 401 is not retried again', async ({ page }) => {
+    test.setTimeout(90_000);
+
+    let auth0Hits = 0;
+    await page.route(AUTH0_ORIGIN, route => {
+      auth0Hits++;
+      return route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>stub auth0 login</body></html>' });
+    });
+
+    await loginWith(page, ['read:kits']);
+    await page.route(WARD_LOOKUP_ORIGIN, route =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body></body></html>' }),
+    );
+    const adminConfig: { authenticated: boolean; at: number }[] = [];
+    await page.route('**/graphql', async route => {
+      const raw = route.request().postData() ?? '';
+      if (raw.includes('buildInfo')) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { buildInfo: BUILD_INFO } }) });
+      }
+      if (raw.includes('adminConfig')) {
+        adminConfig.push({ authenticated: Boolean((await route.request().allHeaders())['authorization']), at: Date.now() });
+        // Rejected with or without a token.
+        return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) });
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {} }) });
+    });
+
+    await page.goto('/organisation-device-request');
+
+    // Two polls' worth (the page re-polls every 4 s): each poll is one tokened attempt and at
+    // most one tokenless retry, never two tokenless attempts in a row.
+    await expect.poll(() => adminConfig.length, { timeout: 30_000 }).toBeGreaterThanOrEqual(4);
+    const sequence = adminConfig.map(call => call.authenticated);
+    sequence.forEach((authenticated, i) => {
+      expect(authenticated, `adminConfig attempt ${i + 1} of ${JSON.stringify(sequence)}`).toBe(i % 2 === 0);
+    });
+    // The retry follows its rejected attempt immediately; the next tokened attempt is the page's
+    // own 4 s poll, not the link looping.
+    expect(adminConfig[2].at - adminConfig[1].at).toBeGreaterThan(3_000);
+
+    await expect(page).toHaveURL(/organisation-device-request/);
+    await expect(page.getByText('E2E public request page content')).toHaveCount(0);
+    expect(auth0Hits, 'a public page must never bounce to Auth0').toBe(0);
+  });
+});
+
+// #391's invariant from the staff side: the tokenless retry is a public-page behaviour only. A
+// 401 in the staff area still redirects and is never downgraded to an anonymous request.
+test.describe('a staff-area 401 is never retried without the token @mocked', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('an HTTP 401 on a staff page sends nothing tokenless', async ({ page }) => {
+    test.setTimeout(90_000);
+
+    await page.route(AUTH0_ORIGIN, route =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>stub auth0 login</body></html>' }),
+    );
+    await loginWith(page, ['read:kits']);
+
+    let rejected = 0;
+    let tokenlessApollo = 0;
+    await page.route('**/graphql', async route => {
+      const raw = route.request().postData() ?? '';
+      if (raw.includes('buildInfo')) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { buildInfo: BUILD_INFO } }) });
+      }
+      // FeatureFlagsPublic is an HttpClient post that bypasses the Apollo links; always tokenless.
+      if (raw.includes('FeatureFlagsPublic')) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {} }) });
+      }
+      if ((await route.request().allHeaders())['authorization']) {
+        rejected++;
+        return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) });
+      }
+      tokenlessApollo++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {} }) });
+    });
+
+    await page.goto('/dashboard');
+    await page.waitForURL(/auth0\.com\/authorize/, { timeout: 30_000 });
+    await page.waitForTimeout(2_000);
+
+    expect(rejected).toBeGreaterThan(0);
+    expect(tokenlessApollo, 'Apollo operations retried without a token from a staff page').toBe(0);
   });
 });

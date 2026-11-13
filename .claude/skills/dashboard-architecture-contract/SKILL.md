@@ -112,8 +112,12 @@ The single Apollo client is built in `createApollo`. Three behaviours are delibe
     other failure is retried, then fails the request. **Never sent tokenless** — a downgraded staff
     request is the silent "Access Denied" bug (#164).
 - **Error link** — only an **HTTP 401**, and only **in the staff area**, triggers re-login. On a public
-  page a 401 (the API rejecting a stale token the browser still holds) just fails the request; the
-  page's own retry/error UI handles it. A GraphQL-level `Access Denied` (HTTP 200, no `statusCode`) is
+  page a 401 (the API rejecting a stale token the browser still holds) makes the error link re-send
+  that operation **once without the token** (#391): it sets the context flag `tokenlessRetryAfter401`
+  and calls `forward`, and the auth link, seeing the flag, strips the previous attempt's
+  `Authorization` header (context merges, so it must be removed explicitly). The flag stays on the
+  context, so a second 401 is not retried; the request then fails and the page's own retry/error UI
+  handles it. Never in the staff area (#164). A GraphQL-level `Access Denied` (HTTP 200, no `statusCode`) is
   deliberately left alone everywhere: it can be a real permission denial for an authenticated user,
   and redirecting on it would cause a login loop. **Do not "simplify" this to redirect on any auth
   error.** Pinned by `expired-session-redirects-to-login.spec.ts`, `invalid-grant-reauth.spec.ts`,

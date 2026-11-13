@@ -40,6 +40,25 @@ const isStaffArea = () => /^\/(dashboard(\/|$)|device-request-admin(\/|$)|$)/.te
 const TOKEN_RETRY_COUNT = 2;
 const TOKEN_RETRY_DELAY_MS = 250;
 
+// Operation-context flag for the public-page 401 retry (#391). The error link sets it when it
+// re-sends an operation the API rejected with HTTP 401 outside the staff area; the auth link sees
+// it and sends that attempt without the token. It stays on the operation's context, so a second
+// 401 on the same operation finds it set and is not retried again: at most one retry, no loop.
+const TOKENLESS_RETRY_FLAG = 'tokenlessRetryAfter401';
+
+// The forwarded operation keeps the previous attempt's context, including the headers the auth
+// link set on it; setContext merges rather than replaces, so the header must be removed explicitly.
+const withoutAuthorization = (headers: unknown): HttpHeaders | Record<string, string> => {
+  if (headers instanceof HttpHeaders) {
+    return headers.delete('Authorization');
+  }
+  const rest: Record<string, string> = { ...((headers as Record<string, string>) ?? {}) };
+  Object.keys(rest)
+    .filter(name => name.toLowerCase() === 'authorization')
+    .forEach(name => delete rest[name]);
+  return rest;
+};
+
 export function createApollo(httpLink: HttpLink, config: ConfigService, authService: AuthenticationService): ApolloClientOptions {
   const http = httpLink.create({
     uri: config.environment.graphql_endpoint
@@ -90,7 +109,11 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
   // between two subscribers of the same observable is not guaranteed — so on a cold load it can
   // still be null here and misclassify a staff user as anonymous. Taking the value from the
   // stream we are already sequenced on has no such window.
-  const asyncAuthLink = setContext((_request, _previous) => firstValueFrom(
+  const asyncAuthLink = setContext((_request, previous) => previous[TOKENLESS_RETRY_FLAG]
+    // The error link's one tokenless retry of a public-page operation the API rejected with 401
+    // (#391). Only ever set outside the staff area; see errorHandler below.
+    ? { headers: withoutAuthorization(previous['headers']) }
+    : firstValueFrom(
     authService.isAuthenticated$.pipe(
       take(1),
       switchMap(isAuthenticated =>
@@ -145,7 +168,7 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
     ),
   ));
 
-  const errorHandler = onError(({ error }) => {
+  const errorHandler = onError(({ error, operation, forward }) => {
     // A 401 from the API means the token is missing/expired → prompt re-login. A GraphQL-level
     // "Access Denied" (HTTP 200, surfaced as a CombinedGraphQLErrors with no statusCode) is
     // deliberately left alone: it can be a genuine permission denial for an authenticated user,
@@ -153,12 +176,28 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
     //
     // Staff areas only: on a public page a 401 means the API rejected a stale staff token the
     // browser still holds, and the visitor must never be sent to Auth0 (the 2026-07-28 incident
-    // class). The request has failed either way; the public pages' own retry/error UI handles it.
+    // class). Instead the operation is sent once more WITHOUT the token (#391): public operations
+    // are served anonymously, so this is the request an anonymous visitor would have made, and
+    // without it every retry of the page's own poll carried the same rejected token. A 401 means
+    // the API refused the request before running it, so re-sending a mutation is safe too. An
+    // operation that genuinely needs auth just fails on the retry, as it did before.
+    //
+    // At most once per operation: the flag stays on the operation's context, so if the tokenless
+    // attempt is also rejected the error passes through to the caller as before. Never in the
+    // staff area, where a failed token must never be downgraded to an anonymous request (#164).
     const status = ServerError.is(error)
       ? error.statusCode
       : ((error as any)?.statusCode ?? (error as any)?.status);
-    if (status === 401 && isStaffArea()) {
+    if (status !== 401) {
+      return;
+    }
+    if (isStaffArea()) {
       redirectToLogin();
+      return;
+    }
+    if (!operation.getContext()[TOKENLESS_RETRY_FLAG]) {
+      operation.setContext({ [TOKENLESS_RETRY_FLAG]: true });
+      return forward(operation);
     }
   });
 
