@@ -26,17 +26,138 @@
  *
  * Discriminator. A redirect to Auth0 could in principle come from AuthGuard rather than the
  * auth link, which would make this spec pass for the wrong reason. It cannot here: identity is
- * cached, so AuthGuard lets the route through. The assertion that a /graphql request was
- * actually attempted proves we got inside the component and that the auth link ran its error
- * path (it calls success({}) after redirecting, so the request still goes out untokened).
+ * cached, so AuthGuard lets the route through. Since #164 the auth link fails the request after
+ * redirecting instead of sending it untokened, so no Apollo request reaches /graphql at all; the
+ * test asserts exactly that (no Apollo operation left without a token, the staff-area invariant).
+ * An earlier version asserted that "a /graphql request was attempted", which the always-present
+ * FeatureFlagsPublic HttpClient post satisfied on its own, so it proved nothing.
+ *
+ * The same stale session on a PUBLIC page is the opposite case (the later describe blocks). An
+ * ex-staff browser still holds cached identity, so isAuthenticated$ is true and the auth link's
+ * anonymous branch does not apply; before the fix every re-auth code below, and any HTTP 401,
+ * sent that visitor to Auth0 from /organisation-device-request. Matched pair, per code:
+ *
+ *   staff area  (/dashboard)                    -> re-auth code / 401 -> redirect to login
+ *   public page (/organisation-device-request)  -> re-auth code / 401 -> no redirect, page stays
+ *
+ * How each code is produced (auth0-spa-js, Auth0Client._getTokenUsingRefreshToken):
+ *   - missing_refresh_token: expired access token and no refresh token in the cache; thrown
+ *     locally, no network call.
+ *   - login_required / consent_required: a refresh token is cached and the token endpoint answers
+ *     {"error": "<code>"}; http.getJSON throws GenericError(<code>). useRefreshTokensFallback is
+ *     off, so the SDK does not fall back to the iframe.
  *
  * @mocked — all GraphQL stubbed and the Auth0 tenant intercepted; no token needed, runs in
  * CI's e2e-mocked gate.
  */
+import { Page } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
 import { loginWith } from '../helpers/auth0-cache';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';
+const TOKEN_ENDPOINT = '**://techaid-auth.eu.auth0.com/oauth/token';
+// The public form's ready state embeds a ward-lookup iframe from this origin.
+const WARD_LOOKUP_ORIGIN = '**://communitytechaid.github.io/**';
+
+const BUILD_INFO = { version: '1.0.0-test', commit: 'abc', time: '2026-01-01T00:00:00Z' };
+
+const REAUTH_CODES = ['missing_refresh_token', 'login_required', 'consent_required'] as const;
+type ReauthCode = (typeof REAUTH_CODES)[number];
+
+/**
+ * Seeds a logged-in session whose next getAccessTokenSilently() rejects with `code`, and counts
+ * navigations to Auth0's /authorize (what loginWithRedirect() does). Route registration order
+ * matters: Playwright matches in reverse, so the tenant catch-all goes first.
+ */
+async function seedDeadSession(page: Page, code: ReauthCode): Promise<{ authorizeHits: () => number }> {
+  let authorizeHits = 0;
+  await page.route(AUTH0_ORIGIN, route => {
+    if (route.request().url().includes('/authorize')) {
+      authorizeHits++;
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<html><body>stub auth0 login</body></html>',
+    });
+  });
+
+  const viaTokenEndpoint = code !== 'missing_refresh_token';
+  if (viaTokenEndpoint) {
+    await page.route(TOKEN_ENDPOINT, route =>
+      route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: code, error_description: `stubbed ${code}` }),
+      }),
+    );
+  }
+
+  await loginWith(page, ['read:kits'], { expiredAccessToken: true, refreshToken: viaTokenEndpoint });
+  return { authorizeHits: () => authorizeHits };
+}
+
+interface PublicCall {
+  operation: string;
+  authenticated: boolean;
+}
+
+/**
+ * Stubs /graphql for the public request form. `rejectTokens` answers every request that carries
+ * an Authorization header with HTTP 401, the API's answer to a token it will not accept.
+ */
+async function stubPublicForm(page: Page, options: { rejectTokens?: boolean } = {}): Promise<PublicCall[]> {
+  await page.route(WARD_LOOKUP_ORIGIN, route =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body></body></html>' }),
+  );
+
+  const calls: PublicCall[] = [];
+  await page.route('**/graphql', async route => {
+    const raw = route.request().postData() ?? '';
+    const authenticated = Boolean((await route.request().allHeaders())['authorization']);
+    if (raw.includes('buildInfo')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: { buildInfo: BUILD_INFO } }),
+      });
+    }
+    let operation = '';
+    try {
+      operation = JSON.parse(raw).operationName ?? '';
+    } catch {
+      /* not ours */
+    }
+    // QUERY_ADMIN_CONFIG is unnamed; match on the body.
+    if (!operation && raw.includes('adminConfig')) {
+      operation = 'adminConfig';
+    }
+    calls.push({ operation, authenticated });
+
+    if (options.rejectTokens && authenticated) {
+      return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) });
+    }
+    const data =
+      operation === 'adminConfig'
+        ? {
+            adminConfig: {
+              canPublicRequestSIMCard: true,
+              canPublicRequestLaptop: true,
+              canPublicRequestPhone: true,
+              canPublicRequestBroadbandHub: true,
+              canPublicRequestTablet: true,
+              canPublicRequestDesktop: true,
+            },
+          }
+        : operation === 'findContent'
+          ? { post: { id: '1', content: '<p>E2E public request page content</p>' } }
+          : operation === 'findAutocompleteReferringOrgs'
+            ? { referringOrganisationsPublic: [] }
+            : {};
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data }) });
+  });
+  return calls;
+}
 
 test.describe('expired staff session still re-prompts for login @mocked', () => {
   // Seed nothing from disk: the helper writes the whole synthetic session itself, so the
@@ -58,12 +179,18 @@ test.describe('expired staff session still re-prompts for login @mocked', () => 
       });
     });
 
-    let graphqlAttempts = 0;
-    await page.route('**/graphql', route => {
+    let tokenlessApollo = 0;
+    await page.route('**/graphql', async route => {
+      const raw = route.request().postData() ?? '';
       // The app's startup health probe (a raw `{ buildInfo }` fetch from BackendStatusService)
-      // also hits /graphql, from outside any component. Answer it, but don't count it: only a
-      // query issued from inside the component proves the redirect came from the auth link.
-      if ((route.request().postData() ?? '').includes('buildInfo')) {
+      // and FeatureFlagsPublic (HttpClient) bypass the Apollo auth link and are always tokenless.
+      // Answer the probe; count only Apollo operations that went out without a token.
+      if (!raw.includes('buildInfo') && !raw.includes('FeatureFlagsPublic')) {
+        if (!(await route.request().allHeaders())['authorization']) {
+          tokenlessApollo++;
+        }
+      }
+      if (raw.includes('buildInfo')) {
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -72,7 +199,6 @@ test.describe('expired staff session still re-prompts for login @mocked', () => 
           }),
         });
       }
-      graphqlAttempts++;
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -89,9 +215,156 @@ test.describe('expired staff session still re-prompts for login @mocked', () => 
     // The contract: the dying session is noticed and the user is sent to log in again.
     await page.waitForURL(/auth0\.com/, { timeout: 30_000 });
 
+    // Let any downgraded request land before judging.
+    await page.waitForTimeout(2_000);
+
     expect(authorizeHits).toBeGreaterThan(0);
-    // Proves the redirect came from the Apollo auth link (we were inside the component,
-    // querying) and not from AuthGuard turning us away at the door.
-    expect(graphqlAttempts).toBeGreaterThan(0);
+    // The staff-area invariant: the failed token fetch failed the request; nothing was
+    // downgraded to an anonymous request.
+    expect(tokenlessApollo, 'Apollo operations sent without a token from a staff page').toBe(0);
+  });
+
+  // missing_refresh_token is the test above; these are the two codes that come back from the
+  // token endpoint. Green before and after the public-page fix: guard rails against a fix that
+  // stops redirecting staff, not reproductions.
+  for (const code of ['login_required', 'consent_required'] as const) {
+    test(`a logged-in user whose refresh answers ${code} is sent to Auth0 and sends nothing tokenless`, async ({ page }) => {
+      test.setTimeout(90_000);
+
+      const session = await seedDeadSession(page, code);
+
+      let tokenlessApollo = 0;
+      await page.route('**/graphql', async route => {
+        const raw = route.request().postData() ?? '';
+        // buildInfo (raw fetch) and FeatureFlagsPublic (HttpClient) bypass the Apollo auth link.
+        if (!raw.includes('buildInfo') && !raw.includes('FeatureFlagsPublic')) {
+          if (!(await route.request().allHeaders())['authorization']) {
+            tokenlessApollo++;
+          }
+        }
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: { buildInfo: BUILD_INFO, kits: [], donors: [], typeCount: [], statusCount: [], volunteerCount: [] },
+          }),
+        });
+      });
+
+      await page.goto('/dashboard');
+
+      await page.waitForURL(/auth0\.com\/authorize/, { timeout: 30_000 });
+      await page.waitForTimeout(2_000);
+
+      expect(session.authorizeHits(), 'exactly one redirect to /authorize').toBe(1);
+      // The staff-area invariant: a failed token fetch fails the request, never downgrades it.
+      expect(tokenlessApollo, 'Apollo operations sent without a token from a staff page').toBe(0);
+    });
+  }
+
+  test('an HTTP 401 from the API on a staff page is sent to Auth0', async ({ page }) => {
+    test.setTimeout(90_000);
+
+    let authorizeHits = 0;
+    await page.route(AUTH0_ORIGIN, route => {
+      if (route.request().url().includes('/authorize')) {
+        authorizeHits++;
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<html><body>stub auth0 login</body></html>',
+      });
+    });
+
+    // A token the SDK still considers valid, which the API rejects (e.g. client clock skew past
+    // the SDK's 60 s leeway). AuthGuard admits the route; the 401 is the only reason to redirect.
+    await loginWith(page, ['read:kits']);
+
+    let rejected = 0;
+    await page.route('**/graphql', async route => {
+      const raw = route.request().postData() ?? '';
+      if (raw.includes('buildInfo')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { buildInfo: BUILD_INFO } }),
+        });
+      }
+      if ((await route.request().allHeaders())['authorization']) {
+        rejected++;
+        return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) });
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: {} }) });
+    });
+
+    await page.goto('/dashboard');
+
+    await page.waitForURL(/auth0\.com\/authorize/, { timeout: 30_000 });
+    expect(authorizeHits).toBeGreaterThan(0);
+    // The redirect came from the error link answering a 401, not from AuthGuard.
+    expect(rejected).toBeGreaterThan(0);
+  });
+});
+
+test.describe('a stale staff session never sends a public-page visitor to login @mocked', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  // Red before the fix: the auth link called redirectToLogin() for every re-auth code once
+  // isAuthenticated$ was true, whatever the page, so the form never rendered.
+  for (const code of REAUTH_CODES) {
+    test(`public request form with a session that fails ${code} loads tokenless and never redirects`, async ({ page }) => {
+      test.setTimeout(90_000);
+
+      const session = await seedDeadSession(page, code);
+      const calls = await stubPublicForm(page);
+
+      await page.goto('/organisation-device-request');
+
+      // adminConfig resolving is what renders the CMS body, so this proves the page's queries
+      // went out and were answered rather than bounced.
+      await expect(page.getByText('E2E public request page content')).toBeVisible({ timeout: 30_000 });
+      await page.waitForTimeout(2_000);
+
+      await expect(page).toHaveURL(/organisation-device-request/);
+      expect(session.authorizeHits(), 'a public page must never bounce to Auth0').toBe(0);
+      const adminConfig = calls.filter(call => call.operation === 'adminConfig');
+      expect(adminConfig.length).toBeGreaterThan(0);
+      // Treated as the anonymous visitor they now are.
+      expect(adminConfig.every(call => !call.authenticated)).toBe(true);
+    });
+  }
+
+  // Red before the fix: the error link redirected on any 401 with no staff-area check.
+  test('an HTTP 401 on the public request form never redirects', async ({ page }) => {
+    test.setTimeout(90_000);
+
+    let auth0Hits = 0;
+    await page.route(AUTH0_ORIGIN, route => {
+      auth0Hits++;
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<html><body>stub auth0 login</body></html>',
+      });
+    });
+
+    // A token the SDK still considers valid (so it is attached), which the API rejects.
+    await loginWith(page, ['read:kits']);
+    const calls = await stubPublicForm(page, { rejectTokens: true });
+
+    await page.goto('/organisation-device-request');
+
+    // Wait for the rejected adminConfig, then give any redirect time to fire.
+    await expect
+      .poll(() => calls.filter(call => call.operation === 'adminConfig' && call.authenticated).length, { timeout: 30_000 })
+      .toBeGreaterThan(0);
+    await page.waitForTimeout(3_000);
+
+    await expect(page).toHaveURL(/organisation-device-request/);
+    expect(auth0Hits, 'a public page must never bounce to Auth0').toBe(0);
+    // Out of scope here, recorded so the next reader is not surprised: the page does NOT
+    // recover. Every adminConfig retry carries the same rejected token, so the form stays on its
+    // "Starting up" poll and then shows its retry message.
   });
 });

@@ -99,13 +99,25 @@ When a table "loads empty" with no obvious error, suspect an in-place mutation f
 The single Apollo client is built in `createApollo`. Three behaviours are deliberate and must be kept:
 
 - **Auth link** — `setContext` fetches a fresh bearer token per request via
-  `authService.getTokenSilently$({ audience })`. If Auth0 returns a genuine re-auth error
-  (`login_required` / `consent_required` / `missing_refresh_token`), it redirects to login **once**
-  (guarded by `reauthInProgress`); otherwise it sends the request tokenless rather than blocking.
-- **Error link** — only an **HTTP 401** triggers re-login. A GraphQL-level `Access Denied` (HTTP 200,
-  no `statusCode`) is deliberately left alone: it can be a real permission denial for an authenticated
-  user, and redirecting on it would cause a login loop. **Do not "simplify" this to redirect on any
-  auth error.**
+  `authService.getTokenSilently$({ audience })`, after `isAuthenticated$` has settled. When the token
+  fetch fails, the outcome depends on who and where:
+  - **Genuine anonymous visitor** (`isAuthenticated` false): the request goes out tokenless; the
+    public resolvers accept it. Never a redirect (the 2026-07-28 incident).
+  - **Cached identity on a public page** (`isStaffArea()` false — the request form, delivery booking,
+    equalities preview, CMS posts): a re-auth error (`login_required` / `consent_required` /
+    `missing_refresh_token`) or a dead refresh token (`invalid_grant` after one retry) sends the
+    request tokenless, exactly like an anonymous visitor. **Never a redirect.**
+  - **Staff area** (`/`, `/dashboard/**`, `/device-request-admin`): a re-auth error or dead refresh
+    token redirects to login **once** (guarded by `reauthInProgress`) and fails the request. Any
+    other failure is retried, then fails the request. **Never sent tokenless** — a downgraded staff
+    request is the silent "Access Denied" bug (#164).
+- **Error link** — only an **HTTP 401**, and only **in the staff area**, triggers re-login. On a public
+  page a 401 (the API rejecting a stale token the browser still holds) just fails the request; the
+  page's own retry/error UI handles it. A GraphQL-level `Access Denied` (HTTP 200, no `statusCode`) is
+  deliberately left alone everywhere: it can be a real permission denial for an authenticated user,
+  and redirecting on it would cause a login loop. **Do not "simplify" this to redirect on any auth
+  error.** Pinned by `expired-session-redirects-to-login.spec.ts`, `invalid-grant-reauth.spec.ts`,
+  `auth-link-no-anonymous-downgrade.spec.ts` and `anon-public-request-no-login-redirect.spec.ts`.
 - **Cache** — `new InMemoryCache()` with **no `typePolicies`**. Lists are re-fetched, not normalized-
   merged. Adding type policies / field merge functions is an architectural change with real cache-
   identity risk, not a tuning knob — treat as such.
@@ -275,7 +287,7 @@ Check any diff against this table. "MUST" means a violation is a blocking review
 |---|-----------|--------------|
 | 1 | App stays fully standalone — no new `@NgModule` | grep the diff for `@NgModule` |
 | 2 | Never mutate an Apollo result in place — `.map()`+spread to clone | Read every `refetch/ajax` callback that touches `data.content` |
-| 3 | GraphQL error link redirects only on HTTP 401, never on GraphQL `Access Denied` | `graphql.module.ts` `onError` |
+| 3 | GraphQL error link redirects only on HTTP 401 in the staff area, never on GraphQL `Access Denied`; public pages never redirect to login | `graphql.module.ts` `onError` + auth link |
 | 4 | Conditional Formly fields that must retain values set `resetOnHide: false` (no bogus `defaultValue`) | grep `hideExpression` near value fields |
 | 5 | New custom Formly field types are registered in `formly/index.ts` `FORMLYCONFIG` | that file |
 | 6 | Users-table sort sends string `'1'`/`'-1'`, NOT `'asc'`/`'desc'` — don't normalize | `user-index` / `role-users` |

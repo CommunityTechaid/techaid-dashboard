@@ -119,10 +119,12 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
               return of({});
             }
 
-            if (isDeadRefreshToken(err) && !isStaffArea()) {
-              // A dead refresh token on a PUBLIC page: an ex-staff browser whose cached identity
-              // still reads as signed in. Treat them as the anonymous visitor they now are — send
-              // the request without a token and never redirect (see the incident note above).
+            if ((isReauthError(err) || isDeadRefreshToken(err)) && !isStaffArea()) {
+              // A dead session on a PUBLIC page: a browser whose cached identity still reads as
+              // signed in, but whose token cannot be renewed (dead refresh token, or one of the
+              // re-auth codes). Treat them as the anonymous visitor they now are: send the request
+              // without a token and never redirect (see the incident note above). Pinned by
+              // invalid-grant-reauth.spec.ts and expired-session-redirects-to-login.spec.ts.
               return of({});
             }
 
@@ -148,10 +150,14 @@ export function createApollo(httpLink: HttpLink, config: ConfigService, authServ
     // "Access Denied" (HTTP 200, surfaced as a CombinedGraphQLErrors with no statusCode) is
     // deliberately left alone: it can be a genuine permission denial for an authenticated user,
     // and redirecting on it would cause a login loop.
+    //
+    // Staff areas only: on a public page a 401 means the API rejected a stale staff token the
+    // browser still holds, and the visitor must never be sent to Auth0 (the 2026-07-28 incident
+    // class). The request has failed either way; the public pages' own retry/error UI handles it.
     const status = ServerError.is(error)
       ? error.statusCode
       : ((error as any)?.statusCode ?? (error as any)?.status);
-    if (status === 401) {
+    if (status === 401 && isStaffArea()) {
       redirectToLogin();
     }
   });
