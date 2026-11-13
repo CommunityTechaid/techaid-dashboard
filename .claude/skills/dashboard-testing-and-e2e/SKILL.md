@@ -171,7 +171,9 @@ individually when copying a pattern).
 - **`e2e/cleanup-residue.mjs`** (`npm run e2e:cleanup`) — finds and (with `--delete`) hard-deletes every
   UAT record whose identifying field contains the `E2E` marker, across donor/kit/org/contact/
   deviceRequest. Dry-run by default; only ever touches records matching that marker (real CommunityTechAid
-  records never do), and only ever talks to `api-testing` (UAT), never prod. Run it periodically to
+  records never do), and only ever talks to `api-testing` (UAT), never prod. It deletes in dependency
+  order (`e2e/cleanup-order.mjs`: device requests before the referee contacts and organisations that
+  hold foreign keys from them), so one `--delete` pass is enough. Run it periodically to
   clear write-flow residue, or immediately after a crashed Batch 5 run.
 - **`e2e/check-skips.mjs`** — reads the Playwright JSON report, prints a pass/fail/skip/flaky
   breakdown + skip reasons, and **fails (non-zero exit) if skipped share exceeds 40%**
