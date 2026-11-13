@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ScanInputComponent } from '../scan/scan-input.component';
 import { ScanModeStrategy, ScanSession } from '../scan/scan-session';
-import { PrepApiService, QueueRange } from './prep-api.service';
-import { errorText } from '@app/shared/utils';
+import { PrepApiService, PrepError, QueueRange } from './prep-api.service';
+import { errorToastText } from '@app/shared/utils/error-toast';
 import {
   ITEM_KEY_LABELS,
   KIT_TYPE_TO_ITEM_KEY,
@@ -35,6 +35,14 @@ interface Banner {
  *
  * Default change detection (like the booking flow) — NOT OnPush.
  */
+/**
+ * What an error banner shows for a failure: this page's own message as written, otherwise
+ * friendly or deliberate server text plus the request's ref (#381), never raw server text.
+ */
+function failureText(err: unknown): string {
+  return err instanceof PrepError ? err.message : errorToastText(err);
+}
+
 @Component({
   selector: 'app-prep-mode',
   standalone: true,
@@ -370,7 +378,7 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
       this.phase.set('prepping');
       await this.openIndex(0);
     } catch (err) {
-      this.queueError.set(errorText(err));
+      this.queueError.set(failureText(err));
     } finally {
       this.loadingQueue.set(false);
     }
@@ -391,7 +399,7 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
         this.banner.set({ kind: 'error', text: `Request #${item.id} could not be loaded.` });
       }
     } catch (err) {
-      this.banner.set({ kind: 'error', text: errorText(err) });
+      this.banner.set({ kind: 'error', text: failureText(err) });
     } finally {
       this.loadingRequest.set(false);
     }
@@ -475,7 +483,7 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
         this.banner.set({ kind: 'success', text: `Kit #${id} (${kit.type}) assigned.` });
       }
     } catch (err) {
-      this.banner.set({ kind: 'error', text: errorText(err) });
+      this.banner.set({ kind: 'error', text: failureText(err) });
     }
   }
 
@@ -519,7 +527,7 @@ export class PrepModeComponent implements OnInit, ScanModeStrategy {
       });
       await this.advance();
     } catch (err) {
-      this.banner.set({ kind: 'error', text: errorText(err) });
+      this.banner.set({ kind: 'error', text: failureText(err) });
     }
   }
 

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges
 import { DatePipe } from '@angular/common';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
+import { errorToastText } from '@app/shared/utils/error-toast';
 import { MembershipTier, formatMembershipDate, tierLabel } from '@app/shared/membership/membership';
 
 const QUERY_AUDITS = gql`
@@ -138,7 +139,8 @@ export class ReferringOrganisationAuditComponent implements OnChanges {
         this.cdr.markForCheck();
       },
       error: err => {
-        this.error = err.message;
+        // Friendly or deliberate text plus the request's ref (#381), never the raw server text.
+        this.error = errorToastText(err);
         this.cdr.markForCheck();
       },
     });
