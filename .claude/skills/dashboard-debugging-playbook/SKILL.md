@@ -41,7 +41,7 @@ Run shell commands from the repo root. All paths below are relative to
 | 4 | User list sort broken or reversed | Users resolver wants string `'1'`/`'-1'`, not `'asc'`/`'desc'` |
 | 5 | "Clear date" saves but the value comes back on reload | Which mutation the component calls + server null semantics |
 | 6 | Detail tab blank / nested fields null (user/role) | Raw GraphQL response in the Network tab — FE vs BE |
-| 7 | Login loop / auth errors / "Access Denied" | 401-only redirect in `graphql.module.ts` + Auth0 config |
+| 7 | Login loop / auth errors / "Access Denied" | staff-area-only, 401-only redirect in `graphql.module.ts` + Auth0 config |
 | 8 | Public booking page: Turnstile missing / CSP violations | CSP `connect-src`/`script-src`/`frame-src` in `staticwebapp.config.json` |
 | 9 | Address autocomplete dead on the booking form | Network tab: the Places Worker request status (403 / 429 / stale) |
 | 10 | "Is the right build even deployed?" | `version.ts` triple vs what `deploy-dev.yml` stamped |
@@ -185,12 +185,24 @@ tested deterministically even after the backend is fixed.
 ## 7. Login loop / auth errors / "Access Denied"
 
 **First check** — distinguish an HTTP 401 from a GraphQL `Access Denied`. The Apollo error link in
-`src/app/graphql.module.ts` redirects to login on **HTTP 401 only** — never on a GraphQL-level
+`src/app/graphql.module.ts` redirects to login on **HTTP 401 only, and only in the staff area**
+(`isStaffArea()`: `/`, `/dashboard/**`, `/device-request-admin`) — never on a GraphQL-level
 `Access Denied` (HTTP 200, a `CombinedGraphQLErrors` with no `statusCode`):
 
 ```bash
-sed -n '50,61p' src/app/graphql.module.ts   # if (status === 401) redirectToLogin();
+grep -n "isStaffArea()" src/app/graphql.module.ts   # 401 redirect + public-page tokenless fallback
 ```
+
+Where a redirect can come from, after the public-page fix:
+- **Staff area:** a token fetch failing with a re-auth code (`login_required` / `consent_required` /
+  `missing_refresh_token`) or a dead refresh token (`invalid_grant` after one retry), or a 401 from the
+  API → login, once. The request is failed, never sent tokenless.
+- **Public pages** (request form, delivery booking, equalities preview, CMS posts): **never** a
+  redirect. A re-auth error or dead refresh token sends the request tokenless, like an anonymous
+  visitor; a 401 just fails the request. A visitor bounced to Auth0 from a public page is a bug (the
+  2026-07-28 incident class) — check `isStaffArea()` first. Known gap: after a public-page 401 the
+  request form keeps retrying `adminConfig` with the same rejected token for about a minute, then
+  shows its retry message.
 
 A GraphQL `Access Denied` for an **authenticated** user is a real permission result — the caller's
 Auth0 token lacks the required scope, a server-side gate — not a client bug.

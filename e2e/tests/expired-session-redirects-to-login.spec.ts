@@ -26,9 +26,11 @@
  *
  * Discriminator. A redirect to Auth0 could in principle come from AuthGuard rather than the
  * auth link, which would make this spec pass for the wrong reason. It cannot here: identity is
- * cached, so AuthGuard lets the route through. The assertion that a /graphql request was
- * actually attempted proves we got inside the component and that the auth link ran its error
- * path (it calls success({}) after redirecting, so the request still goes out untokened).
+ * cached, so AuthGuard lets the route through. Since #164 the auth link fails the request after
+ * redirecting instead of sending it untokened, so no Apollo request reaches /graphql at all; the
+ * test asserts exactly that (no Apollo operation left without a token, the staff-area invariant).
+ * An earlier version asserted that "a /graphql request was attempted", which the always-present
+ * FeatureFlagsPublic HttpClient post satisfied on its own, so it proved nothing.
  *
  * The same stale session on a PUBLIC page is the opposite case (the later describe blocks). An
  * ex-staff browser still holds cached identity, so isAuthenticated$ is true and the auth link's
@@ -177,12 +179,18 @@ test.describe('expired staff session still re-prompts for login @mocked', () => 
       });
     });
 
-    let graphqlAttempts = 0;
-    await page.route('**/graphql', route => {
+    let tokenlessApollo = 0;
+    await page.route('**/graphql', async route => {
+      const raw = route.request().postData() ?? '';
       // The app's startup health probe (a raw `{ buildInfo }` fetch from BackendStatusService)
-      // also hits /graphql, from outside any component. Answer it, but don't count it: only a
-      // query issued from inside the component proves the redirect came from the auth link.
-      if ((route.request().postData() ?? '').includes('buildInfo')) {
+      // and FeatureFlagsPublic (HttpClient) bypass the Apollo auth link and are always tokenless.
+      // Answer the probe; count only Apollo operations that went out without a token.
+      if (!raw.includes('buildInfo') && !raw.includes('FeatureFlagsPublic')) {
+        if (!(await route.request().allHeaders())['authorization']) {
+          tokenlessApollo++;
+        }
+      }
+      if (raw.includes('buildInfo')) {
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -191,7 +199,6 @@ test.describe('expired staff session still re-prompts for login @mocked', () => 
           }),
         });
       }
-      graphqlAttempts++;
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -208,10 +215,13 @@ test.describe('expired staff session still re-prompts for login @mocked', () => 
     // The contract: the dying session is noticed and the user is sent to log in again.
     await page.waitForURL(/auth0\.com/, { timeout: 30_000 });
 
+    // Let any downgraded request land before judging.
+    await page.waitForTimeout(2_000);
+
     expect(authorizeHits).toBeGreaterThan(0);
-    // Proves the redirect came from the Apollo auth link (we were inside the component,
-    // querying) and not from AuthGuard turning us away at the door.
-    expect(graphqlAttempts).toBeGreaterThan(0);
+    // The staff-area invariant: the failed token fetch failed the request; nothing was
+    // downgraded to an anonymous request.
+    expect(tokenlessApollo, 'Apollo operations sent without a token from a staff page').toBe(0);
   });
 
   // missing_refresh_token is the test above; these are the two codes that come back from the
