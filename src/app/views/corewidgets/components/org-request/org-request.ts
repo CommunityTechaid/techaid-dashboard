@@ -862,6 +862,12 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     key: 'deviceRequestItems',
     type: 'radio',
     className: 'col-md-6',
+    hooks: {
+      onInit: (field) => {
+        // Changing the choice answers the message, so take it down at once.
+        this.sub.add(field.formControl.valueChanges.subscribe(() => this.setDeviceTypeNotOffered(false)));
+      }
+    },
     templateOptions: {
       label: 'Please select the item your client needs. *',
       //description: 'If your client needs a SIM card in addition to a device, select the main device above and check the below box. If they just need a SIM card, only select the box below.',
@@ -884,6 +890,12 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     key: 'deviceRequestItems',
     type: 'radio',
     className: 'col-md-6',
+    hooks: {
+      onInit: (field) => {
+        // Changing the choice answers the message, so take it down at once.
+        this.sub.add(field.formControl.valueChanges.subscribe(() => this.setDeviceTypeNotOffered(false)));
+      }
+    },
     templateOptions: {
       label: 'Please select the item your client needs. *',
       options: [
@@ -902,7 +914,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   deviceTypeNotOfferedMessage: FormlyFieldConfig = {
     hide: true,
     className: 'col-md-12',
-    template: `<div class="alert alert-warning border-left-warning" role="alert" data-testid="device-type-not-offered">
+    template: `<div class="alert alert-warning border-left-warning" role="alert">
 This device type is not currently being offered. Please choose a different item.
 </div>`
   }

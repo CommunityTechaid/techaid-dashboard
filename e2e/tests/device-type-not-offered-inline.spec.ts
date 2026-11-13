@@ -13,7 +13,7 @@
  *
  * @mocked: all GraphQL stubbed, no token needed.
  */
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { test, expect } from '../helpers/csp';
 
 const AUTH0_ORIGIN = '**://techaid-auth.eu.auth0.com/**';
@@ -21,6 +21,11 @@ const WARD_LOOKUP_ORIGIN = '**://communitytechaid.github.io/**';
 const COVERED_POSTCODE = 'SE15 5TD'; // Peckham, Southwark
 
 const SERVER_MESSAGE = 'Laptops are not currently available in Southwark. Please refresh the form.';
+
+/** The inline message, found by role and text (template-field HTML is sanitised: no data-testid). */
+function inlineMessage(scope: Locator): Locator {
+  return scope.getByRole('alert').filter({ hasText: 'not currently being offered' });
+}
 
 async function installMocks(page: Page, createResponse: unknown): Promise<{ createCalls: number }> {
   const captured = { createCalls: 0 };
@@ -135,14 +140,14 @@ test.describe('device type not offered, inline @mocked', () => {
     await fillSubmittableRequest(page);
     await page.getByRole('button', { name: 'Next' }).click();
 
-    const inline = page.getByTestId('device-type-not-offered');
+    const inline = inlineMessage(page.locator('formly-form'));
     await expect(inline).toBeVisible({ timeout: 15_000 });
     await expect(inline).toContainText('not currently being offered');
     await expect(inline).toContainText('choose a different item');
 
     // It sits in the same form, directly with the device-type choice: the same row as the radios.
     const choiceRow = page.locator('formly-form .row', { has: page.getByText('Please select the item your client needs.') });
-    await expect(choiceRow.getByTestId('device-type-not-offered')).toBeVisible();
+    await expect(inlineMessage(choiceRow)).toBeVisible();
 
     // The server's own sentence ("... Please refresh the form.") is not what the user sees.
     await expect(page.getByText('Please refresh the form')).toHaveCount(0);
@@ -152,6 +157,14 @@ test.describe('device type not offered, inline @mocked', () => {
     await expect(page.getByText('Oops!')).toHaveCount(0);
     await expect(page.getByText('Please select the item your client needs.')).toBeVisible();
     expect(captured.createCalls).toBe(1);
+
+    // Announced to assistive tech (the locator itself is by role=alert; Angular's sanitiser strips
+    // data-testid from a Formly template field, so there is no test id to use).
+    await expect(inline).toHaveAttribute('role', 'alert');
+
+    // Choosing something else answers the message, so it goes away straight away.
+    await page.locator('formly-form').getByText('Smartphone', { exact: true }).click();
+    await expect(inline).toHaveCount(0);
   });
 
   test('a different error keeps the existing generic path and shows no inline message', async ({ page }) => {
@@ -172,6 +185,6 @@ test.describe('device type not offered, inline @mocked', () => {
 
     // Existing path: the server's message is raised as an error toast.
     await expect(page.getByText('Something else went wrong on the server')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('device-type-not-offered')).toHaveCount(0);
+    await expect(inlineMessage(page.locator('formly-form'))).toHaveCount(0);
   });
 });
