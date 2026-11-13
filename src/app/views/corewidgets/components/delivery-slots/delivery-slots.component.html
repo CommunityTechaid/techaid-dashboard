@@ -35,7 +35,7 @@
     <!-- Admin exception booking (techaid-server#73): any day, any window, doesn't take a slot. -->
     <div class="card shadow-sm mb-4" data-testid="exception-booking-form">
       <div class="card-header py-2">
-        <span class="font-weight-bold text-primary">Exception booking</span>
+        <span class="fw-bold text-primary">Exception booking</span>
         <span class="text-muted small ms-2">Admins only. Any day and any window, even a full one. It doesn't take a public slot, and the normal confirmation email is sent.</span>
       </div>
       <div class="card-body">
@@ -79,7 +79,7 @@
   <!-- Bookings -->
   <div class="card shadow-sm mb-4">
     <div class="card-header py-2 d-flex justify-content-between align-items-center">
-      <span class="font-weight-bold text-primary">Who's booked</span>
+      <span class="fw-bold text-primary">Who's booked</span>
       <span class="badge badge-secondary">{{ totalBookings() }} booking{{ totalBookings() === 1 ? '' : 's' }}</span>
     </div>
     <div class="card-body">
@@ -88,7 +88,7 @@
       } @else {
         @for (group of bookingGroups(); track group.key) {
           <div class="mb-4">
-            <div class="font-weight-bold mb-2">
+            <div class="fw-bold mb-2">
               {{ group.dayLabel }} · {{ group.windowName }}
               <span class="badge badge-primary ms-1">{{ group.bookings.length }}</span>
             </div>

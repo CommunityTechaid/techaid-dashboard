@@ -1,7 +1,7 @@
 <!-- Rendered as a tab inside the Admin Panel, so no breadcrumb/layout wrapper of its own. -->
 <div class="card shadow mb-4 mt-1">
   <div class="card-header py-3">
-    <h6 class="m-0 font-weight-bold text-primary">Feature Flags</h6>
+    <h6 class="m-0 fw-bold text-primary">Feature Flags</h6>
   </div>
   <div class="card-body">
     <p class="text-muted small mb-4">
@@ -18,7 +18,7 @@
       @for (flag of flags(); track flag.key) {
         <div class="d-flex justify-content-between align-items-start py-3 border-bottom">
           <div class="me-3">
-            <div class="font-weight-bold">
+            <div class="fw-bold">
               {{ flag.label }}
               @if (flag.critical) {
                 <span class="badge bg-warning text-dark ms-2 align-middle">Compliance control</span>

@@ -20,7 +20,7 @@
             <div class="card-header py-3">
               <div class="d-flex justify-content-between">
                 <div>
-                  <h6 class="m-0 font-weight-bold text-primary">
+                  <h6 class="m-0 fw-bold text-primary">
                     {{requestId}} -
                     <a href="#" [routerLink]="['/dashboard/referring-organisations', $safeNavigationMigration(model?.referringOrganisationContact?.referringOrganisation?.id)]">{{model?.referringOrganisationContact?.referringOrganisation?.name}}</a> /
                     <a href="#" [routerLink]="['/dashboard/referring-organisation-contacts', $safeNavigationMigration(model?.referringOrganisationContact?.id)]">{{model?.referringOrganisationContact?.fullName}}</a>
@@ -125,10 +125,10 @@
 
 <ng-template #kitWarning let-c="close">
   <div class="modal-header bg-warning">
-    <h4 class="modal-title font-weight-bold">⚠ Too Many Devices</h4>
+    <h4 class="modal-title fw-bold">⚠ Too Many Devices</h4>
   </div>
   <div class="modal-body text-center py-4">
-    <h3 class="font-weight-bold text-danger">
+    <h3 class="fw-bold text-danger">
       Please contact staff as this request has more devices than will be shown on the delivery receipt.
     </h3>
   </div>
@@ -201,7 +201,7 @@
         }
         @if (assignmentResults().length > 0) {
           <div>
-            <h6 class="font-weight-bold">Assignment Results:</h6>
+            <h6 class="fw-bold">Assignment Results:</h6>
             <div class="border rounded p-2" style="max-height: 240px; overflow-y: auto; background: #f8f9fa; font-family: monospace; font-size: 0.85rem;">
               @for (result of assignmentResults(); track result.deviceId) {
                 <div class="mb-1"
