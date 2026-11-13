@@ -225,7 +225,14 @@ function detailTable(
 ): Table {
   const { listPath, segment, tab, wantRows = 6, noSearch, plain } = opts;
   const openTab = async (page: Page) => {
-    if (tab) await page.getByRole('tab', { name: tab }).click();
+    if (!tab) return;
+    await page.getByRole('tab', { name: tab }).click();
+    // ngbNav fades the old pane out before it renders the new one, so for ~200-450 ms after the
+    // click `.tab-pane.active` is still the previous tab's pane. On a role page that is the Users
+    // table, whose length menu offers 5, so reading it there and then selecting 5 on the
+    // Permissions table (10/25/50/100) waited out the whole test timeout. Wait for the clicked
+    // tab's own panel (named by its tab via aria-labelledby) before anything reads the pane.
+    await expect(page.getByRole('tabpanel', { name: tab })).toBeVisible({ timeout: 20_000 });
   };
   return {
     name,
