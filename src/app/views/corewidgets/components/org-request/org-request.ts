@@ -14,7 +14,7 @@ import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
 // import { FormGroup } from '@angular/forms';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { errorText, graphQLErrorMessages, isNetworkError } from '@app/shared/utils';
+import { errorText, graphQLErrorCodes, graphQLErrorMessages, isNetworkError } from '@app/shared/utils';
 import { AbstractControl, UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions, FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -862,6 +862,12 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     key: 'deviceRequestItems',
     type: 'radio',
     className: 'col-md-6',
+    hooks: {
+      onInit: (field) => {
+        // Changing the choice answers the message, so take it down at once.
+        this.sub.add(field.formControl.valueChanges.subscribe(() => this.setDeviceTypeNotOffered(false)));
+      }
+    },
     templateOptions: {
       label: 'Please select the item your client needs. *',
       //description: 'If your client needs a SIM card in addition to a device, select the main device above and check the below box. If they just need a SIM card, only select the box below.',
@@ -884,6 +890,12 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
     key: 'deviceRequestItems',
     type: 'radio',
     className: 'col-md-6',
+    hooks: {
+      onInit: (field) => {
+        // Changing the choice answers the message, so take it down at once.
+        this.sub.add(field.formControl.valueChanges.subscribe(() => this.setDeviceTypeNotOffered(false)));
+      }
+    },
     templateOptions: {
       label: 'Please select the item your client needs. *',
       options: [
@@ -891,6 +903,38 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       ],
       required: false
     }
+  }
+
+  /**
+   * Shown by the device-type choice when the server refuses the request because that type is not
+   * currently offered (`DEVICE_TYPE_NOT_OFFERED`, techaid-server#369). A static template toggled
+   * through `hide` (the isLambethErrorMessage pattern), so it needs no Formly string expression,
+   * and it has no key, so it adds nothing to the model and `resetOnHide` has nothing to reset.
+   */
+  deviceTypeNotOfferedMessage: FormlyFieldConfig = {
+    hide: true,
+    className: 'col-md-12',
+    template: `<div class="alert alert-warning border-left-warning" role="alert">
+This device type is not currently being offered. Please choose a different item.
+</div>`
+  }
+
+  private setDeviceTypeNotOffered(show: boolean) {
+    if (this.deviceTypeNotOfferedMessage.hide === !show) {
+      return;
+    }
+    this.deviceTypeNotOfferedMessage.hide = !show;
+    this.options.detectChanges?.(this.requestPage);
+    this.changeDetectorRef.markForCheck();
+  }
+
+  /** True (and the inline message is showing) when the server refused the device type. */
+  private handleDeviceTypeNotOffered(error: unknown): boolean {
+    if (!graphQLErrorCodes(error).includes('DEVICE_TYPE_NOT_OFFERED')) {
+      return false;
+    }
+    this.setDeviceTypeNotOffered(true);
+    return true;
   }
 
   additionalSimRequestPublic: FormlyFieldConfig = {
@@ -961,6 +1005,7 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         fieldGroup: [
           this.deviceTypesPublic,
           this.deviceTypesAdmin,
+          this.deviceTypeNotOfferedMessage,
         ]
       },
       this.additionalSimRequestPublic,
@@ -1528,6 +1573,9 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
       return false;
     }
 
+    // A fresh attempt: clear any earlier "not offered" message before the server answers again.
+    this.setDeviceTypeNotOffered(false);
+
     const data: any = {
       clientRef: deviceRequest.clientRef,
       details: deviceRequest.details,
@@ -1569,6 +1617,10 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         return false;
       }
 
+      if (this.handleDeviceTypeNotOffered(firstError)) {
+        return false;
+      }
+
       // Only retry on transport-level failures — GraphQL business errors won't change on retry.
       if (!parsed.isNetwork) {
         this.toastr.error(parsed.message);
@@ -1594,6 +1646,9 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
         }
         if (retryParsed.isLimit) {
           this.showMoreThanThreeRequestsPage(retryParsed.limit);
+          return false;
+        }
+        if (this.handleDeviceTypeNotOffered(retryError)) {
           return false;
         }
         this.toastr.error(retryParsed.message);

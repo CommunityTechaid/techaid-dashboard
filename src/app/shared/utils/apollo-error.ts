@@ -60,6 +60,21 @@ export function graphQLErrorMessages(err: unknown): string[] {
   return [];
 }
 
+/**
+ * Every `extensions.code` carried by a GraphQL error response, in the order the server sent them.
+ *
+ * Only reads a normal GraphQL error response (HTTP 200 with an `errors` array, which is how the
+ * server reports business rejections). A transport failure carries no codes.
+ */
+export function graphQLErrorCodes(err: unknown): string[] {
+  if (CombinedGraphQLErrors.is(err)) {
+    return err.errors
+      .map(e => e?.extensions?.['code'])
+      .filter((code): code is string => typeof code === 'string' && code.length > 0);
+  }
+  return [];
+}
+
 /** True when the request failed at the transport level rather than returning GraphQL errors. */
 export function isNetworkError(err: unknown): boolean {
   return ServerError.is(err) || ServerParseError.is(err) || err instanceof HttpErrorResponse;
