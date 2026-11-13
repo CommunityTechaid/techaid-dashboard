@@ -110,7 +110,8 @@ test.describe('Bootstrap 5 class names keep the sb-admin look @mocked', () => {
     test.setTimeout(60_000);
     await injectProbe(page);
     await page.locator('[data-probe="link-badge"]').hover();
-    expect(await css(page, 'link-badge', 'background-color')).toBe('rgb(212, 218, 237)'); // #d4daed
+    // sb-admin's .badge has a 0.15s colour transition: poll until it settles instead of reading mid-fade
+    await expect.poll(() => css(page, 'link-badge', 'background-color')).toBe('rgb(212, 218, 237)'); // #d4daed
     expect(await css(page, 'link-badge', 'color')).toBe('rgb(58, 59, 69)');
     expect(await css(page, 'link-badge', 'text-decoration-line')).toBe('none');
   });
