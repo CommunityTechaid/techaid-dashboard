@@ -307,6 +307,10 @@ export class DonorParentIndexComponent implements OnInit, OnDestroy {
 
   createEntity(data: any) {
     if (warnIfFormInvalid(this.form, this.fields, this.toastr)) return;
+    // The place field's clear (X) button sets null, but the server's CreateDonorParentInput.address is
+    // a non-null Kotlin String: address: null fails with a raw instantiation error. Send '' instead,
+    // which is what an untouched field sends.
+    data = { ...data, address: data.address ?? '' };
     this.apollo.mutate({
       mutation: CREATE_ENTITY,
       variables: { data }
