@@ -55,7 +55,8 @@ async function installMocks(page: Page, nativeFlag: boolean, reply: SubmitReply 
   const captured: Captured = { submits: [], typeformRequests: [] };
 
   page.on('request', (req) => {
-    if (new URL(req.url()).hostname.endsWith('typeform.com')) captured.typeformRequests.push(req.url());
+    const host = new URL(req.url()).hostname;
+    if (host === 'typeform.com' || host.endsWith('.typeform.com')) captured.typeformRequests.push(req.url());
   });
   await page.route(AUTH0_ORIGIN, (route) =>
     route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>stub</body></html>' }),
