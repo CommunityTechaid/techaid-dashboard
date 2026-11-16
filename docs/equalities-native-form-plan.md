@@ -8,7 +8,8 @@ of scope** and stays as a plain link for now.
 ## Current status / next action
 
 - **Status:** plan only. No code has been written.
-- **Next action:** answer decisions D2 and D3 in M0 (they block all build work). D1 is done.
+- **Next action:** start M1 (server) and M2 (Google service account) once the 2026-11-16 prod
+  deploy has shipped. D1, D2, D3 and D5 are decided. D4 and D6 are open but don't block the build.
 - Branch: `plan/native-equalities-form` (dashboard). It is held back from `dev` until after the
   2026-11-16 production deploy.
 
@@ -51,19 +52,20 @@ and exclude review and CI waits.
 - [x] **D1. Approval.** The CEO approved bringing the equalities form into TaDa in writing on
       2026-11-16. The CEO will source a separate tool for feedback and surveys, so this work does
       not need to cover them.
-- [ ] **D2. How the server writes to the Sheet.** *Blocks M1/M2.*
-  - **Recommended: an Apps Script web app** bound to the Sheet (`doPost`, shared-secret header,
-    appends one row). There's no GCP service-account key to manage, and the Sheet owner keeps
-    control. Trap: Apps Script copies are hand-pasted (see the delivery-schedule export), so the
-    script needs a version endpoint.
-  - Alternative: the Sheets API with a service account shared on the Sheet. That puts a JSON key
-    secret in Azure.
-- [ ] **D3. Sheet layout.** Same Sheet and same columns as the Typeform integration, so existing
-      reports keep working? Recommended: yes, plus a `source` column (`typeform`/`tada`). We also
-      need a **separate test Sheet for UAT**.
+- [x] **D2. How the server writes to the Sheet: Google Sheets API with a service account**
+      (decided 2026-11-16). The service account gets editor access to the target spreadsheet only.
+      Its JSON key is an Azure Container Apps secret, with one service account (or key) per
+      environment so UAT can never write to the real Sheet.
+- [x] **D3. Sheet layout: a new destination, not the Typeform columns** (decided 2026-11-16).
+      Native answers go to their own tab or spreadsheet, with one column per question (header =
+      question title), plus `submitted_at`, `corr_id`, `borough` and `ward`. UAT writes to a
+      separate test spreadsheet.
+  - **Still to settle:** a new **tab** in the existing equalities spreadsheet (inherits its sharing
+    and access controls; recommended) or a new spreadsheet. Either way, any report that reads the
+    Typeform tab needs to combine both (task R1).
 - [ ] **D4. Question set.** The form is titled "2025/2026". Confirm that the 11 questions and their
       choices carry over unchanged (they were transcribed 2026-11-02).
-- [ ] **D5. Failure policy.** Recommended: the write is synchronous. The request is marked complete
+- [x] **D5. Failure policy** (decided 2026-11-16): the write is synchronous. The request is marked complete
       and the email sent **only after** the Sheet accepts the row. If the write fails, the user
       sees a retryable error with their answers still on screen. Queueing for a later retry would
       mean storing the answers in TaDa, which breaks the ground rule.
@@ -78,24 +80,30 @@ and exclude review and CI waits.
 | # | Task | Model | Size | Time |
 |---|------|-------|------|------|
 | [ ] S1 | Public mutation `submitEqualities(correlationId, answers)`. Allowed anonymously like `createDeviceRequest` (`RequestFilterConfig`). Rejects an unknown or already-cleared `correlationId`. Validates every answer against a server-side copy of the question refs and allowed choices, including the benefits=Yes → no-NRPF rule. | Opus | M | 3h |
-| [ ] S2 | `EqualitiesSheetClient`: POST to the D2 endpoint with a secret header and a timeout. Never logs the body. Env vars `EQUALITIES_SHEET_URL` / `EQUALITIES_SHEET_SECRET`. | Sonnet | M | 2h |
+| [ ] S2 | `EqualitiesSheetClient`: Sheets API `values.append` to the configured spreadsheet and tab, authenticated with the service account, with a timeout. Never logs the row or the request body (check the Google client's HTTP logging too). Env vars `EQUALITIES_SHEET_ID`, `EQUALITIES_SHEET_TAB`, `EQUALITIES_SA_KEY` (JSON). | Sonnet | M | 3h |
 | [ ] S3 | Extract the completion step from `TypeformService` (`markRequestStepsCompleted` + `acknowledgeSubmission`) so both the webhook and S1 call it. | Sonnet | S | 1h |
 | [ ] S4 | **Redaction.** Exclude `submitEqualities` variables from `GraphQlTelemetryInterceptor`'s "input variables" logging and from any debug or request logging. Add a test that fails if an answer string appears in captured logs. | Opus | M | 2h |
 | [ ] S5 | Per-IP rate limit on the mutation, same pattern as the booking submit. | Sonnet | S | 1h |
 | [ ] S6 | Add the `native-equalities-form` flag to `featureFlagsPublic`, default OFF. | Haiku | S | 0.5h |
 | [ ] S7 | Tests: `SchemaAssemblyTest`, service tests with a fake sheet client (happy path, Sheet down → nothing completed, bad corr_id, invalid answer, replay). Run `ktlintFormat` + `ktlintCheck`. | Sonnet | M | 2h |
-| [ ] S8 | Set the secrets on UAT (pointing at the test Sheet) and the prod Container Apps. | Human | S | 0.5h |
+| [ ] S8 | Set the env vars and the key secret on the UAT (test spreadsheet) and prod Container Apps. | Human | S | 0.5h |
 
 **Pause point:** server PR merged to `dev`, deployed to api-testing, flag OFF.
 
-## M2: Sheet receiver (Apps Script, if D2 = Apps Script)
+## M2: Google side (service account and Sheets)
 
 | # | Task | Model | Size | Time |
 |---|------|-------|------|------|
-| [ ] A1 | `doPost`: checks the secret, maps question refs to the existing column order, appends a row. Duplicate `corr_id` returns OK without a second row (idempotent retry). Add a `?version` endpoint. Source lives in the repo (e.g. `tools/equalities-sheet/Code.gs`). | Sonnet | M | 2h |
-| [ ] A2 | Deploy as a web app on the **test** Sheet (UAT) and, later, on the real Sheet (prod). Must be deployed by the Sheet owner's account. | Human | S | 0.5h |
+| [ ] G1 | In the existing GCP project, enable the Sheets API and create service accounts `equalities-uat` and `equalities-prod`. Create one JSON key for each. No project-level roles: access comes only from sharing the spreadsheet. | Human (guided) | S | 0.5h |
+| [ ] G2 | Create the UAT test spreadsheet and the prod destination tab or spreadsheet (D3), with the header row. Share each with its own service account's email as Editor. | Human | S | 0.5h |
+| [ ] G3 | Write a short runbook in the repo: which service account writes where, how to rotate a key, and how to revoke access (unshare the spreadsheet). | Sonnet | S | 0.5h |
 
-**Pause point:** a curl with the secret appends a row to the test Sheet.
+**Pause point:** a one-off local script using the UAT key appends a row to the test spreadsheet.
+
+Duplicate rows: once a submission succeeds, its `corr_id` is cleared, so it can't be resubmitted.
+The one gap is a row that was appended but whose completion step then failed; a retry then
+appends a second row. This is rare, and the `corr_id` column makes duplicates easy to spot. The
+server does not read the Sheet back to check.
 
 ## M3: Dashboard (this repo)
 
@@ -114,15 +122,18 @@ and exclude review and CI waits.
 ## M4: UAT acceptance
 
 - [ ] U1. Flag ON in UAT. Run the live spec. Check that the test Sheet row lines up column-for-column
-      with a Typeform-era row. *(Sonnet, S)*
+      with the agreed header row (D3). *(Sonnet, S)*
 - [ ] U2. Search UAT App Insights for an answer string from the test submission. Expect zero hits.
       *(Sonnet, S)*
+- [ ] R1. Update any report that reads the Typeform tab so it also includes the native tab. *(Human:
+      report owner)*
 - [ ] U3. Cat walks through on phone and desktop and signs off the wording and Sheet output. *(Human)*
 
 ## M5: Production
 
 - [ ] P1. Ship through the normal release cut (server first, then dashboard). The flag is still OFF.
-- [ ] P2. Point the prod secret at the real Sheet's web app. Turn the flag ON in prod.
+- [ ] P2. Confirm the prod Container App has the prod key and the prod spreadsheet/tab. Turn the
+      flag ON in prod.
 - [ ] P3. Watch the first few real submissions: a Sheet row appears, the status moves, the email is
       sent, nothing turns up in App Insights. Rollback = flag OFF, which brings back Typeform with
       no deploy.
@@ -139,5 +150,5 @@ and exclude review and CI waits.
 
 ## Rough total
 
-About 30 hours of hands-on build and test time (server ~12h, Sheet ~2.5h, dashboard ~12.5h, rollout
-and clean-up ~4h), plus reviews, the UAT sign-off and the soak.
+About 30 hours of hands-on build and test time (server ~13h, Google setup ~1.5h, dashboard ~12.5h,
+rollout and clean-up ~4h), plus reviews, the UAT sign-off and the soak.
