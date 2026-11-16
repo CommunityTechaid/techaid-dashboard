@@ -1245,7 +1245,7 @@ This device type is not currently being offered. Please choose a different item.
     this.sub.add(
       this.user$.subscribe((user) => {
         console.log('getting user');
-        this.isOrgAdmin.set((user && user.authorities && (user.authorities['write:requests'] || user.authorities['write:organisations'])));
+        this.isOrgAdmin.set((user && user.authorities && user.authorities['write:requests']));
         this.deviceTypesPublic.hide = this.isOrgAdmin();
         this.deviceTypesAdmin.hide = !this.isOrgAdmin();
 
