@@ -7,9 +7,12 @@ of scope** and stays as a plain link for now.
 
 ## Current status / next action
 
-- **Status:** plan only. No code has been written.
-- **Next action:** start M1 (server) and M2 (Google service account) once the 2026-11-16 prod
-  deploy has shipped. D1, D2, D3 and D5 are decided. D4 and D6 are open but don't block the build.
+- **Status (2026-11-16):** M1 and M3 code is up as **draft** PRs: server
+  CommunityTechaid/techaid-server#383, dashboard #410. Both are held off `dev` until the
+  2026-11-16 prod deploy ships. M0 is decided except D6 (on hold).
+- **Next action:** after the prod deploy, take the drafts out of draft and review them. In
+  parallel, do M2 (service accounts, the UAT test spreadsheet, the `TaDa responses` tab) using the
+  server runbook `docs/equalities-sheet.md`.
 - Branch: `plan/native-equalities-form` (dashboard). It is held back from `dev` until after the
   2026-11-16 production deploy.
 
@@ -60,16 +63,15 @@ and exclude review and CI waits.
       Native answers go to their own tab or spreadsheet, with one column per question (header =
       question title), plus `submitted_at`, `corr_id`, `borough` and `ward`. UAT writes to a
       separate test spreadsheet.
-  - **Still to settle:** a new **tab** in the existing equalities spreadsheet (inherits its sharing
-    and access controls; recommended) or a new spreadsheet. Either way, any report that reads the
-    Typeform tab needs to combine both (task R1).
-- [ ] **D4. Question set.** The form is titled "2025/2026". Confirm that the 11 questions and their
+  - Settled 2026-11-16: a new tab, `TaDa responses`, in the existing equalities spreadsheet. Any
+    report that reads the Typeform tab needs to combine both (task R1).
+- [x] **D4. Question set.** Confirmed unchanged 2026-11-16. The form is titled "2025/2026". The 11 questions and their
       choices carry over unchanged (they were transcribed 2026-11-02).
 - [x] **D5. Failure policy** (decided 2026-11-16): the write is synchronous. The request is marked complete
       and the email sent **only after** the Sheet accepts the row. If the write fails, the user
       sees a retryable error with their answers still on screen. Queueing for a later retry would
       mean storing the answers in TaDa, which breaks the ground rule.
-- [ ] **D6. Privacy notice / DPIA.** Typeform stops being a processor for this data and TaDa
+- [ ] **D6. Privacy notice / DPIA.** *On hold (2026-11-16).* Typeform stops being a processor for this data and TaDa
       becomes a pass-through. Does the privacy notice or DPIA need an edit? (For the CEO or data
       lead.)
 
@@ -79,13 +81,13 @@ and exclude review and CI waits.
 
 | # | Task | Model | Size | Time |
 |---|------|-------|------|------|
-| [ ] S1 | Public mutation `submitEqualities(correlationId, answers)`. Allowed anonymously like `createDeviceRequest` (`RequestFilterConfig`). Rejects an unknown or already-cleared `correlationId`. Validates every answer against a server-side copy of the question refs and allowed choices, including the benefits=Yes → no-NRPF rule. | Opus | M | 3h |
-| [ ] S2 | `EqualitiesSheetClient`: Sheets API `values.append` to the configured spreadsheet and tab, authenticated with the service account, with a timeout. Never logs the row or the request body (check the Google client's HTTP logging too). Env vars `EQUALITIES_SHEET_ID`, `EQUALITIES_SHEET_TAB`, `EQUALITIES_SA_KEY` (JSON). | Sonnet | M | 3h |
-| [ ] S3 | Extract the completion step from `TypeformService` (`markRequestStepsCompleted` + `acknowledgeSubmission`) so both the webhook and S1 call it. | Sonnet | S | 1h |
-| [ ] S4 | **Redaction.** Exclude `submitEqualities` variables from `GraphQlTelemetryInterceptor`'s "input variables" logging and from any debug or request logging. Add a test that fails if an answer string appears in captured logs. | Opus | M | 2h |
-| [ ] S5 | Per-IP rate limit on the mutation, same pattern as the booking submit. | Sonnet | S | 1h |
-| [ ] S6 | Add the `native-equalities-form` flag to `featureFlagsPublic`, default OFF. | Haiku | S | 0.5h |
-| [ ] S7 | Tests: `SchemaAssemblyTest`, service tests with a fake sheet client (happy path, Sheet down → nothing completed, bad corr_id, invalid answer, replay). Run `ktlintFormat` + `ktlintCheck`. | Sonnet | M | 2h |
+| [x] S1 | Public mutation `submitEqualities(correlationId, answers)`. Allowed anonymously like `createDeviceRequest` (`RequestFilterConfig`). Rejects an unknown or already-cleared `correlationId`. Validates every answer against a server-side copy of the question refs and allowed choices, including the benefits=Yes → no-NRPF rule. | Opus | M | 3h |
+| [x] S2 | `EqualitiesSheetClient`: Sheets API `values.append` to the configured spreadsheet and tab, authenticated with the service account, with a timeout. Never logs the row or the request body (check the Google client's HTTP logging too). Env vars `EQUALITIES_SHEET_ID`, `EQUALITIES_SHEET_TAB`, `EQUALITIES_SA_KEY` (JSON). | Sonnet | M | 3h |
+| [x] S3 | Extract the completion step from `TypeformService` (`markRequestStepsCompleted` + `acknowledgeSubmission`) so both the webhook and S1 call it. | Sonnet | S | 1h |
+| [x] S4 | **Redaction.** Exclude `submitEqualities` variables from `GraphQlTelemetryInterceptor`'s "input variables" logging and from any debug or request logging. Add a test that fails if an answer string appears in captured logs. | Opus | M | 2h |
+| [x] S5 | Per-IP rate limit on the mutation, same pattern as the booking submit. | Sonnet | S | 1h |
+| [x] S6 | Add the `native-equalities-form` flag to `featureFlagsPublic`, default OFF. | Haiku | S | 0.5h |
+| [x] S7 | Tests: `SchemaAssemblyTest`, service tests with a fake sheet client (happy path, Sheet down → nothing completed, bad corr_id, invalid answer, replay). Run `ktlintFormat` + `ktlintCheck`. | Sonnet | M | 2h |
 | [ ] S8 | Set the env vars and the key secret on the UAT (test spreadsheet) and prod Container Apps. | Human | S | 0.5h |
 
 **Pause point:** server PR merged to `dev`, deployed to api-testing, flag OFF.
@@ -96,7 +98,7 @@ and exclude review and CI waits.
 |---|------|-------|------|------|
 | [ ] G1 | In the existing GCP project, enable the Sheets API and create service accounts `equalities-uat` and `equalities-prod`. Create one JSON key for each. No project-level roles: access comes only from sharing the spreadsheet. | Human (guided) | S | 0.5h |
 | [ ] G2 | Create the UAT test spreadsheet and the prod destination tab or spreadsheet (D3), with the header row. Share each with its own service account's email as Editor. | Human | S | 0.5h |
-| [ ] G3 | Write a short runbook in the repo: which service account writes where, how to rotate a key, and how to revoke access (unshare the spreadsheet). | Sonnet | S | 0.5h |
+| [x] G3 | Write a short runbook in the repo: which service account writes where, how to rotate a key, and how to revoke access (unshare the spreadsheet). | Sonnet | S | 0.5h |
 
 **Pause point:** a one-off local script using the UAT key appends a row to the test spreadsheet.
 
@@ -109,12 +111,12 @@ server does not read the Sheet back to check.
 
 | # | Task | Model | Size | Time |
 |---|------|-------|------|------|
-| [ ] F1 | Promote `equalities-preview` into a real step of `org-request`. With the flag ON it renders in place of the Typeform widget, given corr_id, borough and ward in memory. With the flag OFF, Typeform is unchanged. | Sonnet | M | 3h |
-| [ ] F2 | Submit through `submitEqualities` with the network retry from #403 and an inline friendly error with a ref (#402). The thank-you and "request saved" screens match today's. | Sonnet | M | 2h |
-| [ ] F3 | Accessibility and mobile pass on the Typeform-style UX: focus moves per question, Back, screen-reader labels, auto-advance not trapping keyboard users. | Opus | M | 2h |
-| [ ] F4 | Privacy guard: answers never go to storage, App Insights (including the error-toast/exception path) or the URL. Extend the #265 spec assertions to the real flow. | Sonnet | S | 1h |
-| [ ] F5 | Remove the `/preview/equalities-…` route. Keep `nonProductionGuard` only if something else uses it. | Haiku | S | 0.5h |
-| [ ] F6 | `@mocked` specs: flag ON full journey (both benefits branches, error + retry, mutation payload shape); flag OFF still gets Typeform (`typeform-on-demand` keeps passing). | Sonnet | M | 2h |
+| [x] F1 | Promote `equalities-preview` into a real step of `org-request`. With the flag ON it renders in place of the Typeform widget, given corr_id, borough and ward in memory. With the flag OFF, Typeform is unchanged. | Sonnet | M | 3h |
+| [x] F2 | Submit through `submitEqualities` with the network retry from #403 and an inline friendly error with a ref (#402). The thank-you and "request saved" screens match today's. | Sonnet | M | 2h |
+| [x] F3 | Accessibility and mobile pass on the Typeform-style UX: focus moves per question, Back, screen-reader labels, auto-advance not trapping keyboard users. | Opus | M | 2h |
+| [x] F4 | Privacy guard: answers never go to storage, App Insights (including the error-toast/exception path) or the URL. Extend the #265 spec assertions to the real flow. | Sonnet | S | 1h |
+| [x] F5 | Remove the `/preview/equalities-…` route. Keep `nonProductionGuard` only if something else uses it. | Haiku | S | 0.5h |
+| [x] F6 | `@mocked` specs: flag ON full journey (both benefits branches, error + retry, mutation payload shape); flag OFF still gets Typeform (`typeform-on-demand` keeps passing). | Sonnet | M | 2h |
 | [ ] F7 | Live UAT spec: create request → submit equalities → status is `PROCESSING_EQUALITIES_DATA_COMPLETE`. Uses `E2E Sample` naming + cleanup, and writes to the **test** Sheet only. | Sonnet | M | 2h |
 
 **Pause point:** dashboard PR merged to `dev`, on UAT, flag OFF in both environments.
