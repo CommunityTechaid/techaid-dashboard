@@ -1,6 +1,6 @@
 /**
- * Issue #233 (phase 1) — request / referee pages accept `write:requests` / `write:referees`
- * as well as the legacy `write:organisations`; the organisation page stays organisations-only.
+ * Issue #233 / server #348 (phase 2) — request pages need `*:requests`, referee pages need
+ * `*:referees`; the legacy `*:organisations` scopes now unlock the organisation pages only.
  *
  * @mocked — every GraphQL operation is page.route-stubbed; fake JWTs carry the permission sets.
  */
@@ -43,7 +43,7 @@ const PAGES = [
 // expected editable: [referee, organisation, request]
 const SCENARIOS: { perms: string[]; editable: boolean[] }[] = [
   { perms: ['write:requests'], editable: [false, false, true] },
-  { perms: ['write:organisations'], editable: [true, true, true] },
+  { perms: ['write:organisations'], editable: [false, true, false] },
   { perms: ['write:referees'], editable: [true, false, false] },
   // read-only user (read:organisations is in the base set): nothing editable (#287)
   { perms: [], editable: [false, false, false] },
@@ -91,7 +91,7 @@ test.describe('split write permissions (#233) @mocked', () => {
     });
   }
 
-  // ---- #288: read + delete gating (accept old OR new) ----
+  // ---- #288 / #348: read + delete gating (new scopes only) ----
   const DELETE_BTN = (page: Page) => page.locator('button', { hasText: /^\s*DELETE\s*$/ });
   const BASE = ['app:bulkedit', 'read:kits']; // deliberately NO read:organisations/requests/referees
 
@@ -99,7 +99,7 @@ test.describe('split write permissions (#233) @mocked', () => {
   const DELETE_SCENARIOS: { perms: string[]; visible: boolean[] }[] = [
     { perms: ['delete:requests'], visible: [false, false, true] },
     { perms: ['delete:referees'], visible: [true, false, false] },
-    { perms: ['delete:organisations'], visible: [true, true, true] },
+    { perms: ['delete:organisations'], visible: [false, true, false] },
     { perms: [], visible: [false, false, false] },
   ];
   for (const s of DELETE_SCENARIOS) {
@@ -120,7 +120,7 @@ test.describe('split write permissions (#233) @mocked', () => {
   const MENU_SCENARIOS: { perms: string[]; shown: boolean[] }[] = [
     { perms: ['read:requests'], shown: [false, false, true, true] },
     { perms: ['read:referees'], shown: [false, true, false, false] },
-    { perms: ['read:organisations'], shown: [true, true, true, true] },
+    { perms: ['read:organisations'], shown: [true, false, false, false] },
     { perms: [], shown: [false, false, false, false] },
   ];
   for (const s of MENU_SCENARIOS) {

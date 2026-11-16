@@ -914,7 +914,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
       this.user$.subscribe((user) => {
         this.cdr.markForCheck();
         this.user.set(user);
-        this.options.formState.disabled = !(user && user.authorities && (user.authorities['write:requests'] || user.authorities['write:organisations']));
+        this.options.formState.disabled = !(user && user.authorities && user.authorities['write:requests']);
       })
     );
 
@@ -941,7 +941,7 @@ export class DeviceRequestInfoComponent implements OnInit, OnDestroy {
   }
 
 
-  /** False until the user is known to hold write:requests (or the legacy write:organisations). */
+  /** False until the user is known to hold write:requests. */
   get canWrite(): boolean {
     return !this.options.formState.disabled;
   }

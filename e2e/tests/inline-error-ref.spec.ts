@@ -122,7 +122,7 @@ test.describe('inline error displays show friendly text and the error ref @mocke
     test.setTimeout(60_000);
     const REQUEST_ID = 99381;
     const KIT_ID = 16381;
-    await loginWith(page, ['app:bulkedit', 'read:organisations', 'write:organisations']);
+    await loginWith(page, ['app:bulkedit', 'read:requests', 'write:requests']);
     const refs: string[] = [];
     await page.route('**/graphql', async route => {
       const raw = route.request().postData() ?? '';

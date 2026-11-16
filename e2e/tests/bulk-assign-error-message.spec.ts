@@ -75,7 +75,7 @@ test.describe('Bulk assign renders the real error, not "[object Object]" @mocked
     // The "Assign Devices" button is gated on `app:bulkedit`. CI mints a token with
     // `permissions: []`, so without this the button never renders and the spec times out
     // waiting for it — even though it passes locally against a real UAT token.
-    await loginWith(page, ['app:bulkedit', 'read:organisations', 'write:organisations']);
+    await loginWith(page, ['app:bulkedit', 'read:requests', 'write:requests']);
 
     await page.route('**/graphql', async route => {
       const body = route.request().postDataJSON?.() ?? {};
