@@ -135,6 +135,18 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
       'started on the Free tier when this was released, so set the real tiers before turning it on, or ' +
       'established organisations will start hitting the 10-a-year limit.',
   },
+  'native-equalities-form': {
+    label: 'Native Equalities Form',
+    description:
+      'Show our own equalities questions at the end of the public device-request form, in place of the ' +
+      'embedded Typeform. Answers go straight to the equalities Google Sheet and are never stored in TaDa; ' +
+      'the request completes only once the Sheet has accepted them. Before turning it on, the environment ' +
+      'needs its equalities Sheet and service account set up (techaid-server docs/equalities-sheet.md), or ' +
+      'every submission will fail and referrers will be asked to try again.',
+    offMeaning:
+      'Off = referrers answer the equalities questions in the Typeform embed, as before. Safe to switch ' +
+      'either way at any time: a referrer already on the native form can still submit it.',
+  },
 };
 
 // Shown instead of a blank line for a flag with no entry above — a flag added server-side
