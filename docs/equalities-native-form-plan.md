@@ -8,7 +8,7 @@ of scope** and stays as a plain link for now.
 ## Current status / next action
 
 - **Status:** plan only. No code has been written.
-- **Next action:** answer the decisions in M0 (D1 to D3 block all build work).
+- **Next action:** answer decisions D2 and D3 in M0 (they block all build work). D1 is done.
 - Branch: `plan/native-equalities-form` (dashboard). It is held back from `dev` until after the
   2026-11-16 production deploy.
 
@@ -18,7 +18,8 @@ of scope** and stays as a plain link for now.
   row, no log line, no App Insights trace, no browser storage. The server passes them straight
   through to the isolated Google Sheet and keeps nothing.
 - **Behind a flag.** A new public flag, `native-equalities-form`. With it off, the Typeform path is
-  unchanged. Code can ship to prod dark.
+  unchanged. Code can ship to prod dark, and staff can switch between the two forms at will **until
+  M6**. M6 removes the Typeform path, so the switch only goes one way after that.
 - **`/typeform/hook` stays live** until the soak in M6 ends, so Typeform submissions already in
   flight still complete.
 - Red/green e2e for every behaviour (see the `dashboard-testing-and-e2e` skill).
@@ -47,9 +48,9 @@ and exclude review and CI waits.
 
 ## M0: Decisions (human, before any build)
 
-- [ ] **D1. Confirm the approval and the owner.** Get the CEO's approval in writing, and agree with
-      the owner of the equalities Sheet (Cat) that the Sheet stays the system of record. *Blocks
-      everything.*
+- [x] **D1. Approval.** The CEO approved bringing the equalities form into TaDa in writing on
+      2026-11-16. The CEO will source a separate tool for feedback and surveys, so this work does
+      not need to cover them.
 - [ ] **D2. How the server writes to the Sheet.** *Blocks M1/M2.*
   - **Recommended: an Apps Script web app** bound to the Sheet (`doPost`, shared-secret header,
     appends one row). There's no GCP service-account key to manage, and the Sheet owner keeps
@@ -132,7 +133,7 @@ and exclude review and CI waits.
 |---|------|-------|------|------|
 | [ ] C1 | Dashboard: remove the Typeform embed loader and widget code from `org-request.ts`, the `typeform-on-demand` spec, `e2e/typeform-probe.mjs` and its runbook step. Drop the `embed.typeform.com` / `api.typeform.com` / `*.typeform.com` CSP entries. The `Qz4rILeN` link-out needs none of them. | Sonnet | M | 1.5h |
 | [ ] C2 | Server: retire `/typeform/hook`, `TypeformService`, `TypeFormPayload` and `TYPEFORM_KEY`. Then retire the flag. | Sonnet | S | 1h |
-| [ ] C3 | Typeform: close form `f93D0s88` and remove its webhook and Sheet integration. **The subscription can't be cancelled yet**, because `Qz4rILeN` still lives there. Check whether a free plan covers that one form. | Human | S | 0.5h |
+| [ ] C3 | Typeform: close form `f93D0s88` and remove its webhook and Sheet integration. **The subscription can't be cancelled yet**, because `Qz4rILeN` still lives there and the CEO still needs a tool for feedback and surveys. Settle the plan when that tool is chosen. | Human | S | 0.5h |
 
 ---
 
