@@ -117,7 +117,7 @@ server does not read the Sheet back to check.
 | [x] F4 | Privacy guard: answers never go to storage, App Insights (including the error-toast/exception path) or the URL. Extend the #265 spec assertions to the real flow. | Sonnet | S | 1h |
 | [x] F5 | Remove the `/preview/equalities-…` route. Keep `nonProductionGuard` only if something else uses it. | Haiku | S | 0.5h |
 | [x] F6 | `@mocked` specs: flag ON full journey (both benefits branches, error + retry, mutation payload shape); flag OFF still gets Typeform (`typeform-on-demand` keeps passing). | Sonnet | M | 2h |
-| [ ] F7 | Live UAT spec: create request → submit equalities → status is `PROCESSING_EQUALITIES_DATA_COMPLETE`. Uses `E2E Sample` naming + cleanup, and writes to the **test** Sheet only. | Sonnet | M | 2h |
+| [x] F7 | Live UAT spec: create request → submit equalities → status is `PROCESSING_EQUALITIES_DATA_COMPLETE`. Uses `E2E Sample` naming + cleanup, and writes to the **test** Sheet only. | Sonnet | M | 2h |
 
 **Pause point:** dashboard PR merged to `dev`, on UAT, flag OFF in both environments.
 
