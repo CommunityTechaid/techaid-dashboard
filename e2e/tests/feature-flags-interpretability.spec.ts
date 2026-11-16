@@ -39,6 +39,7 @@ const SERVER_FLAGS = [
   { key: 'streamlined-ward-lookup', enabled: false, updatedAt: '2026-08-14T10:00:00Z' },
   { key: 'borough-availability-rules', enabled: false, updatedAt: '2026-08-17T10:00:00Z' },
   { key: 'membership-support', enabled: false, updatedAt: '2026-11-02T10:00:00Z' },
+  { key: 'native-equalities-form', enabled: false, updatedAt: '2026-11-16T10:00:00Z' },
 ];
 
 /** Permanently on in production and hidden from the tab (see `hidden` in FLAG_LABELS). Their
@@ -133,6 +134,9 @@ test.describe('feature flags interpretability @mocked', () => {
     await expect(rowFor(page, 'blocking-flag-enforcement')).toContainText('Block Allocation of Flagged Devices');
     // Seeded by techaid-server V26.10.28.1010 and shipped in 5.1.0 with no copy here.
     await expect(rowFor(page, 'membership-support')).toContainText('Membership Support');
+    // Seeded by techaid-server V26.11.16.1000 (6.2.0); shipped to dev with no copy here.
+    await expect(rowFor(page, 'native-equalities-form')).toContainText('Native Equalities Form');
+    await expect(rowFor(page, 'native-equalities-form')).not.toContainText('No description recorded');
   });
 
   test('hides flags that are permanently on, so nobody can switch them off from here', async ({ page }) => {
