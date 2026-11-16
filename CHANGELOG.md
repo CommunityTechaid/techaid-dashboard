@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.5.1](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.5.0...v2.5.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* request and referee pages no longer accept *:organisations (server [#348](https://github.com/CommunityTechaid/techaid-dashboard/issues/348)) ([#415](https://github.com/CommunityTechaid/techaid-dashboard/issues/415)) ([51ff2e5](https://github.com/CommunityTechaid/techaid-dashboard/commit/51ff2e5fe3a070e8125e0f4ce6d97804bbead45c))
+
 ## [2.5.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.4.0...v2.5.0) (2026-11-16)
 
 
