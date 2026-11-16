@@ -1,7 +1,8 @@
 /**
  * The Typeform embed (script + stylesheet) is only needed by the public request form, so it is
  * injected by org-request.ts instead of being loaded from index.html on every page. Staff pages
- * must make no request to embed.typeform.com; the public request page must fetch embed.js.
+ * must make no request to embed.typeform.com; the public request page must fetch embed.js while
+ * the native-equalities-form flag is off.
  *
  * @mocked — all GraphQL and the Typeform host are stubbed, no token needed.
  */
@@ -36,6 +37,8 @@ test.describe('Typeform loads on demand @mocked', () => {
     expect(typeformRequests).toEqual([]);
   });
 
+  // The page warms the embed once the feature flags have loaded, and only while
+  // native-equalities-form is off (equalities-native-form.spec.ts covers the flag-on side).
   test('the public request page requests the Typeform embed script', async ({ page }) => {
     test.setTimeout(60_000);
     const embedRequest = page.waitForRequest('**://embed.typeform.com/next/embed.js', { timeout: 30_000 });
@@ -46,6 +49,12 @@ test.describe('Typeform loads on demand @mocked', () => {
       const body = route.request().postData() ?? '';
       if (body.includes('buildInfo')) {
         return fulfillJson(route, { buildInfo: { version: '1.0.0-test', commit: 'abc', time: '2026-01-01T00:00:00Z' } });
+      }
+      if (body.includes('adminConfig')) {
+        return fulfillJson(route, { adminConfig: { canPublicRequestLaptop: true } });
+      }
+      if (body.includes('featureFlagsPublic')) {
+        return fulfillJson(route, { featureFlagsPublic: [] });
       }
       return fulfillJson(route, {});
     });

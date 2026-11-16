@@ -55,7 +55,9 @@
           }
           @if (showTypeform() && wardSubmitted()) {
             <div class="col-md-12">
-              @if (typeformUnavailable()) {
+              @if (equalitiesCorrelationId(); as corrId) {
+                <app-equalities-form [correlationId]="corrId" [ward]="ward"></app-equalities-form>
+              } @else if (typeformUnavailable()) {
                 <div class="alert alert-warning border-left-warning" data-testid="typeform-unavailable">
                   Your request has been received and saved. The follow-up equalities form could not be displayed.
                   Please email

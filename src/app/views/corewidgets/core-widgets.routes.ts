@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { provideStates } from '@ngxs/store';
 import { AuthGuard } from '@app/shared/services/auth.guard';
 import { requirePermission } from '@app/shared/services/permission.guard';
-import { nonProductionGuard } from '@app/shared/services/non-production.guard';
 import { deliveryBookingVisibleGuard } from '@app/shared/services/delivery-booking-visible.guard';
 import { prepModeEnabledGuard } from './components/prep-mode/prep-mode-enabled.guard';
 import { updateScannerVisibleGuard } from './components/kit-scanner/update-scanner-visible.guard';
@@ -24,7 +23,6 @@ export const CORE_WIDGET_ROUTES: Routes = [
       { path: 'delivery-booking', loadComponent: () => import('./components/delivery-booking/delivery-booking.component').then(m => m.DeliveryBookingComponent), data: { title: 'Book a delivery' }, canActivate: [deliveryBookingVisibleGuard] },
       // PROTOTYPE: native equalities form (Typeform replacement study). Deliberately unlinked —
       // shared by URL only — and 404s on production. Public, like the request form it would sit in.
-      { path: 'preview/equalities-491d341f15', loadComponent: () => import('./components/equalities-preview/equalities-preview.component').then(m => m.EqualitiesPreviewComponent), data: { title: 'Equalities (prototype)' }, canActivate: [nonProductionGuard] },
       { path: 'dashboard/admin-panel', loadComponent: () => import('./components/admin-panel/admin-panel.component').then(m => m.AdminPanelComponent), data: { title: 'Admin Panel' }, canActivate: [AuthGuard] },
       // MUST stay above 'dashboard/devices/:kitId' — Angular matches in order, so
       // a later declaration would be swallowed as a kitId of "update-scanner".

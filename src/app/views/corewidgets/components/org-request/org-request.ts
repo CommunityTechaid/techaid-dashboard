@@ -4,7 +4,7 @@ import {
   Component,
   ElementRef,
   Renderer2,
-  ViewChild, OnInit, AfterViewInit, OnDestroy,
+  ViewChild, OnInit, OnDestroy,
   ChangeDetectionStrategy,
   signal
 } from '@angular/core';
@@ -31,7 +31,8 @@ import {
   MEMBERSHIP_FLAG, MEMBERSHIP_LIMIT_MARKERS, MEMBERSHIP_PUBLIC_SELECTION, MEMBERSHIP_SELECTION, MembershipNotice,
   MembershipOverLimitMode, MembershipPublic, membershipNotice,
 } from '@app/shared/membership/membership';
-import { FeatureFlagService } from '@app/shared/services/feature-flag.service';
+import { FeatureFlagService, NATIVE_EQUALITIES_FLAG } from '@app/shared/services/feature-flag.service';
+import { EqualitiesFormComponent } from '../equalities-form/equalities-form.component';
 import { Borough, CORE_BOROUGHS } from '@app/shared/utils/boroughs';
 import {
   availabilityNote,
@@ -239,10 +240,10 @@ const QUERY_ADMIN_CONFIG = gql`
     styleUrls: ['./org-request.scss'],
     templateUrl: './org-request.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule, PostcodeLocationStepComponent, MembershipNoticeComponent, MembershipBadgesComponent]
+    imports: [AppLocalCSS, ReactiveFormsModule, FormlyModule, PostcodeLocationStepComponent, MembershipNoticeComponent, MembershipBadgesComponent, EqualitiesFormComponent]
 })
 
-export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewInit, OnDestroy {
+export class OrgRequestComponent implements AfterViewChecked, OnInit, OnDestroy {
   sub: Subscription;
   form: UntypedFormGroup = new UntypedFormGroup({});
   options: FormlyFormOptions = {};
@@ -270,6 +271,10 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
   newOrganisationName = ""
   readonly showTypeform = signal(false);
   readonly typeformUnavailable = signal(false);
+  /** The native-equalities-form flag. False until the flags load, and on any flag read failure. */
+  readonly nativeEqualities = signal(false);
+  /** Set when the native equalities form is showing: the created request's correlationId. */
+  readonly equalitiesCorrelationId = signal<string | null>(null);
   borough = "";
   ward = "";
   unsupported = false;
@@ -414,6 +419,19 @@ export class OrgRequestComponent implements AfterViewChecked, OnInit, AfterViewI
    * the health check means the backend is known to be up before we ask.
    */
   private loadFeatureFlags(): void {
+    // Typeform is only fetched when it will be used: with the native form on, the third-party
+    // script never runs on this page (it would share the page with the equalities answers).
+    this.flagsSub.add(
+      this.featureFlags.isEnabled(NATIVE_EQUALITIES_FLAG).subscribe(enabled => {
+        this.nativeEqualities.set(enabled);
+        if (!enabled) {
+          // Warm the Typeform embed in the background so it is ready by the time the user
+          // submits. A failure is logged and retried by displayTypeForm.
+          loadTypeformEmbed().catch(() => undefined);
+        }
+      })
+    );
+
     this.flagsSub.add(
       this.featureFlags.isEnabled(MEMBERSHIP_FLAG).subscribe(enabled => {
         this.membershipEnabled.set(enabled);
@@ -1254,12 +1272,6 @@ This device type is not currently being offered. Please choose a different item.
     this.applyDeviceAvailability();
   }
 
-  ngAfterViewInit() {
-    // Warm the Typeform embed in the background so it is ready by the time the user submits.
-    // A failure is logged and retried by displayTypeForm.
-    loadTypeformEmbed().catch(() => undefined);
-  }
-
   getRefContact() {
 
     if (this.emailField.formControl.errors) {
@@ -1692,6 +1704,11 @@ This device type is not currently being offered. Please choose a different item.
     }
     this.showTypeform.set(true);
     this.content.set({});
+    if (this.nativeEqualities()) {
+      this.equalitiesCorrelationId.set(String(correlationId));
+      this.changeDetectorRef.detectChanges();
+      return;
+    }
     this.pendingCorrelationId = correlationId;
     this.changeDetectorRef.detectChanges();
     // ngAfterViewChecked creates the widget once the embed script is present; if it is still

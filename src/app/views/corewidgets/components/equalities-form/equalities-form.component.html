@@ -1,0 +1,109 @@
+<div class="page-shell" data-testid="equalities-form">
+  <div class="form-column">
+    <div class="card-shell">
+      @if (state() !== 'done') {
+        <div
+          class="progress-track"
+          role="progressbar"
+          aria-label="Equalities questions answered"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="progress()"
+        >
+          <div class="progress-fill" [style.width.%]="progress()"></div>
+        </div>
+      }
+
+      @if (state() === 'done') {
+        <section class="screen" data-testid="thank-you">
+          <h1 #heading tabindex="-1">Thank you!</h1>
+          <p>
+            Your request has been placed and you should receive a confirmation email shortly. If you do not receive
+            one within a few minutes, please check your spam folder or get in touch:
+            <a href="mailto:distributions@communitytechaid.org.uk">distributions&#64;communitytechaid.org.uk</a>
+          </p>
+        </section>
+      } @else if (error(); as err) {
+        <section class="screen" data-testid="equalities-error">
+          <h1 #heading tabindex="-1">Your answers have not been sent yet</h1>
+          <div class="status-box error" role="alert">
+            {{ err.text }}
+            @if (err.ref) {
+              <span class="ref" data-testid="equalities-error-ref">Reference: {{ err.ref }}</span>
+            }
+          </div>
+          <div class="nav">
+            @if (err.action === 'retry') {
+              <button type="button" class="btn-link-cta" (click)="dismissError()">← Back to the questions</button>
+              <button type="button" class="btn-primary-cta" (click)="submit()" data-testid="equalities-retry">
+                Try again
+              </button>
+            } @else if (err.action === 'restart') {
+              <span></span>
+              <button type="button" class="btn-primary-cta" (click)="restart()" data-testid="equalities-restart">
+                Start again
+              </button>
+            }
+          </div>
+        </section>
+      } @else if (position() === -1) {
+        <section class="screen" data-testid="welcome">
+          <h1 #heading tabindex="-1">Equalities information</h1>
+          <p>{{ intro }}</p>
+          <button type="button" class="btn-primary-cta" (click)="start()" data-testid="start">
+            Start <span class="hint" aria-hidden="true">press Enter ↵</span>
+          </button>
+        </section>
+      } @else if (current(); as q) {
+        <section class="screen" data-testid="question">
+          <div class="counter" aria-hidden="true">{{ position() + 1 }} / {{ visibleQuestions().length }}</div>
+          <h1 #heading tabindex="-1" data-testid="question-title" [attr.id]="'eq-q-' + q.key">
+            <span class="sr-only">Question {{ position() + 1 }} of {{ visibleQuestions().length }}: </span>{{ q.title }}
+          </h1>
+          @if (q.description) {
+            <p class="description" [attr.id]="'eq-d-' + q.key">{{ q.description }}</p>
+          }
+
+          <div
+            class="choices"
+            role="radiogroup"
+            [attr.aria-labelledby]="'eq-q-' + q.key"
+            [attr.aria-describedby]="q.description ? 'eq-d-' + q.key : null"
+          >
+            @for (choice of q.choices; track choice; let i = $index) {
+              <button
+                type="button"
+                class="choice"
+                role="radio"
+                [class.selected]="answers()[q.key] === choice"
+                [attr.aria-checked]="answers()[q.key] === choice"
+                [disabled]="state() === 'submitting'"
+                (click)="choose(choice)"
+              >
+                <span class="key" aria-hidden="true">{{ letters[i] }}</span>
+                <span class="label">{{ choice }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="nav">
+            <button type="button" class="btn-link-cta" (click)="back()" [disabled]="state() === 'submitting'">← Back</button>
+            @if (isLast()) {
+              <button
+                type="button"
+                class="btn-primary-cta"
+                [disabled]="!answers()[q.key] || state() === 'submitting'"
+                (click)="submit()"
+                data-testid="submit"
+              >
+                {{ state() === 'submitting' ? 'Sending…' : 'Submit' }}
+              </button>
+            } @else if (answers()[q.key]) {
+              <button type="button" class="btn-primary-cta" (click)="next()">OK</button>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </div>
+</div>
