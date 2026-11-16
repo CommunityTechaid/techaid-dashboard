@@ -30,16 +30,16 @@
     "@babel/core": "^7.29.7"
   },
   "dependencies": {
-    "@angular/animations": "22.2.5",
-    "@angular/cdk": "22.2.6",
-    "@angular/common": "22.2.5",
-    "@angular/compiler": "22.2.5",
-    "@angular/core": "22.2.5",
-    "@angular/forms": "22.2.5",
-    "@angular/localize": "22.2.5",
-    "@angular/platform-browser": "22.2.5",
-    "@angular/router": "22.2.5",
-    "@apollo/client": "^4.3.7",
+    "@angular/animations": "22.2.6",
+    "@angular/cdk": "22.2.7",
+    "@angular/common": "22.2.6",
+    "@angular/compiler": "22.2.6",
+    "@angular/core": "22.2.6",
+    "@angular/forms": "22.2.6",
+    "@angular/localize": "22.2.6",
+    "@angular/platform-browser": "22.2.6",
+    "@angular/router": "22.2.6",
+    "@apollo/client": "^4.3.8",
     "@auth0/angular-jwt": "^5.2.0",
     "@auth0/auth0-angular": "^2.15.0",
     "@fortawesome/fontawesome-free": "^7.3.1",
@@ -47,7 +47,7 @@
     "@ng-bootstrap/ng-bootstrap": "^21.0.0",
     "@ng-select/ng-select": "^24.2.1",
     "@ngx-formly/bootstrap": "^11.1.0",
-    "@ngx-formly/core": "^11.1.0",
+    "@ngx-formly/core": "^11.2.0",
     "@ngxs/devtools-plugin": "^22.0.0",
     "@ngxs/form-plugin": "^22.0.0",
     "@ngxs/router-plugin": "^22.0.0",
@@ -67,10 +67,10 @@
   },
   "devDependencies": {
     "@angular-eslint/builder": "^22.6.0",
-    "@angular/build": "^22.2.6",
-    "@angular/cli": "^22.2.6",
-    "@angular/compiler-cli": "22.2.5",
-    "@angular/language-service": "22.2.5",
+    "@angular/build": "^22.2.7",
+    "@angular/cli": "^22.2.7",
+    "@angular/compiler-cli": "22.2.6",
+    "@angular/language-service": "22.2.6",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.65.0",
     "@types/node": "^26.6.6",
@@ -81,6 +81,6 @@
     "subset-font": "^2.9.0",
     "ts-node": "^10.9.2",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.0"
+    "typescript-eslint": "^8.72.2"
   }
 }
