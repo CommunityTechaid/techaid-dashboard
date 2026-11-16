@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 section is cut from `[Unreleased]` each time `master` advances after a
 successful production deploy (see "Release Workflow" in `CLAUDE.md`).
 
+## [2.5.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.4.0...v2.5.0) (2026-11-16)
+
+
+### Features
+
+* native equalities form on the public request form, behind a flag ([#410](https://github.com/CommunityTechaid/techaid-dashboard/issues/410)) ([749ed1c](https://github.com/CommunityTechaid/techaid-dashboard/commit/749ed1cc3eedc8432a35858a0ad224ce6f661fee))
+
+
+### Bug Fixes
+
+* label and describe the native-equalities-form flag on the Feature Flags tab ([#413](https://github.com/CommunityTechaid/techaid-dashboard/issues/413)) ([40b4939](https://github.com/CommunityTechaid/techaid-dashboard/commit/40b4939d8461dc4eb5d183afb22547b0fedc8746))
+
 ## [2.4.0](https://github.com/CommunityTechaid/techaid-dashboard/compare/v2.3.0...v2.4.0) (2026-11-16)
 
 
