@@ -2,8 +2,10 @@
  * The recipient equalities questions, transcribed from the live Typeform
  * "Recipient Equalities Data 2025/2026" (form id f93D0s88) on 2026-11-02.
  *
- * `ref` is the Typeform field ref, kept so a future submission can be mapped onto the
- * existing Google Sheet columns without guessing.
+ * `ref` is the Typeform field ref, kept for tracing a question back to the Typeform.
+ *
+ * The server keeps a matching copy (techaid-server `cta.app.EqualitiesQuestions`) and rejects
+ * any key or choice it does not list, so change both together.
  */
 export interface EqualitiesQuestion {
   ref: string;

@@ -22,6 +22,14 @@ export const UPDATE_SCANNER_FLAG = 'update-scanner';
 export const TOWER_HAMLETS_BOROUGH_FLAG = 'tower-hamlets-borough-support';
 
 /**
+ * Which equalities form the public request form shows after a request is created. Off → the
+ * equalities Typeform (f93D0s88) is embedded, as before. On → the native form
+ * (equalities-form.component.ts), which submits through submitEqualities, and the Typeform script
+ * is never loaded. Staff can switch either way while both paths exist.
+ */
+export const NATIVE_EQUALITIES_FLAG = 'native-equalities-form';
+
+/**
  * Membership support (tiers, yearly allowance, membership contacts — techaid-server#311).
  * Off → the dashboard neither shows nor queries any membership field.
  */
