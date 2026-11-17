@@ -66,6 +66,20 @@ export const KIT_STATUS_LABELS_WITH_DISABLED = [
 // Shared with the low-battery status lock (#232, techaid-server#264) so they can't drift apart.
 export const BATTERY_HEALTH_OK_ABOVE = 50;
 
+// Low-battery status lock (#232): mirrors techaid-server BatteryHealthGuardService.
+// Only these device types are checked, and only these statuses are locked.
+export const BATTERY_LOCK_TYPES = ['LAPTOP', 'TABLET', 'SMARTPHONE'];
+export const BATTERY_LOCKED_STATUSES = ['ALLOCATION_READY', 'ALLOCATION_QC_COMPLETED', 'ALLOCATION_DELIVERY_ARRANGED'];
+
+// KIT_STATUS_LABELS with the low-battery statuses disabled. Built once, so the form gets the same array each time.
+const KIT_STATUS_LABELS_BATTERY_LOCKED = KIT_STATUS_LABELS.map(o =>
+  BATTERY_LOCKED_STATUSES.includes(o.value) ? {...o, disabled: true} : o);
+
+// True when the low-battery lock applies. Empty is locked too: null > 50 and '' > 50 are both false.
+function isBatteryLocked(model): boolean {
+  return BATTERY_LOCK_TYPES.includes(model?.type) && !(model?.batteryHealth > BATTERY_HEALTH_OK_ABOVE);
+}
+
 const QUERY_ENTITY = gql`
 query findKit($id: Long) {
   kit(where: {
@@ -354,6 +368,9 @@ export class KitInfoComponent implements OnInit, OnDestroy {
         const s = model?.subStatus || {};
         return !!(s.needsFurtherInvestigation || s.needsSparePart || s.installationOfOSFailed || s.wipeFailed || s.lockedToUser);
       },
+      // Low-battery lock (#232): only the 3 statuses, separate from the sub-status lock above.
+      'templateOptions.options': (model) =>
+        isBatteryLocked(model) ? KIT_STATUS_LABELS_BATTERY_LOCKED : KIT_STATUS_LABELS,
       'validation.show': (model) => !!model?.showErrorState
     }
   }
@@ -561,6 +578,14 @@ export class KitInfoComponent implements OnInit, OnDestroy {
                 const s = model?.subStatus || {};
                 return !(s.needsFurtherInvestigation || s.needsSparePart || s.installationOfOSFailed || s.wipeFailed || s.lockedToUser);
               }
+            },
+            {
+              template: `
+                <div class="alert alert-warning mt-2 p-2" role="alert">
+                  <small><strong>Status locked:</strong> Battery health too low, please see guide for next steps</small>
+                </div>
+              `,
+              hideExpression: (model) => !isBatteryLocked(model)
             }
           ]
         },
