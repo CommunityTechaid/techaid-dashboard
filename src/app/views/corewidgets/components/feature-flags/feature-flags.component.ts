@@ -86,6 +86,17 @@ const FLAG_LABELS: Record<string, FlagCopy> = {
       'Off does NOT mean unchecked — off is shadow mode: every change is still checked and logged, ' +
       'but allowed through. On rejects it with an error.',
   },
+  'battery-health-enforcement': {
+    label: 'Block Allocation on Low Battery Health',
+    description:
+      'Enforce the rule that a laptop, tablet or smartphone whose battery health is 50% or below, or not ' +
+      'recorded, cannot be moved into an allocation status (ready for allocation, quality check completed, ' +
+      'delivery arranged). 50% or below matches the red battery colour on the device form. Desktops and ' +
+      'all-in-ones have no battery and are not checked. Delivered, recycling and repair-return are always allowed.',
+    offMeaning:
+      'Off does NOT mean unchecked — off is shadow mode: every change is still checked and logged, ' +
+      'but allowed through. On rejects it with an error.',
+  },
   'streamlined-ward-lookup': {
     label: 'Streamlined Ward Lookup',
     description:

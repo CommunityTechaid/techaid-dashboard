@@ -12,7 +12,7 @@
  * copy fails this spec rather than quietly shipping a blank row.
  *
  * The other assertions pin the meaning-carrying parts that a bare on/off switch cannot
- * convey: that "off" is shadow mode for the two enforcement guards, and that the two
+ * convey: that "off" is shadow mode for the three enforcement guards, and that the two
  * ward-lookup flags depend on each other.
  *
  * The `critical` confirm-before-disabling path lost its only user when gdpr-in-app-cleanup
@@ -35,6 +35,7 @@ const SERVER_FLAGS = [
   { key: 'update-scanner', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
   { key: 'wipe-cert-enforcement', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
   { key: 'blocking-flag-enforcement', enabled: false, updatedAt: '2026-08-01T10:00:00Z' },
+  { key: 'battery-health-enforcement', enabled: false, updatedAt: '2026-11-04T10:00:00Z' },
   { key: 'tower-hamlets-borough-support', enabled: false, updatedAt: '2026-08-13T10:00:00Z' },
   { key: 'streamlined-ward-lookup', enabled: false, updatedAt: '2026-08-14T10:00:00Z' },
   { key: 'borough-availability-rules', enabled: false, updatedAt: '2026-08-17T10:00:00Z' },
@@ -131,6 +132,8 @@ test.describe('feature flags interpretability @mocked', () => {
     // Before #174 these three rendered their kebab key as the heading.
     await expect(rowFor(page, 'wipe-cert-enforcement')).toContainText('Require Wipe Certificate Before Allocation');
     await expect(rowFor(page, 'blocking-flag-enforcement')).toContainText('Block Allocation of Flagged Devices');
+    // Seeded by techaid-server V26.11.04.1000 (#264).
+    await expect(rowFor(page, 'battery-health-enforcement')).toContainText('Block Allocation on Low Battery Health');
     // Seeded by techaid-server V26.10.28.1010 and shipped in 5.1.0 with no copy here.
     await expect(rowFor(page, 'membership-support')).toContainText('Membership Support');
   });
@@ -150,14 +153,14 @@ test.describe('feature flags interpretability @mocked', () => {
     await expect(rowFor(page, 'delivery-booking')).toHaveCount(1);
   });
 
-  test('says that OFF is shadow mode for the two enforcement guards', async ({ page }) => {
+  test('says that OFF is shadow mode for the three enforcement guards', async ({ page }) => {
     test.setTimeout(60_000);
     await installMocks(page);
     await openFlagsTab(page);
 
     // The whole point: a bare on/off switch implies "off = not checked", which is wrong
     // for these two. If this wording is lost the page is actively misleading again.
-    for (const key of ['wipe-cert-enforcement', 'blocking-flag-enforcement']) {
+    for (const key of ['wipe-cert-enforcement', 'blocking-flag-enforcement', 'battery-health-enforcement']) {
       await expect(rowFor(page, key)).toContainText('Off does NOT mean unchecked');
       await expect(rowFor(page, key)).toContainText('shadow mode');
     }
