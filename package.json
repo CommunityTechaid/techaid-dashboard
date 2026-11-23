@@ -61,7 +61,7 @@
     "lodash": "^4.17.19",
     "ngx-progressbar": "^14.0.0",
     "ngx-toastr": "^20.0.5",
-    "postcss": "^8.5.14",
+    "postcss": "^8.5.33",
     "rxjs": "^7.8.2",
     "tslib": "^2.9.1"
   },
